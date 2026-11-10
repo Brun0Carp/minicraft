@@ -313,6 +313,29 @@
     .tbtns { bottom: calc(24px + env(safe-area-inset-bottom)); }
     .flyBtns { bottom: calc(160px + env(safe-area-inset-bottom)); }
   }
+
+  /* §22 controles configurables */
+  #settingsScreen .card { max-height: 92vh; overflow: auto; }
+  #settingsList { max-height: none; }
+  #keysList { max-height: 40vh; overflow: auto; padding-right: 4px; }
+  .keysHelp { font-size: 12px; color: #aaa; margin: 4px 0 6px; }
+  .keyRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .keyBtn { min-width: 118px; padding: 5px 8px; font: inherit; font-size: 13px; color: #fff; background: #3a3a3a; border: 2px solid #777; border-radius: 4px; cursor: pointer; }
+  .keyBtn:hover { border-color: #ddd; } .keyBtn.wait { background: #5a5a20; border-color: #ffef3a; } .keyBtn.dup { border-color: #e05a4a; color: #ffb3a8; }
+  #touchLayoutWrap { display: none; } body.touch #touchLayoutWrap { display: block; } body.touch #keysWrap { display: none; }
+  #touchLayoutWrap p { font-size: 12px; color: #aaa; }
+  #layoutBar { display: none; position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 60; background: rgba(0,0,0,.8); color: #fff;
+    border: 2px solid #888; border-radius: 8px; padding: 5px 8px; gap: 8px; align-items: center; flex-wrap: nowrap; justify-content: center; font-size: 12px; max-width: 98vw; white-space: nowrap; }
+  #layoutBar label { display: flex; align-items: center; gap: 4px; } #layoutBar input[type=range] { width: 90px; }
+  #layoutBar .btn { margin: 0; padding: 6px 8px; font-size: 12px; width: auto; }
+  @media (orientation: portrait) { #layoutBar > b { display: none; } }
+  #keysList { margin-top: 6px; }
+  body.layout-edit #layoutBar { display: flex; }
+  body.layout-edit #touchUI { display: block !important; }
+  body.layout-edit .flyBtns { display: flex; }
+  body.layout-edit #lookZone { background: rgba(0,0,0,.35); }
+  body.layout-edit #touchUI .tbtn, body.layout-edit #joy { outline: 2px dashed rgba(255,255,255,.6); outline-offset: 3px; touch-action: none; }
+  .editSel { outline: 3px solid #ffef3a !important; }
 </style>
 </head>
 <body>
@@ -412,8 +435,15 @@
     <div class="row"><button id="createCancel" class="btn">Cancelar</button><button id="createGo" class="btn primary">Crear</button></div>
   </div>
 </div>
+<div id="layoutBar"><b>Arrastra los controles</b>
+  <label>Tamaño <input id="layoutSize" type="range" min="0.6" max="1.8" step="0.05" value="1"></label>
+  <button id="layoutReset" class="btn small">Restablecer</button><button id="layoutDone" class="btn small primary">Hecho</button></div>
 <div id="settingsScreen" class="screen">
   <div class="card"><h2>Ajustes</h2><div id="settingsList"></div>
+    <div class="netBox" id="ctrlBox"><b>Controles</b>
+      <div id="keysWrap"><div id="keysList"></div></div>
+      <div id="touchLayoutWrap"><p>Mueve y cambia el tamaño de cada botón táctil (joystick, saltar, minar, usar, volar, mapa, inventario, pausa). Se guarda por separado en vertical y horizontal.</p>
+        <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div></div>
     <div class="netBox"><b>Multijugador (servidor externo)</b><p>Conecta con tu propio servidor WebSocket. Sin servidor, el juego es de un jugador.</p>
       <div class="row"><input id="netUrl" type="text" placeholder="wss://mi-servidor:8080"><button id="netGo" class="btn small">Conectar</button><button id="netStop" class="btn small">Salir</button></div><p id="netStatus">Estado: Desconectado</p></div>
     <button id="settingsBack" class="btn">Hecho</button></div>
@@ -4855,7 +4885,14 @@ class Sfx {
     } catch (e) { this.ctx = null; }
   }
   setVolume(v) { if (this.master) this.master.gain.value = v; }
-  setRain(a) { if (this.rainGain) this.rainGain.gain.setTargetAtTime(a * 0.09, this.ctx.currentTime, 0.5); }
+  // La lluvia solo suena mientras se juega (no en pausa, en el menú ni con la pestaña oculta)
+  setRain(a) {
+    if (!this.rainGain) return;
+    if (document.hidden || !['playing', 'inventory', 'map'].includes(game.state)) a = 0;
+    this.rainGain.gain.setTargetAtTime(a * 0.09, this.ctx.currentTime, 0.5);
+  }
+  stopAmbient() { if (this.rainGain) { this.rainGain.gain.cancelScheduledValues(this.ctx.currentTime); this.rainGain.gain.setValueAtTime(0, this.ctx.currentTime); } }
+  suspend() { this.stopAmbient(); if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
   out(opts) {
     const c = this.ctx, g = c.createGain();
     let vol = opts.vol ?? 1;
@@ -5505,8 +5542,9 @@ function initSettingsUI() {
     box.append(row);
   }
   $('#settingsBack').onclick = () => { saveSettings(); showScreen(game.settingsBack || 'mainMenu'); };
+  buildKeyBindingsUI();
 }
-function openSettings() { showScreen('settingsScreen'); }
+function openSettings() { buildKeyBindingsUI(); showScreen('settingsScreen'); }
 function applySettings(key) {
   if (key === 'volume') sfx.setVolume(settings.volume);
   if (key === 'fov') { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
@@ -6118,18 +6156,18 @@ const game = {
   resume() {
     if (this.state === 'dead' || !this.player) return;
     this.state = 'playing'; showScreen(null);
-    if (!IS_TOUCH && !controlsLocked()) { try { controls.lock(); } catch {} }
+    if (!IS_TOUCH && !controlsLocked() && !noLockMode()) { try { controls.lock(); } catch { game.noLock = true; applyCursor(); } }
     sfx.init();
   },
   pause() {
     if (this.state !== 'playing') return;
-    this.state = 'paused'; this.releaseInputs();
+    this.state = 'paused'; this.releaseInputs(); sfx.stopAmbient();
     $('#pauseInfo').textContent = `${this.meta.name} · Día ${this.env.days + 1} · ${this.env.clock()} · ${WEATHER_NAMES[this.env.weather]}`;
     showScreen('pauseScreen'); saveGame(true);
   },
   quitToMenu() {
     saveGame(true);
-    this.state = 'menu';
+    this.state = 'menu'; sfx.stopAmbient();
     if (controlsLocked()) { this.ignoreUnlock = true; controls.unlock(); }
     $('#hud').classList.remove('show');
     decor.clear(); this.boss = null; mapUI.open = false;
@@ -6150,7 +6188,7 @@ const game = {
   },
   die(cause) {
     const p = this.player; if (p.dead) return;
-    p.dead = true; this.state = 'dead'; this.releaseInputs(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
+    p.dead = true; this.state = 'dead'; this.releaseInputs(); sfx.stopAmbient(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
     sfx.play('death');
     if (!this.meta.keepInventory) {
       for (const inv of [p.inv, p.armor]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
@@ -6417,7 +6455,7 @@ const game = {
   interact() {
     const t = this.target; if (!t) return false;
     const def = BLOCKS[t.id], p = this.player;
-    if (!def.interact || input.keys.has('ShiftLeft')) return false;
+    if (!def.interact || down('sneak')) return false;
     const pos = { x: t.x, y: t.y, z: t.z };
     switch (def.interact) {
       case 'door': {
@@ -6477,16 +6515,17 @@ const game = {
     const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
     const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
     const wish = new THREE.Vector3();
-    if (k.has('KeyW') || k.has('ArrowUp')) wish.add(fwd);
-    if (k.has('KeyS') || k.has('ArrowDown')) wish.sub(fwd);
-    if (k.has('KeyD') || k.has('ArrowRight')) wish.add(right);
-    if (k.has('KeyA') || k.has('ArrowLeft')) wish.sub(right);
+    keyLook(dt);
+    if (down('forward')) wish.add(fwd);
+    if (down('back')) wish.sub(fwd);
+    if (down('right')) wish.add(right);
+    if (down('left')) wish.sub(right);
     wish.addScaledVector(fwd, -input.joy.y).addScaledVector(right, input.joy.x);
     if (wish.lengthSq() > 1) wish.normalize();
     const moving = wish.lengthSq() > 0.01;
-    const jump = k.has('Space') || input.flyUp;
+    const jump = down('jump') || input.flyUp;
     const canSprint = this.mode === 'creative' || p.hunger > 6;
-    const sprint = canSprint && moving && (k.has('ShiftLeft') && !p.flying || k.has('ControlLeft') || Math.hypot(input.joy.x, input.joy.y) > 0.97);
+    const sprint = canSprint && moving && (down('sprint') && !(p.flying && settings.keys.sprint === settings.keys.descend) || (k.has('ControlLeft') && !actionsFor('ControlLeft').length) || Math.hypot(input.joy.x, input.joy.y) > 0.97);
     p.sprinting = sprint;
     const c = bodyContacts(p);
     p.inWater = c.water;
@@ -6504,7 +6543,7 @@ const game = {
     if (p.flying) {
       const sp = FLY_SPEED * (sprint ? 1.8 : 1);
       p.vel.x += (wish.x * sp - p.vel.x) * Math.min(1, dt * 8); p.vel.z += (wish.z * sp - p.vel.z) * Math.min(1, dt * 8);
-      const vy = (jump ? 1 : 0) - (k.has('ShiftLeft') || input.flyDown ? 1 : 0);
+      const vy = (jump ? 1 : 0) - (down('descend') || input.flyDown ? 1 : 0);
       p.vel.y += (vy * 8 - p.vel.y) * Math.min(1, dt * 10);
       moveBody(p, p.vel.x * dt, p.vel.y * dt, p.vel.z * dt, false);
       if (p.onGround && vy < 0) p.flying = false;
@@ -6788,49 +6827,13 @@ function findSpawn(seed) {
    §17 ENTRADA: TECLADO, RATÓN Y TÁCTIL
    ========================================================================== */
 function initInput() {
-  document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (game.state === 'map' && (e.code === 'KeyM' || e.code === 'Escape')) { e.preventDefault(); mapUI.hide(); return; }
-    sfx.init();
-    if (game.state === 'inventory' && (e.code === 'KeyE' || e.code === 'Escape')) { e.preventDefault(); closeInventory(); return; }
-    if (game.state !== 'playing') return;
-    if (e.code === 'Space') {
-      e.preventDefault();
-      const now = performance.now();
-      if (!e.repeat && game.mode === 'creative' && now - input.lastSpace < 300) { game.player.flying = !game.player.flying; game.player.vel.y = 0; }
-      if (!e.repeat) input.lastSpace = now;
-    }
-    input.keys.add(e.code);
-    if (e.code.startsWith('Digit')) { const n = +e.code.slice(5); if (n >= 1 && n <= 9) game.selectSlot(n - 1); }
-    if (e.code === 'KeyE') { e.preventDefault(); openInventory('inv'); }
-    if (e.code === 'KeyM') { e.preventDefault(); mapUI.show(); }
-    if (e.code === 'KeyL') { e.preventDefault(); game.pause(); openAchievements(); }
-    if (e.code === 'KeyQ') {
-      const p = game.player, s = p.held();
-      if (s) { const n = e.ctrlKey ? s.count : 1; p.dropStack({ ...s, count: n }); s.count -= n; if (!s.count) p.inv.slots[p.selected] = null; hud.update(); }
-    }
-    if (e.code === 'F3') { e.preventDefault(); settings.showFps = !settings.showFps; saveSettings(); }
-    if (e.code === 'KeyF' && game.mode === 'creative') game.player.flying = !game.player.flying;
+  // Teclado y ratón: ver initControls() (§22, teclas reasignables y modo sin captura del ratón)
+  window.addEventListener('blur', () => { game.releaseInputs(); if (game.state === 'playing' && !IS_TOUCH) game.pause(); sfx.stopAmbient(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { saveGame(true); if (game.state === 'playing') game.pause(); sfx.suspend(); }
+    else if (game.state === 'playing') sfx.init();
   });
-  document.addEventListener('keyup', (e) => input.keys.delete(e.code));
-  window.addEventListener('blur', () => game.releaseInputs());
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { saveGame(true); if (game.state === 'playing' && IS_TOUCH) game.pause(); } });
-  window.addEventListener('pagehide', () => saveGame(true));
-
-  document.addEventListener('mousedown', (e) => {
-    if (game.state !== 'playing' || IS_TOUCH || !controlsLocked()) return;
-    if (e.button === 0) input.primary = true;
-    if (e.button === 2) { input.secondary = true; game.useCd = 0; }
-  });
-  document.addEventListener('mouseup', (e) => { if (e.button === 0) input.primary = false; if (e.button === 2) input.secondary = false; });
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('wheel', (e) => { if (game.state === 'playing' && controlsLocked()) game.selectSlot(game.player.selected + (e.deltaY > 0 ? 1 : -1)); }, { passive: true });
-  controls.addEventListener('unlock', () => {
-    if (game.ignoreUnlock) { game.ignoreUnlock = false; return; }
-    if (game.state === 'playing') game.pause();
-  });
-  renderer.domElement.addEventListener('click', () => { if (game.state === 'playing' && !IS_TOUCH && !controlsLocked()) game.resume(); });
-  document.addEventListener('pointerlockerror', () => { if (!IS_TOUCH) hud.toast('Haz clic en la pantalla para capturar el ratón'); });
+  window.addEventListener('pagehide', () => { saveGame(true); sfx.suspend(); });
 
   // --- Táctil (Pointer Events: también funcionan con ratón) ---
   const joyEl = $('#joy'), knob = $('#joyKnob');
@@ -6868,7 +6871,7 @@ function initInput() {
     btn.addEventListener('pointerdown', (e) => {
       e.preventDefault(); e.stopPropagation(); sfx.init();
       btn.setPointerCapture(e.pointerId); btn.classList.add('pressed');
-      if (act === 'jump') { input.keys.add('Space'); }
+      if (act === 'jump') { input.flyUp = true; }
       if (act === 'break') input.primary = true;
       if (act === 'place') { input.secondary = true; game.useCd = 0; }
       if (act === 'down') input.flyDown = true;
@@ -6879,7 +6882,7 @@ function initInput() {
     });
     const up = () => {
       btn.classList.remove('pressed');
-      if (act === 'jump') input.keys.delete('Space');
+      if (act === 'jump') input.flyUp = false;
       if (act === 'break') input.primary = false;
       if (act === 'place') input.secondary = false;
       if (act === 'down') input.flyDown = false;
@@ -6891,6 +6894,7 @@ function initInput() {
     camera.updateProjectionMatrix(); viewCam.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+  initControls();
 }
 
 /* ---------- Bucle principal ---------- */
@@ -6913,7 +6917,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 2.0  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.0  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -6936,7 +6940,7 @@ function boot() {
   showScreen('mainMenu');
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout };
 }
 
 /* ==========================================================================
@@ -7437,6 +7441,291 @@ function importWorld(text) {
   catch { try { localStorage.removeItem(SAVE_PREFIX + id); } catch {} return 'No hay espacio suficiente para importar este mundo.'; }
   const list = listWorlds(); list.push(meta); saveWorldIndex(list);
   return null;
+}
+
+/* ==========================================================================
+   §22 CONTROLES CONFIGURABLES
+   --------------------------------------------------------------------------
+   · Todas las acciones de teclado/ratón se pueden reasignar (Ajustes → Controles).
+     Un "código" es un e.code de teclado (KeyW, Space…), un botón del ratón
+     (Mouse0 izq., Mouse1 central, Mouse2 der., Mouse3/4 laterales) o la rueda
+     (WheelUp / WheelDown).
+   · Si el navegador no permite capturar el ratón (p. ej. dentro de una vista
+     previa o un iframe), la cámara pasa a un modo alternativo: arrastrar con el
+     ratón o mover el ratón libremente, y también con las teclas de mirar.
+   · En pantallas táctiles cada control se puede mover y redimensionar; la
+     disposición se guarda por separado en vertical y en horizontal.
+   ========================================================================== */
+const KEY_ACTIONS = [
+  ['forward', 'Avanzar', 'KeyW'], ['back', 'Retroceder', 'KeyS'], ['left', 'Izquierda', 'KeyA'], ['right', 'Derecha', 'KeyD'],
+  ['jump', 'Saltar / nadar / subir', 'Space'], ['sprint', 'Correr', 'ShiftLeft'], ['descend', 'Bajar (volando)', 'ShiftLeft'],
+  ['sneak', 'Colocar sobre cofres y mesas', 'ShiftLeft'],
+  ['attack', 'Minar / atacar', 'Mouse0'], ['use', 'Usar / colocar / comer', 'Mouse2'],
+  ['lookUp', 'Mirar arriba', 'ArrowUp'], ['lookDown', 'Mirar abajo', 'ArrowDown'], ['lookLeft', 'Mirar a la izquierda', 'ArrowLeft'], ['lookRight', 'Mirar a la derecha', 'ArrowRight'],
+  ['inventory', 'Inventario', 'KeyE'], ['drop', 'Soltar objeto', 'KeyQ'], ['map', 'Mapa', 'KeyM'], ['achievements', 'Logros', 'KeyL'],
+  ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
+  ['hotbarNext', 'Siguiente espacio', 'WheelDown'], ['hotbarPrev', 'Espacio anterior', 'WheelUp'],
+  ...Array.from({ length: 9 }, (_, i) => [`hotbar${i + 1}`, `Espacio ${i + 1} de la barra`, `Digit${i + 1}`]),
+];
+const DEFAULT_KEYS = Object.fromEntries(KEY_ACTIONS.map(([id, , code]) => [id, code]));
+settings.keys = Object.assign({}, DEFAULT_KEYS, settings.keys || {});
+settings.mouseMode ??= 'auto';          // auto | arrastrar | mover
+settings.touchLayout ??= {};            // { port: {...}, land: {...} }
+
+const KEY_LABELS = { Space: 'Espacio', ShiftLeft: 'Mayús izq.', ShiftRight: 'Mayús der.', ControlLeft: 'Ctrl izq.', ControlRight: 'Ctrl der.', AltLeft: 'Alt', AltRight: 'Alt Gr',
+  Tab: 'Tab', Enter: 'Intro', Backspace: 'Retroceso', CapsLock: 'Bloq Mayús', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Escape: 'Esc',
+  Mouse0: 'Clic izquierdo', Mouse1: 'Clic central', Mouse2: 'Clic derecho', Mouse3: 'Ratón 4', Mouse4: 'Ratón 5', WheelUp: 'Rueda arriba', WheelDown: 'Rueda abajo',
+  Semicolon: 'Ñ', Backquote: 'º', Minus: "'", Equal: '¡', BracketLeft: '`', BracketRight: '+', Quote: '´', Backslash: 'ç', Comma: ',', Period: '.', Slash: '-' };
+function keyName(code) {
+  if (!code) return '—';
+  if (KEY_LABELS[code]) return KEY_LABELS[code];
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
+  return code;
+}
+const down = (action) => input.keys.has(settings.keys[action]);
+const actionsFor = (code) => KEY_ACTIONS.filter(([id]) => settings.keys[id] === code).map(([id]) => id);
+
+// ¿Hay que usar el modo sin captura del ratón?
+const noLockMode = () => !IS_TOUCH && (settings.mouseMode !== 'auto' || game.noLock);
+function rotateCam(dx, dy) {
+  const e = new THREE.Euler(0, 0, 0, 'YXZ');
+  e.setFromQuaternion(camera.quaternion);
+  e.y -= dx; e.x = clamp(e.x - dy, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
+  camera.quaternion.setFromEuler(e);
+}
+
+// Pulsar / soltar un código: dispara todas las acciones asignadas a él
+function pressCode(code, ev) {
+  if (input.keys.has(code) && !code.startsWith('Wheel')) return;
+  input.keys.add(code);
+  for (const a of actionsFor(code)) {
+    const p = game.player;
+    switch (a) {
+      case 'attack': input.primary = true; break;
+      case 'use': input.secondary = true; game.useCd = 0; break;
+      case 'jump': {
+        const now = performance.now();
+        if (game.mode === 'creative' && now - input.lastSpace < 300) { p.flying = !p.flying; p.vel.y = 0; }
+        input.lastSpace = now; break;
+      }
+      case 'inventory': openInventory('inv'); break;
+      case 'map': mapUI.show(); break;
+      case 'achievements': game.pause(); openAchievements(); break;
+      case 'pause': game.pause(); break;
+      case 'fly': if (game.mode === 'creative') { p.flying = !p.flying; p.vel.y = 0; } break;
+      case 'debug': settings.showFps = !settings.showFps; saveSettings(); break;
+      case 'drop': {
+        const s = p.held();
+        if (s) { const n = ev && ev.ctrlKey ? s.count : 1; p.dropStack({ ...s, count: n }); s.count -= n; if (!s.count) p.inv.slots[p.selected] = null; hud.update(); }
+        break;
+      }
+      case 'hotbarNext': game.selectSlot(p.selected + 1); break;
+      case 'hotbarPrev': game.selectSlot(p.selected - 1); break;
+      default: if (a.startsWith('hotbar')) game.selectSlot(+a.slice(6) - 1);
+    }
+  }
+}
+function releaseCode(code) {
+  input.keys.delete(code);
+  for (const a of actionsFor(code)) { if (a === 'attack') input.primary = false; if (a === 'use') input.secondary = false; }
+}
+
+// Teclas de mirar (útiles sin ratón capturado) — llamado desde updatePlayer
+function keyLook(dt) {
+  const s = 2.4 * dt * settings.sensitivity;
+  let dx = 0, dy = 0;
+  if (down('lookLeft')) dx -= s; if (down('lookRight')) dx += s;
+  if (down('lookUp')) dy -= s; if (down('lookDown')) dy += s;
+  if (dx || dy) rotateCam(dx, dy);
+}
+
+function initControls() {
+  // ---------- Teclado ----------
+  document.addEventListener('keydown', (e) => {
+    if (rebind.active) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    sfx.init();
+    const acts = actionsFor(e.code);
+    if (game.state === 'map' && (acts.includes('map') || e.code === 'Escape')) { e.preventDefault(); mapUI.hide(); return; }
+    if (game.state === 'inventory' && (acts.includes('inventory') || e.code === 'Escape')) { e.preventDefault(); closeInventory(); return; }
+    if (game.state !== 'playing') return;
+    if (e.code === 'Escape' && !controlsLocked()) { game.pause(); return; }
+    if (acts.length || e.code === 'Space' || e.code.startsWith('Arrow')) e.preventDefault();
+    if (!e.repeat) pressCode(e.code, e);
+  });
+  document.addEventListener('keyup', (e) => { if (!rebind.active) releaseCode(e.code); });
+
+  // ---------- Ratón ----------
+  let drag = null;
+  const canvas = renderer.domElement;
+  document.addEventListener('mousedown', (e) => {
+    if (rebind.active || IS_TOUCH || game.state !== 'playing') return;
+    const code = 'Mouse' + e.button;
+    if (controlsLocked()) { pressCode(code); return; }
+    if (!noLockMode() || e.target !== canvas) return;
+    e.preventDefault();
+    drag = { b: e.button, code, moved: 0, pressed: false, pending: null };
+    // En modo arrastrar, minar/usar esperan un instante: si arrastras, solo giras la cámara
+    if (actionsFor(code).some((a) => a === 'use' || a === 'attack') && settings.mouseMode !== 'mover') {
+      drag.pending = setTimeout(() => { if (drag && drag.moved < 6) { drag.pressed = true; pressCode(code); } }, 170);
+    } else { drag.pressed = true; pressCode(code); }
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (controlsLocked() || !noLockMode() || game.state !== 'playing') return;
+    const k = 0.0028 * settings.sensitivity;
+    if (settings.mouseMode === 'mover') { rotateCam(e.movementX * k, e.movementY * k); return; }
+    if (drag) { drag.moved += Math.abs(e.movementX) + Math.abs(e.movementY); rotateCam(e.movementX * k, e.movementY * k); }
+  });
+  document.addEventListener('mouseup', (e) => {
+    const code = 'Mouse' + e.button;
+    if (drag && drag.b === e.button) {
+      clearTimeout(drag.pending);
+      if (drag.pressed) releaseCode(code);
+      else if (drag.moved < 6) { pressCode(code); setTimeout(() => releaseCode(code), 90); }   // clic corto = usar una vez
+      drag = null; return;
+    }
+    releaseCode(code);
+  });
+  document.addEventListener('wheel', (e) => {
+    if (rebind.active || game.state !== 'playing' || IS_TOUCH || (!controlsLocked() && !noLockMode())) return;
+    const code = e.deltaY > 0 ? 'WheelDown' : 'WheelUp';
+    pressCode(code); releaseCode(code);
+  }, { passive: true });
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  canvas.addEventListener('click', () => { if (game.state === 'playing' && !IS_TOUCH && !controlsLocked() && !noLockMode()) game.resume(); });
+  // El navegador rechazó la captura del ratón → modo alternativo automático
+  let lastUnlock = 0;
+  document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement) lastUnlock = performance.now(); });
+  document.addEventListener('pointerlockerror', () => {
+    if (IS_TOUCH || game.noLock) return;
+    // Chrome rechaza la captura si se pide justo después de soltarla: no es un bloqueo real
+    if (performance.now() - lastUnlock < 1600) { if (game.state === 'playing') game.pause(); hud.toast('Espera un segundo y vuelve a pulsar «Volver al juego»'); return; }
+    game.noLock = true; applyCursor();
+    hud.toast('Este navegador no permite capturar el ratón aquí. Arrastra con el ratón (o usa las flechas) para mirar. Cámbialo en Ajustes → Controles.', 7000);
+  });
+  controls.addEventListener('unlock', () => {
+    if (game.ignoreUnlock) { game.ignoreUnlock = false; return; }
+    if (game.state === 'playing') game.pause();
+  });
+  window.addEventListener('blur', () => { drag = null; });
+  applyCursor();
+  initTouchLayout();
+}
+function applyCursor() {
+  renderer.domElement.style.cursor = noLockMode() ? (settings.mouseMode === 'mover' ? 'none' : 'grab') : '';
+}
+
+/* ---------- Ajustes: reasignación de teclas ---------- */
+const rebind = { active: null };
+function buildKeyBindingsUI() {
+  const box = $('#keysList'); if (!box) return;
+  box.innerHTML = '';
+  const mode = document.createElement('label'); mode.className = 'setRow';
+  mode.innerHTML = '<span>Cámara con ratón</span>';
+  const sel = document.createElement('select');
+  [['auto', 'Capturar el ratón (recomendado)'], ['arrastrar', 'Arrastrar para mirar'], ['mover', 'Mover el ratón sin capturar']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); });
+  sel.value = settings.mouseMode; sel.onchange = () => { settings.mouseMode = sel.value; saveSettings(); applyCursor(); };
+  mode.append(sel); box.append(mode);
+  const help = document.createElement('p'); help.className = 'keysHelp';
+  help.textContent = 'Toca un botón y pulsa la tecla, el botón del ratón o la rueda que quieras. Esc cancela.';
+  box.append(help);
+  const counts = {}; for (const [id] of KEY_ACTIONS) counts[settings.keys[id]] = (counts[settings.keys[id]] || 0) + 1;
+  const SHARED = new Set(['sprint', 'descend', 'sneak']);
+  for (const [id, label] of KEY_ACTIONS) {
+    const row = document.createElement('div'); row.className = 'keyRow';
+    const b = document.createElement('button'); b.className = 'keyBtn'; b.textContent = keyName(settings.keys[id]);
+    const dup = counts[settings.keys[id]] > 1 && !(SHARED.has(id) && actionsFor(settings.keys[id]).every((a) => SHARED.has(a)));
+    if (dup) { b.classList.add('dup'); b.title = 'Esta tecla también se usa en: ' + actionsFor(settings.keys[id]).filter((a) => a !== id).map((a) => KEY_ACTIONS.find((k) => k[0] === a)[1]).join(', '); }
+    b.onclick = (e) => { e.stopPropagation(); startRebind(id, b); };
+    row.innerHTML = `<span>${label}</span>`; row.append(b); box.append(row);
+  }
+  const reset = document.createElement('button'); reset.className = 'btn small'; reset.textContent = 'Restablecer teclas';
+  reset.onclick = () => { settings.keys = { ...DEFAULT_KEYS }; saveSettings(); buildKeyBindingsUI(); };
+  box.append(reset);
+}
+function startRebind(id, btn) {
+  if (rebind.active) return;
+  btn.textContent = 'Pulsa una tecla…'; btn.classList.add('wait');
+  const finish = (code) => {
+    window.removeEventListener('keydown', onKey, true); window.removeEventListener('mousedown', onMouse, true); window.removeEventListener('wheel', onWheel, true);
+    setTimeout(() => { rebind.active = null; }, 50);
+    if (code) { settings.keys[id] = code; saveSettings(); }
+    buildKeyBindingsUI();
+  };
+  const onKey = (e) => { e.preventDefault(); e.stopPropagation(); finish(e.code === 'Escape' ? null : e.code); };
+  const onMouse = (e) => { e.preventDefault(); e.stopPropagation(); finish('Mouse' + e.button); };
+  const onWheel = (e) => { e.preventDefault(); e.stopPropagation(); finish(e.deltaY > 0 ? 'WheelDown' : 'WheelUp'); };
+  // se espera a que termine el clic que abrió la captura
+  setTimeout(() => {
+    rebind.active = id;
+    window.addEventListener('keydown', onKey, true); window.addEventListener('mousedown', onMouse, true); window.addEventListener('wheel', onWheel, { capture: true, passive: false });
+  }, 0);
+}
+
+/* ---------- Editor de la disposición táctil ---------- */
+const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['fly', '[data-act=fly]'],
+  ['down', '[data-act=down]'], ['map', '[data-act=map]'], ['inv', '[data-act=inv]'], ['pause', '[data-act=pause]']];
+const orient = () => (window.innerWidth > window.innerHeight ? 'land' : 'port');
+function applyTouchLayout() {
+  const L = settings.touchLayout[orient()] || {};
+  for (const [id, sel] of TOUCH_CTRLS) {
+    const el = $(sel); if (!el) continue;
+    const c = L[id];
+    if (!c) { el.style.position = el.style.left = el.style.top = el.style.right = el.style.bottom = el.style.transform = el.style.zIndex = el.style.width = ''; continue; }
+    el.style.position = 'fixed'; el.style.left = c.x + '%'; el.style.top = c.y + '%'; el.style.right = 'auto'; el.style.bottom = 'auto';
+    el.style.transform = `translate(-50%, -50%) scale(${c.s || 1})`; el.style.zIndex = 7; if (c.w) el.style.width = c.w + 'px';
+  }
+}
+function startLayoutEdit() {
+  game.layoutEdit = true; game.releaseInputs();
+  showScreen(null); document.body.classList.add('layout-edit');
+  const o = orient(); settings.touchLayout[o] = settings.touchLayout[o] || {};
+  const L = settings.touchLayout[o];
+  // la primera vez se parte de la posición actual de cada control
+  for (const [id, sel] of TOUCH_CTRLS) {
+    if (L[id]) continue;
+    const el = $(sel), r = el.getBoundingClientRect();
+    L[id] = { w: el.offsetWidth, x: +((r.left + r.width / 2) / innerWidth * 100).toFixed(2), y: +((r.top + r.height / 2) / innerHeight * 100).toFixed(2), s: 1 };
+  }
+  applyTouchLayout(); selectLayoutCtrl('jump');
+}
+function selectLayoutCtrl(id) {
+  layoutSel = id;
+  for (const [cid, sel] of TOUCH_CTRLS) $(sel).classList.toggle('editSel', cid === id);
+  const c = settings.touchLayout[orient()][id]; $('#layoutSize').value = c ? c.s || 1 : 1;
+}
+let layoutSel = null;
+function initTouchLayout() {
+  applyTouchLayout();
+  window.addEventListener('resize', () => { if (game.layoutEdit) startLayoutEdit(); else applyTouchLayout(); });
+  // arrastre de controles en modo edición (fase de captura: antes que los controles del juego)
+  let drag = null;
+  document.addEventListener('pointerdown', (e) => {
+    if (!game.layoutEdit) return;
+    const hit = TOUCH_CTRLS.find(([, sel]) => e.target.closest(sel));
+    if (!hit) return;
+    e.preventDefault(); e.stopPropagation();
+    selectLayoutCtrl(hit[0]);
+    drag = { id: hit[0], pid: e.pointerId };
+  }, true);
+  document.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.pid) return;
+    e.preventDefault(); e.stopPropagation();
+    const c = settings.touchLayout[orient()][drag.id];
+    c.x = +clamp(e.clientX / innerWidth * 100, 3, 97).toFixed(2); c.y = +clamp(e.clientY / innerHeight * 100, 3, 97).toFixed(2);
+    applyTouchLayout();
+  }, true);
+  document.addEventListener('pointerup', (e) => { if (drag && e.pointerId === drag.pid) { drag = null; e.stopPropagation(); } }, true);
+  $('#layoutSize').oninput = () => { const c = settings.touchLayout[orient()][layoutSel]; if (c) { c.s = +$('#layoutSize').value; applyTouchLayout(); } };
+  $('#layoutReset').onclick = () => { delete settings.touchLayout[orient()]; applyTouchLayout(); startLayoutEdit(); };
+  $('#layoutDone').onclick = () => {
+    game.layoutEdit = false; document.body.classList.remove('layout-edit');
+    for (const [, sel] of TOUCH_CTRLS) $(sel).classList.remove('editSel');
+    saveSettings(); applyTouchLayout(); showScreen('settingsScreen');
+  };
+  $('#btnTouchLayout').onclick = () => { if (!game.player || game.state === 'menu') { hud.toast('Entra en un mundo para personalizar los controles táctiles'); return; } startLayoutEdit(); };
 }
 
 /* ==========================================================================
