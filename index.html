@@ -478,6 +478,15 @@
   .keyBtn { border-radius: 3px; transition: border-color .15s, background .15s; }
   #keysList { max-height: none; }
 
+  /* --- Minimapa (§24) --- */
+  #minimapContainer { position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); display: none; padding: 2px;
+    background: rgba(0,0,0,.6); border: 2px solid #0b0b0b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.35); pointer-events: none; image-rendering: pixelated; }
+  body.minimap-on #minimapContainer { display: block; }
+  #minimapCanvas { display: block; width: 100px; height: 100px; image-rendering: pixelated; pointer-events: none; }
+  body.touch #minimapContainer { top: calc(62px + env(safe-area-inset-top)); }
+  body.minimap-on:not(.touch) #effectsHud { top: 124px; }
+  body.minimap-on.touch #effectsHud { top: calc(176px + env(safe-area-inset-top)); }
+  body.inv-open #minimapContainer { display: none; }
   /* --- Carga --- */
   .loadBox { padding: 20px 22px; background: var(--glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 2px solid var(--edge); border-radius: 6px; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
   .bar { border-radius: 3px; overflow: hidden; }
@@ -495,6 +504,7 @@
   <div id="toast"></div>
   <div id="bossBar"><b></b><em></em><u><s></s></u></div>
   <div id="compass"><div></div></div>
+  <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
   <div id="notifs"></div>
   <div id="bottomHud">
@@ -969,10 +979,29 @@ function buildAtlas() {
   const paint = (tile, fn) => { for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const c = fn(x, y); if (c) px(tile, x, y, c[0], c[1], c[2], c[3] ?? 255); } };
   const copy = (dst, src) => paint(dst, (x, y) => get(src, x, y));
   const noise = ([r, g, b], v) => () => { const n = (rnd() - 0.5) * 2 * v; return [r + n, g + n, b + n]; };
+  // HD: ruido de valor suave y repetible cada 16 px (las casillas se repiten sin costuras)
+  const vnoise = (x, y, cell, seed) => {
+    const P = 16 / cell, fx = x / cell, fy = y / cell, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+    const h = (a, b) => hash2(((a % P) + P) % P, ((b % P) + P) % P, seed);
+    const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    return lerp(lerp(h(x0, y0), h(x0 + 1, y0), sx), lerp(h(x0, y0 + 1), h(x0 + 1, y0 + 1), sx), sy);
+  };
+  // HD: grietas con relieve (borde oscuro abajo, luz arriba) sobre una casilla ya pintada
+  const cracks = (tile, n, dark = 30) => {
+    for (let k = 0; k < n; k++) {
+      let x = Math.floor(rnd() * 16), y = Math.floor(rnd() * 16); const dx = rnd() < 0.5 ? 1 : -1;
+      for (let j = 0, L = 3 + Math.floor(rnd() * 3); j < L; j++) {
+        const c = get(tile, x & 15, y & 15), u = get(tile, x & 15, (y + 15) & 15);
+        px(tile, x & 15, y & 15, c[0] - dark, c[1] - dark, c[2] - dark);
+        px(tile, x & 15, (y + 15) & 15, u[0] + 10, u[1] + 10, u[2] + 10);
+        if (rnd() < 0.55) x += dx; else y++;
+      }
+    }
+  };
 
   // --- Tierras y piedras ---
-  paint(T.dirt, () => { const n = (rnd() - 0.5) * 34, d = rnd() < 0.1 ? -26 : 0; return [134 + n + d, 96 + n * 0.8 + d, 67 + n * 0.6 + d]; });
-  paint(T.grass_top, () => { const n = (rnd() - 0.5) * 50; return [200 + n, 200 + n, 200 + n]; }); // gris: se tiñe por bioma
+  paint(T.dirt, (x, y) => { const v = (vnoise(x, y, 8, 41) - 0.5) * 18, n = (rnd() - 0.5) * 26, t = rnd(), d = t < 0.09 ? -28 : t > 0.965 ? 26 : 0; return [134 + n + d + v, 96 + n * 0.8 + d + v * 0.8, 67 + n * 0.6 + d + v * 0.6]; });
+  paint(T.grass_top, (x, y) => { const v = (vnoise(x, y, 4, 43) - 0.5) * 34, n = (rnd() - 0.5) * 40; return [200 + n + v, 200 + n + v, 200 + n + v]; }); // gris: se tiñe por bioma
   copy(T.grass_side, T.dirt);
   copy(T.snowy_grass_side, T.dirt);
   for (let x = 0; x < 16; x++) {
@@ -983,25 +1012,28 @@ function buildAtlas() {
       px(T.snowy_grass_side, x, y, 236 + n * 0.3, 240 + n * 0.3, 248);
     }
   }
-  paint(T.stone, () => { let n = (rnd() - 0.5) * 26; if (rnd() < 0.12) n -= 26; return [124 + n, 124 + n, 126 + n]; });
+  paint(T.stone, (x, y) => { const v = (vnoise(x, y, 8, 11) - 0.5) * 24 + (vnoise(x, y, 4, 12) - 0.5) * 14; let n = (rnd() - 0.5) * 14; if (rnd() < 0.1) n -= 22; return [124 + n + v, 124 + n + v, 127 + n + v]; });
+  cracks(T.stone, 3, 26);
   paint(T.bedrock, () => { const n = rnd() < 0.45 ? -42 : 0, m = (rnd() - 0.5) * 30; return [82 + n + m, 82 + n + m, 84 + n + m]; });
   // Piedra labrada: celdas irregulares con juntas oscuras
   const cobble = (tile, base, moss) => {
     const cells = Array.from({ length: 7 }, () => [rnd() * 16, rnd() * 16, (rnd() - 0.5) * 30]);
     paint(tile, (x, y) => {
-      let d1 = 99, d2 = 99, c = 0;
+      let d1 = 99, d2 = 99, c = 0, ncx = 0, ncy = 0;
       for (const [cx, cy, s] of cells) for (const ox of [-16, 0, 16]) for (const oy of [-16, 0, 16]) {
         const d = Math.hypot(x - cx - ox, y - cy - oy);
-        if (d < d1) { d2 = d1; d1 = d; c = s; } else if (d < d2) d2 = d;
+        if (d < d1) { d2 = d1; d1 = d; c = s; ncx = cx + ox; ncy = cy + oy; } else if (d < d2) d2 = d;
       }
-      const edge = d2 - d1 < 1.2 ? -45 : 0, n = (rnd() - 0.5) * 18;
-      if (moss && rnd() < 0.3 + (edge ? 0.3 : 0)) return [70 + n, 110 + n, 50 + n];
-      return [base + c + n + edge, base + c + n + edge, base + 2 + c + n + edge];
+      const gap = d2 - d1, edge = gap < 1.2 ? -50 : gap < 2.2 ? -14 : 0, n = (rnd() - 0.5) * 14;
+      // relieve: cada piedra recibe luz desde arriba a la izquierda
+      const lit = clamp(((ncy - y) + (ncx - x) * 0.6) * 3.2, -18, 18) * (edge ? 0.3 : 1);
+      if (moss && rnd() < 0.3 + (edge ? 0.3 : 0)) return [70 + n + lit * 0.5, 110 + n + lit * 0.5, 50 + n];
+      return [base + c + n + edge + lit, base + c + n + edge + lit, base + 2 + c + n + edge + lit];
     });
   };
   cobble(T.cobble, 122, false);
   cobble(T.mossy_cobble, 118, true);
-  paint(T.sand, () => { const n = (rnd() - 0.5) * 16; return [219 + n, 207 + n, 160 + n]; });
+  paint(T.sand, (x, y) => { const v = (vnoise(x, y, 8, 51) - 0.5) * 12, n = (rnd() - 0.5) * 14; return [219 + n + v, 207 + n + v, 160 + n + v]; });
   paint(T.sandstone_top, () => { const n = (rnd() - 0.5) * 12; return [216 + n, 200 + n, 150 + n]; });
   paint(T.sandstone_side, (x, y) => { const n = (rnd() - 0.5) * 10, band = y < 3 ? 6 : y > 12 ? -14 : (y % 4 === 0 ? -8 : 0); return [212 + n + band, 196 + n + band, 146 + n + band]; });
   paint(T.gravel, () => { const t = rnd(), n = (rnd() - 0.5) * 20; const b = t < 0.3 ? 100 : t < 0.6 ? 135 : t < 0.85 ? 155 : 115; return [b + n + (t > 0.85 ? 15 : 0), b + n, b + n - (t > 0.85 ? 8 : 0)]; });
@@ -1014,20 +1046,32 @@ function buildAtlas() {
   const bricks = (tile, h, w, mortar, base, varc) => paint(tile, (x, y) => {
     const row = Math.floor(y / h), off = row % 2 ? w / 2 : 0;
     if (y % h === h - 1 || (x + off) % w === 0) return mortar.map((v) => v + (rnd() - 0.5) * 10);
-    const n = (rnd() - 0.5) * varc;
+    const ry = y % h, rx = (x + off) % w, bv = ry === 0 ? 14 : ry === h - 2 ? -12 : 0, bx = rx === 1 ? 7 : rx === w - 1 ? -9 : 0;
+    const n = (rnd() - 0.5) * varc + bv + bx;
     return [base[0] + n, base[1] + n * 0.6, base[2] + n * 0.5];
   });
   bricks(T.bricks, 4, 8, [168, 160, 150], [150, 70, 54], 26);
   bricks(T.stone_bricks, 8, 16, [80, 80, 82], [124, 124, 126], 18);
   // Menas: piedra + motas de color
+  // HD: cada veta tiene volumen (brillo arriba-izquierda, sombra abajo-derecha) y proyecta sombra sobre la piedra
   const ore = (tile, col) => {
     copy(tile, T.stone);
+    const set = new Set(), key = (x, y) => y * 16 + x;
     for (let k = 0; k < 5; k++) {
       const cx = 2 + Math.floor(rnd() * 12), cy = 2 + Math.floor(rnd() * 12);
-      for (let j = 0; j < 4; j++) {
-        const x = clamp(cx + Math.floor(rnd() * 3) - 1, 0, 15), y = clamp(cy + Math.floor(rnd() * 3) - 1, 0, 15), n = (rnd() - 0.5) * 30;
-        px(tile, x, y, col[0] + n, col[1] + n, col[2] + n);
-      }
+      for (let j = 0; j < 5; j++) set.add(key(clamp(cx + Math.floor(rnd() * 3) - 1, 1, 14), clamp(cy + Math.floor(rnd() * 3) - 1, 1, 14)));
+    }
+    const has = (x, y) => set.has(key(x, y));
+    for (const k of set) {
+      const x = k & 15, y = k >> 4;
+      if (!has(x + 1, y + 1)) { const c = get(tile, x + 1, y + 1); px(tile, x + 1, y + 1, c[0] * 0.55, c[1] * 0.55, c[2] * 0.55); }
+      if (!has(x - 1, y - 1)) { const c = get(tile, x - 1, y - 1); px(tile, x - 1, y - 1, c[0] * 1.12 + 6, c[1] * 1.12 + 6, c[2] * 1.12 + 6); }
+    }
+    const hi = col.map((v) => v * 1.3 + 34), lo = col.map((v) => v * 0.62);
+    for (const k of set) {
+      const x = k & 15, y = k >> 4, n = (rnd() - 0.5) * 18;
+      const c = (!has(x - 1, y) || !has(x, y - 1)) ? hi : (!has(x + 1, y) || !has(x, y + 1)) ? lo : col;
+      px(tile, x, y, c[0] + n, c[1] + n, c[2] + n);
     }
   };
   ore(T.coal_ore, [34, 34, 36]); ore(T.iron_ore, [216, 175, 147]); ore(T.gold_ore, [250, 220, 60]);
@@ -1052,30 +1096,53 @@ function buildAtlas() {
   // Maderas
   const logSide = (tile, base, stripeDark, birch) => paint(tile, (x, y) => {
     const n = (rnd() - 0.5) * 16;
-    if (birch) { const mark = hash2(Math.floor(x / 3), Math.floor(y / 2), 9) < 0.18 ? -170 : 0; return [222 + n + mark, 222 + n + mark, 212 + n + mark]; }
-    const s = x % 4 === 0 ? -stripeDark : x % 4 === 2 ? 8 : 0;
-    return [base[0] + n + s, base[1] + n * 0.8 + s, base[2] + n * 0.6 + s];
+    if (birch) {
+      const m = hash2(Math.floor(x / 3), Math.floor(y / 2), 9) < 0.18, below = hash2(Math.floor(x / 3), Math.floor((y + 1) / 2), 9) < 0.18 && !m;
+      const mark = m ? -170 : below ? -22 : 0, v = (vnoise(x, y, 8, 61) - 0.5) * 10;
+      return [222 + n + mark + v, 222 + n + mark + v, 212 + n + mark + v];
+    }
+    // corteza en placas verticales: luz en el borde izquierdo, sombra profunda en la grieta
+    const col = x % 4, s = col === 0 ? -stripeDark * 1.25 : col === 1 ? 12 : col === 2 ? 4 : -stripeDark * 0.35;
+    const knot = hash2(x >> 2, y >> 2, 23) < 0.08 ? -18 : 0, v = (vnoise(x, y, 4, 63) - 0.5) * 12;
+    return [base[0] + n * 0.7 + s + knot + v, base[1] + n * 0.6 + s + knot + v, base[2] + n * 0.5 + s + knot + v];
   });
   const logTop = (tile, bark, inner) => paint(tile, (x, y) => {
     const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)), n = (rnd() - 0.5) * 12;
     if (d > 6.5) return [bark[0] + n, bark[1] + n, bark[2] + n];
-    const ring = Math.floor(d) % 2 ? -22 : 0;
-    return [inner[0] + n + ring, inner[1] + n + ring, inner[2] + n + ring];
+    const ring = Math.floor(d) % 2 ? -20 : 0, ao = d > 5.5 ? -16 : d < 1.5 ? 10 : 0;
+    return [inner[0] + n + ring + ao, inner[1] + n + ring + ao, inner[2] + n + ring + ao];
   });
   const planks = (tile, c) => paint(tile, (x, y) => {
-    const n = (rnd() - 0.5) * 14, seamY = y % 4 === 3, seamX = x === (Math.floor(y / 4) % 2 ? 4 : 11);
-    const d = seamY ? -38 : seamX ? -26 : 0;
-    return [c[0] + n + d, c[1] + n + d, c[2] + n * 0.6 + d];
+    const b = Math.floor(y / 4), yy = y % 4, sx = b % 2 ? 4 : 11;
+    const n = (rnd() - 0.5) * 9, seamY = yy === 3, seamX = x === sx;
+    // veta de la madera y bisel de cada tabla (arriba claro, abajo oscuro)
+    const grain = Math.sin((x + b * 5) * 0.8 + hash2(b, 0, 3) * 6) * 4 + (hash2(x >> 1, b, 77) < 0.2 ? -9 : 0);
+    const bevel = yy === 0 ? 13 : yy === 2 ? -7 : 0, side = x === ((sx + 1) & 15) ? 8 : x === ((sx + 15) & 15) ? -6 : 0;
+    const d = seamY ? -42 : seamX ? -30 : bevel + side + grain;
+    return [c[0] + n + d, c[1] + n + d * 0.95, c[2] + n * 0.6 + d * 0.8];
   });
   logSide(T.oak_log, [104, 80, 48], 26); logTop(T.oak_log_top, [100, 78, 46], [182, 148, 96]); planks(T.oak_planks, [168, 134, 82]);
   logSide(T.birch_log, null, 0, true); logTop(T.birch_log_top, [220, 220, 210], [200, 180, 130]); planks(T.birch_planks, [196, 178, 122]);
   logSide(T.spruce_log, [70, 50, 30], 18); logTop(T.spruce_log_top, [62, 44, 26], [140, 104, 64]); planks(T.spruce_planks, [118, 86, 52]);
   logSide(T.dark_log, [62, 46, 28], 16); logTop(T.dark_log_top, [56, 40, 24], [96, 72, 44]); planks(T.dark_planks, [76, 52, 28]);
   // Hojas (gris → se tiñen), con huecos para el recorte alfa
-  const leaves = (tile, holes, base = 190) => paint(tile, () => {
-    const n = (rnd() - 0.5) * 70;
-    return rnd() < holes ? [0, 0, 0, 0] : [base + n, base + n, base + n, 255];
-  });
+  // HD: racimos de hojas (ruido suave), huecos agrupados y sombreado según los huecos vecinos
+  const leaves = (tile, holes, base = 190) => {
+    const seed = tile * 7 + 3;
+    paint(tile, (x, y) => {
+      const v = vnoise(x, y, 4, seed), n = (rnd() - 0.5) * 44;
+      if (rnd() < holes * (1.7 - v * 1.5)) return [0, 0, 0, 0];
+      const b = base + n + (v - 0.5) * 70;
+      return [b, b, b, 255];
+    });
+    const solid = []; for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) solid[y * 16 + x] = get(tile, x, y)[3] > 0;
+    paint(tile, (x, y) => {
+      if (!solid[y * 16 + x]) return null;
+      const c = get(tile, x, y), up = !solid[((y + 15) & 15) * 16 + x], dn = !solid[((y + 1) & 15) * 16 + x], lf = !solid[y * 16 + ((x + 15) & 15)];
+      const k = (up ? 26 : 0) + (lf ? 10 : 0) - (dn ? 30 : 0);
+      return [c[0] + k, c[1] + k, c[2] + k, 255];
+    });
+  };
   leaves(T.oak_leaves, 0.2); leaves(T.birch_leaves, 0.18, 205); leaves(T.spruce_leaves, 0.22, 170); leaves(T.dark_leaves, 0.12, 150);
   // Plantas (fondo transparente)
   const clear = (tile) => paint(tile, () => [0, 0, 0, 0]);
@@ -3257,6 +3324,18 @@ class Pix {
   }
   disk(cx, cy, r, col) { for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) this.set(x, y, typeof col === 'function' ? col(x, y) : col); return this; }
   canvas() {
+    // HD: volumen — luz en los bordes de arriba/izquierda, sombra abajo/derecha y un degradado diagonal suave
+    const src = this.c, op = (x, y) => x >= 0 && x < 16 && y >= 0 && y < 16 && !!src[y * 16 + x];
+    const lit = src.map((c, i) => {
+      if (!c) return c;
+      const x = i & 15, y = i >> 4;
+      let k = 1 + (8 - (x + y) / 2) * 0.012;
+      if (!op(x, y - 1) || !op(x - 1, y)) k += 0.2;
+      else if (!op(x, y + 1) || !op(x + 1, y)) k -= 0.2;
+      else if (!op(x + 1, y + 1)) k -= 0.08;
+      return [clamp(c[0] * k + (k > 1.15 ? 10 : 0), 0, 255), clamp(c[1] * k + (k > 1.15 ? 10 : 0), 0, 255), clamp(c[2] * k + (k > 1.15 ? 10 : 0), 0, 255)];
+    });
+    this.c = lit;
     // contorno oscuro automático
     const out = this.c.slice();
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
@@ -3301,8 +3380,8 @@ function drawItemPixels(id) {
     case I.IRON_INGOT: ingot([215, 215, 220]); break;
     case I.GOLD_INGOT: ingot([248, 210, 60]); break;
     case I.COPPER_INGOT: ingot([205, 115, 75]); break;
-    case I.DIAMOND: p.poly([[8, 2], [14, 7], [8, 14], [2, 7]], (x, y) => (y < 7 ? [160, 250, 245] : x < 8 ? [80, 220, 210] : [50, 180, 175])); break;
-    case I.APPLE: p.disk(8, 9.5, 5, (x, y) => (x < 7 && y < 8 ? [255, 120, 110] : [210, 30, 40])); p.line([[8, 4.5], [9, 1.5]], 1.2, [90, 60, 30]); p.set(10, 3, [60, 160, 50]); p.set(11, 2, [60, 160, 50]); break;
+    case I.DIAMOND: p.poly([[8, 2], [14, 7], [8, 14], [2, 7]], (x, y) => (y < 4 && x < 9 ? [235, 255, 255] : y < 7 ? (x < 8 ? [170, 252, 248] : [130, 236, 230]) : x < 8 ? [80, 220, 210] : [44, 168, 165])); p.set(6, 4, [255, 255, 255]); break;
+    case I.APPLE: p.disk(8, 9.5, 5, (x, y) => { const d = Math.hypot(x - 5.5, y - 7); return d < 1.2 ? [255, 235, 230] : d < 3 ? [240, 70, 70] : y > 12 ? [150, 16, 26] : [205, 30, 40]; }); p.line([[8, 4.5], [9, 1.5]], 1.2, [90, 60, 30]); p.set(10, 3, [80, 180, 60]); p.set(11, 2, [60, 150, 45]); p.set(10, 2, [110, 200, 80]); break;
     case I.BEEF: meat([200, 50, 50], false); p.disk(6, 7, 1.4, [240, 220, 220]); break;
     case I.COOKED_BEEF: meat([130, 74, 40], false); break;
     case I.PORK: meat([240, 140, 140], false); p.line([[4, 10], [12, 6]], 1.2, [255, 220, 220]); break;
@@ -3778,71 +3857,142 @@ function part(parent, mat, px, py, pz, boxes) {
 const GEO_CACHE = new Map();
 
 const MOB_MODELS = {
+  // Cuadrúpedo. Opciones HD: hoof (pezuñas), legExtra (cajas extra en cada pata), tail (cajas de la cola, pivote arriba atrás)
   quadruped(mat, o) {
     const root = new THREE.Group();
     const body = part(root, mat, 0, o.legH + o.bodyH / 2, 0, [[o.bodyW, o.bodyH, o.bodyL, 0, 0, 0, o.body], ...(o.bodyExtra || [])]);
     const head = part(root, mat, 0, o.legH + o.bodyH * 0.75, o.bodyL / 2, [[o.headW, o.headH, o.headL, 0, o.headY || 0, o.headL / 2, o.head], ...(o.headExtra || [])]);
     const legs = [];
     for (const [sx, sz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) {
-      legs.push(part(root, mat, sx * (o.bodyW / 2 - o.legW / 2), o.legH, sz * (o.bodyL / 2 - o.legW / 2 - 1), [[o.legW, o.legH, o.legW, 0, -o.legH / 2, 0, o.leg]]));
+      const boxes = [[o.legW, o.legH, o.legW, 0, -o.legH / 2, 0, o.leg], ...(o.legExtra || [])];
+      if (o.hoof) boxes.push([o.legW + 0.25, 2, o.legW + 0.25, 0, -o.legH + 1, 0, o.hoof]);
+      legs.push(part(root, mat, sx * (o.bodyW / 2 - o.legW / 2), o.legH, sz * (o.bodyL / 2 - o.legW / 2 - 1), boxes));
     }
-    return { root, body, head, legs, arms: [] };
+    const tail = o.tail ? part(root, mat, 0, o.legH + o.bodyH - 1.5, -o.bodyL / 2, o.tail) : null;
+    return { root, body, head, legs, arms: [], tail, quad: true, grazes: !!o.grazes };
   },
   chicken(mat) {
-    const root = new THREE.Group(), W = rgb(245, 245, 240), Y = rgb(240, 180, 40), R = rgb(210, 30, 30), B = rgb(20, 20, 20);
-    const body = part(root, mat, 0, 8, 0, [[6, 6, 8, 0, 0, 0, W]]);
-    const head = part(root, mat, 0, 10, 3, [[4, 6, 3, 0, 2, 1.5, W], [4, 2, 2, 0, 3, 4, Y], [2, 2, 1, 0, 1, 3.5, R], [1, 1, 0.2, -1.5, 4, 3.1, B], [1, 1, 0.2, 1.5, 4, 3.1, B]]);
-    const legs = [part(root, mat, -1.5, 5, 0, [[1, 5, 1, 0, -2.5, 0, Y], [3, 0.6, 3, 0, -4.8, 0.5, Y]]), part(root, mat, 1.5, 5, 0, [[1, 5, 1, 0, -2.5, 0, Y], [3, 0.6, 3, 0, -4.8, 0.5, Y]])];
-    const arms = [part(root, mat, -3.5, 10, 0, [[1, 4, 6, 0, -2, 0, W]]), part(root, mat, 3.5, 10, 0, [[1, 4, 6, 0, -2, 0, W]])];
-    return { root, body, head, legs, arms, wings: true };
+    const root = new THREE.Group(), W = rgb(245, 245, 240), W2 = rgb(222, 222, 215), Y = rgb(240, 180, 40), Y2 = rgb(205, 140, 30), R = rgb(210, 30, 30), B = rgb(20, 20, 20);
+    const body = part(root, mat, 0, 8, 0, [[6, 6, 8, 0, 0, 0, W], [5, 3, 1.6, 0, 1.6, -4.6, W2], [3, 3.4, 1.2, 0, 2.6, -5.2, rgb(205, 205, 198)], [5.2, 1.5, 6, 0, -3.1, 0.4, W2]]);
+    const head = part(root, mat, 0, 10, 3, [[4, 6, 3, 0, 2, 1.5, W],
+      [4, 1.2, 2, 0, 3.4, 4, Y], [3, 1, 1.5, 0, 2.4, 3.6, Y2],                 // pico superior e inferior
+      [2, 2.2, 1, 0, 1, 3.3, R], [1, 1.6, 3, 0, 5.6, 1.4, R], [1, 1, 2, 0, 6.4, 1.2, rgb(235, 50, 50)], // barbilla y cresta
+      [1.2, 1.2, 0.2, -1.5, 4, 3.05, W2], [0.7, 0.8, 0.25, -1.65, 4, 3.2, B], [1.2, 1.2, 0.2, 1.5, 4, 3.05, W2], [0.7, 0.8, 0.25, 1.65, 4, 3.2, B]]);
+    const leg = () => [[1, 5, 1, 0, -2.5, 0, Y], [3, 0.6, 3, 0, -4.8, 0.5, Y], [1, 0.6, 1.4, 0, -4.8, -1.2, Y2]];
+    const legs = [part(root, mat, -1.5, 5, 0, leg()), part(root, mat, 1.5, 5, 0, leg())];
+    const arms = [part(root, mat, -3.5, 10, 0, [[1, 4, 6, 0, -2, 0, W], [1.2, 1.5, 3, 0, -3.6, -2.4, W2]]), part(root, mat, 3.5, 10, 0, [[1, 4, 6, 0, -2, 0, W], [1.2, 1.5, 3, 0, -3.6, -2.4, W2]])];
+    return { root, body, head, legs, arms, wings: true, chicken: true };
   },
+  // Humanoide. Opciones HD: bodyBoxes (sustituye al torso), sleeve (manga sobre el brazo), armExtra/legExtra, shoe (calzado)
   humanoid(mat, o) {
     const root = new THREE.Group(), lw = o.limb;
-    const body = part(root, mat, 0, 18, 0, [[8, 12, o.thin ? 2 : 4, 0, 0, 0, o.shirt], ...(o.bodyExtra || [])]);
-    const head = part(root, mat, 0, 24, 0, [[8, 8, 8, 0, 4, 0, o.skin], [2, 1.5, 0.2, -2, 4, 4.05, o.eye], [2, 1.5, 0.2, 2, 4, 4.05, o.eye], ...(o.headExtra || [])]);
-    const legs = [part(root, mat, -2, 12, 0, [[lw, 12, lw, 0, -6, 0, o.pants]]), part(root, mat, 2, 12, 0, [[lw, 12, lw, 0, -6, 0, o.pants]])];
-    const arms = [part(root, mat, -4 - lw / 2, 22, 0, [[lw, 12, lw, 0, -5, 0, o.arm]]), part(root, mat, 4 + lw / 2, 22, 0, [[lw, 12, lw, 0, -5, 0, o.arm], ...(o.bow ? [[1, 14, 1, 0, -10, 2, rgb(110, 80, 40)]] : [])])];
+    const body = part(root, mat, 0, 18, 0, [...(o.bodyBoxes || [[8, 12, o.thin ? 2 : 4, 0, 0, 0, o.shirt]]), ...(o.bodyExtra || [])]);
+    const eyes = o.eyeHD ? [] : [[2, 1.5, 0.2, -2, 4, 4.05, o.eye], [2, 1.5, 0.2, 2, 4, 4.05, o.eye]];
+    const head = part(root, mat, 0, 24, 0, [[8, 8, 8, 0, 4, 0, o.skin], ...eyes, ...(o.headExtra || [])]);
+    const legBoxes = () => [[lw, 12, lw, 0, -6, 0, o.pants], ...(o.shoe ? [[lw + 0.3, 2, lw + 0.6, 0, -11, 0.2, o.shoe]] : []), ...(o.legExtra || [])];
+    const legs = [part(root, mat, -2, 12, 0, legBoxes()), part(root, mat, 2, 12, 0, legBoxes())];
+    const armBoxes = () => [[lw, 12, lw, 0, -5, 0, o.arm], ...(o.sleeve ? [[lw + 0.4, 5, lw + 0.4, 0, 0.6, 0, o.sleeve]] : []), ...(o.armExtra || [])];
+    const arms = [part(root, mat, -4 - lw / 2, 22, 0, armBoxes()), part(root, mat, 4 + lw / 2, 22, 0, [...armBoxes(), ...(o.bow ? [[1, 14, 1, 0, -10, 2, rgb(110, 80, 40)], [0.4, 12, 0.4, 0, -10, 1.2, rgb(230, 230, 230)]] : [])])];
     return { root, body, head, legs, arms, humanoid: true };
   },
+};
+// Ojos de doble capa: cuenca/esclerótica y pupila un poco adelantada (z = cara frontal de la cabeza)
+const eyesHD = (z, y, sx, sclera, pupil, opts = {}) => {
+  const w = opts.w || 2, h = opts.h || 1.6, pw = opts.pw || 1, ph = opts.ph || 1.1, po = opts.po ?? 0.3;
+  return [[w, h, 0.2, -sx, y, z + 0.05, sclera], [pw, ph, 0.25, -sx - po, y, z + 0.2, pupil], [w, h, 0.2, sx, y, z + 0.05, sclera], [pw, ph, 0.25, sx + po, y, z + 0.2, pupil]];
 };
 
 const MOBS = {
   cow: { name: 'Vaca', hp: 10, w: 0.9, h: 1.4, speed: 1.1, xp: 2, sound: 'cow',
     drops: [[I.BEEF, 1, 3], [I.LEATHER, 0, 2]],
-    model: (m) => MOB_MODELS.quadruped(m, { legH: 12, legW: 4, bodyW: 12, bodyH: 10, bodyL: 18, headW: 8, headH: 8, headL: 6, headY: 1,
-      body: rgb(90, 60, 40), leg: rgb(80, 54, 36), head: rgb(90, 60, 40),
-      bodyExtra: [[12.2, 6, 8, 0, 1, -3, rgb(235, 235, 230)], [12.2, 4, 5, 0, -2, 5, rgb(235, 235, 230)]],
-      headExtra: [[1, 3, 1, -4.5, 5, 1, rgb(220, 210, 190)], [1, 3, 1, 4.5, 5, 1, rgb(220, 210, 190)], [4, 3, 1, 0, -1.5, 6.2, rgb(200, 160, 150)], [1.5, 1.5, 0.2, -2.5, 2, 6.1, rgb(10, 10, 10)], [1.5, 1.5, 0.2, 2.5, 2, 6.1, rgb(10, 10, 10)]] }) },
+    model: (m) => { const BR = rgb(90, 60, 40), WH = rgb(235, 235, 230), CR = rgb(225, 214, 190), PK = rgb(214, 160, 150), K = rgb(18, 14, 12);
+      return MOB_MODELS.quadruped(m, { legH: 12, legW: 4, bodyW: 12, bodyH: 10, bodyL: 18, headW: 8, headH: 8, headL: 6, headY: 1, grazes: true,
+        body: BR, leg: rgb(80, 54, 36), head: BR, hoof: rgb(48, 38, 32),
+        bodyExtra: [[12.2, 6, 8, 0, 1, -3, WH], [12.2, 4, 5, 0, -2, 5, WH], [6, 3, 6.2, 2, 3.6, 6, WH], [12.4, 0.8, 18.2, 0, 4.7, 0, rgb(84, 56, 37)],
+          [4, 2, 4, 0, -5.8, -4, PK], [0.8, 1.2, 0.8, -1, -7.2, -3, rgb(200, 140, 130)], [0.8, 1.2, 0.8, 1, -7.2, -3, rgb(200, 140, 130)], [0.8, 1.2, 0.8, -1, -7.2, -5, rgb(200, 140, 130)], [0.8, 1.2, 0.8, 1, -7.2, -5, rgb(200, 140, 130)]],
+        headExtra: [
+          [6, 3.4, 1.8, 0, -1.4, 6.9, PK], [1, 0.9, 0.2, -1.6, -1, 7.85, K], [1, 0.9, 0.2, 1.6, -1, 7.85, K], [6.2, 0.6, 1.9, 0, -3, 6.9, rgb(190, 140, 130)], // hocico y fosas nasales
+          [3, 3, 0.2, 0, 3.6, 6.05, WH],                                                                            // mancha de la frente
+          ...eyesHD(6, 2, 2.5, rgb(240, 240, 235), K, { w: 1.8, h: 1.6, pw: 0.9, ph: 1.2 }),
+          [1.6, 1.6, 1.6, -4.7, 4.4, 1.4, CR], [1, 2.2, 1, -5.3, 6, 1.4, rgb(205, 196, 176)], [1.6, 1.6, 1.6, 4.7, 4.4, 1.4, CR], [1, 2.2, 1, 5.3, 6, 1.4, rgb(205, 196, 176)], // cuernos
+          [2.6, 1.3, 1.2, -5.2, 2.8, 2.6, rgb(80, 54, 36)], [2.6, 1.3, 1.2, 5.2, 2.8, 2.6, rgb(80, 54, 36)]],                                          // orejas
+        tail: [[1, 8, 1, 0, -4, -0.5, BR], [1.6, 2.2, 1.6, 0, -8.6, -0.5, rgb(40, 30, 24)]] }); } },
   pig: { name: 'Cerdo', hp: 10, w: 0.9, h: 0.9, speed: 1.1, xp: 2, sound: 'pig',
     drops: [[I.PORK, 1, 3]],
-    model: (m) => MOB_MODELS.quadruped(m, { legH: 6, legW: 4, bodyW: 10, bodyH: 8, bodyL: 16, headW: 8, headH: 8, headL: 8, headY: 0,
-      body: rgb(240, 160, 160), leg: rgb(230, 150, 150), head: rgb(240, 160, 160),
-      headExtra: [[4, 3, 1, 0, -1, 8.4, rgb(230, 120, 130)], [1.5, 1.5, 0.2, -2.5, 2, 8.1, rgb(10, 10, 10)], [1.5, 1.5, 0.2, 2.5, 2, 8.1, rgb(10, 10, 10)]] }) },
+    model: (m) => { const PK = rgb(240, 160, 160), PD = rgb(222, 128, 136), PL = rgb(250, 190, 186), K = rgb(18, 12, 12);
+      return MOB_MODELS.quadruped(m, { legH: 6, legW: 4, bodyW: 10, bodyH: 8, bodyL: 16, headW: 8, headH: 8, headL: 8, headY: 0,
+        body: PK, leg: rgb(230, 150, 150), head: PK, hoof: rgb(150, 96, 96),
+        bodyExtra: [[9.6, 1, 14, 0, -4.1, 0, PL], [10.2, 2.4, 6, 0, 2.6, 3, rgb(246, 170, 168)], [3, 2, 0.2, -2.4, 1, -8.05, PD]],
+        headExtra: [[4.4, 3.4, 2.2, 0, -1, 9, PD], [1, 1.2, 0.2, -1, -1, 10.15, rgb(120, 50, 60)], [1, 1.2, 0.2, 1, -1, 10.15, rgb(120, 50, 60)],      // hocico
+          ...eyesHD(8, 1.8, 2.5, rgb(250, 245, 240), K, { w: 1.8, h: 1.4, pw: 0.9, ph: 1 }),
+          [2.8, 1, 2.6, -2.7, 4.4, 6.6, PD], [2.2, 1.6, 1, -2.7, 3.2, 7.6, PD], [2.8, 1, 2.6, 2.7, 4.4, 6.6, PD], [2.2, 1.6, 1, 2.7, 3.2, 7.6, PD], // orejas caídas
+          [8.2, 0.6, 8.2, 0, -3.9, 4, rgb(232, 146, 150)]],
+        tail: [[1, 1, 1.6, 0, 0, -0.8, PD], [1, 1.6, 1, 0.6, 0.9, -1.6, PD], [1, 1, 1, -0.1, 1.8, -1.3, PD]] }); } },
   sheep: { name: 'Oveja', hp: 8, w: 0.9, h: 1.3, speed: 1.0, xp: 2, sound: 'sheep',
     drops: [[WOOL, 1, 1], [I.MUTTON, 1, 2]],
-    model: (m) => MOB_MODELS.quadruped(m, { legH: 10, legW: 4, bodyW: 12, bodyH: 11, bodyL: 17, headW: 6, headH: 6, headL: 8, headY: 2,
-      body: rgb(235, 235, 228), leg: rgb(215, 190, 160), head: rgb(215, 190, 160),
-      headExtra: [[7, 3, 6, 0, 5.5, 3, rgb(235, 235, 228)], [1.2, 1.2, 0.2, -1.8, 3, 8.1, rgb(10, 10, 10)], [1.2, 1.2, 0.2, 1.8, 3, 8.1, rgb(10, 10, 10)]] }) },
+    model: (m) => { const W1 = rgb(235, 235, 228), W2 = rgb(222, 222, 214), W3 = rgb(244, 244, 238), SK = rgb(215, 190, 160), K = rgb(16, 14, 12);
+      return MOB_MODELS.quadruped(m, { legH: 10, legW: 4, bodyW: 12, bodyH: 11, bodyL: 17, headW: 6, headH: 6, headL: 8, headY: 2, grazes: true,
+        body: W1, leg: SK, head: SK, hoof: rgb(96, 80, 64),
+        bodyExtra: [[13, 9, 14, 0, 0.8, 0.5, W2], [10.6, 12, 15, 0, 0.3, -0.5, W3], [12.6, 8, 17.8, 0, -0.8, 0, W2], [9, 2, 9, 2, 5.6, 2, W3], [8, 2, 7, -2, 5.4, -4, W2]],
+        legExtra: [[5.2, 4, 5.2, 0, -2, 0, W2]],
+        headExtra: [[7, 3, 6.2, 0, 5.5, 3, W1], [7.4, 2, 3, 0, 4.4, 1, W3], [2.6, 1.2, 1.6, -3.9, 3.2, 3.2, SK], [2.6, 1.2, 1.6, 3.9, 3.2, 3.2, SK],
+          ...eyesHD(8, 3, 1.8, rgb(245, 240, 230), K, { w: 1.4, h: 1.2, pw: 0.8, ph: 0.9, po: 0.2 }), [2, 1.2, 0.3, 0, 0.8, 8.1, rgb(150, 110, 100)]],
+        tail: [[3, 3, 2, 0, -1.2, -1, W1]] }); } },
   chicken: { name: 'Gallina', hp: 4, w: 0.45, h: 0.75, speed: 1.0, xp: 1, sound: 'chicken', floaty: true,
     drops: [[I.CHICKEN, 1, 1], [I.FEATHER, 0, 2]], model: (m) => MOB_MODELS.chicken(m) },
   zombie: { name: 'Zombi', hp: 20, w: 0.6, h: 1.95, speed: 2.3, xp: 5, sound: 'zombie', hostile: true, melee: 3, burns: true,
     drops: [[I.ROTTEN_FLESH, 0, 2]],
-    model: (m) => MOB_MODELS.humanoid(m, { limb: 4, skin: rgb(80, 140, 70), arm: rgb(80, 140, 70), shirt: rgb(40, 150, 160), pants: rgb(50, 60, 140), eye: rgb(10, 20, 10) }) },
+    model: (m) => { const SK = rgb(80, 140, 70), SD = rgb(62, 112, 54), SH = rgb(40, 150, 160), ST = rgb(30, 118, 128), PA = rgb(50, 60, 140), PT = rgb(38, 46, 110);
+      return MOB_MODELS.humanoid(m, { limb: 4, eyeHD: true, skin: SK, arm: SK, shirt: SH, pants: PA, eye: rgb(10, 20, 10), sleeve: SH, shoe: rgb(58, 52, 50),
+        headExtra: [...eyesHD(4, 4, 2, rgb(28, 54, 26), rgb(200, 30, 20), { w: 2.2, h: 1.8, pw: 0.9, ph: 0.9, po: 0.1 }),
+          [1.6, 2, 0.8, 0, 2.6, 4.4, SD], [3.4, 0.9, 0.2, 0, 1.1, 4.05, rgb(36, 56, 32)], [0.8, 0.6, 0.25, -0.8, 1.2, 4.2, rgb(220, 220, 190)],  // nariz, boca, diente
+          [8.4, 1.6, 8.4, 0, 7.6, 0, rgb(46, 84, 40)], [3, 1.6, 8.6, -2.6, 6.6, 0, rgb(46, 84, 40)], [2.2, 2, 0.2, 2.6, 6, 4.05, SD]],       // pelo y cicatriz
+        bodyExtra: [[3, 2.2, 0.3, 1.6, -3.4, 2.05, SK], [2, 3, 0.3, -2.2, 1.6, -2.05, SK], [8.3, 1, 4.3, 0, 5.6, 0, ST],                     // camisa rota
+          [1.6, 1.6, 4.3, -3.1, -6.6, 0, SH], [1.2, 2.2, 4.3, 1.2, -6.9, 0, ST], [1, 1.4, 4.3, 3.4, -6.5, 0, SH]],                           // bajo deshilachado
+        legExtra: [[4.2, 1.6, 0.3, 0, -6.2, 2.05, SK], [4.3, 1, 4.3, 0, -9.2, 0, PT]],
+        armExtra: [[4.3, 1, 4.3, 0, -2.2, 0, ST], [4.2, 1, 4.2, 0, -10.4, 0, SD]] }); } },
   husk: { name: 'Momia', hp: 20, w: 0.6, h: 1.95, speed: 2.3, xp: 5, sound: 'zombie', hostile: true, melee: 3,
     drops: [[I.ROTTEN_FLESH, 0, 2], [SAND, 0, 1]],
-    model: (m) => MOB_MODELS.humanoid(m, { limb: 4, skin: rgb(170, 150, 110), arm: rgb(170, 150, 110), shirt: rgb(130, 110, 80), pants: rgb(100, 85, 60), eye: rgb(30, 20, 10) }) },
+    model: (m) => { const SK = rgb(170, 150, 110), WR = rgb(214, 198, 160), WD = rgb(184, 166, 128);
+      return MOB_MODELS.humanoid(m, { limb: 4, eyeHD: true, skin: SK, arm: SK, shirt: rgb(130, 110, 80), pants: rgb(100, 85, 60), eye: rgb(30, 20, 10), shoe: rgb(90, 74, 52),
+        headExtra: [...eyesHD(4, 4, 2, rgb(52, 38, 22), rgb(255, 190, 60), { w: 2.2, h: 1.8, pw: 0.8, ph: 0.8, po: 0 }),
+          [8.4, 1.4, 8.4, 0, 6.4, 0, WR], [8.4, 1, 8.4, 0, 1.6, 0, WD], [3, 1.2, 8.5, -2.4, 7.6, 0, WD], [1.6, 2, 0.8, 0, 2.8, 4.4, rgb(150, 130, 92)]],
+        bodyExtra: [[8.4, 1.2, 4.4, 0, 4, 0, WR], [8.4, 1.2, 4.4, 0, 0, 0, WD], [8.4, 1.2, 4.4, 0, -3.8, 0, WR], [3, 4, 4.5, 2.2, -2, 0, WD]],
+        armExtra: [[4.4, 1, 4.4, 0, -2, 0, WR], [4.4, 1, 4.4, 0, -5.6, 0, WD], [4.4, 1, 4.4, 0, -9, 0, WR]],
+        legExtra: [[4.4, 1, 4.4, 0, -3, 0, WR], [4.4, 1, 4.4, 0, -7, 0, WD]] }); } },
   drowned: { name: 'Ahogado', hp: 20, w: 0.6, h: 1.95, speed: 2.0, xp: 5, sound: 'zombie', hostile: true, melee: 3, swims: true, burns: true,
     drops: [[I.ROTTEN_FLESH, 0, 2], [I.COPPER_INGOT, 0, 1]],
-    model: (m) => MOB_MODELS.humanoid(m, { limb: 4, skin: rgb(80, 160, 150), arm: rgb(80, 160, 150), shirt: rgb(60, 110, 100), pants: rgb(40, 70, 80), eye: rgb(120, 255, 240) }) },
+    model: (m) => { const SK = rgb(80, 160, 150), KE = rgb(40, 110, 50), KL = rgb(70, 150, 70);
+      return MOB_MODELS.humanoid(m, { limb: 4, eyeHD: true, skin: SK, arm: SK, shirt: rgb(60, 110, 100), pants: rgb(40, 70, 80), eye: rgb(120, 255, 240), sleeve: rgb(54, 100, 92),
+        headExtra: [...eyesHD(4, 4, 2, rgb(30, 70, 70), rgb(140, 255, 245), { w: 2.2, h: 1.8, pw: 1.2, ph: 1, po: 0 }),
+          [3, 0.9, 0.2, 0, 1.2, 4.05, rgb(30, 70, 66)], [8.4, 1.4, 8.4, 0, 7.8, 0, rgb(50, 90, 80)],
+          [1, 4, 0.3, -3.2, 3, 4.2, KE], [1, 3, 0.3, 3, 5, 4.2, KL], [1, 5, 0.3, -1.5, 2.5, -4.2, KE], [1, 4, 0.3, 2, 3, -4.2, KL]],    // algas en la cara y la nuca
+        bodyExtra: [[1, 6, 0.3, -2.5, -2, 2.2, KE], [1, 4, 0.3, 2, -4, 2.2, KL], [1.2, 5, 0.3, 0.5, 1, -2.2, KE], [3, 2, 0.3, 1.8, 3.2, 2.05, SK], [2, 2.6, 4.3, -3, -6.6, 0, rgb(50, 96, 88)]],
+        legExtra: [[4.2, 2, 0.3, 0, -7, 2.05, SK], [1, 3, 0.3, 1, -9, 2.2, KE]],
+        armExtra: [[0.3, 4, 1, 2.2, -6, 0, KE]] }); } },
   skeleton: { name: 'Esqueleto', hp: 20, w: 0.6, h: 1.99, speed: 2.2, xp: 5, sound: 'skeleton', hostile: true, ranged: true, burns: true,
     drops: [[I.BONE, 0, 2], [I.ARROW, 0, 2]],
-    model: (m) => MOB_MODELS.humanoid(m, { limb: 2, thin: true, bow: true, skin: rgb(210, 210, 205), arm: rgb(200, 200, 195), shirt: rgb(190, 190, 185), pants: rgb(185, 185, 180), eye: rgb(20, 20, 20),
-      bodyExtra: [[7, 1, 2.4, 0, 3, 0, rgb(120, 120, 118)], [7, 1, 2.4, 0, 0, 0, rgb(120, 120, 118)], [7, 1, 2.4, 0, -3, 0, rgb(120, 120, 118)]] }) },
+    model: (m) => MOB_MODELS.humanoid(m, skeletonLook(rgb(214, 214, 208), rgb(190, 190, 184), rgb(120, 120, 118))) },
   stray: { name: 'Esqueleto glacial', hp: 20, w: 0.6, h: 1.99, speed: 2.2, xp: 5, sound: 'skeleton', hostile: true, ranged: true, burns: true,
     drops: [[I.BONE, 0, 2], [I.ARROW, 0, 2]],
-    model: (m) => MOB_MODELS.humanoid(m, { limb: 2, thin: true, bow: true, skin: rgb(190, 205, 210), arm: rgb(180, 195, 200), shirt: rgb(120, 150, 165), pants: rgb(110, 140, 155), eye: rgb(20, 30, 40),
-      headExtra: [[8.6, 2, 8.6, 0, 8, 0, rgb(120, 150, 165)]], bodyExtra: [[8.4, 6, 4.4, 0, -3, 0, rgb(110, 140, 150)]] }) },
+    model: (m) => { const o = skeletonLook(rgb(190, 205, 210), rgb(170, 186, 192), rgb(100, 118, 126)), C = rgb(120, 150, 165), CD = rgb(96, 122, 138);
+      o.headExtra.push([8.6, 2, 8.6, 0, 8, 0, C], [8.6, 4, 1, 0, 5, -4.3, C], [1, 4, 8.6, -4.3, 5, 0, CD], [1, 4, 8.6, 4.3, 5, 0, CD]);           // capucha
+      o.bodyExtra.push([8.4, 6, 3.4, 0, 1.5, -0.6, CD], [8.6, 4, 3.6, 0, 4, 0, C], [2, 3, 3.4, -3, -3, 0, CD], [1.4, 2, 3.4, 2.6, -2.6, 0, C]); // capa raída
+      o.legExtra.push([2.6, 3, 2.6, 0, -1.5, 0, CD]);
+      return MOB_MODELS.humanoid(m, o); } },
 };
+// Esqueleto HD: columna, costillas separadas, pelvis, cuencas profundas, mandíbula y articulaciones
+function skeletonLook(B, BD, DK) {
+  const K = rgb(16, 16, 18);
+  return { limb: 2, thin: true, bow: true, eyeHD: true, skin: B, arm: BD, shirt: B, pants: BD, eye: K,
+    bodyBoxes: [[2, 12, 2, 0, 0, -0.4, BD], [8, 1.6, 2.4, 0, 5.2, 0, B], [7, 1.1, 2.6, 0, 2.8, 0.1, B], [6.6, 1.1, 2.6, 0, 1, 0.1, B], [6, 1.1, 2.6, 0, -0.8, 0.1, B], [5.4, 1.1, 2.6, 0, -2.6, 0.1, BD], [6, 2, 2.4, 0, -5, 0, B]],
+    bodyExtra: [],
+    headExtra: [[2.4, 2.2, 0.2, -2, 4.2, 4.05, DK], [1.4, 1.4, 0.3, -2, 4.2, 4.1, K], [2.4, 2.2, 0.2, 2, 4.2, 4.05, DK], [1.4, 1.4, 0.3, 2, 4.2, 4.1, K], // cuencas
+      [1, 1.2, 0.25, 0, 2.6, 4.05, K], [6, 1.6, 0.2, 0, 0.9, 4.05, rgb(232, 232, 226)], [0.5, 1, 0.3, -1.5, 0.9, 4.1, DK], [0.5, 1, 0.3, 0, 0.9, 4.1, DK], [0.5, 1, 0.3, 1.5, 0.9, 4.1, DK], // nariz y dientes
+      [8.2, 1, 8.2, 0, 0.5, 0, BD]],
+    armExtra: [[2.6, 1.6, 2.6, 0, -4.6, 0, B]],
+    legExtra: [[2.6, 1.6, 2.6, 0, -6, 0, B], [2.4, 1, 3, 0, -11.5, 0.4, BD]] };
+}
 
 // Color de luz (0-1) en una posición: mismo cálculo que el shader del terreno
 function lightLevel(x, y, z) {
@@ -3971,6 +4121,67 @@ class Entity {
     if (this.lightTimer <= 0) { this.lightTimer = 0.25; this.light = lightLevel(this.pos.x, this.pos.y + this.h * 0.6, this.pos.z); }
   }
   hitTest(o, d, max) { const r = rayBox(o.x, o.y, o.z, d.x, d.y, d.z, aabbOf(this)); return r && r[0] <= max ? r[0] : null; }
+}
+
+/* ---------- Animación orgánica de las criaturas ----------
+   · La amplitud del paso se suaviza (arranca y frena sin saltos) y depende de la velocidad real.
+   · Cuadrúpedos: marcha en diagonal con las patas traseras algo desfasadas, balanceo del cuerpo,
+     cabeceo al andar, cola que se mueve y, en vacas y ovejas, pastar cuando están quietas.
+   · Humanoides: brazos opuestos a las piernas, torso que gira un poco, respiración y vaivén
+     de los brazos estirados de los zombis.
+   · La cabeza gira hacia el jugador con suavidad en lugar de saltar. */
+function animateModel(e, dt, lookYaw) {
+  const m = e.model, s = e.spec || {}, k = Math.min(1, dt * 7);
+  const spd = Math.min(1.2, Math.hypot(e.vel.x, e.vel.z) / Math.max(0.6, s.speed || 1));
+  e.amp = (e.amp ?? 0) + (spd - (e.amp ?? 0)) * Math.min(1, dt * 6);
+  e.animT = (e.animT || 0) + dt;
+  const A = e.amp, w = e.walk, t = e.animT + (e.animSeed ??= Math.random() * 10);
+  if (!m.base) m.base = { by: m.body.position.y, hy: m.head.position.y, hz: m.head.position.z };
+  const sw = Math.sin(w) * 0.72 * A;
+  // respiración
+  m.body.scale.y = 1 + Math.sin(t * 2.3) * 0.012;
+  if (m.quad) {
+    const back = Math.sin(w + 0.4) * 0.72 * A;
+    m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw; m.legs[2].rotation.x = -back; m.legs[3].rotation.x = back;
+    m.body.position.y = m.base.by + Math.abs(Math.sin(w)) * 0.035 * A;
+    m.body.rotation.z = Math.sin(w) * 0.035 * A;
+    m.head.position.y = m.base.hy + Math.abs(Math.sin(w)) * 0.03 * A;
+    // pastar: de vez en cuando bajan la cabeza si están quietas
+    let pitch = Math.sin(w * 2) * 0.07 * A + Math.sin(t * 0.8) * 0.03;
+    if (m.grazes) {
+      e.grazeT = (e.grazeT ?? 4 + Math.random() * 8) - dt;
+      if (e.grazeT < 0) { if (e.grazeT < -2.6 || A > 0.2) e.grazeT = 5 + Math.random() * 10; else pitch += 0.75; }
+    }
+    m.head.rotation.x += (pitch - m.head.rotation.x) * Math.min(1, dt * 4);
+    if (m.tail) { m.tail.rotation.x = 0.25 + Math.sin(w) * 0.15 * A; m.tail.rotation.z = Math.sin(t * 2.6) * 0.22 + sw * 0.2; }
+  } else if (m.humanoid) {
+    m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw;
+    m.body.rotation.y = sw * 0.09;
+    m.body.position.y = m.base.by + Math.abs(Math.sin(w)) * 0.03 * A;
+    m.head.position.y = m.base.hy + Math.abs(Math.sin(w)) * 0.03 * A;
+    m.head.rotation.x += ((Math.sin(w * 2) * 0.04 * A + Math.sin(t * 0.7) * 0.025) - m.head.rotation.x) * k;
+    const zombieArms = s.hostile && !s.ranged, base = zombieArms ? -1.45 : s.ranged ? -1.3 : 0;
+    m.arms.forEach((a, i) => {
+      const swing = m.villager ? 0 : zombieArms ? sw * 0.18 + Math.sin(t * 1.7 + i * 1.3) * 0.06 : (i ? sw : -sw) * 0.85;
+      a.rotation.x += ((base + swing) - a.rotation.x) * k;
+      if (!m.villager) a.rotation.z = (i ? 1 : -1) * (0.04 + Math.sin(t * 1.3 + i) * 0.02);
+    });
+  } else {
+    m.legs.forEach((l, i) => (l.rotation.x = i % 2 ? -sw : sw));
+  }
+  if (m.chicken) {
+    m.head.position.z = m.base.hz + Math.sin(w * 2) * 0.05 * A;
+    m.body.rotation.x = Math.sin(w * 2) * 0.05 * A;
+  }
+  if (m.wings) {
+    const f = e.onGround ? Math.sin(t * 9) * 0.08 * A : Math.sin(performance.now() / 50) * 0.8;
+    m.arms[0].rotation.z = -f; m.arms[1].rotation.z = f;
+  }
+  // la cabeza sigue al jugador con suavidad
+  let ty = 0;
+  if (lookYaw != null) ty = clamp(((lookYaw - e.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI, -1, 1);
+  else if (A < 0.15) ty = Math.sin(t * 0.35) * 0.35;
+  m.head.rotation.y += (ty - m.head.rotation.y) * Math.min(1, dt * 5);
 }
 
 class Mob extends Entity {
@@ -4121,19 +4332,7 @@ class Mob extends Entity {
     this.mat.color.setRGB(L[0] * (hurt ? 1.6 : 1), L[1] * (hurt ? 0.5 : 1), L[2] * (hurt ? 0.5 : 1));
     if (this.fire > 0 && Math.random() < 0.3) this.mat.color.setRGB(1.4, 0.8, 0.4);
     this.mesh.position.copy(this.pos); this.mesh.rotation.y = this.yaw;
-    const sw = Math.sin(this.walk) * 0.7 * Math.min(1, Math.hypot(this.vel.x, this.vel.z));
-    const m = this.model;
-    m.legs.forEach((l, i) => (l.rotation.x = (i % 2 === (i < 2 ? 0 : 1) ? sw : -sw)));
-    if (m.humanoid) {
-      m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw;
-      const base = this.spec.hostile && !this.spec.ranged ? -1.45 : this.spec.ranged ? -1.3 : 0;
-      m.arms.forEach((a, i) => { a.rotation.x += ((base + (i ? sw : -sw) * 0.3) - a.rotation.x) * Math.min(1, dt * 8); });
-    }
-    if (m.wings) { const f = this.onGround ? 0 : Math.sin(performance.now() / 50) * 0.8; m.arms[0].rotation.z = -f; m.arms[1].rotation.z = f; }
-    if (lookYaw != null) {
-      const d = ((lookYaw - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-      m.head.rotation.y = clamp(d, -1, 1);
-    } else m.head.rotation.y *= 0.9;
+    animateModel(this, dt, lookYaw);
   }
   toJSON() { return { k: this.type, p: [+this.pos.x.toFixed(2), +this.pos.y.toFixed(2), +this.pos.z.toFixed(2)], hp: this.hp, a: Math.round(this.age), pe: this.persistent ? 1 : 0, lc: Math.round(this.loveCd), pl: this.planId }; }
 }
@@ -5700,7 +5899,7 @@ function initSettingsUI() {
     ['volume', 'Volumen', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['quality', 'Resolución', 'select', ['baja', 'media', 'alta']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
-    ['menuPanorama', 'Paisaje animado en el menú', 'check'],
+    ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'],
   ];
   // cada ajuste va a su pestaña: Gráficos, Sonido o Controles
   const TAB = { volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
@@ -5741,6 +5940,7 @@ function initSettingsUI() {
 }
 function openSettings() { buildKeyBindingsUI(); showScreen('settingsScreen'); }
 function applySettings(key) {
+  if (key === 'minimap') minimap.apply();
   if (key === 'menuPanorama') { if (game.state === 'menu') { if (settings.menuPanorama) startPanorama(); else stopPanorama(true); } }
   if (key === 'volume') sfx.setVolume(settings.volume);
   if (key === 'fov') { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
@@ -7112,6 +7312,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
+  if (game.state === 'playing') minimap.render(game.player, world);   // §24: solo con el HUD activo y sin pausa
   dbgT += dt;
   if (dbgT > 0.25) {
     dbgT = 0;
@@ -7137,7 +7338,7 @@ function boot() {
   const tiles = [T.grass_side, T.dirt, T.stone, T.cobble, T.oak_planks, T.stone, T.coal_ore, T.dirt];
   for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) bx.drawImage(tileCanvas(y === 0 ? T.grass_side : tiles[(x * 3 + y * 5) % tiles.length], y === 0 ? null : null), x * 16, y * 16);
   $('#menuBg .fallback').style.backgroundImage = `url(${bg.toDataURL()})`;
-  initMenuLook();
+  initMenuLook(); minimap.init();
   initMenus(); initInventoryInput(); initInput();
   $('#touchHint').style.display = IS_TOUCH ? '' : 'none';
   if (IS_TOUCH) document.body.classList.add('touch');
@@ -8045,6 +8246,97 @@ function drawWorldThumb(canvas, seed) {
     thumbCache.set(seed, img); ctx.putImageData(img, 0, 0);
   }, 30);
 }
+
+/* ==========================================================================
+   §24 MINIMAPA EN TIEMPO REAL (esquina superior derecha del HUD)
+   --------------------------------------------------------------------------
+   · Usa la misma paleta que el mapa del mundo (§ recordMap): color medio de
+     la textura superior de cada bloque, teñido por el bioma; el agua se
+     oscurece con la profundidad y el relieve se sombrea comparando con la
+     fila de arriba (norte), igual que en el mapa grande.
+   · Escanea una cuadrícula de 50×50 bloques (radio 25) alrededor del jugador
+     leyendo los chunks cargados directamente (sin generar nada nuevo).
+   · El terreno se recalcula solo si el jugador cambia de bloque o cada 0,6 s;
+     la flecha del jugador se redibuja en cada fotograma y gira con la cámara.
+   · Norte arriba. Se activa o desactiva en Ajustes → Gráficos → Minimapa.
+   ► CAMBIAR EL ALCANCE: modifica minimap.R (radio en bloques; el canvas es de
+     100×100 px, así que cada bloque ocupa 100 / (2·R) píxeles).
+   ========================================================================== */
+settings.minimap ??= true;
+const minimap = {
+  R: 25, cv: null, ctx: null, buf: null, img: null, lastKey: '', t: 0,
+  init() {
+    this.cv = $('#minimapCanvas'); this.ctx = this.cv.getContext('2d');
+    this.buf = document.createElement('canvas'); this.buf.width = this.buf.height = this.R * 2;
+    this.bctx = this.buf.getContext('2d'); this.img = this.bctx.createImageData(this.R * 2, this.R * 2);
+    this.apply();
+  },
+  apply() { document.body.classList.toggle('minimap-on', !!settings.minimap); this.lastKey = ''; },
+  // Color de un bloque de superficie con la paleta del mapa del mundo
+  color(id, biome, depth) {
+    if (id === WATER) { const k = 1 - Math.min(depth, 12) / 16; return [0.18 * k, 0.36 * k, 0.85 * k]; }
+    const def = BLOCKS[id], b = BIOMES[biome] || BIOMES[2];
+    let c = (TILE_AVG[def.tex.top] || [0.5, 0.5, 0.5]).slice();
+    if (def.tint === 'grass') c = c.map((v, i) => v * b.grass[i]);
+    else if (def.tint === 'foliage') c = c.map((v, i) => v * b.foliage[i]);
+    else if (Array.isArray(def.tint)) c = c.map((v, i) => v * def.tint[i]);
+    return c;
+  },
+  // Bloque visible más alto de una columna: [id, y, profundidad de agua, bioma]
+  surface(x, z) {
+    const ch = world.chunk(x >> 4, z >> 4); if (!ch) return null;
+    const ci = (x & 15) | ((z & 15) << 4), top = Math.min(WY - 1, ch.hm[ci] + 10);
+    for (let y = top; y > 0; y--) {
+      const id = ch.blocks[ci | (y << 8)];
+      if (!id) continue;
+      const sh = BLOCKS[id].shape;
+      if (sh === 'cross' || sh === 'crop' || sh === 'torch') continue;
+      let d = 0; if (id === WATER) while (d < 12 && ch.blocks[ci | ((y - d) << 8)] === WATER) d++;
+      return [id, y, d, ch.biome[ci]];
+    }
+    return null;
+  },
+  render(player, wld) {
+    if (!settings.minimap || !this.cv || !wld) return;
+    const px = Math.floor(player.pos.x), pz = Math.floor(player.pos.z), key = px + ',' + pz;
+    this.t -= 1 / 60;
+    if (key !== this.lastKey || this.t <= 0) { this.lastKey = key; this.t = 0.6; this.drawTerrain(px, pz); }
+    // Terreno escalado + flecha del jugador
+    const c = this.ctx, S = this.cv.width, half = S / 2;
+    c.imageSmoothingEnabled = false;
+    c.clearRect(0, 0, S, S);
+    c.drawImage(this.buf, 0, 0, S, S);
+    // marcadores del jugador (mapa grande) dentro del alcance
+    const k = S / (this.R * 2);
+    for (const m of player.markers || []) {
+      const dx = (m.x - player.pos.x) * k, dz = (m.z - player.pos.z) * k;
+      if (Math.abs(dx) < half - 3 && Math.abs(dz) < half - 3) { c.fillStyle = '#ffef3a'; c.fillRect(half + dx - 2, half + dz - 2, 4, 4); c.strokeStyle = '#000'; c.strokeRect(half + dx - 2.5, half + dz - 2.5, 5, 5); }
+    }
+    // flecha: apunta hacia donde mira la cámara (yaw 0 = norte, −z)
+    const yaw = game.yaw(), fx = -Math.sin(yaw), fz = -Math.cos(yaw), a = Math.atan2(fz, fx);
+    c.save(); c.translate(half, half); c.rotate(a + Math.PI / 2);
+    c.beginPath(); c.moveTo(0, -7); c.lineTo(5, 5); c.lineTo(0, 2.5); c.lineTo(-5, 5); c.closePath();
+    c.fillStyle = '#fff'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#000'; c.stroke();
+    c.restore();
+    // norte
+    c.font = '700 10px ' + getComputedStyle(document.body).fontFamily; c.textAlign = 'center'; c.textBaseline = 'top';
+    c.fillStyle = '#000'; c.fillText('N', half + 1, 3); c.fillStyle = '#ff6a5a'; c.fillText('N', half, 2);
+  },
+  drawTerrain(px, pz) {
+    const R = this.R, N = R * 2, d = this.img.data, prevY = new Array(N);
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const x = px - R + i, z = pz - R + j, s = this.surface(x, z), o = (j * N + i) * 4;
+        if (!s) { d[o] = 18; d[o + 1] = 18; d[o + 2] = 22; d[o + 3] = 255; prevY[i] = null; continue; }
+        const [id, y, depth, biome] = s, c = this.color(id, biome, depth);
+        const north = prevY[i] ?? y, sh = id === WATER ? 1 : clamp(1 + (y - north) * 0.09, 0.72, 1.3);
+        prevY[i] = y;
+        d[o] = clamp(c[0] * sh * 255, 0, 255); d[o + 1] = clamp(c[1] * sh * 255, 0, 255); d[o + 2] = clamp(c[2] * sh * 255, 0, 255); d[o + 3] = 255;
+      }
+    }
+    this.bctx.putImageData(this.img, 0, 0);
+  },
+};
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
