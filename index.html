@@ -336,10 +336,157 @@
   body.layout-edit #lookZone { background: rgba(0,0,0,.35); }
   body.layout-edit #touchUI .tbtn, body.layout-edit #joy { outline: 2px dashed rgba(255,255,255,.6); outline-offset: 3px; touch-action: none; }
   .editSel { outline: 3px solid #ffef3a !important; }
+
+  /* ======================================================================
+     §23 INTERFAZ 4: menús con panel de cristal, botones de piedra y transiciones
+     (estas reglas van al final y sustituyen a las anteriores de igual especificidad)
+     ====================================================================== */
+  :root {
+    --glass: rgba(14, 16, 22, .62); --glass-hi: rgba(255,255,255,.09); --edge: rgba(0,0,0,.85);
+    --accent: #ffe14d; --ok: #6cc04a; --bad: #e0574a; --ease: cubic-bezier(.2,.85,.25,1.15);
+    --stoneTex: none; --grassTex: none;
+  }
+  /* --- Botones de piedra --- */
+  .btn { position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: center; justify-content: center; gap: 9px;
+    width: 100%; min-height: 44px; padding: 10px 16px; margin-top: 8px; font-size: 18px; letter-spacing: .3px; color: #f2f2f2; cursor: pointer;
+    text-shadow: 0 2px 0 rgba(0,0,0,.55);
+    background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 45%, rgba(0,0,0,.22)), var(--stoneTex), #7a7a7a;
+    background-size: 100% 100%, 64px 64px, auto; image-rendering: pixelated;
+    border: 2px solid #0b0b0b; border-radius: 3px;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.32), inset 0 -3px 0 rgba(0,0,0,.38), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.25);
+    transition: transform .14s var(--ease), filter .14s, box-shadow .14s, border-color .14s, color .14s; }
+  .btn::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.28) 48%, transparent 66%); transform: translateX(-120%); transition: transform .55s ease; }
+  .btn:hover { filter: brightness(1.12) saturate(1.05); color: #fffbd0; border-color: #f4f4f4; transform: translateY(-1px);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 0 rgba(0,0,0,.38), 0 4px 0 rgba(0,0,0,.45), 0 0 0 2px rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.35); }
+  .btn:hover::after { transform: translateX(120%); }
+  .btn:active { transform: translateY(2px); filter: brightness(.94);
+    box-shadow: inset 0 3px 0 rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(0,0,0,.45); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn:disabled { filter: grayscale(1) brightness(.7); cursor: default; transform: none; }
+  .btn.small { width: auto; min-height: 34px; font-size: 15px; padding: 6px 12px; margin: 0; gap: 6px; }
+  .btn.primary { background: linear-gradient(180deg, rgba(160,255,120,.28), rgba(40,110,20,.18) 50%, rgba(0,0,0,.28)), var(--grassTex), #4f8a39; background-size: 100% 100%, 64px 64px, auto; }
+  .btn.primary:hover { color: #fff; }
+  .btn.danger:hover, .btn.danger[data-sure] { background: linear-gradient(180deg, rgba(255,140,120,.3), rgba(120,20,10,.3) 50%, rgba(0,0,0,.3)), var(--stoneTex), #8a3a32; background-size: 100% 100%, 64px 64px, auto; }
+  .btn.big { min-height: 56px; font-size: 22px; }
+  .bico { width: 22px; height: 22px; flex: none; background: center / contain no-repeat; image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,.45)); }
+  .bico.lg { width: 34px; height: 34px; }
+  .row { display: flex; gap: 8px; } .row .btn { flex: 1; }
+
+  /* --- Pantallas con transición (opacidad + escala) --- */
+  .screen { display: flex; visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .22s ease, visibility 0s linear .22s; }
+  .screen.show { display: flex; visibility: visible; opacity: 1; pointer-events: auto; transition: opacity .22s ease; }
+  .screen > .card, .screen > .menuWrap, .screen > .loadBox { transform: translateY(10px) scale(.95); transition: transform .3s var(--ease); }
+  .screen.show > .card, .screen.show > .menuWrap, .screen.show > .loadBox { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .screen, .screen > * { transition: none !important; } .title .ver { animation: none !important; } }
+
+  /* --- Paneles de cristal con bisel oscuro --- */
+  .card { width: min(480px, 100%); max-height: 100%; overflow: auto; padding: 22px 22px 18px; border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 30%), var(--glass);
+    -webkit-backdrop-filter: blur(14px) saturate(1.25); backdrop-filter: blur(14px) saturate(1.25);
+    border: 2px solid var(--edge);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.07), inset 0 2px 0 2px var(--glass-hi), inset 0 -3px 0 1px rgba(0,0,0,.35), 0 18px 50px rgba(0,0,0,.55), 0 2px 0 rgba(0,0,0,.6);
+    scrollbar-width: thin; scrollbar-color: #666 transparent; }
+  .card::-webkit-scrollbar { width: 8px; } .card::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+  .card h2 { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 12px; letter-spacing: .5px; text-shadow: 0 3px 0 #1a1a1a, 0 6px 12px rgba(0,0,0,.5); }
+  .cardSub { text-align: center; color: #b9bcc6; font-size: 14px; margin: -6px 0 10px; }
+  .cardHead { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; } .cardHead h2 { margin: 0; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; font-size: 12px; color: #dfe3ea; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); border-radius: 999px; white-space: nowrap; }
+  .wideCard { width: min(760px, 100%); }
+  #pauseScreen, #settingsScreen, #invScreen { background: radial-gradient(ellipse at center, rgba(0,0,0,.25), rgba(0,0,0,.6)); }
+
+  /* --- Fondo del menú: escena 3D en vivo + viñeta (la textura queda de respaldo) --- */
+  #menuBg { transition: opacity .9s ease; }
+  #menuBg::after { z-index: 1; background: radial-gradient(ellipse at 50% 40%, rgba(0,0,0,0) 35%, rgba(0,0,0,.55) 100%), linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,.45)); }
+  #menuBg .fallback { position: absolute; inset: 0; image-rendering: pixelated; background-size: 512px 256px; transition: opacity 1.2s ease; }
+  #menuBg.live .fallback { opacity: 0; }
+
+  /* --- Menú principal --- */
+  #mainMenu { flex-direction: column; }
+  .menuWrap { width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; }
+  .title { position: relative; text-align: center; margin-bottom: 22px; }
+  .title h1 { position: relative; font-size: clamp(46px, 13vw, 92px); font-weight: 700; letter-spacing: 4px; line-height: 1;
+    color: #e9e9e9; background: linear-gradient(180deg, #ffffff 0%, #d9d9d9 46%, #9c9c9c 54%, #c4c4c4 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px rgba(0,0,0,.35); text-shadow: none;
+    filter: drop-shadow(0 2px 0 #5b5b5b) drop-shadow(0 2px 0 #3f3f3f) drop-shadow(0 2px 0 #2a2a2a) drop-shadow(0 3px 0 #141414) drop-shadow(0 12px 18px rgba(0,0,0,.55)); }
+  .title .ver { position: absolute; right: -34px; top: -6px; margin: 0; font-size: clamp(14px, 3.6vw, 20px); font-weight: 700; color: var(--accent);
+    text-shadow: 0 2px 0 #4a3f00, 0 0 12px rgba(255,225,77,.35); transform-origin: center; transform: rotate(-12deg); animation: verPulse 2.6s ease-in-out infinite; white-space: nowrap; }
+  @keyframes verPulse { 0%, 100% { transform: rotate(-12deg) scale(1); text-shadow: 0 2px 0 #4a3f00, 0 0 8px rgba(255,225,77,.25); }
+    50% { transform: rotate(-12deg) scale(1.07); text-shadow: 0 2px 0 #4a3f00, 0 0 18px rgba(255,225,77,.6); } }
+  .title .subtitle { margin-top: 18px; font-size: 15px; color: #e4e7ee; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0,0,0,.7); opacity: .9; }
+  .menuCard { width: 100%; padding: 16px; }
+  .menuCard > .btn:first-child { margin-top: 0; }
+  .menuFoot { position: absolute; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: space-between; gap: 8px; padding: 0 14px;
+    font-size: 12px; color: rgba(255,255,255,.75); text-shadow: 0 2px 0 rgba(0,0,0,.7); pointer-events: none; }
+  #mainMenu .menuWrap { animation: menuIn .8s var(--ease) both; }
+  @keyframes menuIn { from { opacity: 0; transform: translateY(18px) scale(.97); } to { opacity: 1; transform: none; } }
+  @media (max-width: 480px) { .title .ver { right: -4px; top: -22px; } }
+  @media (max-height: 520px) { .title { margin-bottom: 10px; } .title .subtitle { display: none; } .title h1 { font-size: clamp(40px, 10vh, 70px); } .menuFoot { display: none; } }
+
+  /* --- Lista de mundos en tarjetas --- */
+  #worldList { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; max-height: min(52vh, 520px); overflow: auto; margin: 4px 0 10px; padding: 2px 4px 4px 2px; }
+  .wcard { position: relative; display: flex; flex-direction: column; background: rgba(0,0,0,.38); border: 2px solid #0b0b0b; border-radius: 5px; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), 0 3px 0 rgba(0,0,0,.4); transition: transform .18s var(--ease), border-color .18s, box-shadow .18s; animation: cardIn .35s var(--ease) both; }
+  .wcard:hover { transform: translateY(-2px); border-color: #d8d8d8; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 8px 18px rgba(0,0,0,.4); }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .wthumb { position: relative; height: 92px; background: #2c3a28; cursor: pointer; }
+  .wthumb canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; object-fit: cover; }
+  .wthumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.7)); pointer-events: none; }
+  .wmode { position: absolute; left: 8px; top: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; font-size: 12px; font-weight: 600;
+    border-radius: 999px; border: 1px solid rgba(0,0,0,.6); box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+  .wmode .bico { width: 18px; height: 18px; }
+  .wmode.survival { background: #b8473a; color: #fff; } .wmode.creative { background: #3b7fd1; color: #fff; }
+  .wname { position: absolute; left: 10px; right: 10px; bottom: 6px; z-index: 1; font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 2px 0 #000; }
+  .wmeta { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 8px 10px 4px; font-size: 12.5px; color: #c9ccd4; }
+  .wmeta dt { color: #8d919c; } .wmeta dd { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wmeta .seed { font-family: ui-monospace, Consolas, monospace; color: #e8e8e8; }
+  .wactions { display: flex; gap: 6px; padding: 8px 10px 10px; flex-wrap: wrap; }
+  .wactions .play { flex: 1 1 100%; }
+  .wactions .btn.small { flex: 1; font-size: 13px; padding: 5px 6px; min-height: 30px; }
+  .empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #b8bcc6; text-align: center; padding: 26px 10px; border: 2px dashed rgba(255,255,255,.15); border-radius: 6px; }
+  .empty .bico { width: 42px; height: 42px; }
+
+  /* --- Crear mundo --- */
+  input[type=text], select, textarea { border-radius: 3px; background: rgba(0,0,0,.6); border: 2px solid #8a8a8a; transition: border-color .15s, box-shadow .15s; }
+  input[type=text]:focus, select:focus, textarea:focus { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,225,77,.25); }
+  .modes { gap: 10px; }
+  .modeBtn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 8px; font-family: var(--font); color: #ddd; border-radius: 5px; background: rgba(0,0,0,.4); border: 2px solid #3a3a3a;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: transform .15s var(--ease), border-color .15s, background .15s; }
+  .modeBtn b { font-size: 16px; } .modeBtn:hover { transform: translateY(-1px); border-color: #888; }
+  .modeBtn.on { border-color: var(--accent); background: rgba(255,225,77,.1); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,225,77,.3), 0 0 16px rgba(255,225,77,.15); }
+
+  /* --- Ajustes con pestañas --- */
+  .settingsCard { width: min(640px, 100%); display: flex; flex-direction: column; overflow: hidden; max-height: min(92vh, 760px); }
+  #settingsScreen .card { max-height: min(92vh, 760px); overflow: hidden; }
+  .stabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 10px; background: rgba(0,0,0,.4); border: 2px solid #0b0b0b; border-radius: 5px; overflow-x: auto; scrollbar-width: none; flex: none; }
+  .stabs::-webkit-scrollbar { display: none; }
+  .stab { flex: 1 0 auto; padding: 8px 12px; font: 15px var(--font); color: #b9bcc6; background: transparent; border: 0; border-radius: 3px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+  .stab:hover { color: #fff; background: rgba(255,255,255,.06); }
+  .stab.on { color: #fff; background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), inset 0 -2px 0 var(--accent); }
+  .tabPanels { flex: 1 1 auto; min-height: 0; overflow: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: #666 transparent; }
+  .tabPanel { display: none; } .tabPanel.on { display: block; animation: tabIn .22s ease both; }
+  @keyframes tabIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  #settingsList, #settingsAudio, #settingsCtrlRows { max-height: none; overflow: visible; margin: 0; }
+  .setRow { padding: 10px 2px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .setRow select { margin-top: 4px; }
+  @media (min-width: 620px) { #settingsList { display: grid; grid-template-columns: 1fr 1fr; column-gap: 22px; } #settingsList .setRow.full { grid-column: 1 / -1; } }
+  .setSection { padding-top: 4px; } .setSection p { font-size: 13px; color: #aab; margin: 6px 0; }
+  .setSection .row { align-items: stretch; } .setSection input[type=text] { flex: 1; min-width: 0; }
+  #ctrlBox { margin-top: 8px; } #soundTest { margin-top: 10px; }
+  #settingsBack { flex: none; }
+  .keyRow { padding: 5px 2px; }
+  .keyBtn { border-radius: 3px; transition: border-color .15s, background .15s; }
+  #keysList { max-height: none; }
+
+  /* --- Carga --- */
+  .loadBox { padding: 20px 22px; background: var(--glass); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border: 2px solid var(--edge); border-radius: 6px; box-shadow: 0 18px 40px rgba(0,0,0,.5); }
+  .bar { border-radius: 3px; overflow: hidden; }
+  #loadBar { background: linear-gradient(180deg, #a6f07c, #4c9a32); box-shadow: inset 0 2px 0 rgba(255,255,255,.35); }
+  @media (max-width: 480px) { .card { padding: 16px 14px 14px; } .card h2 { font-size: 24px; } .btn { font-size: 17px; } #worldList { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div id="menuBg"></div>
+<div id="menuBg"><div class="fallback"></div></div>
 
 <div id="hud">
   <div id="crosshair"></div>
@@ -386,13 +533,18 @@
 
 <!-- Menú principal -->
 <div id="mainMenu" class="screen">
-  <div class="card">
-    <div class="title"><h1>MINICRAFT</h1><span class="ver">¡Versión 3.0!</span></div>
-    <button id="btnPlay" class="btn primary">Un jugador</button>
-    <button id="btnSettings" class="btn">Ajustes</button>
-    <button id="btnAbout" class="btn">Cómo jugar</button>
-    <p class="foot">Supervivencia y construcción voxel · Three.js<br><span id="touchHint">Controles táctiles activados</span></p>
+  <div class="menuWrap">
+    <div class="title">
+      <h1 data-text="MINICRAFT">MINICRAFT</h1>
+      <span class="ver">¡Versión 3.0!</span>
+      <p class="subtitle">Supervivencia y construcción voxel</p>
+    </div>
+    <div class="card menuCard">
+      <button id="btnPlay" class="btn primary big"><i class="bico" data-icon="play"></i>Un jugador</button>
+      <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
+    </div>
   </div>
+  <div class="menuFoot"><span>MiniCraft 3.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -407,10 +559,10 @@
   </div>
 </div>
 <div id="worldsScreen" class="screen">
-  <div class="card">
-    <h2>Seleccionar mundo</h2>
+  <div class="card wideCard">
+    <div class="cardHead"><h2>Seleccionar mundo</h2><span id="worldCount" class="chip"></span></div>
     <div id="worldList"></div>
-    <button id="btnNewWorld" class="btn primary">Crear mundo nuevo</button>
+    <div class="row"><button id="btnNewWorld" class="btn primary"><i class="bico" data-icon="new"></i>Crear mundo nuevo</button></div>
     <div class="row"><button id="btnImport" class="btn">Importar archivo</button><button id="btnPaste" class="btn">Pegar texto</button></div>
     <input id="importFile" type="file" accept=".json,application/json" hidden>
     <div id="pasteBox"><textarea id="pasteText" placeholder="Pega aquí el texto de un mundo exportado"></textarea><button id="pasteGo" class="btn small">Importar como mundo nuevo</button><span id="pasteMsg"></span></div>
@@ -419,15 +571,15 @@
 </div>
 <div id="createScreen" class="screen" data-mode="survival">
   <div class="card">
-    <h2>Crear mundo</h2>
+    <h2>Crear mundo</h2><p class="cardSub">Elige un nombre, una semilla y cómo quieres jugar.</p>
     <label class="field" for="wName">Nombre del mundo</label>
     <input id="wName" type="text" maxlength="32">
     <label class="field" for="wSeed">Semilla (opcional)</label>
     <input id="wSeed" type="text" maxlength="32" placeholder="Aleatoria">
     <label class="field">Modo de juego</label>
     <div class="modes">
-      <button class="modeBtn on" data-mode="survival">Supervivencia<small>Vida, hambre, enemigos y fabricación</small></button>
-      <button class="modeBtn" data-mode="creative">Creativo<small>Bloques infinitos, vuelo, sin daño</small></button>
+      <button class="modeBtn on" data-mode="survival"><i class="bico lg" data-icon="survival"></i><b>Supervivencia</b><small>Vida, hambre, enemigos y fabricación</small></button>
+      <button class="modeBtn" data-mode="creative"><i class="bico lg" data-icon="creative"></i><b>Creativo</b><small>Bloques infinitos, vuelo, sin daño</small></button>
     </div>
     <label class="field" for="wDay">Duración del día</label>
     <select id="wDay"><option value="600">10 minutos</option><option value="1200" selected>20 minutos</option><option value="2400">40 minutos</option></select>
@@ -439,14 +591,27 @@
   <label>Tamaño <input id="layoutSize" type="range" min="0.6" max="1.8" step="0.05" value="1"></label>
   <button id="layoutReset" class="btn small">Restablecer</button><button id="layoutDone" class="btn small primary">Hecho</button></div>
 <div id="settingsScreen" class="screen">
-  <div class="card"><h2>Ajustes</h2><div id="settingsList"></div>
-    <div class="netBox" id="ctrlBox"><b>Controles</b>
-      <div id="keysWrap"><div id="keysList"></div></div>
-      <div id="touchLayoutWrap"><p>Mueve y cambia el tamaño de cada botón táctil (joystick, saltar, minar, usar, volar, mapa, inventario, pausa). Se guarda por separado en vertical y horizontal.</p>
-        <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div></div>
-    <div class="netBox"><b>Multijugador (servidor externo)</b><p>Conecta con tu propio servidor WebSocket. Sin servidor, el juego es de un jugador.</p>
+  <div class="card settingsCard">
+    <h2>Ajustes</h2>
+    <div class="stabs" role="tablist">
+      <button class="stab on" data-tab="video" role="tab">Gráficos</button><button class="stab" data-tab="audio" role="tab">Sonido</button><button class="stab" data-tab="controls" role="tab">Controles</button><button class="stab" data-tab="net" role="tab">Multijugador</button>
+    </div>
+    <div class="tabPanels">
+      <div class="tabPanel on" data-tab="video"><div id="settingsList"></div></div>
+      <div class="tabPanel" data-tab="audio"><div id="settingsAudio"></div><button id="soundTest" class="btn small">Probar sonido</button></div>
+      <div class="tabPanel" data-tab="controls"><div id="settingsCtrlRows"></div>
+        <div id="ctrlBox">
+          <div id="keysWrap"><div id="keysList"></div></div>
+          <div id="touchLayoutWrap"><p>Mueve y cambia el tamaño de cada botón táctil (joystick, saltar, minar, usar, volar, mapa, inventario, pausa). Se guarda por separado en vertical y horizontal.</p>
+            <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div>
+        </div>
+      </div>
+      <div class="tabPanel" data-tab="net"><div class="setSection"><b>Servidor externo</b><p>Conecta con tu propio servidor WebSocket. Sin servidor, el juego es de un jugador.</p>
       <div class="row"><input id="netUrl" type="text" placeholder="wss://mi-servidor:8080"><button id="netGo" class="btn small">Conectar</button><button id="netStop" class="btn small">Salir</button></div><p id="netStatus">Estado: Desconectado</p></div>
-    <button id="settingsBack" class="btn">Hecho</button></div>
+    </div>
+    </div>
+    <button id="settingsBack" class="btn primary">Hecho</button>
+  </div>
 </div>
 <div id="pauseScreen" class="screen">
   <div class="card">
@@ -5427,15 +5592,38 @@ const WORLD_INDEX = 'mc2-index';
 function listWorlds() { try { return JSON.parse(localStorage.getItem(WORLD_INDEX)) || []; } catch { return []; } }
 function saveWorldIndex(list) { try { localStorage.setItem(WORLD_INDEX, JSON.stringify(list)); } catch {} }
 
+// Fecha legible: "hace 5 min", "hoy, 18:40", "ayer, 09:12" o "12 nov 2026, 18:40"
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts), now = new Date(), diff = (now - d) / 1000;
+  const hm = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+  if (diff < 60) return 'hace un momento';
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`;
+  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((day(now) - day(d)) / 86400000);
+  if (days === 0) return `hoy, ${hm}`;
+  if (days === 1) return `ayer, ${hm}`;
+  return d.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + hm;
+}
 function renderWorldList() {
   const list = listWorlds().sort((a, b) => (b.last || 0) - (a.last || 0)), box = $('#worldList');
-  box.innerHTML = list.length ? '' : '<p class="empty">Todavía no hay mundos. ¡Crea el primero!</p>';
-  for (const w of list) {
-    const row = document.createElement('div'); row.className = 'worldRow';
-    const date = w.last ? new Date(w.last).toLocaleString('es') : '—';
-    row.innerHTML = `<div class="wicon ${w.mode}"></div><div class="winfo"><b>${escapeHtml(w.name)}</b><span>${w.mode === 'creative' ? 'Creativo' : 'Supervivencia'} · semilla ${w.seed}</span><span>Última partida: ${date}</span></div>`;
-    const play = document.createElement('button'); play.className = 'btn small'; play.textContent = 'Jugar';
+  $('#worldCount').textContent = list.length ? `${list.length} ${list.length === 1 ? 'mundo' : 'mundos'}` : '';
+  box.innerHTML = list.length ? '' : `<div class="empty"><i class="bico" style="background-image:url(${ICON[GRASS]})"></i>Todavía no hay mundos.<br>¡Crea el primero!</div>`;
+  list.forEach((w, idx) => {
+    const card = document.createElement('div'); card.className = 'wcard'; card.style.animationDelay = Math.min(idx, 8) * 40 + 'ms';
+    const creative = w.mode === 'creative';
+    let kb = 0; try { kb = Math.round(((localStorage.getItem(SAVE_PREFIX + w.id) || '').length) / 1024); } catch {}
+    card.innerHTML = `<div class="wthumb" title="Jugar"><canvas width="48" height="24"></canvas>
+        <span class="wmode ${creative ? 'creative' : 'survival'}"><i class="bico" style="background-image:url(${menuIcon(creative ? 'creative' : 'survival')})"></i>${creative ? 'Creativo' : 'Supervivencia'}</span>
+        <b class="wname">${escapeHtml(w.name)}</b></div>
+      <dl class="wmeta"><dt>Última partida</dt><dd>${fmtDate(w.last)}</dd><dt>Semilla</dt><dd class="seed">${w.seed}</dd>
+        <dt>Guardado</dt><dd>${kb} KB${w.keepInventory ? ' · conserva inventario' : ''}</dd></dl>
+      <div class="wactions"></div>`;
+    drawWorldThumb(card.querySelector('canvas'), w.seed);
+    const acts = card.querySelector('.wactions');
+    const play = document.createElement('button'); play.className = 'btn small primary play'; play.textContent = 'Jugar';
     play.onclick = () => game.startWorld(w.id);
+    card.querySelector('.wthumb').onclick = () => game.startWorld(w.id);
     const del = document.createElement('button'); del.className = 'btn small danger'; del.textContent = 'Borrar';
     del.onclick = () => {
       if (del.dataset.sure) { deleteWorld(w.id); renderWorldList(); }
@@ -5448,9 +5636,9 @@ function renderWorldList() {
       try { await navigator.clipboard.writeText(e.text); hud.toast('Mundo exportado: se descargó el archivo y se copió el texto al portapapeles', 3500); } catch { hud.toast('Mundo exportado como archivo', 3000); }
     };
     let hasBak = false; try { hasBak = !!localStorage.getItem(SAVE_PREFIX + w.id + '-bak'); } catch {}
-    const btns = document.createElement('div'); btns.className = 'wbtns'; btns.append(play, exp);
+    acts.append(play, exp);
     if (hasBak) {
-      const rb = document.createElement('button'); rb.className = 'btn small'; rb.textContent = 'Restaurar copia';
+      const rb = document.createElement('button'); rb.className = 'btn small'; rb.textContent = 'Restaurar copia'; rb.title = 'Vuelve al guardado anterior';
       rb.onclick = () => {
         if (!rb.dataset.sure) { rb.dataset.sure = 1; rb.textContent = '¿Restaurar?'; setTimeout(() => { rb.textContent = 'Restaurar copia'; delete rb.dataset.sure; }, 2500); return; }
         try { const bak = localStorage.getItem(SAVE_PREFIX + w.id + '-bak'); const d = JSON.parse(bak); if (validateSave(d).length) throw 0;
@@ -5458,13 +5646,11 @@ function renderWorldList() {
         catch { hud.toast('La copia de seguridad está dañada; no se cambió nada'); }
         renderWorldList();
       };
-      btns.append(rb);
+      acts.append(rb);
     }
-    btns.append(del);
-    let kb = 0; try { kb = Math.round(((localStorage.getItem(SAVE_PREFIX + w.id) || '').length) / 1024); } catch {}
-    row.querySelector('.winfo').insertAdjacentHTML('beforeend', `<span>${kb} KB guardados</span>`);
-    row.append(btns); box.append(row);
-  }
+    acts.append(del);
+    box.append(card);
+  });
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function deleteWorld(id) {
@@ -5514,10 +5700,15 @@ function initSettingsUI() {
     ['volume', 'Volumen', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['quality', 'Resolución', 'select', ['baja', 'media', 'alta']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
+    ['menuPanorama', 'Paisaje animado en el menú', 'check'],
   ];
-  const box = $('#settingsList'); box.innerHTML = '';
+  // cada ajuste va a su pestaña: Gráficos, Sonido o Controles
+  const TAB = { volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
+  for (const sel of ['#settingsList', '#settingsAudio', '#settingsCtrlRows']) $(sel).innerHTML = '';
   for (const [key, label, type, a, b, step, fmt] of rows) {
-    const row = document.createElement('label'); row.className = 'setRow';
+    if ((key === 'sensitivity' && IS_TOUCH) || (key === 'touchSensitivity' && !IS_TOUCH)) continue;
+    const box = $(TAB[key] || '#settingsList');
+    const row = document.createElement('label'); row.className = 'setRow' + (['preset', 'renderDistance', 'fov', 'quality'].includes(key) ? ' full' : '');
     const name = document.createElement('span'); name.textContent = label;
     let input, val;
     if (type === 'range') {
@@ -5542,10 +5733,15 @@ function initSettingsUI() {
     box.append(row);
   }
   $('#settingsBack').onclick = () => { saveSettings(); showScreen(game.settingsBack || 'mainMenu'); };
+  // pestañas
+  const setTab = (t) => { $$('#settingsScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.tab === t)); $$('#settingsScreen .tabPanel').forEach((p) => p.classList.toggle('on', p.dataset.tab === t)); };
+  $$('#settingsScreen .stab').forEach((b) => (b.onclick = () => { setTab(b.dataset.tab); $('.tabPanels').scrollTop = 0; }));
+  $('#soundTest').onclick = () => { sfx.init(); sfx.play('pop'); setTimeout(() => sfx.play('levelup'), 250); };
   buildKeyBindingsUI();
 }
 function openSettings() { buildKeyBindingsUI(); showScreen('settingsScreen'); }
 function applySettings(key) {
+  if (key === 'menuPanorama') { if (game.state === 'menu') { if (settings.menuPanorama) startPanorama(); else stopPanorama(true); } }
   if (key === 'volume') sfx.setVolume(settings.volume);
   if (key === 'fov') { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
   if (key === 'quality') setQuality();
@@ -6085,6 +6281,7 @@ const game = {
     const meta = freshMeta || save?.meta || listWorlds().find((w) => w.id === id);
     if (!meta) { hud.toast('No se encontró el mundo'); return; }
     this.meta = meta; this.mode = meta.mode;
+    stopPanorama(true);
     showScreen('loadingScreen'); $('#loadBar').style.width = '0%'; $('#loadText').textContent = 'Generando terreno…';
     this.state = 'loading';
     if (this.chunks) this.chunks.disposeAll();
@@ -6107,7 +6304,7 @@ const game = {
       camera.rotation.set(save.player.pitch || 0, save.player.yaw || 0, 0);
       if (save.recovered) setTimeout(() => hud.toast('Se recuperó la copia de seguridad del mundo', 4000), 500);
     } else {
-      this.env.time = 0.045; this.env.weather = 'clear';
+      this.env.time = 0.045; this.env.weather = 'clear'; this.env.days = 0;
       const sp = findSpawn(meta.seed);
       this.player.pos.set(sp[0] + 0.5, WY, sp[1] + 0.5); this.player.needsGround = true;
       camera.rotation.set(-0.2, 0, 0);
@@ -6162,6 +6359,7 @@ const game = {
   pause() {
     if (this.state !== 'playing') return;
     this.state = 'paused'; this.releaseInputs(); sfx.stopAmbient();
+    if (controlsLocked()) { this.ignoreUnlock = true; controls.unlock(); }   // soltar el ratón para poder pulsar los botones
     $('#pauseInfo').textContent = `${this.meta.name} · Día ${this.env.days + 1} · ${this.env.clock()} · ${WEATHER_NAMES[this.env.weather]}`;
     showScreen('pauseScreen'); saveGame(true);
   },
@@ -6174,6 +6372,7 @@ const game = {
     if (this.chunks) this.chunks.disposeAll();
     this.entities.clear();
     showScreen('mainMenu');
+    startPanorama();
   },
   releaseInputs() {
     input.keys.clear(); input.primary = input.secondary = input.flyUp = input.flyDown = false; input.joy.x = input.joy.y = 0;
@@ -6903,7 +7102,11 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, 0.05); last = now;
   fpsN++; fpsT += dt; if (fpsT >= 1) { fps = Math.round(fpsN / fpsT); fpsN = 0; fpsT = 0; }
-  if (game.state === 'menu' || game.state === 'loading') { menuBackdrop(dt); return; }
+  if (game.state === 'menu' || game.state === 'loading') {
+    menuBackdrop(dt);
+    if (game.state === 'menu' && updatePanorama(dt)) { renderer.clear(); renderer.render(scene, camera); }
+    return;
+  }
   game.update(dt);
   controls.pointerSpeed = settings.sensitivity;
   renderer.clear();
@@ -6924,7 +7127,7 @@ function loop(now) {
 }
 // Fondo animado del menú: panorámica del atlas
 let menuT = 0;
-function menuBackdrop(dt) { menuT += dt; const bg = $('#menuBg'); if (bg) bg.style.backgroundPosition = `${-menuT * 6}px ${Math.sin(menuT * 0.2) * 20}px`; }
+function menuBackdrop(dt) { menuT += dt; const bg = $('#menuBg .fallback'); if (bg && !$('#menuBg').classList.contains('live')) bg.style.backgroundPosition = `${-menuT * 6}px ${Math.sin(menuT * 0.2) * 20}px`; }
 
 function boot() {
   buildIcons();
@@ -6933,14 +7136,16 @@ function boot() {
   const bx = bg.getContext('2d'); bx.imageSmoothingEnabled = false;
   const tiles = [T.grass_side, T.dirt, T.stone, T.cobble, T.oak_planks, T.stone, T.coal_ore, T.dirt];
   for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) bx.drawImage(tileCanvas(y === 0 ? T.grass_side : tiles[(x * 3 + y * 5) % tiles.length], y === 0 ? null : null), x * 16, y * 16);
-  $('#menuBg').style.backgroundImage = `url(${bg.toDataURL()})`;
+  $('#menuBg .fallback').style.backgroundImage = `url(${bg.toDataURL()})`;
+  initMenuLook();
   initMenus(); initInventoryInput(); initInput();
   $('#touchHint').style.display = IS_TOUCH ? '' : 'none';
   if (IS_TOUCH) document.body.classList.add('touch');
   showScreen('mainMenu');
+  startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama };
 }
 
 /* ==========================================================================
@@ -7726,6 +7931,119 @@ function initTouchLayout() {
     saveSettings(); applyTouchLayout(); showScreen('settingsScreen');
   };
   $('#btnTouchLayout').onclick = () => { if (!game.player || game.state === 'menu') { hud.toast('Entra en un mundo para personalizar los controles táctiles'); return; } startLayoutEdit(); };
+}
+
+/* ==========================================================================
+   §23 MENÚ CINEMÁTICO E INTERFAZ 4
+   --------------------------------------------------------------------------
+   · Fondo del menú: un mundo voxel real (mismo generador, mallado y cielo que
+     el juego) visto por una cámara que flota y gira despacio, con nubes en
+     movimiento e iluminación según la hora elegida al azar.
+   · El mundo del fondo se descarta al entrar en una partida (startWorld ya
+     libera los chunks) y se vuelve a crear al salir al menú.
+   · Se puede desactivar en Ajustes → Gráficos → "Paisaje animado en el menú";
+     entonces queda el fondo de texturas de antes.
+   ► CAMBIAR EL PAISAJE: edita PANO_SEEDS (semillas con buenas vistas) o los
+     valores de pano (radio, altura, velocidad de giro).
+   ========================================================================== */
+settings.menuPanorama ??= true;
+const PANO_SEEDS = [88, 20240611, 12, 2026, 9184];
+const pano = { active: false, t: 0, seed: 0, cx: 0, cz: 0, h: 60, ready: 0, R: IS_TOUCH ? 3 : 4, yaw0: 0 };
+
+function startPanorama(forceSeed) {
+  if (!settings.menuPanorama || !game.entities) { stopPanorama(true); return; }
+  pano.active = true; pano.ready = 0; pano.t = 0;
+  pano.seed = forceSeed ?? PANO_SEEDS[Math.floor(Math.random() * PANO_SEEDS.length)];
+  if (game.chunks) game.chunks.disposeAll();
+  game.entities.clear(); decor.clear(); game.boss = null;
+  highlight.visible = false; crack.visible = false; game.particles.list.length = 0; game.particles.mesh.count = 0;
+  world = new World(pano.seed); world.onLoad = null;
+  game.chunks = new ChunkManager(scene, world);
+  game.env = game.env || new Environment(scene);
+  const env = game.env;
+  env.dayLength = 2400; env.weather = 'clear'; env.weatherT = 1e9; env.rainAmt = 0; env.fogAmt = 0; env.flash = 0;
+  env.time = [0.11, 0.17, 0.24, 0.31, 0.44][Math.floor(Math.random() * 5)];   // mañana, mediodía o atardecer
+  const sp = findSpawn(pano.seed), g = new WorldGen(pano.seed);
+  pano.cx = sp[0] + 0.5; pano.cz = sp[1] + 0.5;
+  // altura: la media del terreno alrededor, para no meter la cámara en una montaña
+  let hMax = SEA;
+  for (let dx = -12; dx <= 12; dx += 4) for (let dz = -12; dz <= 12; dz += 4) hMax = Math.max(hMax, g.column(Math.floor(pano.cx + dx), Math.floor(pano.cz + dz)).h);
+  pano.h = Math.max(g.column(Math.floor(pano.cx), Math.floor(pano.cz)).h + 14, hMax + 5);
+  pano.yaw0 = Math.random() * Math.PI * 2;
+  camera.position.set(pano.cx, pano.h, pano.cz);
+  $('#menuBg').classList.remove('live');
+}
+function stopPanorama(showFallback) {
+  pano.active = false;
+  if (showFallback) $('#menuBg').classList.remove('live');
+  const env = game.env;
+  if (env) { env.weatherT = 120 + Math.random() * 200; env.weather = 'clear'; env.rainAmt = 0; }
+}
+// Llamado desde el bucle principal mientras se está en el menú
+function updatePanorama(dt) {
+  if (!pano.active) return false;
+  pano.t += dt;
+  const saved = settings.renderDistance; settings.renderDistance = Math.min(saved, pano.R);
+  const ready = game.chunks.update(pano.cx, pano.cz, pano.ready < 1 ? 10 : 4);
+  // cámara flotante: gira muy despacio, sube y baja un poco y se inclina hacia el paisaje
+  const t = pano.t, yaw = pano.yaw0 + t * 0.045;
+  camera.position.set(pano.cx + Math.sin(t * 0.07) * 2.5, pano.h + Math.sin(t * 0.21) * 0.8, pano.cz + Math.cos(t * 0.05) * 2.5);
+  camera.rotation.set(-0.16 + Math.sin(t * 0.13) * 0.04, yaw, 0, 'YXZ');
+  sharedUniforms.uTime.value += dt;
+  game.env.update(dt, camera, { pos: camera.position }, false);
+  settings.renderDistance = saved;
+  if (ready >= 0.5 && pano.ready < 0.5) $('#menuBg').classList.add('live');
+  pano.ready = ready;
+  return true;
+}
+
+/* ---------- Iconos de los botones del menú (dibujados con el atlas del juego) ---------- */
+const MENU_ICON = {};
+function menuIcon(name) {
+  if (MENU_ICON[name]) return MENU_ICON[name];
+  const map = { play: GRASS, settings: I.COMPASS, about: BOOKSHELF, new: CRAFTING_TABLE, creative: GRASS };
+  let url = '';
+  if (name === 'survival') { const id = toolId('iron', 'sword'); url = ICON[id] || ICON[GRASS]; }
+  else url = ICON[map[name]] || ICON[GRASS];
+  return (MENU_ICON[name] = url);
+}
+function initMenuLook() {
+  for (const el of $$('.bico[data-icon]')) el.style.backgroundImage = `url(${menuIcon(el.dataset.icon)})`;
+  // texturas de piedra y césped para los botones
+  const tex = (tile, tint) => { const c = document.createElement('canvas'); c.width = c.height = 16; const x = c.getContext('2d'); x.drawImage(tileCanvas(tile, tint), 0, 0); return c.toDataURL(); };
+  document.documentElement.style.setProperty('--stoneTex', `url(${tex(T.stone)})`);
+  document.documentElement.style.setProperty('--grassTex', `url(${tex(T.grass_top, BIOMES[2].grass)})`);
+  // sonido suave al pulsar botones de los menús
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.btn, .stab, .modeBtn'); if (!b) return;
+    sfx.init(); sfx.play('click', { vol: 0.35 });
+  });
+}
+
+/* ---------- Miniatura de cada mundo: mapa del terreno alrededor de la aparición ---------- */
+const thumbCache = new Map();
+function drawWorldThumb(canvas, seed) {
+  const W = canvas.width, H = canvas.height, ctx = canvas.getContext('2d');
+  if (thumbCache.has(seed)) { ctx.putImageData(thumbCache.get(seed), 0, 0); return; }
+  ctx.fillStyle = '#2c3a28'; ctx.fillRect(0, 0, W, H);
+  // se calcula en segundo plano para que la lista aparezca al instante
+  setTimeout(() => {
+    const g = new WorldGen(seed), sp = findSpawn(seed), img = ctx.createImageData(W, H), step = 5;
+    let prev = [];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const c = g.column(sp[0] + (x - W / 2) * step, sp[1] + (y - H / 2) * step), b = BIOMES[c.b];
+      let col;
+      if (c.h < SEA) { const k = clamp(1 - (SEA - c.h) / 18, 0.45, 1); col = [0.2 * k, 0.4 * k, 0.86 * k]; }
+      else if (c.b === BIOME.DESERT || c.b === BIOME.BEACH) col = [0.86, 0.8, 0.55];
+      else if (b.precip === 'snow' && c.h > 70) col = [0.92, 0.95, 0.98];
+      else col = b.grass.slice();
+      const north = prev[x] ?? c.h, sh = clamp(1 + (c.h - north) * 0.05 + (c.h - SEA) * 0.004, 0.7, 1.3);
+      prev[x] = c.h;
+      const i = (y * W + x) * 4;
+      img.data[i] = clamp(col[0] * sh * 255, 0, 255); img.data[i + 1] = clamp(col[1] * sh * 255, 0, 255); img.data[i + 2] = clamp(col[2] * sh * 255, 0, 255); img.data[i + 3] = 255;
+    }
+    thumbCache.set(seed, img); ctx.putImageData(img, 0, 0);
+  }, 30);
 }
 
 /* ==========================================================================
