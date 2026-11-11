@@ -4425,7 +4425,8 @@ class ItemDrop extends Entity {
     this.physics(dt, { step: false, swimUp: true });
     const p = game.player, dx = p.pos.x - this.pos.x, dy = p.pos.y + 0.8 - this.pos.y, dz = p.pos.z - this.pos.z, d = Math.hypot(dx, dy, dz);
     if (this.pickupDelay <= 0 && !p.dead && d < 2.2) {
-      if (d < 0.9) {
+      if (d < 0.9 && this.did) net.requestPickup(this);      // en un servidor decide él quién se lo lleva
+      else if (d < 0.9) {
         const left = p.inv.add(this.stack.id, this.stack.count, this.stack.dmg, this.stack.ench);
         if (left < this.stack.count) { sfx.play('pop'); p.discover(this.stack.id); }
         if (left <= 0) this.dead = true; else this.stack.count = left;
@@ -4496,9 +4497,11 @@ class EntityManager {
   spawnMob(type, x, y, z) { return this.add(new Mob(type, x, y, z)); }
   dropItem(stack, x, y, z, vel) {
     if (!stack || !stack.count) return;
+    if (net.active && net.applying) return;                // cambio recibido de otro jugador: el objeto lo anuncia él
     const e = new ItemDrop({ ...stack }, x, y, z);
     if (vel) e.vel.copy(vel); else e.vel.set((Math.random() - 0.5) * 3, 3.5, (Math.random() - 0.5) * 3);
     this.add(e);
+    if (net.active) net.announceDrop(e);
   }
   shootArrow(mob, target) {
     const sx = mob.pos.x, sy = mob.pos.y + 1.5, sz = mob.pos.z;
@@ -4552,7 +4555,7 @@ class EntityManager {
       }
     }
     // límite de objetos tirados: se fusionan los iguales cercanos y se eliminan los más viejos
-    if (items > 60 && this.frame % 30 === 0) this.compactItems();
+    if (items > 60 && this.frame % 30 === 0 && !net.active) this.compactItems();
     for (let i = this.list.length - 1; i >= 0; i--) if (this.list[i].dead) { this.remove(this.list[i]); this.list.splice(i, 1); }
     this.spawnT -= dt;
     if (this.spawnT <= 0) { this.spawnT = 1; this.trySpawn(game); }
@@ -7447,7 +7450,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS };
 }
 
 /* ==========================================================================
@@ -7471,6 +7474,8 @@ const bus = {
      ↔ ents    {l:[[nid,tipo,x,y,z,yaw,hp,flags]…]}  criaturas que simula cada jugador
      → ehit {to,nid,dmg,x,z}  golpe a una criatura de otro jugador   ← kill {k,p} botín para quien la mató
      ↔ hit  {to,dmg,x,z}      golpe entre jugadores (si el servidor tiene PvP)
+     ↔ drop {did,s,p,v} objeto al suelo   → pickup {did}   ← picked {did,by}  (se lo lleva el primero)
+     → bstart/bstate/bdead/bleft {plan,…}  jefe único: lo simula quien lo despierta   ← bdeny / bdone
    El servidor es la autoridad de la semilla, los bloques, los cofres, la hora y el clima.
    Cada criatura la simula el jugador que la generó; los demás ven una copia y le envían sus golpes. */
 settings.netName ??= 'Jugador' + Math.floor(100 + Math.random() * 900);
@@ -7564,8 +7569,47 @@ class RemoteMob extends Mob {
   toJSON() { return null; }
 }
 
+// Copia local del jefe que simula otro jugador: mismo jefe y misma vida para todos
+class RemoteBoss extends Boss {
+  constructor(type, arena, owner, nid) {
+    super(type, arena);
+    this.remote = true; this.owner = owner; this.nid = nid; this.t = { x: this.pos.x, y: this.pos.y, z: this.pos.z, yaw: 0 }; this.seenT = 0; this.hitCd = 1.5; this.state = 'fight';
+  }
+  setState(m) { this.t = { x: m.p[0], y: m.p[1], z: m.p[2], yaw: m.yaw || 0 }; this.hp = m.hp; this.phase = m.ph || 1; this.state = m.st || 'fight'; this.nid = m.nid; this.seenT = 0; }
+  update(dt) {
+    this.invuln -= dt; this.hurtT -= dt; this.seenT += dt; this.hitCd -= dt;
+    const t = this.t, k = Math.min(1, dt * 10), ox = this.pos.x, oz = this.pos.z;
+    if (Math.hypot(t.x - this.pos.x, t.y - this.pos.y, t.z - this.pos.z) > 16) this.pos.set(t.x, t.y, t.z);
+    else { this.pos.x += (t.x - this.pos.x) * k; this.pos.y += (t.y - this.pos.y) * k; this.pos.z += (t.z - this.pos.z) * k; }
+    this.vel.set((this.pos.x - ox) / Math.max(dt, 1e-3), 0, (this.pos.z - oz) / Math.max(dt, 1e-3));
+    this.yaw += ((((t.yaw - this.yaw) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * k;
+    this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4; this.onGround = true;
+    this.syncMesh(dt, null);
+    // tocarlo hace daño (sus ataques a distancia solo van contra quien lo simula)
+    const p = game.player;
+    if (game.mode === 'survival' && !p.dead && this.hitCd <= 0 && this.state !== 'intro' && Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z) < this.hw + 1.4 && Math.abs(p.pos.y - this.pos.y) < this.h + 1) {
+      this.hitCd = 1.2; p.damage(this.spec.melee || 4, `Te derrotó ${this.spec.name}`, this.pos);
+    }
+    if (this.seenT > 2.5) this.dead = true;
+  }
+  hurt(dmg, from) {
+    if (this.invuln > 0 || this.state === 'intro') return false;
+    this.invuln = 0.45; this.hurtT = 0.35;
+    net.send({ type: 'ehit', to: this.owner, nid: this.nid, dmg, x: from ? from.x : game.player.pos.x, z: from ? from.z : game.player.pos.z });
+    sfx.play('hit', { pos: this.pos });
+    return true;
+  }
+  toJSON() { return null; }
+}
+function bossCard(title, sub) {
+  const c = $('#bossIntro'); c.querySelector('b').textContent = title; c.querySelector('span').textContent = sub;
+  c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); setTimeout(() => c.classList.remove('show'), 3500);
+}
+const invHasRoom = (inv, s) => { const max = s.ench ? 1 : maxStack(s.id); return inv.slots.some((q) => !q || (q.id === s.id && max > 1 && !q.ench && q.count < max)); };
+
 class NetClient {
   constructor() {
+    this.drops = new Map(); this.dropN = 0; this.bossDone = new Set(); this.bossPuppets = new Map();
     this.ws = null; this.status = 'Desconectado'; this.id = null; this.applying = false; this.active = false; this.pvp = false; this.ping = 0;
     this.remote = new Map(); this.puppets = new Map(); this.tileSig = new Map(); this.tP = 0; this.tE = 0; this.tT = 0; this.tPing = 0; this.sentEnts = false;
   }
@@ -7612,7 +7656,7 @@ class NetClient {
     this.active = false; this.id = null;
     for (const r of this.remote.values()) { r.dead = true; r.disposeTag(); }
     for (const p of this.puppets.values()) p.dead = true;
-    this.remote.clear(); this.puppets.clear(); this.tileSig.clear();
+    this.remote.clear(); this.puppets.clear(); this.tileSig.clear(); this.drops.clear(); this.bossDone.clear(); this.bossPuppets.clear();
     document.body.classList.remove('net-on'); chatUI.close(); chatUI.clear();
   }
   send(msg) { if (this.connected) this.ws.send(JSON.stringify(msg)); }
@@ -7625,6 +7669,8 @@ class NetClient {
     const save = { v: 3, net: true, edits: m.edits || {}, tiles: m.tiles || {}, env: { t: m.time, d: m.days, w: m.weather, wt: 1e9 }, player: m.you || null, entities: [] };
     this.active = true; document.body.classList.add('net-on');
     for (const p of m.players || []) { const r = this.addRemote(p.id, p.name); if (p.s) r.setState(p.s); }
+    for (const k of m.bosses || []) this.bossDone.add(String(k));
+    for (const d of m.drops || []) if (Array.isArray(d) && Array.isArray(d[1]) && Array.isArray(d[2])) this.drops.set(d[0], { s: d[1], p: d[2], v: [0, 0, 0], age: d[3] || 0, ent: null });
     await game.startWorld('net', meta, save);
     if (!this.connected) return;
     game.env.weatherT = 1e9;
@@ -7651,7 +7697,40 @@ class NetClient {
         case 'sys': chatUI.add(m.text, 'sys'); break;
         case 'ents': this.applyEnts(m.id, m.l); break;
         case 'ehit': { const e = game.entities.list.find((x) => x.id === m.nid && x.kind === 'mob' && !x.remote); if (e) { e.lastHit = '@' + m.from; e.hurt(m.dmg, { x: m.x, z: m.z }); } break; }
-        case 'kill': if (MOBS[m.k]) game.entities.onMobDeath({ type: m.k, spec: MOBS[m.k], pos: new THREE.Vector3(...m.p), age: 0, fire: m.fire ? 1 : 0, lastHit: 'player' }); break;
+        case 'kill': this.applying = false; if (MOBS[m.k]) game.entities.onMobDeath({ type: m.k, spec: MOBS[m.k], pos: new THREE.Vector3(...m.p), age: 0, fire: m.fire ? 1 : 0, lastHit: 'player' }); break;
+        case 'drop': if (Array.isArray(m.s) && Array.isArray(m.p) && ITEMS[m.s[0]] && !this.drops.has(m.did)) { this.drops.set(m.did, { s: m.s, p: m.p, v: m.v || [0, 0, 0], age: 0, ent: null }); this.spawnDrops(); } break;
+        case 'dmove': { const d = this.drops.get(m.did); if (d && !d.ent && Array.isArray(m.p)) d.p = m.p; break; }
+        case 'picked': {
+          const d = this.drops.get(m.did); if (!d) break;
+          this.drops.delete(m.did); if (d.ent) d.ent.dead = true;
+          if (m.by === this.id) {           // me lo llevo yo; lo que no quepa vuelve al suelo
+            this.applying = false;
+            const p = game.player, left = p.inv.add(d.s[0], d.s[1], d.s[2] || 0, d.s[3] || null);
+            if (left < d.s[1]) { sfx.play('pop'); p.discover(d.s[0]); hud.update(); }
+            if (left > 0) game.entities.dropItem({ id: d.s[0], count: left, dmg: d.s[2] || 0, ench: d.s[3] || undefined }, p.pos.x, p.pos.y + 0.5, p.pos.z);
+          }
+          break;
+        }
+        case 'bstate': this.applyBoss(m); break;
+        case 'bdeny': case 'bdone': {
+          if (m.type === 'bdone') { this.bossDone.add(String(m.plan)); game.structState(m.plan).boss = 'done'; }
+          const b = game.boss; if (b && !b.remote && String(b.arena.planId) === String(m.plan)) { b.dead = true; game.boss = null; }
+          break;
+        }
+        case 'bleft': { const b = this.bossPuppets.get(String(m.plan)); if (b) { b.dead = true; this.bossPuppets.delete(String(m.plan)); if (game.boss === b) { game.boss = null; hud.toast(`${b.spec.name} se ha retirado…`); } } break; }
+        case 'bdead': {
+          const key = String(m.plan), b = this.bossPuppets.get(key), spec = MOBS[m.k];
+          this.bossDone.add(key); game.structState(m.plan).boss = 'done';
+          if (b) { b.dead = true; this.bossPuppets.delete(key); if (game.boss === b) game.boss = null; }
+          if (spec) {
+            chatUI.add(`${m.name} derrotó a ${spec.name}`, 'sys');
+            const p = game.player;
+            if (Array.isArray(m.p) && Math.hypot(p.pos.x - m.p[0], p.pos.z - m.p[2]) < 90) {      // quien estaba en la pelea comparte la victoria
+              p.addXp(spec.xp); game.stats.add('bosses'); game.unlock('boss_' + m.k); bossCard('¡JEFE DERROTADO!', spec.name); sfx.play('levelup');
+            }
+          }
+          break;
+        }
         case 'hit': if (game.mode === 'survival' && game.state !== 'dead' && game.player) { game.lastPvp = m.name; game.player.damage(m.dmg, `Te derrotó ${m.name}`, new THREE.Vector3(m.x, game.player.pos.y, m.z)); } break;
       }
     } finally { this.applying = false; }
@@ -7664,6 +7743,48 @@ class NetClient {
   removeRemote(id) {
     const r = this.remote.get(id); if (r) { r.dead = true; r.disposeTag(); this.remote.delete(id); }
     for (const [k, p] of this.puppets) if (p.owner === id) { p.dead = true; this.puppets.delete(k); }
+  }
+  /* --- Objetos en el suelo: los anuncia quien los crea y el servidor decide quién los recoge --- */
+  announceDrop(e) {
+    e.did = this.id + ':' + (++this.dropN).toString(36);
+    const s = [e.stack.id, e.stack.count, e.stack.dmg || 0]; if (e.stack.ench) s.push(e.stack.ench);
+    const p = [+e.pos.x.toFixed(2), +e.pos.y.toFixed(2), +e.pos.z.toFixed(2)];
+    this.drops.set(e.did, { s, p, v: [0, 0, 0], age: 0, ent: e, mine: true });
+    this.send({ type: 'drop', did: e.did, s, p, v: [+e.vel.x.toFixed(2), +e.vel.y.toFixed(2), +e.vel.z.toFixed(2)] });
+  }
+  requestPickup(e) {
+    const now = performance.now();
+    if (e.reqT && now - e.reqT < 1200) return;
+    if (!invHasRoom(game.player.inv, e.stack)) return;
+    e.reqT = now; this.send({ type: 'pickup', did: e.did });
+  }
+  // Crea (o vuelve a crear) los objetos cuya zona está cargada
+  spawnDrops() {
+    for (const [did, d] of this.drops) {
+      if (d.ent && !d.ent.dead) { d.p = [d.ent.pos.x, d.ent.pos.y, d.ent.pos.z]; if (d.mine && !d.rest && d.ent.age > 2) { d.rest = true; this.send({ type: 'dmove', did, p: d.p.map((v) => +v.toFixed(2)) }); } continue; }
+      const loaded = world.isLoaded(Math.floor(d.p[0]), Math.floor(d.p[2]));
+      if (d.ent) { if (loaded) { this.drops.delete(did); continue; } d.age = d.ent.age; d.ent = null; }    // caducó aquí / su zona se descargó
+      if (!loaded || !ITEMS[d.s[0]]) continue;
+      const e = new ItemDrop({ id: d.s[0], count: d.s[1], dmg: d.s[2] || 0, ...(d.s[3] ? { ench: d.s[3] } : {}) }, d.p[0], d.p[1], d.p[2]);
+      e.vel.set(d.v[0], d.v[1], d.v[2]); d.v = [0, 0, 0]; e.did = did; e.age = d.age || 0; d.ent = e; game.entities.add(e);
+    }
+  }
+  /* --- Jefes --- */
+  bossBlocked(planId) { const k = String(planId); return this.bossDone.has(k) || this.bossPuppets.has(k); }
+  applyBoss(m) {
+    if (!Array.isArray(m.p) || !MOBS[m.k]) return;
+    const key = String(m.plan); let b = this.bossPuppets.get(key);
+    if (b && b.dead) { this.bossPuppets.delete(key); if (game.boss === b) game.boss = null; b = null; }
+    if (!b) {
+      if (!world.isLoaded(Math.floor(m.p[0]), Math.floor(m.p[2]))) return;
+      const plan = getPlan(m.plan); if (!plan || !plan.boss) return;
+      const mine = game.boss; if (mine && !mine.remote && String(mine.arena.planId) === key) { mine.dead = true; game.boss = null; }   // gana el del servidor
+      b = new RemoteBoss(m.k, { ...plan.boss, planId: m.plan }, m.id, m.nid); b.pos.set(m.p[0], m.p[1], m.p[2]);
+      this.bossPuppets.set(key, b); game.entities.add(b);
+      if (!game.boss) { game.boss = b; bossCard(b.spec.name, b.spec.sub); sfx.play('bossIntro'); }
+    }
+    b.setState(m);
+    if (!game.boss) game.boss = b;
   }
   // Bloque de otro jugador: si el chunk no está cargado se guarda como edición pendiente
   applyBlock(m) {
@@ -7719,15 +7840,18 @@ class NetClient {
       this.tE = 0;
       const l = [];
       for (const e of list) {
-        if (e.kind !== 'mob' || e.remote || e.constructor !== Mob || l.length >= 60) continue;
+        if (e.kind !== 'mob' || e.remote || e.constructor !== Mob || e.planId != null || l.length >= 60) continue;   // los de las estructuras son de cada jugador
         if (Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 72) continue;
         l.push([e.id, e.type, +e.pos.x.toFixed(2), +e.pos.y.toFixed(2), +e.pos.z.toFixed(2), +e.yaw.toFixed(2), Math.max(0, Math.ceil(e.hp)), (e.deathT ? 1 : 0) | (e.burnT > 0 ? 2 : 0)]);
       }
       if (l.length || this.sentEnts) this.send({ type: 'ents', l });
       this.sentEnts = l.length > 0;
       for (const [k, q] of this.puppets) if (q.dead) this.puppets.delete(k);
+      const b = game.boss;
+      if (b && b.remote && b.dead) game.boss = null;
+      else if (b && !b.remote && !b.dead) this.send({ type: 'bstate', plan: b.arena.planId, nid: b.id, p: [+b.pos.x.toFixed(2), +b.pos.y.toFixed(2), +b.pos.z.toFixed(2)], yaw: +b.yaw.toFixed(2), hp: Math.max(0, Math.ceil(b.hp)), ph: b.phase, st: b.state });
     }
-    if ((this.tT += dt) >= 0.5) { this.tT = 0; this.scanTiles(); }
+    if ((this.tT += dt) >= 0.5) { this.tT = 0; this.scanTiles(); this.spawnDrops(); }
     if ((this.tPing += dt) >= 5) { this.tPing = 0; this.send({ type: 'ping', t: performance.now() }); }
   }
 }
@@ -7995,22 +8119,24 @@ Object.assign(game, {
       }
       // 3) jefes: se despiertan al entrar en su arena (si no han sido derrotados)
       const b = plan.boss;
-      if (b && st.boss !== 'done' && !this.boss && !p.dead && Math.hypot(p.pos.x - b.x, p.pos.z - b.z) < b.r && Math.abs(p.pos.y - b.y) < 10) {
+      if (b && st.boss !== 'done' && !(net.active && net.bossBlocked(id)) && !this.boss && !p.dead && Math.hypot(p.pos.x - b.x, p.pos.z - b.z) < b.r && Math.abs(p.pos.y - b.y) < 10) {
         if (world.isLoaded(Math.floor(b.x), Math.floor(b.z))) this.summonBoss(b.type, { ...b, planId: id });
       }
     }
   },
   summonBoss(type, arena) {
     const boss = new Boss(type, arena); this.entities.add(boss); this.boss = boss;
+    if (net.active) net.send({ type: 'bstart', plan: arena.planId, k: type });
     const intro = $('#bossIntro'); intro.querySelector('b').textContent = boss.spec.name; intro.querySelector('span').textContent = boss.spec.sub;
     intro.classList.remove('show'); void intro.offsetWidth; intro.classList.add('show');
     setTimeout(() => intro.classList.remove('show'), 3500);
     sfx.play('bossIntro');
   },
-  bossLeft(b) { if (this.boss === b) this.boss = null; hud.toast(`${b.spec.name} se ha retirado…`); },
+  bossLeft(b) { if (net.active && !b.remote) net.send({ type: 'bleft', plan: b.arena.planId }); if (this.boss === b) this.boss = null; hud.toast(`${b.spec.name} se ha retirado…`); },
   onBossDefeated(b) {
     if (this.boss === b) this.boss = null;
     const st = this.structState(b.arena.planId); st.boss = 'done';
+    if (net.active) { net.bossDone.add(String(b.arena.planId)); net.send({ type: 'bdead', plan: b.arena.planId, k: b.type, p: [b.pos.x, b.pos.y, b.pos.z] }); }
     for (const [id, a, c] of b.spec.drops) { const n = a + Math.floor(Math.random() * (c - a + 1)); if (n > 0) this.entities.dropItem({ id, count: n }, b.pos.x, b.pos.y + 1, b.pos.z); }
     this.player.addXp(b.spec.xp); this.stats.add('bosses');
     this.unlock('boss_' + b.type);

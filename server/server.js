@@ -12,7 +12,8 @@
      · Acepta conexiones WebSocket en el mismo puerto (ws://TU-IP:8080).
      · Es la autoridad de la semilla, el modo, los bloques modificados, los
        cofres/hornos/carteles, la hora y el clima; reenvía a los demás las
-       posiciones de los jugadores, las criaturas, el chat y los golpes.
+       posiciones de los jugadores, las criaturas, los objetos del suelo, los
+       jefes, el chat y los golpes.
      · Guarda el mundo y el inventario de cada jugador en data/world.json.
 
    Opciones (como --opcion=valor o como variable de entorno en MAYÚSCULAS):
@@ -60,7 +61,10 @@ function seedFrom(s) {
   return h;
 }
 const worldFile = path.join(cfg.data, 'world.json');
-const W = { v: 1, seed: 0, mode: cfg.mode, time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {} };
+const W = { v: 1, seed: 0, mode: cfg.mode, time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {} };
+const drops = new Map();          // objetos en el suelo: id → { s: [id, cantidad, daño, encantamientos], p: [x, y, z], t: creado }
+const activeBoss = new Map();     // jefes despiertos: plan → { owner: id del jugador que lo simula, k: tipo }
+const DROP_LIFE = 300000, MAX_DROPS = 600;
 const edits = new Map();          // "cx,cz" → Map(índice local → id | meta << 8), igual que en el cliente
 let dirty = false;
 
@@ -70,7 +74,7 @@ function loadWorld() {
       const d = JSON.parse(fs.readFileSync(f, 'utf8'));
       if (!Number.isFinite(d.seed)) throw new Error('sin semilla');
       Object.assign(W, { seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
-        weather: WEATHERS.includes(d.weather) ? d.weather : 'clear', weatherT: +d.weatherT || 600, tiles: d.tiles || {}, players: d.players || {} });
+        weather: WEATHERS.includes(d.weather) ? d.weather : 'clear', weatherT: +d.weatherT || 600, tiles: d.tiles || {}, players: d.players || {}, bosses: d.bosses || {} });
       for (const k in d.edits || {}) {
         const m = new Map();
         for (const e of String(d.edits[k]).split(',')) { const [i, v] = e.split(':'); const ii = parseInt(i, 36), vv = parseInt(v, 36); if (Number.isFinite(ii) && Number.isFinite(vv)) m.set(ii, vv); }
@@ -92,7 +96,7 @@ function packEdits() {
 function saveWorld(sync) {
   if (!dirty) return;
   dirty = false;
-  const json = JSON.stringify({ v: 1, seed: W.seed, mode: W.mode, time: W.time, days: W.days, weather: W.weather, weatherT: W.weatherT, edits: packEdits(), tiles: W.tiles, players: W.players, saved: Date.now() });
+  const json = JSON.stringify({ v: 1, seed: W.seed, mode: W.mode, time: W.time, days: W.days, weather: W.weather, weatherT: W.weatherT, edits: packEdits(), tiles: W.tiles, players: W.players, bosses: W.bosses, saved: Date.now() });
   try {
     fs.mkdirSync(cfg.data, { recursive: true });
     const tmp = worldFile + '.tmp';
@@ -164,6 +168,7 @@ class Client {
     if (this.gone) return; this.gone = true; this.closed = true;
     if (this.id != null && clients.get(this.id) === this) {
       clients.delete(this.id);
+      for (const [plan, b] of activeBoss) if (b.owner === this.id) { activeBoss.delete(plan); broadcast({ type: 'bleft', plan: b.plan }); }
       broadcast({ type: 'leave', id: this.id });
       sys(`${this.name} salió del servidor`);
       log(`- ${this.name} salió (${clients.size}/${cfg.max})`);
@@ -203,7 +208,8 @@ function handle(c, m) {
     c.name = name; c.id = nextId++;
     const saved = W.players[c.key];
     c.send({ type: 'welcome', id: c.id, name, server: cfg.name, seed: W.seed, mode: W.mode, pvp: cfg.pvp, dayLength: DAY_LENGTH,
-      time: W.time, days: W.days, weather: W.weather, edits: packEdits(), tiles: W.tiles, players: playerList(c), you: saved ? saved.d : null });
+      time: W.time, days: W.days, weather: W.weather, edits: packEdits(), tiles: W.tiles, players: playerList(c), you: saved ? saved.d : null,
+      drops: [...drops].map(([did, d]) => [did, d.s, d.p, Math.round((Date.now() - d.t) / 1000)]), bosses: Object.keys(W.bosses) });
     clients.set(c.id, c);
     broadcast({ type: 'join', id: c.id, name }, c);
     sys(`${name} entró al servidor`, c);
@@ -266,6 +272,49 @@ function handle(c, m) {
       else to.send({ type: 'kill', from: c.id, k: String(m.k).slice(0, 24), p: Array.isArray(m.p) ? m.p.slice(0, 3).map((v) => num(v)) : [0, 0, 0], fire: m.fire ? 1 : 0 });
       break;
     }
+    case 'drop': {                          // un objeto cae al suelo: lo ven todos
+      const did = String(m.did);
+      if (did.length > 24 || !did.startsWith(c.id + ':') || drops.has(did)) return;
+      if (!Array.isArray(m.s) || m.s.length < 2 || m.s.length > 4 || !isInt(m.s[0], 1, 65535) || !isInt(m.s[1], 1, 999) || JSON.stringify(m.s).length > 400) return;
+      if (!Array.isArray(m.p) || m.p.length !== 3 || !m.p.every(Number.isFinite)) return;
+      const v = Array.isArray(m.v) && m.v.length === 3 && m.v.every(Number.isFinite) ? m.v : [0, 0, 0];
+      drops.set(did, { s: m.s, p: m.p, t: Date.now() });
+      if (drops.size > MAX_DROPS) { const old = drops.keys().next().value; drops.delete(old); broadcast({ type: 'picked', did: old, by: 0 }); }
+      broadcast({ type: 'drop', did, s: m.s, p: m.p, v }, c);
+      break;
+    }
+    case 'dmove': {                         // dónde quedó en reposo (para quien llegue después)
+      const d = drops.get(String(m.did));
+      if (!d || !Array.isArray(m.p) || m.p.length !== 3 || !m.p.every(Number.isFinite)) return;
+      d.p = m.p; broadcast({ type: 'dmove', did: String(m.did), p: m.p }, c);
+      break;
+    }
+    case 'pickup': {                        // el primero que lo pide se lo lleva
+      const did = String(m.did);
+      if (!drops.delete(did)) return;
+      broadcast({ type: 'picked', did, by: c.id });
+      break;
+    }
+    case 'bstart': case 'bstate': case 'bdead': case 'bleft': {   // jefes: uno solo para todos, lo simula quien lo despertó
+      if (typeof m.plan !== 'string' && typeof m.plan !== 'number') return;
+      const key = String(m.plan).slice(0, 48), cur = activeBoss.get(key);
+      if (m.type === 'bstart') {
+        if (W.bosses[key]) return c.send({ type: 'bdone', plan: m.plan });
+        if (cur && cur.owner !== c.id) return c.send({ type: 'bdeny', plan: m.plan });
+        activeBoss.set(key, { owner: c.id, plan: m.plan, k: String(m.k).slice(0, 24) });
+        return;
+      }
+      if (!cur || cur.owner !== c.id) return;
+      if (m.type === 'bstate') {
+        if (!Array.isArray(m.p) || m.p.length !== 3 || !m.p.every(Number.isFinite)) return;
+        broadcast({ type: 'bstate', id: c.id, plan: m.plan, k: cur.k, nid: m.nid | 0, p: m.p, yaw: num(m.yaw), hp: num(m.hp), ph: m.ph | 0, st: String(m.st || '').slice(0, 16) }, c);
+      } else if (m.type === 'bdead') {
+        activeBoss.delete(key); W.bosses[key] = 'done'; dirty = true;
+        broadcast({ type: 'bdead', plan: m.plan, k: cur.k, p: Array.isArray(m.p) ? m.p.slice(0, 3).map((v) => num(v)) : [0, 0, 0], name: c.name }, c);
+        log(`${c.name} derrotó al jefe ${cur.k}`);
+      } else { activeBoss.delete(key); broadcast({ type: 'bleft', plan: m.plan }, c); }
+      break;
+    }
     case 'ping': c.send({ type: 'pong', t: m.t }); break;
   }
 }
@@ -284,6 +333,7 @@ let lastTick = Date.now(), timeT = 0;
 setInterval(() => {
   const now = Date.now(), dt = Math.min(5, (now - lastTick) / 1000); lastTick = now;
   for (const c of clients.values()) c.msgs = 0;
+  for (const [did, d] of drops) { if (now - d.t < DROP_LIFE) break; drops.delete(did); broadcast({ type: 'picked', did, by: 0 }); }   // los objetos desaparecen a los 5 minutos
   if (!clients.size) return;                                  // el mundo se detiene sin jugadores
   W.time += dt / DAY_LENGTH; if (W.time >= 1) { W.time -= 1; W.days++; }
   W.weatherT -= dt; dirty = true;

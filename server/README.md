@@ -55,10 +55,12 @@ En el chat del juego: `/list`, `/seed`, `/help`.
 - La hora, el clima y dormir en la cama.
 - El chat y los avisos de entrada, salida y muerte.
 - Los animales y enemigos: cada uno lo simula el jugador que lo tiene cerca y los demás lo ven y pueden golpearlo. El botín y la experiencia son para quien lo mata.
+- Los objetos del suelo: todos ven cada objeto tirado y se lo lleva el primero que pasa por encima. Desaparecen a los 5 minutos.
+- Los jefes: hay un solo jefe para todos, con la misma vida. Lo simula quien lo despierta, cualquiera puede golpearlo y, al caer, queda derrotado para todo el servidor.
 
 Cada jugador conserva su inventario, posición, vida y logros en el servidor, y los recupera al volver a entrar desde el mismo navegador.
 
-**No se comparte todavía:** los objetos tirados al suelo (para pasarse cosas, usad un cofre), los aldeanos y los jefes (cada jugador ve los suyos), y los enemigos solo persiguen al jugador que los simula.
+**No se comparte todavía:** los aldeanos y los animales o guardias de las estructuras (cada jugador ve los suyos). Los enemigos y los jefes solo persiguen al jugador que los simula; a los demás, el jefe solo les hace daño si lo tocan.
 
 ## Datos
 
