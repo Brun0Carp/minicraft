@@ -491,6 +491,23 @@
   #mobBar em { display: block; margin-top: 2px; font-size: 11px; font-style: normal; color: #e8e8e8; text-shadow: 0 1px 0 #000; white-space: nowrap; }
   #mobBar.hit { border-color: #c0301e; box-shadow: inset 0 0 0 1px rgba(255,120,100,.5), 0 0 10px rgba(255,60,40,.45); }
   body.inv-open #mobBar { display: none !important; }
+  /* --- Multijugador: chat y pantalla de conexión --- */
+  #mpStatus { min-height: 20px; margin: 8px 0 2px; font-size: 14px; color: #ffe14d; text-align: center; }
+  .mpHelp { margin-top: 12px; font-size: 12.5px; color: #aab0bb; text-align: center; line-height: 1.4; }
+  .netOnly { display: none !important; } body.net-on .netOnly { display: block !important; }
+  #chatLog { position: absolute; left: 8px; bottom: 104px; width: min(420px, 60vw); max-height: 32vh; overflow: hidden; display: none; flex-direction: column; justify-content: flex-end; gap: 2px; pointer-events: none; }
+  body.net-on #chatLog { display: flex; }
+  body.touch #chatLog { bottom: auto; top: calc(64px + env(safe-area-inset-top)); width: min(300px, 56vw); max-height: 24vh; }
+  .chatLine { align-self: flex-start; max-width: 100%; padding: 2px 7px; font-size: 14px; color: #fff; background: rgba(0,0,0,.5); border-radius: 3px; text-shadow: 0 1px 0 #000; overflow-wrap: anywhere; transition: opacity .8s; }
+  .chatLine.sys { color: #ffe14d; } .chatLine.me { color: #bfe8ff; }
+  .chatLine.old { opacity: 0; } body.chat-open .chatLine.old { opacity: 1; }
+  body.chat-open #chatLog { overflow-y: auto; pointer-events: auto; }
+  #chatBar { position: absolute; left: 8px; bottom: 66px; width: min(520px, calc(100vw - 16px)); display: none; gap: 6px; pointer-events: auto; z-index: 8; }
+  body.touch #chatBar { bottom: auto; top: calc(8px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); }
+  body.chat-open #chatBar { display: flex; }
+  #chatInput { flex: 1; min-width: 0; margin: 0; }
+  body.inv-open #chatLog { display: none; }
+  body.touch.net-on #hudClock { left: 12px; transform: none; }
   /* --- Minimapa (§24) --- */
   #minimapContainer { position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); display: none; padding: 2px;
     background: rgba(0,0,0,.6); border: 2px solid #0b0b0b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.35); pointer-events: none; image-rendering: pixelated; }
@@ -517,6 +534,8 @@
   <div id="toast"></div>
   <div id="bossBar"><b></b><em></em><u><s></s></u></div>
   <div id="compass"><div></div></div>
+  <div id="chatLog"></div>
+  <div id="chatBar"><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatSend" class="btn small">Enviar</button></div>
   <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
@@ -545,6 +564,7 @@
       <button class="tbtn" data-act="down"><span>⇩</span>Bajar</button>
     </div>
     <div class="topBtns">
+      <button class="tbtn netOnly" id="chatBtn" data-act="chat">💬</button>
       <button class="tbtn" data-act="map">🗺</button>
       <button class="tbtn" data-act="inv">🎒</button>
       <button class="tbtn" data-act="pause">II</button>
@@ -566,6 +586,7 @@
     </div>
     <div class="card menuCard">
       <button id="btnPlay" class="btn primary big"><i class="bico" data-icon="play"></i>Un jugador</button>
+      <button id="btnMulti" class="btn"><i class="bico" data-icon="multi"></i>Multijugador</button>
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
@@ -592,6 +613,21 @@
     <input id="importFile" type="file" accept=".json,application/json" hidden>
     <div id="pasteBox"><textarea id="pasteText" placeholder="Pega aquí el texto de un mundo exportado"></textarea><button id="pasteGo" class="btn small">Importar como mundo nuevo</button><span id="pasteMsg"></span></div>
     <button id="worldsBack" class="btn">Volver</button>
+  </div>
+</div>
+<div id="mpScreen" class="screen">
+  <div class="card">
+    <h2>Multijugador</h2><p class="cardSub">Entra a un servidor de MiniCraft para jugar con otras personas.</p>
+    <label class="field" for="mpName">Tu nombre</label>
+    <input id="mpName" type="text" maxlength="16" autocomplete="off">
+    <label class="field" for="mpUrl">Dirección del servidor</label>
+    <input id="mpUrl" type="text" placeholder="localhost:8080 o wss://mi-servidor.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <label class="field" for="mpPass">Contraseña (solo si el servidor la pide)</label>
+    <input id="mpPass" type="text" maxlength="60" autocomplete="off">
+    <p id="mpStatus"></p>
+    <button id="mpGo" class="btn primary">Conectar</button>
+    <button id="mpBack" class="btn">Volver</button>
+    <p class="mpHelp">El servidor está en la carpeta <b>server</b> del repositorio: se inicia con <b>node server.js</b> y sus instrucciones están en el LEEME de esa carpeta.</p>
   </div>
 </div>
 <div id="createScreen" class="screen" data-mode="survival">
@@ -631,8 +667,7 @@
             <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div>
         </div>
       </div>
-      <div class="tabPanel" data-tab="net"><div class="setSection"><b>Servidor externo</b><p>Conecta con tu propio servidor WebSocket. Sin servidor, el juego es de un jugador.</p>
-      <div class="row"><input id="netUrl" type="text" placeholder="wss://mi-servidor:8080"><button id="netGo" class="btn small">Conectar</button><button id="netStop" class="btn small">Salir</button></div><p id="netStatus">Estado: Desconectado</p></div>
+      <div class="tabPanel" data-tab="net"><div class="setSection"><b>Multijugador</b><p id="netStatus">Estado: sin conexión (un jugador)</p><p>Para jugar con otras personas, sal al menú principal y entra en «Multijugador» con la dirección de un servidor. El servidor está en la carpeta <b>server</b> del repositorio y se inicia con <b>node server.js</b>.</p></div>
     </div>
     </div>
     <button id="settingsBack" class="btn primary">Hecho</button>
@@ -4475,7 +4510,9 @@ class EntityManager {
   }
   onMobDeath(m) {
     const rnd = Math.random;
-    if (m.isBoss) return;
+    if (m.isBoss || m.remote) return;
+    // la mató otro jugador del servidor: el botín y la experiencia son para él
+    if (typeof m.lastHit === 'string' && m.lastHit[0] === '@') { net.send({ type: 'kill', to: +m.lastHit.slice(1), k: m.type, p: [m.pos.x, m.pos.y, m.pos.z], fire: m.fire > 0 ? 1 : 0 }); return; }
     game.onMobKilled(m);
     if (m.age < 0) return;
     for (const [id, a, b] of m.spec.drops) {
@@ -4509,7 +4546,7 @@ class EntityManager {
       if (!e.isBoss && d > 32 && e.kind === 'mob') { e.accDt = (e.accDt || 0) + dt; if ((this.frame + e.id) % 4) continue; e.update(Math.min(e.accDt, 0.1), game); e.accDt = 0; }
       else e.update(dt, game);
       if (e.kind === 'item') items++;
-      if (e.kind === 'mob' && !e.persistent && !e.isBoss) {
+      if (e.kind === 'mob' && !e.persistent && !e.isBoss && !e.remote) {
         if (e.spec.hostile && (d > 72 || (d > 40 && Math.random() < dt / 30))) e.dead = true;
         else if (!e.spec.hostile && d > R + 24) e.dead = true;
       }
@@ -6264,9 +6301,7 @@ function initUI3() {
   $('#btnPaste').onclick = () => { $('#pasteBox').classList.toggle('show'); };
   $('#pasteGo').onclick = () => { const err = importWorld($('#pasteText').value); $('#pasteMsg').textContent = err || '¡Mundo importado!'; if (!err) { $('#pasteText').value = ''; renderWorldList(); } };
   // Multijugador
-  $('#netGo').onclick = () => { const url = $('#netUrl').value.trim(); if (!/^wss?:\/\//.test(url)) { $('#netStatus').textContent = 'La dirección debe empezar por ws:// o wss://'; return; } net.connect(url); };
-  $('#netStop').onclick = () => net.disconnect();
-  setInterval(() => { const el = $('#netStatus'); if (el && !/debe empezar/.test(el.textContent)) el.textContent = 'Estado: ' + net.status + (net.remote.size ? ` · ${net.remote.size} jugador(es)` : ''); }, 500);
+  initMultiplayerUI();
 }
 
 /* ==========================================================================
@@ -6394,21 +6429,30 @@ function unpackEdits(o) {
 }
 function packTiles() {
   const out = {};
-  for (const [k, t] of world.tiles) out[k] = t.type === 'furnace' ? { t: 'f', s: t.inv.toJSON(), b: t.burn, bm: t.burnMax, c: t.cook, x: t.xp }
-    : t.type === 'brew' ? { t: 'b', s: t.inv.toJSON(), p: t.t } : t.type === 'sign' ? { t: 's', x: t.text } : t.type === 'painting' ? { t: 'p', a: t.art } : { t: 'c', s: t.inv.toJSON() };
+  for (const [k, t] of world.tiles) out[k] = packTile(t);
   return out;
+}
+function packTile(t) {
+  return t.type === 'furnace' ? { t: 'f', s: t.inv.toJSON(), b: t.burn, bm: t.burnMax, c: t.cook, x: t.xp }
+    : t.type === 'brew' ? { t: 'b', s: t.inv.toJSON(), p: t.t } : t.type === 'sign' ? { t: 's', x: t.text } : t.type === 'painting' ? { t: 'p', a: t.art } : { t: 'c', s: t.inv.toJSON() };
+}
+// Crea una entidad de bloque desde sus datos guardados (o actualiza `into` si es del mismo tipo)
+function unpackTile(d, into) {
+  if (!d || typeof d !== 'object') return null;
+  const type = { f: 'furnace', b: 'brew', s: 'sign', p: 'painting' }[d.t] || 'chest';
+  const t = into && into.type === type ? into : makeTile(type);
+  if (t.inv) t.inv.load(d.s);
+  if (d.t === 'f') { t.burn = d.b || 0; t.burnMax = d.bm || 0; t.cook = d.c || 0; t.xp = d.x || 0; }
+  if (d.t === 'b') t.t = d.p || 0;
+  if (d.t === 's') t.text = String(d.x || '').slice(0, 60);
+  if (d.t === 'p') t.art = (d.a | 0) % PAINTINGS;
+  return t;
 }
 function unpackTiles(o) {
   world.tiles.clear();
   for (const k in o || {}) {
     const d = o[k]; if (!d || !/^-?\d+,-?\d+,-?\d+$/.test(k)) continue;
-    const t = makeTile({ f: 'furnace', b: 'brew', s: 'sign', p: 'painting' }[d.t] || 'chest');
-    if (t.inv) t.inv.load(d.s);
-    if (d.t === 'f') { t.burn = d.b || 0; t.burnMax = d.bm || 0; t.cook = d.c || 0; t.xp = d.x || 0; }
-    if (d.t === 'b') t.t = d.p || 0;
-    if (d.t === 's') t.text = String(d.x || '').slice(0, 60);
-    if (d.t === 'p') t.art = (d.a | 0) % PAINTINGS;
-    world.tiles.set(k, t);
+    world.tiles.set(k, unpackTile(d));
   }
 }
 function makeTile(type) {
@@ -6421,6 +6465,7 @@ function makeTile(type) {
 
 function saveGame(silent) {
   if (!world || !game.meta || game.state === 'menu') return;
+  if (game.meta.net) { net.savePlayer(); return; }      // en un servidor, el mundo lo guarda el servidor
   const dormant = {}; for (const [k, a] of world.dormant) dormant[k] = a;
   const data = { v: 3, meta: game.meta, player: game.player.toJSON(), env: game.env.toJSON(), edits: packEdits(), tiles: packTiles(),
     entities: game.entities.toJSON(game.player), dormant, structs: [...game.structs], map: Object.fromEntries(world.mapData), saved: Date.now() };
@@ -6512,9 +6557,9 @@ const game = {
   yaw() { return camera.rotation.y; },
   pitch() { return camera.rotation.x; },
 
-  async startWorld(id, freshMeta) {
+  async startWorld(id, freshMeta, netSave) {
     sfx.init();
-    const save = freshMeta ? null : loadSave(id);
+    const save = netSave || (freshMeta ? null : loadSave(id));
     const meta = freshMeta || save?.meta || listWorlds().find((w) => w.id === id);
     if (!meta) { hud.toast('No se encontró el mundo'); return; }
     this.meta = meta; this.mode = meta.mode;
@@ -6532,13 +6577,14 @@ const game = {
     this.player = new Player();
     this.player.inv.onChange = () => hud.update();
     if (save) {
-      unpackEdits(save.edits); unpackTiles(save.tiles); this.env.load(save.env); this.player.load(save.player);
+      unpackEdits(save.edits); unpackTiles(save.tiles); this.env.load(save.env); if (save.player) this.player.load(save.player);
       // 3.0 (las partidas de la 2.0 no tienen estos campos y se cargan igual)
       for (const k in save.dormant || {}) if (Array.isArray(save.dormant[k])) world.dormant.set(k, save.dormant[k]);
       this.structs = new Map(Array.isArray(save.structs) ? save.structs : []);
       for (const k in save.map || {}) if (typeof save.map[k] === 'string' && save.map[k].length === 44) world.mapData.set(k, save.map[k]);
       if (save.v === 2) setTimeout(() => hud.toast('Partida de la versión 2.0 actualizada a la 3.0', 4000), 600);
-      camera.rotation.set(save.player.pitch || 0, save.player.yaw || 0, 0);
+      if (save.player) camera.rotation.set(save.player.pitch || 0, save.player.yaw || 0, 0);
+      else { const sp = findSpawn(meta.seed); this.player.pos.set(sp[0] + 0.5, WY, sp[1] + 0.5); this.player.needsGround = true; camera.rotation.set(-0.2, 0, 0); }   // primera vez en un servidor
       if (save.recovered) setTimeout(() => hud.toast('Se recuperó la copia de seguridad del mundo', 4000), 500);
     } else {
       this.env.time = 0.045; this.env.weather = 'clear'; this.env.days = 0;
@@ -6602,6 +6648,7 @@ const game = {
   },
   quitToMenu() {
     saveGame(true);
+    if (this.meta && this.meta.net) net.leave();
     this.state = 'menu'; sfx.stopAmbient();
     if (controlsLocked()) { this.ignoreUnlock = true; controls.unlock(); }
     $('#hud').classList.remove('show');
@@ -6624,7 +6671,7 @@ const game = {
   },
   die(cause) {
     const p = this.player; if (p.dead) return;
-    p.dead = true; this.state = 'dead'; this.releaseInputs(); sfx.stopAmbient(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
+    p.dead = true; this.state = 'dead'; bus.emit('died', {}); this.releaseInputs(); sfx.stopAmbient(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
     sfx.play('death');
     if (!this.meta.keepInventory) {
       for (const inv of [p.inv, p.armor]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
@@ -6678,7 +6725,6 @@ const game = {
     if (byPlayer) { this.stats.add('mined'); if (def.crop && (meta & 3) >= 3) { this.stats.add('harvested'); this.unlock('farm'); } }
     if (tile) { if (tile.inv) for (const s of tile.inv.slots) if (s) this.entities.dropItem(s, x + 0.5, y + 0.5, z + 0.5); world.tiles.delete(key); }
     world.set(x, y, z, AIR, 0);
-    net.send({ type: 'block', x, y, z, id: AIR, meta: 0 });
     // puertas: quitar también la otra mitad
     if (id === DOOR) { const oy = meta & 8 ? y - 1 : y + 1; if (world.get(x, oy, z) === DOOR) world.set(x, oy, z, AIR, 0); }
     if (id === BED) { const [dx, dz] = FACING_DIR[meta & 3], s = meta & 8 ? -1 : 1; if (world.get(x + dx * s, y, z + dz * s) === BED) world.set(x + dx * s, y, z + dz * s, AIR, 0); }
@@ -7245,7 +7291,7 @@ const game = {
       }
       this.t05 = (this.t05 || 0) + dt;
       if (this.t05 >= 0.5) { this.t05 = 0; decor.sync(); }
-      if (net.connected) { this.netT = (this.netT || 0) + dt; if (this.netT > 0.1) { this.netT = 0; net.send({ type: 'player', p: [p.pos.x, p.pos.y, p.pos.z], yaw: camera.rotation.y, pitch: camera.rotation.x, anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0 }); } }
+      
       this.flowT = (this.flowT || 0) + dt; if (this.flowT > 0.25) { this.flowT = 0; this.updateFlow(); }
       this.env.update(dt, camera, p, p.headInWater);
       this.chunks.update(p.pos.x, p.pos.z, IS_TOUCH ? 7 : 9);
@@ -7329,6 +7375,7 @@ function initInput() {
       if (act === 'fly' && game.mode === 'creative') { game.player.flying = !game.player.flying; game.player.vel.y = 0; }
       if (act === 'inv' && game.state === 'playing') openInventory('inv');
       if (act === 'map' && game.state === 'playing') mapUI.show();
+      if (act === 'chat') return;
       if (act === 'pause') game.pause();
     });
     const up = () => {
@@ -7353,6 +7400,7 @@ let last = performance.now(), fpsN = 0, fpsT = 0, fps = 0, dbgT = 0;
 function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  net.tick(dt);
   fpsN++; fpsT += dt; if (fpsT >= 1) { fps = Math.round(fpsN / fpsT); fpsN = 0; fpsT = 0; }
   if (game.state === 'menu' || game.state === 'loading') {
     menuBackdrop(dt);
@@ -7399,77 +7447,336 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS };
 }
 
 /* ==========================================================================
    §21 SISTEMAS DE LA VERSIÓN 3.0
    ========================================================================== */
 
-/* ---------- Bus de eventos y red (arquitectura multijugador) ----------
-   Todos los sistemas publican sus cambios en `bus`. Sin servidor no se envía
-   nada; con un servidor WebSocket conectado (Ajustes → Multijugador) el
-   cliente reenvía y aplica estos mensajes JSON:
-     → hello   {v, seed, mode, name}              ← welcome {id}
-     ↔ player  {id?, p:[x,y,z], yaw, pitch, anim, held, armor}
-     ↔ block   {x, y, z, id, meta}                ↔ chest {key, slots}
-     ↔ weather {w}       ↔ time {t, d}            ← leave {id}
-     ↔ entity  {nid, k, p, yaw, hp}  (para entidades con autoridad del servidor)
-     ↔ inventory {slots, armor}     (copia de seguridad del servidor)
-   El servidor (p. ej. Node.js + ws) debe reenviar a los demás jugadores y ser
-   la autoridad de la semilla, bloques, cofres, clima y hora. No se muestran
-   jugadores salvo los que el servidor anuncie realmente. */
+/* ---------- Bus de eventos: todos los sistemas publican aquí sus cambios ---------- */
 const bus = {
   h: new Map(),
   on(t, f) { if (!this.h.has(t)) this.h.set(t, []); this.h.get(t).push(f); },
   emit(t, d) { const a = this.h.get(t); if (a) for (const f of a) f(d); },
 };
-class NetClient {
-  constructor() { this.ws = null; this.status = 'Desconectado'; this.id = null; this.applying = false; this.remote = new Map(); }
-  get connected() { return this.ws && this.ws.readyState === 1; }
-  connect(url) {
-    this.disconnect();
-    try { this.ws = new WebSocket(url); } catch (e) { this.status = 'URL no válida'; return; }
-    this.status = 'Conectando…';
-    this.ws.onopen = () => { this.status = 'Conectado'; this.send({ type: 'hello', v: 3, seed: world ? world.seed : null, mode: game.mode, name: 'Jugador' }); };
-    this.ws.onmessage = (e) => { try { this.receive(JSON.parse(e.data)); } catch {} };
-    this.ws.onclose = () => { this.status = 'Desconectado'; this.clearRemote(); };
-    this.ws.onerror = () => { this.status = 'Error de conexión'; };
+/* ---------- Cliente de red (multijugador real con el servidor de /server) ----------
+   Protocolo JSON sobre WebSocket (v3). → = cliente a servidor, ← = servidor a cliente
+     → hello   {v, name, token, pass}
+     ← welcome {id, name, seed, mode, pvp, time, days, weather, edits, tiles, players, you}
+     ↔ player  {id?, p:[x,y,z], yaw, pitch, anim, held, hp, cr, sw}    ← join {id,name} / leave {id}
+     ↔ block   {x, y, z, id, meta}          ↔ tile {key, d}  (cofres, hornos, carteles…)
+     ↔ chat    {text} / ← chat {id,name,text} / ← sys {text}
+     ← time {t, d}   ← weather {w}   → sleep   → died   → save {d} (inventario y posición)
+     ↔ ents    {l:[[nid,tipo,x,y,z,yaw,hp,flags]…]}  criaturas que simula cada jugador
+     → ehit {to,nid,dmg,x,z}  golpe a una criatura de otro jugador   ← kill {k,p} botín para quien la mató
+     ↔ hit  {to,dmg,x,z}      golpe entre jugadores (si el servidor tiene PvP)
+   El servidor es la autoridad de la semilla, los bloques, los cofres, la hora y el clima.
+   Cada criatura la simula el jugador que la generó; los demás ven una copia y le envían sus golpes. */
+settings.netName ??= 'Jugador' + Math.floor(100 + Math.random() * 900);
+settings.netUrl ??= '';
+if (!settings.netToken) { settings.netToken = Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(36).padStart(2, '0')).join(''); saveSettings(); }
+// Aventureros originales: gorra y mochila del color de cada jugador
+const PLAYER_COLORS = [[205, 70, 55], [235, 160, 40], [80, 170, 90], [150, 95, 205], [235, 125, 175], [240, 215, 80], [235, 235, 228], [95, 200, 190]];
+const PLAYER_HAIR = [[30, 26, 24], [200, 160, 70], [150, 60, 30], [90, 90, 96]];
+
+// Copia local de un jugador remoto: es una entidad más (se puede apuntar, muestra su vida y recibe golpes)
+class RemotePlayer extends Mob {
+  constructor(pid, name) {
+    const c = PLAYER_COLORS[pid % PLAYER_COLORS.length], col = rgb(...c), dark = rgb(...c.map((v) => v * 0.72)), skin = rgb(214, 160, 120);
+    const hair = rgb(...PLAYER_HAIR[(pid >> 3) % PLAYER_HAIR.length]), vest = rgb(86, 78, 66), gray = rgb(62, 64, 72);
+    MOBS.__rp = { name, hp: 20, w: 0.6, h: 1.8, speed: 4.3, xp: 0, sound: 'hit', drops: [],
+      model: (m) => MOB_MODELS.humanoid(m, { limb: 4, eyeHD: true, skin, arm: skin, shirt: vest, sleeve: col, pants: gray, shoe: rgb(40, 36, 34), eye: rgb(30, 30, 30),
+        headExtra: [...eyesHD(4, 4.2, 2, rgb(245, 245, 245), rgb(40, 60, 50)), [3, 0.8, 0.2, 0, 1.5, 4.05, rgb(150, 96, 80)],
+          [8.6, 2.6, 8.6, 0, 7.2, 0, col], [8.6, 0.8, 3.4, 0, 6.2, 5.6, dark], [1.6, 1.6, 1.6, 0, 8.6, 0, dark],                 // gorra, visera y botón
+          [8.4, 3, 1, 0, 4.6, -3.8, hair], [1, 3, 3, -3.8, 4.6, -2, hair], [1, 3, 3, 3.8, 4.6, -2, hair]],                       // pelo bajo la gorra
+        bodyExtra: [[6.4, 8, 3, 0, 0.5, -3.4, col], [5, 3, 0.8, 0, -1.4, -5.2, dark], [1.2, 12.2, 4.4, -2.6, 0, 0, dark], [1.2, 12.2, 4.4, 2.6, 0, 0, dark],   // mochila y correas
+          [8.3, 1.4, 4.3, 0, -5.2, 0, rgb(46, 40, 34)], [1.6, 1.6, 0.4, 0, -5.2, 2.2, rgb(214, 180, 70)]] }) };                   // cinturón con hebilla
+    try { super('__rp', 0, -100, 0); } finally { delete MOBS.__rp; }
+    this.remote = true; this.isPlayer = true; this.pid = pid; this.t = null; this.pitch = 0; this.swingT = 0; this.crouch = 0; this.seen = false;
+    // etiqueta con el nombre
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const x = cv.getContext('2d');
+    x.font = '700 30px ' + getComputedStyle(document.body).fontFamily; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const w = Math.min(250, x.measureText(name).width + 24);
+    x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(128 - w / 2, 12, w, 40); x.fillStyle = '#fff'; x.fillText(name, 128, 33, 240);
+    this.tagTex = new THREE.CanvasTexture(cv); this.tagTex.magFilter = THREE.LinearFilter;
+    this.tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.tagTex, transparent: true, depthWrite: false, fog: false }));
+    this.tag.scale.set(1.8, 0.45, 1); this.tag.position.y = 2.3; this.mesh.add(this.tag);
   }
-  disconnect() { if (this.ws) { try { this.ws.close(); } catch {} } this.ws = null; this.clearRemote(); this.status = 'Desconectado'; }
+  setState(m) {
+    if (!Array.isArray(m.p)) return;
+    this.t = { x: m.p[0], y: m.p[1], z: m.p[2], yaw: (m.yaw || 0) + Math.PI };
+    if (!this.seen) { this.seen = true; this.pos.set(this.t.x, this.t.y, this.t.z); this.yaw = this.t.yaw; }
+    this.pitch = m.pitch || 0; this.hp = m.hp ?? 20; this.crouch = m.cr ? 1 : 0; if (m.sw) this.swingT = 0.25;
+  }
+  update(dt) {
+    this.invuln -= dt; this.hurtT -= dt;
+    const t = this.t; if (!t) return;
+    const k = Math.min(1, dt * 12), ox = this.pos.x, oz = this.pos.z;
+    if (Math.hypot(t.x - this.pos.x, t.y - this.pos.y, t.z - this.pos.z) > 12) this.pos.set(t.x, t.y, t.z);
+    else { this.pos.x += (t.x - this.pos.x) * k; this.pos.y += (t.y - this.pos.y) * k; this.pos.z += (t.z - this.pos.z) * k; }
+    this.vel.set((this.pos.x - ox) / Math.max(dt, 1e-3), 0, (this.pos.z - oz) / Math.max(dt, 1e-3));
+    this.yaw += ((((t.yaw - this.yaw) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * k;
+    this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4; this.onGround = true;
+    this.syncMesh(dt, null);
+    const m = this.model;
+    m.head.rotation.y = 0; m.head.rotation.x = -this.pitch;
+    this.tag.visible = mobBar.e !== this;      // al apuntarle, la barra de vida ya muestra su nombre
+    if (this.swingT > 0) { this.swingT -= dt; m.arms[1].rotation.x = -1.7 * Math.max(0, this.swingT / 0.25); }
+    if (this.crouch) { this.mesh.position.y -= 0.18; m.body.rotation.x = 0.35; } else m.body.rotation.x = 0;
+  }
+  hurt(dmg, from) {
+    if (!net.pvp || this.invuln > 0) return false;
+    this.invuln = 0.45; this.hurtT = 0.35;
+    net.send({ type: 'hit', to: this.pid, dmg, x: from ? from.x : game.player.pos.x, z: from ? from.z : game.player.pos.z });
+    sfx.play('hit', { pos: this.pos });
+    return true;
+  }
+  toJSON() { return null; }
+  disposeTag() { this.tagTex.dispose(); this.tag.material.dispose(); }
+}
+// Copia local de una criatura que simula otro jugador
+class RemoteMob extends Mob {
+  constructor(type, owner, nid, x, y, z) {
+    super(type, x, y, z);
+    this.remote = true; this.owner = owner; this.nid = nid; this.t = { x, y, z, yaw: 0 }; this.seenT = 0; this.dying = 0;
+  }
+  setState(a) { this.t = { x: a[2], y: a[3], z: a[4], yaw: a[5] }; this.hp = a[6]; this.seenT = 0; if ((a[7] & 1) && !this.dying) this.dying = 0.01; this.fire = a[7] & 2 ? 1 : 0; }
+  update(dt) {
+    this.invuln -= dt; this.hurtT -= dt; this.seenT += dt;
+    const t = this.t, k = Math.min(1, dt * 10), ox = this.pos.x, oz = this.pos.z;
+    if (Math.hypot(t.x - this.pos.x, t.z - this.pos.z) > 10) this.pos.set(t.x, t.y, t.z);
+    else { this.pos.x += (t.x - this.pos.x) * k; this.pos.y += (t.y - this.pos.y) * k; this.pos.z += (t.z - this.pos.z) * k; }
+    this.vel.set((this.pos.x - ox) / Math.max(dt, 1e-3), 0, (this.pos.z - oz) / Math.max(dt, 1e-3));
+    this.yaw += ((((t.yaw - this.yaw) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * k;
+    this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4; this.onGround = true;
+    this.syncMesh(dt, null);
+    if (this.dying) { this.dying += dt; this.mesh.rotation.z = Math.min(1, this.dying / 0.6) * Math.PI / 2; }
+    if (this.seenT > 1.5) this.dead = true;          // su dueño dejó de enviarla: murió o se alejó
+  }
+  hurt(dmg, from) {
+    if (this.invuln > 0 || this.dying) return false;
+    this.invuln = 0.45; this.hurtT = 0.35;
+    net.send({ type: 'ehit', to: this.owner, nid: this.nid, dmg, x: from ? from.x : game.player.pos.x, z: from ? from.z : game.player.pos.z });
+    sfx.play(this.spec.sound, { pos: this.pos, pitch: 1.25 }); sfx.play('hit', { pos: this.pos });
+    return true;
+  }
+  toJSON() { return null; }
+}
+
+class NetClient {
+  constructor() {
+    this.ws = null; this.status = 'Desconectado'; this.id = null; this.applying = false; this.active = false; this.pvp = false; this.ping = 0;
+    this.remote = new Map(); this.puppets = new Map(); this.tileSig = new Map(); this.tP = 0; this.tE = 0; this.tT = 0; this.tPing = 0; this.sentEnts = false;
+  }
+  get connected() { return !!this.ws && this.ws.readyState === 1; }
+  // Acepta "host:puerto", http(s):// o ws(s)://
+  static normalize(url) {
+    url = String(url || '').trim().replace(/\/+$/, '');
+    if (!url) return '';
+    if (/^https:\/\//i.test(url)) return 'wss://' + url.slice(8);
+    if (/^http:\/\//i.test(url)) return 'ws://' + url.slice(7);
+    if (/^wss?:\/\//i.test(url)) return url;
+    const local = /^(localhost|127\.|192\.168\.|10\.|\[::1\])/i.test(url);
+    return (location.protocol === 'https:' && !local ? 'wss://' : 'ws://') + url;
+  }
+  // Entrar a un servidor desde el menú
+  join(url, name, pass) {
+    this.leave();
+    url = NetClient.normalize(url);
+    if (!url) { this.status = 'Escribe la dirección del servidor'; return; }
+    if (location.protocol === 'https:' && /^ws:\/\/(?!localhost|127\.0\.0\.1)/i.test(url)) {
+      this.status = 'Esta página es segura (https) y el navegador solo deja conectar con wss:// o con ws://localhost. Abre el juego desde la dirección del propio servidor (por ejemplo http://' + url.slice(5) + ').'; return;
+    }
+    let ws;
+    try { ws = new WebSocket(url); } catch (e) { this.status = 'Dirección no válida'; return; }
+    this.ws = ws; this.status = 'Conectando…'; this.kickReason = null;
+    const timer = setTimeout(() => { if (ws.readyState === 0) { this.status = 'El servidor no responde'; ws.close(); } }, 9000);
+    ws.onopen = () => { clearTimeout(timer); this.status = 'Entrando…'; this.send({ type: 'hello', v: 3, name, token: settings.netToken, pass: pass || undefined }); };
+    ws.onmessage = (e) => { if (this.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch { return; } try { this.receive(m); } catch (err) { console.error('red:', err); } };
+    ws.onerror = () => { if (this.ws === ws && !this.active) this.status = 'No se pudo conectar con el servidor'; };
+    ws.onclose = () => {
+      clearTimeout(timer); if (this.ws !== ws) return;
+      this.ws = null;
+      const reason = this.kickReason || (this.active ? 'Se perdió la conexión con el servidor' : /Conectando|Entrando/.test(this.status) ? 'No se pudo conectar con el servidor' : this.status);
+      this.status = reason;
+      if (this.active) { this.cleanup(); game.quitToMenu(); showScreen('mpScreen'); }
+    };
+  }
+  leave() {
+    const ws = this.ws; this.ws = null;
+    if (ws) { try { ws.close(); } catch {} }
+    this.cleanup(); this.status = 'Desconectado';
+  }
+  cleanup() {
+    this.active = false; this.id = null;
+    for (const r of this.remote.values()) { r.dead = true; r.disposeTag(); }
+    for (const p of this.puppets.values()) p.dead = true;
+    this.remote.clear(); this.puppets.clear(); this.tileSig.clear();
+    document.body.classList.remove('net-on'); chatUI.close(); chatUI.clear();
+  }
   send(msg) { if (this.connected) this.ws.send(JSON.stringify(msg)); }
+  savePlayer() { if (this.active && game.player) this.send({ type: 'save', d: game.player.toJSON() }); }
+
+  async onWelcome(m) {
+    this.id = m.id; this.pvp = !!m.pvp; this.serverName = m.server || 'Servidor'; this.status = 'Conectado';
+    settings.netUrl = this.ws.url; saveSettings();
+    const meta = { id: 'net', name: this.serverName, seed: m.seed, mode: m.mode === 'creative' ? 'creative' : 'survival', net: true, dayLength: m.dayLength || 1200 };
+    const save = { v: 3, net: true, edits: m.edits || {}, tiles: m.tiles || {}, env: { t: m.time, d: m.days, w: m.weather, wt: 1e9 }, player: m.you || null, entities: [] };
+    this.active = true; document.body.classList.add('net-on');
+    for (const p of m.players || []) { const r = this.addRemote(p.id, p.name); if (p.s) r.setState(p.s); }
+    await game.startWorld('net', meta, save);
+    if (!this.connected) return;
+    game.env.weatherT = 1e9;
+    for (const [k, t] of world.tiles) this.tileSig.set(k, this.sig(t));
+    chatUI.add(`Conectado a ${this.serverName} como ${m.name} · ${this.remote.size + 1} jugador(es) · PvP ${this.pvp ? 'activado' : 'desactivado'}`, 'sys');
+    chatUI.add(IS_TOUCH ? 'Toca 💬 para chatear.' : `Pulsa ${keyName(settings.keys.chat)} para chatear. /list muestra quién está conectado.`, 'sys');
+  }
   receive(m) {
+    if (m.type === 'welcome') { this.onWelcome(m); return; }
+    if (m.type === 'kicked') { this.kickReason = String(m.reason || 'El servidor cerró la conexión'); return; }
+    if (m.type === 'pong') { this.ping = Math.round(performance.now() - m.t); return; }
+    if (!this.active || !world) return;
     this.applying = true;
     try {
       switch (m.type) {
-        case 'welcome': this.id = m.id; break;
-        case 'block': if (world && Number.isFinite(m.x) && BLOCKS[m.id]) world.set(m.x, m.y, m.z, m.id, m.meta | 0); break;
-        case 'chest': { const t = world && world.tiles.get(m.key); if (t && t.inv) t.inv.load(m.slots); break; }
-        case 'weather': if (game.env && WEATHER_NAMES[m.w]) game.env.weather = m.w; break;
-        case 'time': if (game.env && Number.isFinite(m.t)) { game.env.time = m.t; game.env.days = m.d | 0; } break;
-        case 'player': if (m.id !== this.id) this.updateRemote(m); break;
+        case 'join': this.addRemote(m.id, m.name); break;
         case 'leave': this.removeRemote(m.id); break;
+        case 'player': { const r = this.remote.get(m.id); if (r) r.setState(m); break; }
+        case 'block': this.applyBlock(m); break;
+        case 'tile': this.applyTile(m.key, m.d); break;
+        case 'time': if (game.env && Number.isFinite(m.t)) { game.env.time = m.t; game.env.days = m.d | 0; } break;
+        case 'weather': if (game.env && WEATHER_NAMES[m.w]) { game.env.weather = m.w; game.env.weatherT = 1e9; } break;
+        case 'chat': chatUI.add(`<${m.name}> ${m.text}`, m.id === this.id ? 'me' : ''); break;
+        case 'sys': chatUI.add(m.text, 'sys'); break;
+        case 'ents': this.applyEnts(m.id, m.l); break;
+        case 'ehit': { const e = game.entities.list.find((x) => x.id === m.nid && x.kind === 'mob' && !x.remote); if (e) { e.lastHit = '@' + m.from; e.hurt(m.dmg, { x: m.x, z: m.z }); } break; }
+        case 'kill': if (MOBS[m.k]) game.entities.onMobDeath({ type: m.k, spec: MOBS[m.k], pos: new THREE.Vector3(...m.p), age: 0, fire: m.fire ? 1 : 0, lastHit: 'player' }); break;
+        case 'hit': if (game.mode === 'survival' && game.state !== 'dead' && game.player) { game.lastPvp = m.name; game.player.damage(m.dmg, `Te derrotó ${m.name}`, new THREE.Vector3(m.x, game.player.pos.y, m.z)); } break;
       }
     } finally { this.applying = false; }
   }
-  updateRemote(m) {
-    let r = this.remote.get(m.id);
-    if (!r) {
-      const mat = new THREE.MeshBasicMaterial({ vertexColors: true });
-      const model = MOB_MODELS.humanoid(mat, { limb: 4, skin: rgb(222, 170, 130), arm: rgb(222, 170, 130), shirt: rgb(60, 140, 200), pants: rgb(50, 60, 140), eye: rgb(40, 40, 120) });
-      r = { model, mat, mesh: model.root, walk: 0 }; scene.add(r.mesh); this.remote.set(m.id, r);
-    }
-    if (Array.isArray(m.p)) { r.mesh.position.set(...m.p); r.mesh.rotation.y = (m.yaw || 0) + Math.PI; }
-    r.walk += 0.3; const sw = m.anim === 'walk' ? Math.sin(r.walk) * 0.6 : 0;
-    r.model.legs[0].rotation.x = sw; r.model.legs[1].rotation.x = -sw;
+  addRemote(id, name) {
+    let r = this.remote.get(id);
+    if (!r) { r = new RemotePlayer(id, String(name || 'Jugador')); this.remote.set(id, r); }
+    return r;
   }
-  removeRemote(id) { const r = this.remote.get(id); if (r) { scene.remove(r.mesh); r.mat.dispose(); this.remote.delete(id); } }
-  clearRemote() { for (const id of [...this.remote.keys()]) this.removeRemote(id); }
+  removeRemote(id) {
+    const r = this.remote.get(id); if (r) { r.dead = true; r.disposeTag(); this.remote.delete(id); }
+    for (const [k, p] of this.puppets) if (p.owner === id) { p.dead = true; this.puppets.delete(k); }
+  }
+  // Bloque de otro jugador: si el chunk no está cargado se guarda como edición pendiente
+  applyBlock(m) {
+    if (!Number.isInteger(m.x) || !Number.isInteger(m.y) || !Number.isInteger(m.z) || !BLOCKS[m.id] || m.y < 0 || m.y >= WY) return;
+    if (world.isLoaded(m.x, m.z)) { world.set(m.x, m.y, m.z, m.id, m.meta | 0); return; }
+    const key = (m.x >> 4) + ',' + (m.z >> 4), i = (m.x & 15) | ((m.z & 15) << 4) | (m.y << 8);
+    let ed = world.edits.get(key); if (!ed) { ed = new Map(); world.edits.set(key, ed); }
+    ed.set(i, m.id | ((m.meta | 0) << 8));
+  }
+  // Firma de una entidad de bloque: solo su contenido (el progreso de los hornos no cuenta como cambio)
+  sig(t) { return t.inv ? JSON.stringify(t.inv.toJSON()) : t.type === 'sign' ? 's' + t.text : 'p' + t.art; }
+  applyTile(key, d) {
+    if (typeof key !== 'string') return;
+    if (!d) { world.tiles.delete(key); this.tileSig.delete(key); return; }
+    const t = unpackTile(d, world.tiles.get(key)); if (!t) return;
+    world.tiles.set(key, t); this.tileSig.set(key, this.sig(t));
+    if (t.inv && t.inv.onChange) t.inv.onChange();
+    if (!t.inv) decor.meshes.get(key) && decor.sync();
+  }
+  scanTiles() {
+    for (const [k, t] of world.tiles) { const s = this.sig(t); if (this.tileSig.get(k) !== s) { this.tileSig.set(k, s); this.send({ type: 'tile', key: k, d: packTile(t) }); } }
+    for (const k of [...this.tileSig.keys()]) if (!world.tiles.has(k)) { this.tileSig.delete(k); this.send({ type: 'tile', key: k, d: null }); }
+  }
+  applyEnts(owner, list) {
+    if (!Array.isArray(list)) return;
+    for (const a of list) {
+      if (!Array.isArray(a) || !MOBS[a[1]] || !Number.isFinite(a[2] + a[3] + a[4])) continue;
+      const key = owner + ':' + a[0]; let p = this.puppets.get(key);
+      if (p && p.dead) { this.puppets.delete(key); p = null; }
+      if (!p) {
+        if (!world.isLoaded(Math.floor(a[2]), Math.floor(a[4])) || (a[7] & 1)) continue;
+        p = new RemoteMob(a[1], owner, a[0], a[2], a[3], a[4]); p.yaw = a[5]; this.puppets.set(key, p); game.entities.add(p);
+      }
+      p.setState(a);
+    }
+  }
+  // Cada fotograma (también en pausa: el mundo de los demás sigue)
+  tick(dt) {
+    const now = performance.now(); dt = Math.min(1, (now - (this.lastT || now)) / 1000); this.lastT = now;     // tiempo real: la red no depende de los FPS
+    if (!this.active || !this.connected || !game.player || game.state === 'loading' || game.state === 'menu') return;
+    const p = game.player, list = game.entities.list;
+    // jugadores remotos: se (re)añaden cuando su zona está cargada
+    for (const r of this.remote.values()) {
+      if (!r.t) continue;
+      if (r.dead || !list.includes(r)) { if (world.isLoaded(Math.floor(r.t.x), Math.floor(r.t.z))) { r.dead = false; r.pos.set(r.t.x, r.t.y, r.t.z); game.entities.add(r); } }
+    }
+    if ((this.tP += dt) >= 0.1) {
+      this.tP = 0;
+      this.send({ type: 'player', p: [+p.pos.x.toFixed(2), +p.pos.y.toFixed(2), +p.pos.z.toFixed(2)], yaw: +camera.rotation.y.toFixed(3), pitch: +camera.rotation.x.toFixed(3),
+        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0 });
+    }
+    if ((this.tE += dt) >= 0.2) {
+      this.tE = 0;
+      const l = [];
+      for (const e of list) {
+        if (e.kind !== 'mob' || e.remote || e.constructor !== Mob || l.length >= 60) continue;
+        if (Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 72) continue;
+        l.push([e.id, e.type, +e.pos.x.toFixed(2), +e.pos.y.toFixed(2), +e.pos.z.toFixed(2), +e.yaw.toFixed(2), Math.max(0, Math.ceil(e.hp)), (e.deathT ? 1 : 0) | (e.burnT > 0 ? 2 : 0)]);
+      }
+      if (l.length || this.sentEnts) this.send({ type: 'ents', l });
+      this.sentEnts = l.length > 0;
+      for (const [k, q] of this.puppets) if (q.dead) this.puppets.delete(k);
+    }
+    if ((this.tT += dt) >= 0.5) { this.tT = 0; this.scanTiles(); }
+    if ((this.tPing += dt) >= 5) { this.tPing = 0; this.send({ type: 'ping', t: performance.now() }); }
+  }
 }
 const net = new NetClient();
-bus.on('block', (d) => { if (!net.applying) net.send({ type: 'block', ...d }); });
-bus.on('chest', (d) => net.send({ type: 'chest', ...d }));
-bus.on('weather', (d) => net.send({ type: 'weather', ...d }));
+bus.on('block', (d) => { if (net.active && !net.applying) net.send({ type: 'block', ...d }); });
+bus.on('sleep', () => { if (net.active) net.send({ type: 'sleep' }); });
+bus.on('died', (d) => { if (net.active) net.send({ type: 'died', msg: game.lastPvp ? `lo derrotó ${game.lastPvp}` : '' }); game.lastPvp = null; });
+
+/* ---------- Chat ---------- */
+const chatUI = {
+  isOpen: false,
+  add(text, cls) {
+    const log = $('#chatLog'); if (!log) return;
+    const d = document.createElement('div'); d.className = 'chatLine ' + (cls || ''); d.textContent = text;
+    log.append(d); while (log.children.length > 40) log.firstChild.remove();
+    setTimeout(() => d.classList.add('old'), 9000);
+    log.scrollTop = log.scrollHeight;
+  },
+  clear() { const log = $('#chatLog'); if (log) log.innerHTML = ''; },
+  open() {
+    if (!net.active || this.isOpen || game.state !== 'playing') return;
+    this.isOpen = true; game.releaseInputs(); document.body.classList.add('chat-open');
+    const i = $('#chatInput'); i.value = ''; i.focus(); setTimeout(() => i.focus(), 30);
+  },
+  close() { if (!this.isOpen) return; this.isOpen = false; document.body.classList.remove('chat-open'); $('#chatInput').blur(); },
+  submit() { const t = $('#chatInput').value.trim(); if (t) net.send({ type: 'chat', text: t }); this.close(); },
+};
+function initMultiplayerUI() {
+  const st = $('#mpStatus');
+  $('#btnMulti').onclick = () => {
+    $('#mpName').value = settings.netName;
+    const own = /^https?:$/.test(location.protocol) && !/github\.io$|claude|anthropic/i.test(location.hostname) && location.hostname ? (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host : '';
+    $('#mpUrl').value = settings.netUrl || own;
+    st.textContent = ''; showScreen('mpScreen');
+  };
+  $('#mpBack').onclick = () => { net.leave(); showScreen('mainMenu'); };
+  $('#mpGo').onclick = () => {
+    const name = $('#mpName').value.trim().slice(0, 16) || 'Jugador';
+    settings.netName = name; saveSettings(); sfx.init();
+    net.join($('#mpUrl').value, name, $('#mpPass').value);
+  };
+  $('#chatInput').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') chatUI.submit(); else if (e.key === 'Escape') chatUI.close(); });
+  $('#chatSend').onclick = () => chatUI.submit();
+  $('#chatBtn').addEventListener('click', () => chatUI.open());
+  setInterval(() => {
+    if (st) st.textContent = net.status === 'Desconectado' ? '' : net.status;
+    const el = $('#netStatus'); if (el) el.textContent = net.active ? `Conectado a ${net.serverName} · ${net.remote.size + 1} jugador(es) · ${net.ping} ms` : 'Estado: sin conexión (un jugador)';
+  }, 400);
+}
 
 /* ---------- Estadísticas y logros ---------- */
 const ACHIEVEMENTS = [
@@ -7809,7 +8116,7 @@ Object.assign(game, {
     if (this.entities.list.some((e) => e.kind === 'mob' && e.spec.hostile && !e.deathT && e.pos.distanceTo(p.pos) < 8)) { hud.toast('No puedes dormir: hay monstruos cerca'); return; }
     const fx = $('#sleepFx'); fx.classList.add('on'); this.state = 'sleeping'; this.releaseInputs();
     setTimeout(() => {
-      env.time = 0.01; env.days++; if (env.weather !== 'clear') { env.weather = 'clear'; env.weatherT = 200; bus.emit('weather', { w: 'clear' }); }
+      env.time = 0.01; env.days++; bus.emit('sleep', {}); if (env.weather !== 'clear') { env.weather = 'clear'; env.weatherT = 200; bus.emit('weather', { w: 'clear' }); }
       this.stats.add('sleeps'); this.unlock('sleep'); saveGame(true);
       setTimeout(() => { fx.classList.remove('on'); if (this.state === 'sleeping') this.state = 'playing'; hud.toast('¡Buenos días! Punto de reaparición fijado'); }, 700);
     }, 1600);
@@ -7922,7 +8229,7 @@ const KEY_ACTIONS = [
   ['attack', 'Minar / atacar', 'Mouse0'], ['use', 'Usar / colocar / comer', 'Mouse2'],
   ['lookUp', 'Mirar arriba', 'ArrowUp'], ['lookDown', 'Mirar abajo', 'ArrowDown'], ['lookLeft', 'Mirar a la izquierda', 'ArrowLeft'], ['lookRight', 'Mirar a la derecha', 'ArrowRight'],
   ['inventory', 'Inventario', 'KeyE'], ['drop', 'Soltar objeto', 'KeyQ'], ['map', 'Mapa', 'KeyM'], ['achievements', 'Logros', 'KeyL'],
-  ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
+  ['chat', 'Chat (multijugador)', 'KeyT'], ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
   ['hotbarNext', 'Siguiente espacio', 'WheelDown'], ['hotbarPrev', 'Espacio anterior', 'WheelUp'],
   ...Array.from({ length: 9 }, (_, i) => [`hotbar${i + 1}`, `Espacio ${i + 1} de la barra`, `Digit${i + 1}`]),
 ];
@@ -7975,6 +8282,7 @@ function pressCode(code, ev) {
       case 'map': mapUI.show(); break;
       case 'achievements': game.pause(); openAchievements(); break;
       case 'pause': game.pause(); break;
+      case 'chat': chatUI.open(); break;
       case 'fly': if (game.mode === 'creative') { p.flying = !p.flying; p.vel.y = 0; } break;
       case 'debug': settings.showFps = !settings.showFps; saveSettings(); break;
       case 'drop': {
@@ -8257,7 +8565,7 @@ function updatePanorama(dt) {
 const MENU_ICON = {};
 function menuIcon(name) {
   if (MENU_ICON[name]) return MENU_ICON[name];
-  const map = { play: GRASS, settings: I.COMPASS, about: BOOKSHELF, new: CRAFTING_TABLE, creative: GRASS };
+  const map = { multi: I.EMERALD, play: GRASS, settings: I.COMPASS, about: BOOKSHELF, new: CRAFTING_TABLE, creative: GRASS };
   let url = '';
   if (name === 'survival') { const id = toolId('iron', 'sword'); url = ICON[id] || ICON[GRASS]; }
   else url = ICON[map[name]] || ICON[GRASS];
