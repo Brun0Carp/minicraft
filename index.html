@@ -302,6 +302,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; touch-action: none; }
   .tbtn span { font-size: 22px; line-height: 1; }
   .tbtn.pressed { background: rgba(255,255,255,.32); }
+  .tbtn.on { background: rgba(255,225,77,.35); border-color: #ffe14d; }
   .tbtn.wide { grid-column: span 2; }
   .topBtns { position: fixed; top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); z-index: 6; display: flex; gap: 8px; pointer-events: auto; }
   .topBtns .tbtn { width: 46px; height: 46px; border-radius: 10px; font-size: 18px; }
@@ -478,6 +479,18 @@
   .keyBtn { border-radius: 3px; transition: border-color .15s, background .15s; }
   #keysList { max-height: none; }
 
+  /* --- Barra de vida al apuntar (§25) --- */
+  #mobBar { position: fixed; left: 0; top: 0; display: none; min-width: 120px; padding: 4px 7px 3px; text-align: center; pointer-events: none; z-index: 4; will-change: transform, opacity;
+    background: rgba(10, 12, 16, .62); border: 2px solid #0b0b0b; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), 0 3px 8px rgba(0,0,0,.4); transform-origin: 50% 100%; }
+  #mobBar b { display: block; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 2px 0 #000; white-space: nowrap; margin-bottom: 3px; }
+  #mobBar.hostile b { color: #ff8a7a; } #mobBar.villager b { color: #9fe08a; }
+  #mobBar .mbBar { position: relative; height: 8px; background: #2a0f0f; border: 1px solid #000; box-shadow: inset 0 1px 0 rgba(0,0,0,.6); overflow: hidden; }
+  #mobBar .mbBar i { position: absolute; left: 0; top: 0; bottom: 0; }
+  #mobBar .mbTrail { background: #f4e6c8; opacity: .85; }
+  #mobBar .mbFill { box-shadow: inset 0 1px 0 rgba(255,255,255,.35); transition: background .2s; }
+  #mobBar em { display: block; margin-top: 2px; font-size: 11px; font-style: normal; color: #e8e8e8; text-shadow: 0 1px 0 #000; white-space: nowrap; }
+  #mobBar.hit { border-color: #c0301e; box-shadow: inset 0 0 0 1px rgba(255,120,100,.5), 0 0 10px rgba(255,60,40,.45); }
+  body.inv-open #mobBar { display: none !important; }
   /* --- Minimapa (§24) --- */
   #minimapContainer { position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); display: none; padding: 2px;
     background: rgba(0,0,0,.6); border: 2px solid #0b0b0b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.35); pointer-events: none; image-rendering: pixelated; }
@@ -504,6 +517,7 @@
   <div id="toast"></div>
   <div id="bossBar"><b></b><em></em><u><s></s></u></div>
   <div id="compass"><div></div></div>
+  <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
   <div id="notifs"></div>
@@ -523,7 +537,8 @@
     <div class="tbtns">
       <button class="tbtn" data-act="place"><span>▣</span>Usar</button>
       <button class="tbtn" data-act="break"><span>⛏</span>Minar</button>
-      <button class="tbtn wide" data-act="jump"><span>⇧</span>Saltar</button>
+      <button class="tbtn" data-act="sneak"><span>⤓</span>Agachar</button>
+      <button class="tbtn" data-act="jump"><span>⇧</span>Saltar</button>
     </div>
     <div class="flyBtns">
       <button class="tbtn" data-act="fly"><span>✈</span>Volar</button>
@@ -759,6 +774,7 @@ const FLY_SPEED = 10.5;
 const PLAYER_HALF_W = 0.3;
 const PLAYER_H = 1.8;
 const EYE_H = 1.62;
+const PLAYER_H_CROUCH = 1.5;   // altura del jugador agachado
 const REACH = 5;
 
 // Ajustes globales del jugador (no del mundo); se guardan aparte.
@@ -3168,6 +3184,27 @@ function moveBody(body, dx, dy, dz, canStep = true) {
   if (Math.abs(ry - dy) > 1e-6) body.vel.y = 0;
   if (Math.abs(rx - dx) > 1e-5) body.vel.x = 0;
   if (Math.abs(rz - dz) > 1e-5) body.vel.z = 0;
+}
+
+// ¿Choca una caja [x0,y0,z0,x1,y1,z1] con algún bloque sólido?
+function boxBlocked(a) {
+  const boxes = collectBoxes(a[0], a[1], a[2], a[3], a[4], a[5], false);
+  for (const b of boxes) if (b[3] > a[0] + EPS && b[0] < a[3] - EPS && b[4] > a[1] + EPS && b[1] < a[4] - EPS && b[5] > a[2] + EPS && b[2] < a[5] - EPS) return true;
+  return false;
+}
+// Agachado: ¿hay suelo bajo el cuerpo si se desplaza (dx, dz)? (como en Minecraft, mira hasta 0,6 bloques hacia abajo)
+function groundBelow(body, dx, dz) {
+  const x0 = body.pos.x - body.hw + dx, z0 = body.pos.z - body.hw + dz, y = body.pos.y;
+  return boxBlocked([x0, y - 0.6, z0, x0 + body.hw * 2, y - 0.001, z0 + body.hw * 2]);
+}
+// Limita el movimiento de un cuerpo agachado para que no se caiga por los bordes
+function sneakClamp(body, dx, dz) {
+  const st = 0.03, red = (v) => (Math.abs(v) < st ? 0 : v - Math.sign(v) * st);
+  if (groundBelow(body, 0, 0) === false) return [dx, dz];          // ya está en el aire: no hace nada
+  while (dx !== 0 && !groundBelow(body, dx, 0)) dx = red(dx);
+  while (dz !== 0 && !groundBelow(body, 0, dz)) dz = red(dz);
+  while (dx !== 0 && dz !== 0 && !groundBelow(body, dx, dz)) { dx = red(dx); dz = red(dz); }
+  return [dx, dz];
 }
 
 // ¿Qué bloques toca el cuerpo? (agua, escaleras, cactus)
@@ -5899,7 +5936,7 @@ function initSettingsUI() {
     ['volume', 'Volumen', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['quality', 'Resolución', 'select', ['baja', 'media', 'alta']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
-    ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'],
+    ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'], ['mobBars', 'Barra de vida al apuntar', 'check'],
   ];
   // cada ajuste va a su pestaña: Gráficos, Sonido o Controles
   const TAB = { volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
@@ -6924,7 +6961,14 @@ const game = {
     const moving = wish.lengthSq() > 0.01;
     const jump = down('jump') || input.flyUp;
     const canSprint = this.mode === 'creative' || p.hunger > 6;
-    const sprint = canSprint && moving && (down('sprint') && !(p.flying && settings.keys.sprint === settings.keys.descend) || (k.has('ControlLeft') && !actionsFor('ControlLeft').length) || Math.hypot(input.joy.x, input.joy.y) > 0.97);
+    // Agacharse: más bajo, más lento y sin caerse de los bordes (no al volar, nadar ni sentado)
+    const wantCrouch = (down('sneak') || input.sneakToggle) && !p.flying && !p.seat;
+    if (wantCrouch && !p.crouching) { p.crouching = true; p.h = PLAYER_H_CROUCH; }
+    else if (!wantCrouch && p.crouching) {
+      // solo se levanta si hay sitio para la cabeza
+      if (!boxBlocked([p.pos.x - p.hw, p.pos.y + 0.01, p.pos.z - p.hw, p.pos.x + p.hw, p.pos.y + PLAYER_H, p.pos.z + p.hw])) { p.crouching = false; p.h = PLAYER_H; }
+    }
+    const sprint = canSprint && moving && !p.crouching && (down('sprint') && !(p.flying && settings.keys.sprint === settings.keys.descend) || Math.hypot(input.joy.x, input.joy.y) > 0.97);
     p.sprinting = sprint;
     const c = bodyContacts(p);
     p.inWater = c.water;
@@ -6958,7 +7002,7 @@ const game = {
       p.fallStart = null;
       if (moving) p.exhaust(0.01 * Math.hypot(p.pos.x - ox, p.pos.z - oz));
     } else {
-      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1);
+      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1);
       const groundId = world.get(Math.floor(p.pos.x), Math.floor(p.pos.y - 0.1), Math.floor(p.pos.z));
       const slip = BLOCKS[groundId]?.slippery;
       const accel = p.onGround ? (slip ? 2.5 : 14) : 3.5;
@@ -6976,7 +7020,13 @@ const game = {
         // doble toque de espacio → volar (creativo)
       }
       p.vel.y = Math.max(p.vel.y - GRAVITY * dt, -50);
-      moveBody(p, p.vel.x * dt, p.vel.y * dt, p.vel.z * dt, true);
+      let mdx = p.vel.x * dt, mdz = p.vel.z * dt;
+      if (p.crouching && p.onGround && p.vel.y <= 0 && !c.ladder) {
+        const [cx, cz] = sneakClamp(p, mdx, mdz);
+        if (cx !== mdx) p.vel.x = 0; if (cz !== mdz) p.vel.z = 0;
+        mdx = cx; mdz = cz;
+      }
+      moveBody(p, mdx, p.vel.y * dt, mdz, true);
       // Daño por caída
       if (!p.onGround && p.vel.y < 0 && p.fallStart === null) p.fallStart = p.pos.y;
       if (p.vel.y > 0 && !p.onGround) p.fallStart = null;
@@ -6999,7 +7049,8 @@ const game = {
     p.survivalTick(dt);
     // Cámara
     const bob = p.onGround && !p.flying ? Math.sin(p.walkDist * 2.2) * 0.045 * Math.min(1, Math.hypot(p.vel.x, p.vel.z) / 4) : 0;
-    camera.position.set(p.pos.x, p.pos.y + EYE_H + bob, p.pos.z);
+    p.eyeOff = (p.eyeOff || 0) + ((p.crouching ? -0.3 : 0) - (p.eyeOff || 0)) * Math.min(1, dt * 14);   // la cámara baja suave al agacharse
+    camera.position.set(p.pos.x, p.pos.y + EYE_H + p.eyeOff + bob, p.pos.z);
     if (this.shake > 0) { this.shake -= dt; camera.position.x += (Math.random() - 0.5) * this.shake * 0.15; }
     const fovT = settings.fov + (sprint ? 8 : 0) + (p.flying && sprint ? 6 : 0) - Math.min(1, p.bowT) * 12;
     if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
@@ -7274,6 +7325,7 @@ function initInput() {
       if (act === 'break') input.primary = true;
       if (act === 'place') { input.secondary = true; game.useCd = 0; }
       if (act === 'down') input.flyDown = true;
+      if (act === 'sneak') { input.sneakToggle = !input.sneakToggle; btn.classList.toggle('on', input.sneakToggle); }
       if (act === 'fly' && game.mode === 'creative') { game.player.flying = !game.player.flying; game.player.vel.y = 0; }
       if (act === 'inv' && game.state === 'playing') openInventory('inv');
       if (act === 'map' && game.state === 'playing') mapUI.show();
@@ -7312,7 +7364,8 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  if (game.state === 'playing') minimap.render(game.player, world);   // §24: solo con el HUD activo y sin pausa
+  if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
+  else mobBar.hide();
   dbgT += dt;
   if (dbgT > 0.25) {
     dbgT = 0;
@@ -7338,7 +7391,7 @@ function boot() {
   const tiles = [T.grass_side, T.dirt, T.stone, T.cobble, T.oak_planks, T.stone, T.coal_ore, T.dirt];
   for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) bx.drawImage(tileCanvas(y === 0 ? T.grass_side : tiles[(x * 3 + y * 5) % tiles.length], y === 0 ? null : null), x * 16, y * 16);
   $('#menuBg .fallback').style.backgroundImage = `url(${bg.toDataURL()})`;
-  initMenuLook(); minimap.init();
+  initMenuLook(); minimap.init(); mobBar.init();
   initMenus(); initInventoryInput(); initInput();
   $('#touchHint').style.display = IS_TOUCH ? '' : 'none';
   if (IS_TOUCH) document.body.classList.add('touch');
@@ -7864,8 +7917,8 @@ function importWorld(text) {
    ========================================================================== */
 const KEY_ACTIONS = [
   ['forward', 'Avanzar', 'KeyW'], ['back', 'Retroceder', 'KeyS'], ['left', 'Izquierda', 'KeyA'], ['right', 'Derecha', 'KeyD'],
-  ['jump', 'Saltar / nadar / subir', 'Space'], ['sprint', 'Correr', 'ShiftLeft'], ['descend', 'Bajar (volando)', 'ShiftLeft'],
-  ['sneak', 'Colocar sobre cofres y mesas', 'ShiftLeft'],
+  ['jump', 'Saltar / nadar / subir', 'Space'], ['sneak', 'Agacharse (y colocar sobre cofres)', 'ShiftLeft'], ['sprint', 'Correr', 'ControlLeft'],
+  ['descend', 'Bajar (volando)', 'ShiftLeft'],
   ['attack', 'Minar / atacar', 'Mouse0'], ['use', 'Usar / colocar / comer', 'Mouse2'],
   ['lookUp', 'Mirar arriba', 'ArrowUp'], ['lookDown', 'Mirar abajo', 'ArrowDown'], ['lookLeft', 'Mirar a la izquierda', 'ArrowLeft'], ['lookRight', 'Mirar a la derecha', 'ArrowRight'],
   ['inventory', 'Inventario', 'KeyE'], ['drop', 'Soltar objeto', 'KeyQ'], ['map', 'Mapa', 'KeyM'], ['achievements', 'Logros', 'KeyL'],
@@ -7875,6 +7928,8 @@ const KEY_ACTIONS = [
 ];
 const DEFAULT_KEYS = Object.fromEntries(KEY_ACTIONS.map(([id, , code]) => [id, code]));
 settings.keys = Object.assign({}, DEFAULT_KEYS, settings.keys || {});
+// v2: Mayús izq. pasa a ser agacharse y correr pasa a Ctrl izq. (como en Minecraft)
+if (!settings.keysV2) { if (settings.keys.sprint === 'ShiftLeft') settings.keys.sprint = 'ControlLeft'; settings.keysV2 = true; }
 settings.mouseMode ??= 'auto';          // auto | arrastrar | mover
 settings.touchLayout ??= {};            // { port: {...}, land: {...} }
 
@@ -8071,7 +8126,7 @@ function startRebind(id, btn) {
 }
 
 /* ---------- Editor de la disposición táctil ---------- */
-const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['fly', '[data-act=fly]'],
+const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['sneak', '[data-act=sneak]'], ['fly', '[data-act=fly]'],
   ['down', '[data-act=down]'], ['map', '[data-act=map]'], ['inv', '[data-act=inv]'], ['pause', '[data-act=pause]']];
 const orient = () => (window.innerWidth > window.innerHeight ? 'land' : 'port');
 function applyTouchLayout() {
@@ -8336,6 +8391,81 @@ const minimap = {
     }
     this.bctx.putImageData(this.img, 0, 0);
   },
+};
+
+/* ==========================================================================
+   §25 BARRA DE VIDA AL APUNTAR
+   --------------------------------------------------------------------------
+   · Al poner la mira sobre un animal, un enemigo o un aldeano (hasta 24
+     bloques, sin paredes en medio) aparece flotando sobre su cabeza una barra
+     con su nombre y su vida.
+   · El color pasa de verde a amarillo y a rojo; el daño recibido deja un
+     rastro claro que se vacía despacio, como en los juegos de lucha.
+   · Sigue visible 1,5 s después de dejar de apuntar y se desvanece. Los jefes
+     no la usan porque ya tienen su barra arriba de la pantalla.
+   · Se activa o desactiva en Ajustes → Gráficos → "Barra de vida al apuntar".
+   ► CAMBIAR EL ALCANCE: MOBBAR_RANGE. CAMBIAR EL TIEMPO VISIBLE: MOBBAR_LINGER.
+   ========================================================================== */
+settings.mobBars ??= true;
+const MOBBAR_RANGE = 24, MOBBAR_LINGER = 1.5;
+const mobBar = {
+  el: null, e: null, t: 0, shown: 0, ghost: 1, lastE: null, v: new THREE.Vector3(), dir: new THREE.Vector3(),
+  init() {
+    this.el = $('#mobBar');
+    this.nameEl = this.el.querySelector('b'); this.hpEl = this.el.querySelector('em');
+    this.fill = this.el.querySelector('.mbFill'); this.trail = this.el.querySelector('.mbTrail');
+  },
+  // Entidad bajo la mira (más lejos que el alcance de ataque, pero respetando las paredes)
+  pick() {
+    if (game.mobTarget) return game.mobTarget;
+    camera.getWorldDirection(this.dir);
+    const m = game.entities.raycast(camera.position, this.dir, MOBBAR_RANGE);
+    if (!m) return null;
+    const wall = raycastBlocks(camera.position, this.dir, m.dist);
+    return wall && wall.dist < m.dist ? null : m.e;
+  },
+  update(dt) {
+    if (!this.el) return;
+    let e = settings.mobBars ? this.pick() : null;
+    if (e && (e instanceof Boss || e.deathT)) e = null;
+    if (e) { if (e !== this.e) { this.e = e; this.ghost = this.frac(e); } this.t = MOBBAR_LINGER; }
+    else this.t -= dt;
+    const cur = this.e;
+    if (!cur || cur.dead || this.t <= 0) { this.e = null; this.shown = Math.max(0, this.shown - dt * 5); this.el.style.opacity = this.shown; if (!this.shown) this.el.style.display = 'none'; return; }
+    // aparece rápido, se desvanece al final del tiempo de espera
+    this.shown = Math.min(1, this.shown + dt * 8) * Math.min(1, this.t / 0.35 + (e ? 1 : 0));
+    // posición: sobre la cabeza, proyectada a la pantalla
+    const s = cur.spec, h = cur.h ?? s.h;
+    this.v.set(cur.pos.x, cur.pos.y + (h || 1.8) + 0.45, cur.pos.z);
+    const dist = camera.position.distanceTo(this.v);
+    this.v.project(camera);
+    if (this.v.z > 1 || Math.abs(this.v.x) > 1.2 || Math.abs(this.v.y) > 1.2) { this.el.style.display = 'none'; return; }
+    const x = (this.v.x * 0.5 + 0.5) * innerWidth, y = (-this.v.y * 0.5 + 0.5) * innerHeight;
+    const sc = clamp(7 / Math.max(dist, 0.1), 0.62, 1.1);
+    this.el.style.display = 'block';
+    this.el.style.opacity = this.shown;
+    this.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%) scale(${sc})`;
+    // vida
+    const f = this.frac(cur), max = this.max(cur);
+    if (f > this.ghost) this.ghost = f;
+    this.ghost += (f - this.ghost) * Math.min(1, dt * 2.2);
+    const hue = Math.round(f * 120);
+    this.fill.style.width = (f * 100).toFixed(1) + '%';
+    this.fill.style.background = `linear-gradient(180deg, hsl(${hue} 85% 62%), hsl(${hue} 80% 40%))`;
+    this.trail.style.width = (this.ghost * 100).toFixed(1) + '%';
+    if (this.lastE !== cur) {
+      this.lastE = cur;
+      this.nameEl.textContent = s.name || 'Criatura';
+      this.el.classList.toggle('hostile', !!s.hostile);
+      this.el.classList.toggle('villager', cur instanceof Villager);
+    }
+    const hp = Math.max(0, Math.ceil(cur.hp));
+    if (this.hpEl.dataset.v !== hp + '/' + max) { this.hpEl.dataset.v = hp + '/' + max; this.hpEl.textContent = `${hp} / ${max} ♥`; }
+    this.el.classList.toggle('hit', cur.hurtT > 0);
+  },
+  max(e) { return Math.max(1, Math.round(e.maxHp || e.spec.hp || 1)); },
+  frac(e) { return clamp(e.hp / this.max(e), 0, 1); },
+  hide() { if (this.el) { this.el.style.display = 'none'; this.shown = 0; this.e = null; this.t = 0; } },
 };
 
 /* ==========================================================================
