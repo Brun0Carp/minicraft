@@ -61,7 +61,7 @@ function seedFrom(s) {
   return h;
 }
 const worldFile = path.join(cfg.data, 'world.json');
-const W = { v: 1, seed: 0, mode: cfg.mode, time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {} };
+const W = { v: 1, gen: 2, seed: 0, mode: cfg.mode, time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {} };
 const drops = new Map();          // objetos en el suelo: id → { s: [id, cantidad, daño, encantamientos], p: [x, y, z], t: creado }
 const activeBoss = new Map();     // jefes despiertos: plan → { owner: id del jugador que lo simula, k: tipo }
 const DROP_LIFE = 300000, MAX_DROPS = 600;
@@ -73,7 +73,7 @@ function loadWorld() {
     try {
       const d = JSON.parse(fs.readFileSync(f, 'utf8'));
       if (!Number.isFinite(d.seed)) throw new Error('sin semilla');
-      Object.assign(W, { seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
+      Object.assign(W, { gen: d.gen === 2 ? 2 : 1, seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
         weather: WEATHERS.includes(d.weather) ? d.weather : 'clear', weatherT: +d.weatherT || 600, tiles: d.tiles || {}, players: d.players || {}, bosses: d.bosses || {} });
       for (const k in d.edits || {}) {
         const m = new Map();
@@ -84,7 +84,7 @@ function loadWorld() {
       return;
     } catch (e) { if (e.code !== 'ENOENT') log(`No se pudo leer ${f}: ${e.message}`); }
   }
-  W.seed = seedFrom(cfg.seed); W.mode = cfg.mode; dirty = true;
+  W.seed = seedFrom(cfg.seed); W.mode = cfg.mode; W.gen = 2; dirty = true;     // gen 2 = biomas de la 3.1; los mundos ya guardados conservan el suyo
   log(`Mundo nuevo: semilla ${W.seed}, modo ${W.mode}`);
 }
 const countEdits = () => { let n = 0; for (const m of edits.values()) n += m.size; return n; };
@@ -96,7 +96,7 @@ function packEdits() {
 function saveWorld(sync) {
   if (!dirty) return;
   dirty = false;
-  const json = JSON.stringify({ v: 1, seed: W.seed, mode: W.mode, time: W.time, days: W.days, weather: W.weather, weatherT: W.weatherT, edits: packEdits(), tiles: W.tiles, players: W.players, bosses: W.bosses, saved: Date.now() });
+  const json = JSON.stringify({ v: 1, gen: W.gen, seed: W.seed, mode: W.mode, time: W.time, days: W.days, weather: W.weather, weatherT: W.weatherT, edits: packEdits(), tiles: W.tiles, players: W.players, bosses: W.bosses, saved: Date.now() });
   try {
     fs.mkdirSync(cfg.data, { recursive: true });
     const tmp = worldFile + '.tmp';
@@ -207,7 +207,7 @@ function handle(c, m) {
     while ([...clients.values()].some((o) => o.name.toLowerCase() === name.toLowerCase())) name = (base.slice(0, 13) + ' ' + n++);
     c.name = name; c.id = nextId++;
     const saved = W.players[c.key];
-    c.send({ type: 'welcome', id: c.id, name, server: cfg.name, seed: W.seed, mode: W.mode, pvp: cfg.pvp, dayLength: DAY_LENGTH,
+    c.send({ type: 'welcome', id: c.id, name, server: cfg.name, seed: W.seed, gen: W.gen, mode: W.mode, pvp: cfg.pvp, dayLength: DAY_LENGTH,
       time: W.time, days: W.days, weather: W.weather, edits: packEdits(), tiles: W.tiles, players: playerList(c), you: saved ? saved.d : null,
       drops: [...drops].map(([did, d]) => [did, d.s, d.p, Math.round((Date.now() - d.t) / 1000)]), bosses: Object.keys(W.bosses) });
     clients.set(c.id, c);
