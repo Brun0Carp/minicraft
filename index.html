@@ -508,6 +508,10 @@
   #chatInput { flex: 1; min-width: 0; margin: 0; }
   body.inv-open #chatLog { display: none; }
   body.touch.net-on #hudClock { left: 12px; transform: none; }
+  /* --- Recarga de la habilidad del arma (§26) --- */
+  #abilityCd { position: absolute; left: 50%; top: calc(50% + 18px); width: 46px; height: 5px; transform: translateX(-50%); display: none; background: rgba(0,0,0,.55); border: 1px solid #000; pointer-events: none; }
+  #abilityCd i { display: block; height: 100%; background: #9aa0aa; }
+  #abilityCd.ready i { background: #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,.8); }
   /* --- Minimapa (§24) --- */
   #minimapContainer { position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); display: none; padding: 2px;
     background: rgba(0,0,0,.6); border: 2px solid #0b0b0b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.35); pointer-events: none; image-rendering: pixelated; }
@@ -529,6 +533,7 @@
 
 <div id="hud">
   <div id="crosshair"></div>
+  <div id="abilityCd"><i></i></div>
   <div id="debug"></div>
   <div id="hudClock"></div>
   <div id="toast"></div>
@@ -814,7 +819,7 @@ const REACH = 5;
 
 // Ajustes globales del jugador (no del mundo); se guardan aparte.
 const SETTINGS_KEY = 'mc2-settings';
-const settings = Object.assign({
+const settings = Object.assign({ brightness: 0, 
   renderDistance: IS_TOUCH ? 3 : 5,   // en chunks
   fov: 75,
   sensitivity: 1.0,                   // ratón
@@ -988,10 +993,12 @@ defBlock(COPPER_BLOCK, 'Bloque de cobre', 'Almacena 9 lingotes de cobre.', T.cop
 // Tablas planas para consultas rápidas en bucles calientes (mallado, física).
 // Se recalculan tras registrar los bloques de la 3.0 (§2b).
 const B_OPAQUE = new Uint8Array(256), B_SOLID = new Uint8Array(256), B_LIGHT = new Uint8Array(256), B_CUBE = new Uint8Array(256);
+const B_WATERY = new Uint8Array(256);   // agua y plantas sumergidas: cuentan como agua para nadar y para dibujarla
 function rebuildBlockTables() {
   for (const b of BLOCKS) if (b) {
     B_OPAQUE[b.id] = b.opaque ? 1 : 0;
     B_SOLID[b.id] = b.solid ? 1 : 0;
+    B_WATERY[b.id] = b.id === WATER || b.watery ? 1 : 0;
     B_LIGHT[b.id] = b.light;
     B_CUBE[b.id] = b.shape === 'cube' ? 1 : 0;
   }
@@ -1344,6 +1351,8 @@ const NEW_TILES = [
   'path_top', 'path_side', 'iron_bars', 'campfire_top', 'campfire_side',
 ];
 for (const n of NEW_TILES) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+// Vida acuática (§26)
+for (const n of ['seagrass', 'kelp', 'kelp_top', 'coral_pink', 'coral_blue', 'coral_yellow', 'coral_block_pink', 'coral_block_blue', 'lily_pad', 'sea_lantern']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
 
 const FARMLAND = 60, WHEAT = 61, CARROTS = 62, POTATOES = 63, BEETROOTS = 64, HAY_BALE = 65, BARREL = 66, BOOKSHELF = 67,
   LANTERN = 68, LAMP_ON = 69, LAMP_OFF = 70,
@@ -1353,7 +1362,8 @@ const FARMLAND = 60, WHEAT = 61, CARROTS = 62, POTATOES = 63, BEETROOTS = 64, HA
   SMOOTH_SANDSTONE = 92, ABYSS_BRICKS = 93, ABYSS_LAMP = 94,
   STRIPPED_OAK = 95, STRIPPED_BIRCH = 96, STRIPPED_SPRUCE = 97, STRIPPED_DARK = 98, CARPET = 99, RED_CARPET = 100,
   CHAIR = 101, DESK = 102, BED = 103, SIGN = 104, PAINTING = 105, TRAPDOOR = 106, ENCHANT_TABLE = 107, BREWING_STAND = 108,
-  SPAWNER = 109, COBWEB = 110, EMERALD_ORE = 111, EMERALD_BLOCK = 112, DIRT_PATH = 113, IRON_BARS = 114, CAMPFIRE = 115, RED_WOOL = 116;
+  SPAWNER = 109, COBWEB = 110, EMERALD_ORE = 111, EMERALD_BLOCK = 112, DIRT_PATH = 113, IRON_BARS = 114, CAMPFIRE = 115, RED_WOOL = 116,
+  SEAGRASS = 117, KELP = 118, CORAL_PINK = 119, CORAL_BLUE = 120, CORAL_YELLOW = 121, CORAL_BLOCK_PINK = 122, CORAL_BLOCK_BLUE = 123, LILY_PAD = 124, SEA_LANTERN = 125;
 
 Object.assign(I, {
   BOW: 350, HAMMER: 351, TRIDENT: 352, DRAGON_SWORD: 353, TOTEM: 354, COMPASS: 355, BUCKET: 356, WATER_BUCKET: 357,
@@ -1454,11 +1464,40 @@ defBlock(CAMPFIRE, 'Hoguera', 'Ilumina y quema a quien la pisa.', { top: T.campf
 // Herramientas que retiran telarañas y heno rápido
 BLOCKS[TALL_GRASS].drop = (r) => (r() < 0.12 ? [[I.WHEAT_SEEDS, 1]] : r() < 0.04 ? [[I.BEET_SEEDS, 1]] : []);
 BLOCKS[GRAVEL].drop = (r) => (r() < 0.1 ? [[I.FLINT, 1]] : [[GRAVEL, 1]]);
+// ---------- Vida acuática: plantas sumergidas (watery = el agua las atraviesa), corales y nenúfares ----------
+const SEA_PLANT = { shape: 'cross', opaque: false, solid: false, hardness: 0, sound: 'grass', watery: true };
+defBlock(SEAGRASS, 'Hierba marina', 'Crece en el fondo de ríos, lagos y mares.', T.seagrass, SEA_PLANT);
+defBlock(KELP, 'Alga marina', 'Forma bosques submarinos. Sécala en un horno para comerla.', { side: T.kelp, top: T.kelp_top }, SEA_PLANT);
+defBlock(CORAL_PINK, 'Coral rosa', 'Brilla tenuemente en los arrecifes.', T.coral_pink, { ...SEA_PLANT, light: 5, sound: 'stone' });
+defBlock(CORAL_BLUE, 'Coral azul', 'Brilla tenuemente en los arrecifes.', T.coral_blue, { ...SEA_PLANT, light: 5, sound: 'stone' });
+defBlock(CORAL_YELLOW, 'Coral amarillo', 'Brilla tenuemente en los arrecifes.', T.coral_yellow, { ...SEA_PLANT, light: 5, sound: 'stone' });
+defBlock(CORAL_BLOCK_PINK, 'Bloque de coral rosa', 'Roca viva de arrecife.', T.coral_block_pink, { hardness: 1.2, tool: 'pickaxe', sound: 'stone' });
+defBlock(CORAL_BLOCK_BLUE, 'Bloque de coral azul', 'Roca viva de arrecife.', T.coral_block_blue, { hardness: 1.2, tool: 'pickaxe', sound: 'stone' });
+defBlock(LILY_PAD, 'Nenúfar', 'Flota sobre el agua y se puede pisar.', T.lily_pad, { shape: 'carpet', opaque: false, hardness: 0, sound: 'grass', tint: 'foliage' });
+defBlock(SEA_LANTERN, 'Linterna marina', 'Luz intensa que también funciona bajo el agua.', T.sea_lantern, { hardness: 0.6, sound: 'glass', light: 15 });
 rebuildBlockTables();
 
 // ---------- Texturas nuevas (se pintan dentro de buildAtlas) ----------
 function paintExtraTiles(h) {
   const { px, get, paint, copy, rnd, clear, planks, bricks, metal, logTop } = h;
+  // Vida acuática
+  const blade = (t, x0, top, col, sway) => { for (let y = 15; y >= top; y--) { const x = Math.round(x0 + Math.sin((15 - y) * 0.5 + x0) * sway), k = 0.75 + (15 - y) / 15 * 0.4; px(t, clamp(x, 0, 15), y, col[0] * k, col[1] * k, col[2] * k, 255); if (y > top + 2) px(t, clamp(x + 1, 0, 15), y, col[0] * k * 0.8, col[1] * k * 0.8, col[2] * k * 0.8, 255); } };
+  clear(T.seagrass); for (const [x0, top] of [[2, 6], [5, 9], [8, 4], [11, 8], [13, 5]]) blade(T.seagrass, x0, top, [50, 150, 70], 1);
+  for (const t of [T.kelp, T.kelp_top]) {
+    clear(t);
+    const top = t === T.kelp_top ? 4 : 0;
+    for (let y = 15; y >= top; y--) { const x = 7 + Math.round(Math.sin(y * 0.8) * 1.5); for (let d = -1; d <= 1; d++) px(t, x + d, y, 62 - d * 14, 112 - d * 16, 40, 255); if (y % 4 === 1) { const s = (y >> 2) % 2 ? 1 : -1; for (let k = 2; k <= 4; k++) px(t, x + s * k, y - (k >> 1), 84, 140, 50, 255); } }
+  }
+  const coral = (t, c) => {
+    clear(t);
+    const grow = (x, y, dx, len) => { for (let k = 0; k < len && y > 0 && x > 0 && x < 15; k++) { const s = 0.7 + (15 - y) / 15 * 0.5; px(t, x, y, c[0] * s, c[1] * s, c[2] * s, 255); px(t, x + 1, y, c[0] * s * 0.78, c[1] * s * 0.78, c[2] * s * 0.78, 255); y--; if (rnd() < 0.45) x += dx; if (k === (len >> 1) && len > 5) grow(x, y, -dx, len >> 1); } };
+    grow(7, 15, 1, 12); grow(4, 15, -1, 8); grow(11, 15, 1, 9);
+  };
+  coral(T.coral_pink, [240, 110, 160]); coral(T.coral_blue, [70, 130, 240]); coral(T.coral_yellow, [240, 205, 70]);
+  const coralBlock = (t, c) => paint(t, (x, y) => { const n = (rnd() - 0.5) * 26, hole = hash2(x >> 1, y >> 1, t) < 0.16 ? -46 : 0, hi = hash2(x, y, t + 9) > 0.9 ? 30 : 0; return [c[0] + n + hole + hi, c[1] + n + hole + hi, c[2] + n + hole + hi]; });
+  coralBlock(T.coral_block_pink, [214, 96, 142]); coralBlock(T.coral_block_blue, [62, 110, 206]);
+  paint(T.lily_pad, (x, y) => { const d = Math.hypot(x - 7.5, y - 7.5), a = Math.atan2(y - 7.5, x - 7.5); if (d > 7 || (Math.abs(a - 0.6) < 0.28 && d > 1.5)) return [0, 0, 0, 0]; const n = (rnd() - 0.5) * 24, vein = Math.abs(Math.sin(a * 4)) < 0.16 ? -26 : 0; return [150 + n + vein, 205 + n + vein, 140 + n + vein, 255]; });
+  paint(T.sea_lantern, (x, y) => { const e = Math.min(x, y, 15 - x, 15 - y), n = (rnd() - 0.5) * 16; if (e === 0) return [70 + n, 120 + n, 130 + n]; const c = hash2(x >> 2, y >> 2, 31) * 40; return [170 + c + n, 225 + c * 0.5 + n, 230 + n]; });
   // Tierra arada y caminos
   paint(T.farmland_dry, (x, y) => { const n = (rnd() - 0.5) * 20, f = y % 4 === 0 ? -30 : 0; return [128 + n + f, 88 + n + f, 58 + n + f]; });
   paint(T.farmland_wet, (x, y) => { const n = (rnd() - 0.5) * 16, f = y % 4 === 0 ? -20 : 0; return [80 + n + f, 52 + n + f, 34 + n + f]; });
@@ -1721,12 +1760,30 @@ class WorldGen {
     }
   }
 
+  // Fondo marino: hierba, bosques de algas, arrecifes de coral y nenúfares (determinista por semilla)
+  placeSeaLife(B, base, h, wx, wz, floor) {
+    if (floor !== SAND && floor !== GRAVEL && floor !== DIRT && floor !== CLAY && floor !== STONE) return;
+    let top = h + 1; while (top + 1 < WY && B[base | ((top + 1) << 8)] === WATER) top++;
+    const depth = top - h, r = hash2(wx, wz, this.seed + 211), zone = hash2(wx >> 3, wz >> 3, this.seed + 77), zone2 = hash2((wx + 5) >> 4, (wz + 3) >> 4, this.seed + 78);
+    const at = (k) => base | ((h + k) << 8);
+    if (depth >= 3 && depth <= 13 && zone < 0.2 && floor !== STONE) {                      // arrecife
+      const fan = [CORAL_PINK, CORAL_BLUE, CORAL_YELLOW][Math.floor(hash2(wx, wz, this.seed + 5) * 3)];
+      if (r < 0.08 && depth >= 4) { const blk = zone < 0.1 ? CORAL_BLOCK_PINK : CORAL_BLOCK_BLUE, n = r < 0.03 ? 2 : 1; for (let k = 1; k <= n; k++) B[at(k)] = blk; B[at(n + 1)] = fan; }
+      else if (r < 0.3) B[at(1)] = fan;
+      else if (r < 0.4) B[at(1)] = SEAGRASS;
+      return;
+    }
+    if (depth >= 5 && zone2 < 0.3 && r < 0.3) { const n = 2 + Math.floor(hash2(wx, wz, this.seed + 6) * Math.min(6, depth - 3)); for (let k = 1; k <= n; k++) B[at(k)] = KELP; return; }   // bosque de algas
+    if (r < (depth <= 4 ? 0.2 : 0.1)) { B[at(1)] = SEAGRASS; return; }
+    if (depth <= 3 && r > 0.955 && top + 1 < WY && B[base | ((top + 1) << 8)] === AIR) B[base | ((top + 1) << 8)] = LILY_PAD;   // aguas tranquilas y orillas
+  }
   placeVegetation(ch, HH, BB) {
     const B = ch.blocks, x0 = ch.cx * 16, z0 = ch.cz * 16;
     for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
       const ci = (lz + 1) * 18 + lx + 1, h = HH[ci], biome = BIOMES[BB[ci]];
-      if (!biome.plants.length || h + 4 >= WY) continue;
       const base = lx | (lz << 4), below = B[base | (h << 8)], at = base | ((h + 1) << 8);
+      if (h < SEA && B[at] === WATER) { this.placeSeaLife(B, base, h, x0 + lx, z0 + lz, below); continue; }
+      if (!biome.plants.length || h + 4 >= WY) continue;
       if (B[at] !== AIR) continue;
       let r = hash2(x0 + lx, z0 + lz, this.seed + 101);
       for (const [id, chance] of biome.plants) {
@@ -2677,12 +2734,12 @@ void main() {
   gl_Position = projectionMatrix * mv;
 }`;
 const LIGHT_FN = `
-uniform float uDay; uniform vec3 uSkyCol; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform float uNV;
+uniform float uDay; uniform vec3 uSkyCol; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform float uNV; uniform vec2 uBr;
 vec3 lightOf(vec2 l) {
   vec3 L = max(uSkyCol * (l.x * uDay), vec3(1.0, 0.82, 0.58) * l.y);
   L = L / (3.0 - 2.0 * L);
   L = max(L, vec3(uNV));
-  return max(L, vec3(0.03));
+  return pow(max(L, vec3(uBr.x)), vec3(uBr.y));    // brillo: suelo de luz y curva (Ajustes → Gráficos)
 }`;
 const TERRAIN_FS = `
 uniform sampler2D map;
@@ -2729,7 +2786,7 @@ atlasTex.flipY = true;
 // Uniformes compartidos por terreno y agua (los actualiza §14 Ambiente)
 const sharedUniforms = {
   map: { value: atlasTex }, uTime: { value: 0 }, uDay: { value: 1 }, uSkyCol: { value: new THREE.Color(1, 1, 1) },
-  fogColor: { value: new THREE.Color(0.6, 0.78, 1) }, fogNear: { value: 40 }, fogFar: { value: 80 }, uNV: { value: 0 },
+  fogColor: { value: new THREE.Color(0.6, 0.78, 1) }, fogNear: { value: 40 }, fogFar: { value: 80 }, uNV: { value: 0 }, uBr: { value: new THREE.Vector2(0.03, 1) },
 };
 const terrainMat = new THREE.ShaderMaterial({ uniforms: sharedUniforms, vertexShader: TERRAIN_VS, fragmentShader: TERRAIN_FS, vertexColors: true });
 const waterTile = tileUV(T.water);
@@ -2857,7 +2914,7 @@ function buildSection(ch, s, nb) {
     const def = BLOCKS[id];
     if (def.shape === 'cube') emitCube(x, y, z, p, id, def, fancy);
     else if (def.shape === 'liquid') emitLiquid(x, y, z, p);
-    else emitCustom(x, y, z, p, id, def);
+    else { emitCustom(x, y, z, p, id, def); if (def.watery) emitLiquid(x, y, z, p); }
   }
   return { solid: solidBuf.toGeometry(), water: waterBuf.toGeometry() };
 }
@@ -2905,11 +2962,11 @@ function emitCube(x, y, z, p, id, def, fancy) {
 
 function emitLiquid(x, y, z, p) {
   const above = pIds[p + PAD2];
-  const topH = above === WATER ? 1 : 0.875;
+  const topH = B_WATERY[above] ? 1 : 0.875;
   const k = (x | (z << 4)) * 3;
   for (let f = 0; f < 6; f++) {
     const fp = p + NOFF[f], n = pIds[fp];
-    if (n === WATER || B_OPAQUE[n] || n === ICE) continue;
+    if (B_WATERY[n] || B_OPAQUE[n] || n === ICE) continue;
     if (f === 2 && n !== AIR) continue;
     const face = FACES[f], sh = f === 3 ? 1 : f === 2 ? 0.6 : 0.82;
     const sk = pSky[fp] / 15, bl = pBlk[fp] / 15;
@@ -3249,7 +3306,7 @@ function bodyContacts(body) {
     for (let y = Math.floor(a[1] + 0.01); y <= Math.floor(a[4] - 0.01); y++)
       for (let z = Math.floor(a[2] + 0.01); z <= Math.floor(a[5] - 0.01); z++) {
         const id = world.get(x, y, z);
-        if (id === WATER) out.water = true;
+        if (B_WATERY[id]) out.water = true;
         else if (id === LADDER) out.ladder = true;
         else if (id === COBWEB) out.web = true;
       }
@@ -4071,7 +4128,7 @@ function lightLevel(x, y, z) {
   const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
   const sky = world.skyAt(xi, yi, zi) / 15 * sharedUniforms.uDay.value, blk = world.blockLightAt(xi, yi, zi) / 15;
   const sc = sharedUniforms.uSkyCol.value;
-  const nv = sharedUniforms.uNV.value, f = (v) => Math.max(0.05, nv, v / (3 - 2 * v));
+  const nv = sharedUniforms.uNV.value, br = sharedUniforms.uBr.value, f = (v) => Math.pow(Math.max(0.05, br.x, nv, v / (3 - 2 * v)), br.y);
   return [f(Math.max(sc.r * sky, blk)), f(Math.max(sc.g * sky, blk * 0.82)), f(Math.max(sc.b * sky, blk * 0.58))];
 }
 
@@ -4290,6 +4347,7 @@ class Mob extends Entity {
       this.physics(dt); this.syncMesh(dt); return;
     }
     const s = this.spec;
+    if (s.ai) return this[s.ai + 'AI'](dt, game, p, dist, dx, dz);     // peces y aves tienen su propia inteligencia (§26)
     let speed = 0, wantDir = this.yaw;
     const survival = game.mode === 'survival' && !p.dead;
     // --- Inteligencia artificial ---
@@ -4584,7 +4642,9 @@ class EntityManager {
   trySpawn(game) {
     const p = game.player, cap = IS_TOUCH ? { p: 7, h: 5 } : { p: 12, h: 8 };
     let np = 0, nh = 0;
-    for (const e of this.list) if (e.kind === 'mob' && !e.persistent) { if (e.spec.hostile) nh++; else np++; }
+    let nw = 0, nb = 0;
+    for (const e of this.list) if (e.kind === 'mob' && !e.persistent) { if (e.spec.ai === 'fish') nw++; else if (e.spec.ai === 'bird') nb++; else if (e.spec.hostile) nh++; else np++; }
+    this.spawnWildlife(p, nw, nb);
     const night = sharedUniforms.uDay.value < 0.35;
     // Pasivos: a la luz del día sobre césped
     if (np < cap.p && Math.random() < 0.3) {
@@ -4592,7 +4652,7 @@ class EntityManager {
       if (s) {
         const list = BIOMES[world.biomeAt(s.x, s.z)].passive, below = world.get(s.x, s.y - 1, s.z);
         if (list.length && (below === GRASS || below === SNOWY_GRASS || (below === SAND && list.includes('chicken')))) {
-          const type = list[Math.floor(Math.random() * list.length)], n = 1 + Math.floor(Math.random() * 3);
+          const type = list[Math.floor(Math.random() * list.length)], n = MOBS[type].solo ? 1 : 1 + Math.floor(Math.random() * 3);
           for (let i = 0; i < n; i++) this.spawnMob(type, s.x + 0.5 + (Math.random() - 0.5) * 2, s.y + 0.1, s.z + 0.5 + (Math.random() - 0.5) * 2);
         }
       }
@@ -5088,6 +5148,452 @@ class Boss extends Mob {
     }
   }
   toJSON() { return null; }
+}
+
+/* ==========================================================================
+   §26 VIDA SALVAJE: MAR, TIERRA Y AIRE · ARMAS DE JEFE CON HABILIDAD
+   --------------------------------------------------------------------------
+   · Peces (sardinas en cardumen, payasos, globos), calamares, tortugas,
+     delfines y tiburones viven en ríos, lagos y mares (ai: 'fish').
+   · Aves (pájaros, gaviotas, águilas) vuelan, planean y se posan (ai: 'bird').
+   · Conejos, ciervos, zorros, ranas, patos y osos amplían la fauna terrestre
+     con la inteligencia normal de las criaturas.
+   · Casi todos sueltan materiales con receta propia (ver «Recetas» abajo).
+   · Las tres armas de jefe tienen una habilidad que se lanza con Usar.
+   ► AÑADIR UNA CRIATURA: define su entrada en MOBS (con model) y añádela a
+     una lista de BIOMES[…].passive / hostile, a SEA_LIFE o a BIRDS.
+   ========================================================================== */
+Object.assign(I, {
+  RAW_FISH: 450, COOKED_FISH: 451, CLOWNFISH: 452, PUFFERFISH: 453, INK_SAC: 454, SCUTE: 455, SHARK_TOOTH: 456,
+  RABBIT: 457, COOKED_RABBIT: 458, RABBIT_HIDE: 459, RABBIT_FOOT: 460, VENISON: 461, COOKED_VENISON: 462, ANTLER: 463,
+  FOX_FUR: 464, BEAR_CLAW: 465, FROG_LEG: 466, COOKED_FROG: 467, DUCK: 468, COOKED_DUCK: 469, EAGLE_FEATHER: 470,
+  DRIED_KELP: 471, SUSHI: 472, TURTLE_HELMET: 473, FEATHER_BOOTS: 474, FUR_COAT: 475, TOOTH_DAGGER: 476, ANTLER_SPEAR: 477, BEAR_CLAWS: 478, STEW: 479,
+});
+// ---------- Objetos ----------
+defItem(I.RAW_FISH, 'Pescado crudo', 'Mejor cocinarlo en un horno.', { food: { hunger: 2, sat: 0.4 } });
+defItem(I.COOKED_FISH, 'Pescado asado', 'Restaura 3 de hambre.', { food: { hunger: 6, sat: 7 } });
+defItem(I.CLOWNFISH, 'Pez payaso', 'Un bocado pequeño. También sirve para hacer sushi.', { food: { hunger: 1, sat: 0.2 } });
+defItem(I.PUFFERFISH, 'Pez globo', 'Venenoso: no se come. En un soporte de pociones da respiración acuática.');
+defItem(I.INK_SAC, 'Saco de tinta', 'En un soporte de pociones da visión nocturna.');
+defItem(I.SCUTE, 'Placa de tortuga', 'Con cinco se fabrica un casco de tortuga.');
+defItem(I.SHARK_TOOTH, 'Diente de tiburón', 'Afiladísimo. Sirve para fabricar una daga.');
+defItem(I.RABBIT, 'Conejo crudo', 'Mejor cocinarlo.', { food: { hunger: 3, sat: 1.8 } });
+defItem(I.COOKED_RABBIT, 'Conejo asado', 'Restaura 2,5 de hambre.', { food: { hunger: 5, sat: 6 } });
+defItem(I.RABBIT_HIDE, 'Piel de conejo', 'Cuatro pieles forman un cuero.');
+defItem(I.RABBIT_FOOT, 'Pata de conejo', 'Trae suerte. En un soporte de pociones da velocidad.');
+defItem(I.VENISON, 'Venado crudo', 'Mejor cocinarlo.', { food: { hunger: 3, sat: 1.8 } });
+defItem(I.COOKED_VENISON, 'Venado asado', 'Restaura 4,5 de hambre.', { food: { hunger: 9, sat: 13 } });
+defItem(I.ANTLER, 'Asta de ciervo', 'Dura y puntiaguda. Sirve para fabricar una lanza.');
+defItem(I.FOX_FUR, 'Piel de zorro', 'Suave y ligera. Con ocho se cose un abrigo.');
+defItem(I.BEAR_CLAW, 'Garra de oso', 'Con tres se fabrican unas garras de combate.');
+defItem(I.FROG_LEG, 'Anca de rana', 'Mejor cocinarla.', { food: { hunger: 1, sat: 0.6 } });
+defItem(I.COOKED_FROG, 'Anca de rana asada', 'Restaura 2 de hambre.', { food: { hunger: 4, sat: 5 } });
+defItem(I.DUCK, 'Pato crudo', 'Mejor cocinarlo.', { food: { hunger: 2, sat: 1.2 } });
+defItem(I.COOKED_DUCK, 'Pato asado', 'Restaura 3,5 de hambre.', { food: { hunger: 7, sat: 9 } });
+defItem(I.EAGLE_FEATHER, 'Pluma de águila', 'Larga y resistente. Con cuatro se hacen unas botas emplumadas.');
+defItem(I.DRIED_KELP, 'Alga seca', 'Tentempié rápido. Envuelve el sushi.', { food: { hunger: 1, sat: 0.6 } });
+defItem(I.SUSHI, 'Sushi', 'Restaura 3,5 de hambre.', { food: { hunger: 7, sat: 9 } });
+defItem(I.STEW, 'Estofado de conejo', 'Restaura 6 de hambre.', { stack: 16, food: { hunger: 12, sat: 14 } });
+ARMOR_STATS.turtle = { name: 'tortuga', pts: [2, 0, 0, 0], dur: 25, color: [70, 160, 90] };
+ARMOR_STATS.feather = { name: 'plumas', pts: [0, 0, 0, 2], dur: 12, color: [236, 232, 214] };
+ARMOR_STATS.fur = { name: 'piel', pts: [0, 4, 0, 0], dur: 10, color: [214, 122, 50] };
+defItem(I.TURTLE_HELMET, 'Casco de tortuga', 'Mientras lo llevas puesto respiras bajo el agua.', { stack: 1, armor: { mat: 'turtle', slot: 'helmet', idx: 0, pts: 2, dur: 275 }, wearEffect: 'water' });
+defItem(I.FEATHER_BOOTS, 'Botas emplumadas', 'Con ellas puestas no recibes daño por caída.', { stack: 1, armor: { mat: 'feather', slot: 'boots', idx: 3, pts: 2, dur: 160 }, featherFall: true });
+defItem(I.FUR_COAT, 'Abrigo de piel de zorro', 'Ligero: caminas y corres un 15 % más rápido.', { stack: 1, armor: { mat: 'fur', slot: 'chest', idx: 1, pts: 4, dur: 160 }, speedBonus: 0.15 });
+defItem(I.TOOTH_DAGGER, 'Daga de dientes', 'Ataca muy rápido.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 6, dur: 350, fast: 0.55 } });
+defItem(I.ANTLER_SPEAR, 'Lanza de asta', 'Empuja lejos a los enemigos.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 7, dur: 300, knock: 1.4 } });
+defItem(I.BEAR_CLAWS, 'Garras de oso', 'Golpes fuertes y rápidos.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 8, dur: 420, fast: 0.7 } });
+// Armas de jefe: habilidad al pulsar Usar (cd = segundos de espera)
+ITEMS[I.HAMMER].ability = { id: 'quake', name: 'Golpe sísmico', cd: 7 };
+ITEMS[I.HAMMER].desc = 'Arma del Gólem ancestral. Golpes demoledores. Usar: golpe sísmico que daña y lanza por los aires a todo lo que te rodea.';
+ITEMS[I.TRIDENT].ability = { id: 'beam', name: 'Rayo abisal', cd: 5 };
+ITEMS[I.TRIDENT].desc = 'Arma del Guardián. Respiras bajo el agua al sostenerlo. Usar: rayo que atraviesa a los enemigos en línea recta; en el agua te impulsa.';
+ITEMS[I.DRAGON_SWORD].ability = { id: 'breath', name: 'Aliento de dragón', cd: 6 };
+ITEMS[I.DRAGON_SWORD].desc = 'Forjada con fuego de dragón: prende fuego al golpear. Usar: llamarada en cono que quema a los enemigos de delante.';
+
+// ---------- Recetas ----------
+Object.assign(SMELT, { [I.RAW_FISH]: [I.COOKED_FISH, 0.35], [I.RABBIT]: [I.COOKED_RABBIT, 0.35], [I.VENISON]: [I.COOKED_VENISON, 0.35],
+  [I.FROG_LEG]: [I.COOKED_FROG, 0.2], [I.DUCK]: [I.COOKED_DUCK, 0.35], [KELP]: [I.DRIED_KELP, 0.1] });
+Object.assign(BREW_INGREDIENTS, { [I.PUFFERFISH]: 'water', [I.INK_SAC]: 'night', [I.RABBIT_FOOT]: 'speed', [I.SCUTE]: 'resist' });
+shapeless(I.LEATHER, 1, [I.RABBIT_HIDE, I.RABBIT_HIDE, I.RABBIT_HIDE, I.RABBIT_HIDE], 'Materiales');
+shapeless(I.SUSHI, 2, [I.DRIED_KELP, I.RAW_FISH], 'Comida');
+shapeless(I.SUSHI, 2, [I.DRIED_KELP, I.CLOWNFISH], 'Comida');
+shapeless(I.STEW, 1, [I.COOKED_RABBIT, I.CARROT, I.POTATO], 'Comida');
+shapeless(SEA_LANTERN, 2, [CORAL_PINK, CORAL_BLUE, CORAL_YELLOW, TORCH], 'Iluminación');
+shaped(I.TURTLE_HELMET, 1, ['###', '# #'], { '#': I.SCUTE }, 'Armaduras');
+shaped(I.FEATHER_BOOTS, 1, ['f f', 'fbf'], { f: I.EAGLE_FEATHER, b: armorId('leather', 'boots') }, 'Armaduras');
+shaped(I.FUR_COAT, 1, ['# #', '###', '###'], { '#': I.FOX_FUR }, 'Armaduras');
+shaped(I.TOOTH_DAGGER, 1, ['t', 't', 's'], { t: I.SHARK_TOOTH, s: I.STICK }, 'Combate');
+shaped(I.ANTLER_SPEAR, 1, ['a', 's', 's'], { a: I.ANTLER, s: I.STICK }, 'Combate');
+shaped(I.BEAR_CLAWS, 1, ['ccc', ' l '], { c: I.BEAR_CLAW, l: I.LEATHER }, 'Combate');
+
+// ---------- Iconos ----------
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const fish = (c1, c2, stripe) => P((p) => { p.poly([[2, 8], [6, 4], [11, 5], [13, 8], [11, 11], [6, 12]], (x, y) => (stripe && (x === 6 || x === 9) ? stripe : y < 8 ? c1 : c2)); p.poly([[12, 8], [15, 4], [15, 12]], c2); p.set(4, 7, [20, 20, 20]); });
+  const meat = (c1, c2) => P((p) => { p.poly([[3, 6], [8, 3], [13, 6], [12, 12], [6, 13], [3, 10]], (x, y) => ((x + y) % 5 === 0 ? c2 : c1)); p.line([[11, 12], [14, 15]], 1.5, [235, 230, 215]); });
+  Object.assign(ICON_OVERRIDE, {
+    [I.RAW_FISH]: fish([150, 170, 190], [110, 130, 155]), [I.COOKED_FISH]: fish([196, 150, 96], [150, 104, 60]),
+    [I.CLOWNFISH]: fish([245, 130, 40], [220, 100, 30], [250, 250, 250]),
+    [I.PUFFERFISH]: P((p) => { p.disk(8, 8, 5, (x, y) => (y > 9 ? [245, 235, 200] : [225, 190, 60])); for (const [x, y] of [[8, 1], [2, 5], [14, 5], [1, 10], [15, 10], [4, 14], [12, 14]]) p.set(x, y, [150, 110, 30]); p.set(6, 7, [20, 20, 20]); p.set(10, 7, [20, 20, 20]); }),
+    [I.INK_SAC]: P((p) => { p.disk(8, 9.5, 4.6, (x, y) => (x < 7 && y < 9 ? [70, 70, 86] : [28, 28, 38])); p.poly([[6, 3], [10, 3], [9, 6], [7, 6]], [44, 44, 56]); }),
+    [I.SCUTE]: P((p) => p.poly([[8, 2], [13, 5], [13, 11], [8, 14], [3, 11], [3, 5]], (x, y) => (Math.abs(x - 8) + Math.abs(y - 8) < 3 ? [130, 200, 120] : (x + y) % 4 === 0 ? [40, 110, 60] : [70, 160, 90]))),
+    [I.SHARK_TOOTH]: P((p) => p.poly([[4, 3], [12, 3], [8, 14]], (x, y) => (x < 8 ? [250, 250, 245] : [205, 205, 196]))),
+    [I.RABBIT]: meat([226, 150, 140], [240, 190, 180]), [I.COOKED_RABBIT]: meat([180, 120, 70], [140, 86, 46]),
+    [I.VENISON]: meat([170, 50, 56], [210, 90, 90]), [I.COOKED_VENISON]: meat([128, 76, 44], [96, 52, 28]),
+    [I.DUCK]: meat([236, 190, 170], [250, 220, 200]), [I.COOKED_DUCK]: meat([200, 140, 70], [160, 100, 44]),
+    [I.FROG_LEG]: P((p) => { p.line([[3, 4], [8, 9]], 3, [150, 190, 110]); p.line([[8, 9], [13, 13]], 1.8, [120, 160, 90]); }),
+    [I.COOKED_FROG]: P((p) => { p.line([[3, 4], [8, 9]], 3, [190, 140, 80]); p.line([[8, 9], [13, 13]], 1.8, [150, 100, 54]); }),
+    [I.RABBIT_HIDE]: P((p) => p.poly([[3, 3], [13, 3], [14, 8], [12, 13], [4, 13], [2, 8]], (x, y) => ((x * 3 + y) % 5 === 0 ? [150, 112, 70] : [196, 160, 112]))),
+    [I.FOX_FUR]: P((p) => p.poly([[3, 3], [13, 3], [14, 8], [12, 13], [4, 13], [2, 8]], (x, y) => (y > 10 ? [245, 240, 230] : (x * 3 + y) % 5 === 0 ? [180, 90, 30] : [222, 124, 48]))),
+    [I.RABBIT_FOOT]: P((p) => { p.line([[5, 3], [8, 10]], 3, [214, 190, 150]); p.disk(9.5, 12, 2.6, [236, 220, 190]); }),
+    [I.ANTLER]: P((p) => { const c = [214, 196, 160]; p.line([[4, 14], [8, 6]], 1.8, c); p.line([[8, 6], [12, 2]], 1.4, c); p.line([[6.5, 9], [3, 5]], 1.3, c); p.line([[8, 6], [13, 7]], 1.3, c); }),
+    [I.BEAR_CLAW]: P((p) => { p.poly([[4, 3], [9, 3], [12, 8], [10, 14], [8, 9]], (x, y) => (y < 6 ? [90, 70, 56] : [236, 230, 214])); }),
+    [I.EAGLE_FEATHER]: P((p) => { p.line([[3, 14], [13, 3]], 1, [120, 90, 60]); p.poly([[5, 11], [9, 3], [14, 2], [12, 8], [7, 13]], (x, y) => ((x + y) % 4 === 0 ? [110, 80, 50] : y < 6 ? [246, 244, 236] : [150, 112, 70])); }),
+    [I.DRIED_KELP]: P((p) => p.poly([[3, 4], [13, 4], [13, 12], [3, 12]], (x, y) => ((x + y * 2) % 5 === 0 ? [30, 60, 30] : [52, 88, 44]))),
+    [I.SUSHI]: P((p) => { p.poly([[3, 5], [13, 5], [13, 13], [3, 13]], [40, 70, 40]); p.poly([[4.5, 4], [11.5, 4], [11.5, 9], [4.5, 9]], [250, 250, 244]); p.poly([[6, 4.5], [10, 4.5], [10, 7.5], [6, 7.5]], [240, 130, 90]); }),
+    [I.STEW]: P((p) => { p.poly([[2, 8], [14, 8], [12, 13], [4, 13]], [130, 92, 54]); p.poly([[3, 7], [13, 7], [13, 9], [3, 9]], (x) => (x % 4 === 0 ? [240, 150, 40] : [170, 96, 50])); }),
+    [I.TOOTH_DAGGER]: P((p) => { p.line([[2.5, 13.5], [5.5, 10.5]], 1.8, [110, 80, 50]); p.line([[6, 10], [12.5, 3.5]], 2.2, (x, y) => ((x + y) % 2 ? [250, 250, 245] : [200, 200, 190])); p.line([[4, 9], [7, 12]], 1.4, [70, 50, 34]); }),
+    [I.ANTLER_SPEAR]: P((p) => { p.line([[2, 14], [10, 6]], 1.4, [120, 90, 56]); p.poly([[9, 7], [10, 3], [14, 1.5], [12.5, 6]], [224, 208, 172]); }),
+    [I.BEAR_CLAWS]: P((p) => { p.poly([[3, 9], [13, 9], [12, 14], [4, 14]], [112, 76, 46]); for (const x of [4.5, 8, 11.5]) p.poly([[x - 1.2, 9], [x + 1.2, 9], [x + 0.4, 2]], [240, 236, 222]); }),
+  });
+}
+
+// ---------- Modelos ----------
+// Pez genérico: cuerpo, cola articulada y aletas. o: { L, H, W, c1 cuerpo, c2 vientre, fin, stripes, eye }
+MOB_MODELS.fish = (mat, o) => {
+  const root = new THREE.Group(), y = o.H / 2 + 1, K = rgb(14, 14, 16);
+  const boxes = [[o.W, o.H, o.L, 0, 0, 0, o.c1], [o.W * 0.72, o.H * 0.5, o.L * 0.96, 0, -o.H * 0.3, 0, o.c2], [o.W * 0.8, o.H * 0.8, o.L * 0.3, 0, 0, o.L * 0.56, o.c1],
+    [0.6, o.H * 0.5, o.L * 0.4, 0, o.H * 0.66, -o.L * 0.05, o.fin],
+    [0.5, 1, 0.3, -o.W / 2 - 0.05, o.H * 0.12, o.L * 0.5, K], [0.5, 1, 0.3, o.W / 2 + 0.05, o.H * 0.12, o.L * 0.5, K], ...(o.extra || [])];
+  for (const z of o.stripes || []) boxes.push([o.W + 0.2, o.H + 0.2, 0.9, 0, 0, z * o.L, rgb(248, 248, 248)]);
+  const body = part(root, mat, 0, y, 0, boxes);
+  const tail = part(root, mat, 0, y, -o.L / 2, [[o.W * 0.5, o.H * 0.6, o.L * 0.24, 0, 0, -o.L * 0.1, o.c1], [0.5, o.H * 1.1, o.L * 0.24, 0, 0, -o.L * 0.32, o.fin]]);
+  const fins = [part(root, mat, -o.W / 2, y - o.H * 0.2, o.L * 0.2, [[o.W * 0.7, 0.4, o.L * 0.22, -o.W * 0.35, 0, 0, o.fin]]), part(root, mat, o.W / 2, y - o.H * 0.2, o.L * 0.2, [[o.W * 0.7, 0.4, o.L * 0.22, o.W * 0.35, 0, 0, o.fin]])];
+  const head = new THREE.Group(); root.add(head);
+  return { root, body, head, legs: [], arms: [], tail, fins,
+    anim(e, dt) { tail.rotation.y = Math.sin(e.walk * 2.4 + e.id) * 0.55; fins[0].rotation.z = 0.3 + Math.sin(e.animT * 3) * 0.2; fins[1].rotation.z = -fins[0].rotation.z; root.rotation.x = -(e.pitchV || 0); } };
+};
+MOB_MODELS.squid = (mat) => {
+  const root = new THREE.Group(), C = rgb(52, 70, 104), D = rgb(34, 46, 74), K = rgb(240, 240, 240);
+  const body = part(root, mat, 0, 13, 0, [[9, 11, 9, 0, 0, 0, C], [7, 3, 7, 0, 6.5, 0, D], [10, 2, 10, 0, -5, 0, D],
+    [2.4, 2.4, 0.3, -2.4, -2, 4.6, K], [1.2, 1.4, 0.3, -2.4, -2, 4.8, rgb(10, 10, 12)], [2.4, 2.4, 0.3, 2.4, -2, 4.6, K], [1.2, 1.4, 0.3, 2.4, -2, 4.8, rgb(10, 10, 12)]]);
+  const legs = [];
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; legs.push(part(root, mat, Math.cos(a) * 3.2, 7.5, Math.sin(a) * 3.2, [[1.6, 8, 1.6, 0, -4, 0, i % 2 ? C : D], [1.2, 3, 1.2, 0, -8.5, 0, D]])); }
+  const head = new THREE.Group(); root.add(head);
+  return { root, body, head, legs: [], arms: [], tent: legs,
+    anim(e) { const k = 0.25 + Math.sin(e.animT * 2.2 + e.id) * 0.22; legs.forEach((l, i) => { const a = i / 8 * Math.PI * 2; l.rotation.x = Math.sin(a) * k; l.rotation.z = -Math.cos(a) * k; }); root.rotation.x = -(e.pitchV || 0) + 1.2 * Math.min(1, Math.hypot(e.vel.x, e.vel.z) / 2); } };
+};
+MOB_MODELS.turtle = (mat) => {
+  const root = new THREE.Group(), S = rgb(70, 140, 80), SD = rgb(44, 100, 58), SK = rgb(150, 190, 120), B = rgb(220, 214, 160);
+  const body = part(root, mat, 0, 4, 0, [[14, 5, 16, 0, 0, 0, S], [11, 2, 13, 0, 3, 0, SD], [4, 1, 4, 0, 4.2, 0, rgb(110, 180, 110)], [12, 1.5, 14, 0, -3, 0, B],
+    [3, 0.6, 3, -3.5, 3.9, 3.5, S], [3, 0.6, 3, 3.5, 3.9, 3.5, S], [3, 0.6, 3, -3.5, 3.9, -3.5, S], [3, 0.6, 3, 3.5, 3.9, -3.5, S]]);
+  const head = part(root, mat, 0, 4, 8, [[5, 4, 5, 0, 0, 2.5, SK], [1, 1, 0.3, -1.4, 0.8, 5.05, rgb(10, 10, 10)], [1, 1, 0.3, 1.4, 0.8, 5.05, rgb(10, 10, 10)], [3, 1, 1.4, 0, -1, 5.2, rgb(120, 160, 96)]]);
+  const fl = (sx, sz, len) => part(root, mat, sx * 6.5, 3, sz, [[len, 1.2, 4, sx * len / 2, 0, 0, SK], [len * 0.5, 1.3, 3, sx * len * 0.9, 0, -0.6, rgb(120, 160, 96)]]);
+  const fins = [fl(-1, 5, 8), fl(1, 5, 8), fl(-1, -6, 4.5), fl(1, -6, 4.5)];
+  return { root, body, head, legs: [], arms: [], fins,
+    anim(e) { const s = Math.sin(e.walk * 1.4 + e.id) * 0.5; fins[0].rotation.z = s; fins[1].rotation.z = -s; fins[0].rotation.y = s * 0.5; fins[1].rotation.y = -s * 0.5; fins[2].rotation.y = -s * 0.5; fins[3].rotation.y = s * 0.5; root.rotation.x = -(e.pitchV || 0); } };
+};
+// Ave: cuerpo, cabeza con pico, alas (brazos) y cola. o: { s tamaño, body, wing, head, beak, tailC }
+MOB_MODELS.bird = (mat, o) => {
+  const root = new THREE.Group(), s = o.s, K = rgb(12, 12, 12);
+  const body = part(root, mat, 0, 3 * s + 2, 0, [[3 * s, 3 * s, 5 * s, 0, 0, 0, o.body], [2.4 * s, 1, 4 * s, 0, -1.4 * s, 0.3 * s, o.belly || o.body], [2 * s, 0.8 * s, 3 * s, 0, 0.6 * s, -3.6 * s, o.tailC || o.wing]]);
+  const head = part(root, mat, 0, 4.4 * s + 2, 2.4 * s, [[2.6 * s, 2.6 * s, 2.6 * s, 0, 0.6 * s, 0.9 * s, o.head || o.body], [1.1 * s, 0.9 * s, 1.8 * s, 0, 0.2 * s, 2.9 * s, o.beak],
+    [0.3, 0.9, 0.9, -1.32 * s, 0.9 * s, 1.3 * s, K], [0.3, 0.9, 0.9, 1.32 * s, 0.9 * s, 1.3 * s, K]]);
+  const wing = (sx) => part(root, mat, sx * 1.5 * s, 4.2 * s + 2, 0, [[4.4 * s, 0.7, 3.6 * s, sx * 2.2 * s, 0, 0, o.wing], [3.4 * s, 0.6, 2.6 * s, sx * 5.8 * s, 0, -0.4 * s, o.tip || o.wing]]);
+  const arms = [wing(-1), wing(1)];
+  const leg = (sx) => part(root, mat, sx * 0.9 * s, 1.6 * s + 2, 0, [[0.6, 1.6 * s + 2, 0.6, 0, -(1.6 * s + 2) / 2, 0, o.beak]]);
+  return { root, body, head, legs: [leg(-1), leg(1)], arms, wings: true };
+};
+
+// ---------- Criaturas ----------
+const FISH_CAUGHT = 'Te mordió un tiburón';
+Object.assign(MOBS, {
+  // --- Agua ---
+  fish: { name: 'Sardina', hp: 3, w: 0.4, h: 0.3, speed: 2.4, xp: 1, sound: 'pop', ai: 'fish', school: true, shy: true, drops: [[I.RAW_FISH, 1, 1]],
+    model: (m) => { const t = Math.floor(Math.random() * 3), c = [[rgb(150, 176, 200), rgb(220, 228, 236)], [rgb(120, 160, 120), rgb(214, 220, 190)], [rgb(190, 150, 110), rgb(236, 220, 196)]][t];
+      return MOB_MODELS.fish(m, { L: 7, H: 3, W: 2, c1: c[0], c2: c[1], fin: rgb(90, 110, 130) }); } },
+  clownfish: { name: 'Pez payaso', hp: 3, w: 0.35, h: 0.3, speed: 2, xp: 1, sound: 'pop', ai: 'fish', shy: true, reef: true, drops: [[I.CLOWNFISH, 1, 1]],
+    model: (m) => MOB_MODELS.fish(m, { L: 6, H: 3.4, W: 2, c1: rgb(245, 130, 40), c2: rgb(250, 160, 70), fin: rgb(30, 30, 30), stripes: [-0.28, 0.02, 0.3] }) },
+  puffer: { name: 'Pez globo', hp: 4, w: 0.45, h: 0.45, speed: 1.2, xp: 2, sound: 'pop', ai: 'fish', puffer: true, drops: [[I.PUFFERFISH, 1, 1]],
+    model: (m) => { const Y = rgb(226, 190, 60), W = rgb(246, 238, 206), S = rgb(150, 110, 30);
+      return MOB_MODELS.fish(m, { L: 5, H: 4.4, W: 4.4, c1: Y, c2: W, fin: rgb(200, 160, 50),
+        extra: [[0.5, 1.4, 0.5, 0, 2.8, 1, S], [0.5, 1.4, 0.5, 0, 2.8, -1.2, S], [1.4, 0.5, 0.5, 2.8, 0.6, 0, S], [1.4, 0.5, 0.5, -2.8, 0.6, 0, S], [0.5, 1.4, 0.5, 1.2, -2.8, 0, S], [0.5, 1.4, 0.5, -1.2, -2.8, 0.6, S]] }); } },
+  squid: { name: 'Calamar', hp: 10, w: 0.7, h: 0.9, speed: 1.6, xp: 2, sound: 'pop', ai: 'fish', deep: true, ink: true, drops: [[I.INK_SAC, 1, 3]], model: (m) => MOB_MODELS.squid(m) },
+  turtle: { name: 'Tortuga marina', hp: 20, w: 1, h: 0.5, speed: 1.4, xp: 3, sound: 'pop', ai: 'fish', calm: true, drops: [[I.SCUTE, 1, 2]], model: (m) => MOB_MODELS.turtle(m) },
+  dolphin: { name: 'Delfín', hp: 14, w: 0.8, h: 0.6, speed: 4.2, xp: 3, sound: 'pop', ai: 'fish', deep: true, friendly: true, school: true, drops: [[I.RAW_FISH, 0, 2]],
+    model: (m) => { const G = rgb(120, 140, 160), W = rgb(226, 232, 238);
+      return MOB_MODELS.fish(m, { L: 20, H: 6, W: 5.5, c1: G, c2: W, fin: rgb(96, 114, 134), extra: [[2.6, 2.4, 5, 0, -0.6, 12.5, G], [2.2, 1, 4, 0, -1.6, 12.8, W]] }); } },
+  shark: { name: 'Tiburón', hp: 30, w: 1.1, h: 0.8, speed: 4, xp: 8, sound: 'guardian', ai: 'fish', deep: true, hostile: true, melee: 5, drops: [[I.SHARK_TOOTH, 1, 3], [I.RAW_FISH, 1, 2]],
+    model: (m) => { const G = rgb(96, 110, 124), W = rgb(232, 234, 236), T = rgb(250, 250, 250);
+      return MOB_MODELS.fish(m, { L: 28, H: 8, W: 8, c1: G, c2: W, fin: rgb(76, 88, 100),
+        extra: [[1, 6, 6, 0, 6.6, 1, rgb(76, 88, 100)], [6, 1.4, 1, 0, -2.6, 16.4, rgb(120, 30, 34)], [0.8, 1, 0.6, -2, -1.9, 16.5, T], [0.8, 1, 0.6, 0, -1.9, 16.5, T], [0.8, 1, 0.6, 2, -1.9, 16.5, T]] }); } },
+  // --- Tierra ---
+  rabbit: { name: 'Conejo', hp: 4, w: 0.4, h: 0.5, speed: 2.6, xp: 1, sound: 'pop', drops: [[I.RABBIT, 1, 1], [I.RABBIT_HIDE, 0, 1], [I.RABBIT_FOOT, 0, 1]],
+    model: (m) => { const t = Math.floor(Math.random() * 3), C = [rgb(170, 130, 90), rgb(236, 232, 224), rgb(110, 104, 100)][t], D = [rgb(140, 104, 70), rgb(214, 208, 198), rgb(84, 80, 78)][t], P = rgb(236, 170, 170);
+      return MOB_MODELS.quadruped(m, { legH: 3, legW: 2, bodyW: 5, bodyH: 5, bodyL: 8, headW: 4, headH: 4, headL: 4, headY: 1, body: C, leg: D, head: C,
+        bodyExtra: [[4.4, 3, 2, 0, -1.4, 3.4, rgb(244, 240, 232)]],
+        headExtra: [[1.2, 5, 1, -1.1, 4.4, 1.2, C], [0.6, 3.6, 0.3, -1.1, 4.4, 1.75, P], [1.2, 5, 1, 1.1, 4.4, 1.2, C], [0.6, 3.6, 0.3, 1.1, 4.4, 1.75, P],
+          ...eyesHD(4, 1.2, 1.3, rgb(20, 14, 12), rgb(20, 14, 12), { w: 1, h: 1, pw: 0.5, ph: 0.5, po: 0 }), [1.2, 0.8, 0.4, 0, 0, 4.2, P]],
+        tail: [[2.4, 2.4, 2, 0, -0.6, -0.8, rgb(246, 244, 238)]] }); } },
+  deer: { name: 'Ciervo', hp: 12, w: 0.8, h: 1.5, speed: 2.4, xp: 3, sound: 'sheep', drops: [[I.VENISON, 1, 2], [I.LEATHER, 0, 1], [I.ANTLER, 0, 1]],
+    model: (m) => { const C = rgb(172, 116, 66), D = rgb(140, 92, 50), W = rgb(240, 232, 214), A = rgb(214, 196, 160), K = rgb(16, 12, 10);
+      return MOB_MODELS.quadruped(m, { legH: 13, legW: 3, bodyW: 9, bodyH: 9, bodyL: 17, headW: 6, headH: 6, headL: 8, headY: 6, grazes: true, body: C, leg: D, head: C, hoof: rgb(48, 38, 30),
+        bodyExtra: [[9.2, 3, 17.2, 0, -3.2, 0, W], [1.4, 1.4, 0.2, -2.4, 2.6, -8.6, W], [1.4, 1.4, 0.2, 2, 1.2, -8.6, W], [5, 8, 5, 0, 5.5, 7.5, C]],
+        headExtra: [[3.4, 3, 2, 0, 4.4, 8.6, D], [1.6, 1.2, 0.3, 0, 5, 9.7, K], ...eyesHD(8, 7.4, 2.2, W, K, { w: 1.4, h: 1.4, pw: 0.8, ph: 1 }).map((b) => (b[5] -= 2.4, b)),
+          [2.4, 1.2, 1, -3.6, 9, 1.6, D], [2.4, 1.2, 1, 3.6, 9, 1.6, D],
+          [1, 6, 1, -2, 12, 1.4, A], [3.4, 1, 1, -3.6, 13, 1.4, A], [1, 3, 1, -5, 14.6, 1.4, A], [1, 2.4, 1, -2, 16, 1.4, A],
+          [1, 6, 1, 2, 12, 1.4, A], [3.4, 1, 1, 3.6, 13, 1.4, A], [1, 3, 1, 5, 14.6, 1.4, A], [1, 2.4, 1, 2, 16, 1.4, A]],
+        tail: [[2.4, 3.4, 1.4, 0, -1.2, -0.4, W]] }); } },
+  fox: { name: 'Zorro', hp: 8, w: 0.6, h: 0.7, speed: 2.8, xp: 2, sound: 'pop', solo: true, drops: [[I.FOX_FUR, 1, 2]],
+    model: (m) => { const O = rgb(222, 124, 48), D = rgb(180, 92, 30), W = rgb(246, 242, 232), K = rgb(30, 22, 20);
+      return MOB_MODELS.quadruped(m, { legH: 5, legW: 2, bodyW: 6, bodyH: 6, bodyL: 12, headW: 7, headH: 5, headL: 5, headY: 0, body: O, leg: K, head: O,
+        bodyExtra: [[5.6, 2, 9, 0, -2.2, 1, W]],
+        headExtra: [[3.4, 2.4, 3, 0, -1, 6.2, W], [1.2, 1, 0.5, 0, -0.2, 7.8, K], [2, 2.6, 1, -2.4, 3.6, 1.6, D], [1, 1.4, 0.3, -2.4, 3.4, 2.15, K], [2, 2.6, 1, 2.4, 3.6, 1.6, D], [1, 1.4, 0.3, 2.4, 3.4, 2.15, K],
+          ...eyesHD(5, 1, 2.1, rgb(240, 200, 80), K, { w: 1.3, h: 1.1, pw: 0.6, ph: 1, po: 0 })],
+        tail: [[3.4, 3.4, 7, 0, -0.6, -3.4, O], [3, 3, 3, 0, -0.8, -8, W]] }); } },
+  frog: { name: 'Rana', hp: 3, w: 0.35, h: 0.3, speed: 1.6, xp: 1, sound: 'pop', drops: [[I.FROG_LEG, 1, 2]],
+    model: (m) => { const G = rgb(96, 160, 70), D = rgb(66, 120, 50), Y = rgb(226, 220, 150), K = rgb(14, 14, 12);
+      return MOB_MODELS.quadruped(m, { legH: 1.6, legW: 1.6, bodyW: 5, bodyH: 3, bodyL: 5, headW: 5, headH: 2.6, headL: 2.4, headY: -0.4, body: G, leg: D, head: G,
+        bodyExtra: [[4.6, 1, 4.6, 0, -1.4, 0, Y], [1.4, 1.4, 1.4, -1, 1.4, -1, D], [1.2, 1.2, 1.2, 1.2, 1.4, 0.8, D]],
+        legExtra: [[2.6, 1, 2.8, 0, -1.2, 0.6, D]],
+        headExtra: [[1.6, 1.6, 1.6, -1.6, 1.6, 1, G], [1, 1, 0.3, -1.6, 1.7, 1.85, K], [1.6, 1.6, 1.6, 1.6, 1.6, 1, G], [1, 1, 0.3, 1.6, 1.7, 1.85, K], [4, 0.5, 0.3, 0, -1, 2.45, D]] }); } },
+  duck: { name: 'Pato', hp: 4, w: 0.45, h: 0.7, speed: 1.1, xp: 1, sound: 'chicken', floaty: true, drops: [[I.DUCK, 1, 1], [I.FEATHER, 0, 2]],
+    model: (m) => { const mdl = MOB_MODELS.bird(m, { s: 1.5, body: rgb(150, 120, 90), belly: rgb(214, 200, 176), wing: rgb(120, 96, 70), tip: rgb(60, 100, 170), head: rgb(40, 110, 70), beak: rgb(236, 180, 50), tailC: rgb(60, 50, 44) });
+      mdl.chicken = true; return mdl; } },
+  bear: { name: 'Oso', hp: 30, w: 1.1, h: 1.4, speed: 2.7, xp: 8, sound: 'golem', hostile: true, melee: 5, drops: [[I.BEAR_CLAW, 1, 2], [I.BEEF, 1, 3], [I.LEATHER, 1, 2]],
+    model: (m) => { const B = rgb(110, 74, 46), D = rgb(84, 56, 34), S = rgb(176, 136, 96), K = rgb(16, 12, 10), W = rgb(240, 236, 224);
+      return MOB_MODELS.quadruped(m, { legH: 9, legW: 5, bodyW: 14, bodyH: 13, bodyL: 22, headW: 10, headH: 9, headL: 8, headY: -1, body: B, leg: D, head: B,
+        bodyExtra: [[12, 4, 10, 0, 7.6, 3, D], [14.2, 6, 8, 0, -1, -6, D]],
+        legExtra: [[5.4, 2, 6, 0, -8, 0.6, D], [1, 1, 1.4, -1.6, -8.6, 3.6, W], [1, 1, 1.4, 0, -8.6, 3.6, W], [1, 1, 1.4, 1.6, -8.6, 3.6, W]],
+        headExtra: [[5, 4, 3.4, 0, -2.4, 9.4, S], [2, 1.6, 0.6, 0, -1.2, 11.2, K], [3, 0.8, 0.4, 0, -3.6, 11.1, K],
+          [3, 3, 1.6, -4, 5.4, 2, D], [1.4, 1.4, 0.3, -4, 5.2, 2.85, S], [3, 3, 1.6, 4, 5.4, 2, D], [1.4, 1.4, 0.3, 4, 5.2, 2.85, S],
+          ...eyesHD(8, 1.8, 2.6, rgb(40, 26, 18), K, { w: 1.4, h: 1.4, pw: 0.8, ph: 0.8, po: 0 })],
+        tail: [[3, 3, 2, 0, -1, -0.8, D]] }); } },
+  // --- Aire ---
+  bird: { name: 'Pájaro', hp: 3, w: 0.35, h: 0.4, speed: 4.5, xp: 1, sound: 'chicken', ai: 'bird', alt: [5, 12], drops: [[I.FEATHER, 0, 2]],
+    model: (m) => { const t = Math.floor(Math.random() * 4), c = [[rgb(150, 110, 70), rgb(110, 80, 50), rgb(214, 190, 150)], [rgb(60, 110, 200), rgb(40, 70, 150), rgb(236, 236, 240)], [rgb(206, 60, 50), rgb(60, 50, 50), rgb(240, 200, 180)], [rgb(240, 200, 50), rgb(70, 70, 60), rgb(250, 240, 180)]][t];
+      return MOB_MODELS.bird(m, { s: 1, body: c[0], wing: c[1], belly: c[2], beak: rgb(236, 170, 50) }); } },
+  seagull: { name: 'Gaviota', hp: 4, w: 0.4, h: 0.45, speed: 5, xp: 1, sound: 'chicken', ai: 'bird', alt: [6, 14], glide: true, drops: [[I.FEATHER, 1, 2]],
+    model: (m) => MOB_MODELS.bird(m, { s: 1.3, body: rgb(244, 244, 240), wing: rgb(170, 176, 186), tip: rgb(40, 40, 44), beak: rgb(240, 190, 50), tailC: rgb(230, 230, 228) }) },
+  eagle: { name: 'Águila', hp: 10, w: 0.6, h: 0.6, speed: 6.5, xp: 4, sound: 'chicken', ai: 'bird', alt: [12, 22], glide: true, noLand: true, drops: [[I.EAGLE_FEATHER, 1, 2], [I.FEATHER, 0, 2]],
+    model: (m) => MOB_MODELS.bird(m, { s: 2, body: rgb(96, 66, 40), wing: rgb(76, 52, 32), tip: rgb(50, 34, 22), head: rgb(246, 244, 236), beak: rgb(240, 196, 50), tailC: rgb(246, 244, 236), belly: rgb(120, 84, 52) }) },
+});
+// Dónde vive cada animal terrestre (se suman a las listas de cada bioma)
+{
+  const add = (name, key, list) => { const b = BIOMES.find((x) => x.name === name); if (b) b[key] = [...b[key], ...list]; };
+  add('Llanuras', 'passive', ['rabbit', 'duck', 'fox']); add('Bosque', 'passive', ['deer', 'rabbit', 'fox', 'deer']); add('Bosque oscuro', 'passive', ['deer', 'fox']);
+  add('Pantano', 'passive', ['frog', 'frog', 'duck']); add('Río', 'passive', ['duck', 'frog']); add('Taiga', 'passive', ['deer', 'fox', 'rabbit']); add('Montañas', 'passive', ['rabbit']);
+  add('Bosque', 'hostile', ['bear']); add('Taiga', 'hostile', ['bear']); add('Bosque oscuro', 'hostile', ['bear']);
+  Object.assign(BREED_FOOD, { rabbit: [I.CARROT], deer: [I.WHEAT, I.APPLE], duck: [I.WHEAT_SEEDS] });
+}
+const SEA_LIFE = { shallow: ['fish', 'fish', 'clownfish', 'puffer', 'turtle'], deep: ['fish', 'fish', 'fish', 'squid', 'squid', 'turtle', 'dolphin', 'clownfish', 'puffer', 'shark'] };
+const BIRDS = { default: ['bird', 'bird', 'bird', 'eagle'], water: ['seagull', 'seagull', 'bird'], high: ['eagle', 'eagle', 'bird'] };
+
+// ---------- Inteligencia de los animales acuáticos ----------
+Mob.prototype.fishAI = function (dt, game, p, dist, dx, dz) {
+  const s = this.spec, ai = this.ai, fx = Math.floor(this.pos.x), fz = Math.floor(this.pos.z);
+  const wet = (x, y, z) => B_WATERY[world.get(Math.floor(x), Math.floor(y), Math.floor(z))];
+  const inWater = wet(this.pos.x, this.pos.y + this.h * 0.5, this.pos.z);
+  this.animT = this.animT || 0;
+  if (!inWater) {                                   // fuera del agua: cae, salta y se asfixia
+    this.vel.y -= 22 * dt; this.vel.x *= 0.9; this.vel.z *= 0.9;
+    if (this.onGround && Math.random() < dt * 3) { this.vel.y = 4; this.vel.x = (Math.random() - 0.5) * 3; this.vel.z = (Math.random() - 0.5) * 3; }
+    this.dryT = (this.dryT || 0) + dt; if (this.dryT > 3) { this.dryT = 2; this.hurt(1, null); }
+    this.pitchV = 0;
+  } else {
+    this.dryT = 0; ai.t -= dt;
+    const survival = game.mode === 'survival' && !p.dead, pInWater = !!p.inWater || !!p.headInWater;
+    let speed = s.speed * (s.calm ? 0.6 : 0.75), want = ai.dir ?? this.yaw, vy = ai.vy || 0;
+    if (ai.t <= 0) {
+      ai.t = 1.5 + Math.random() * 3.5; ai.dir = Math.random() * Math.PI * 2; ai.vy = (Math.random() - 0.5) * 0.9; ai.idle = Math.random() < (s.calm || s.puffer ? 0.4 : 0.12);
+      if (s.school) {                               // cardumen: sigue al compañero de menor id
+        let lead = null;
+        for (const e of game.entities.list) if (e !== this && e.type === this.type && e.id < this.id && !e.deathT && e.pos.distanceTo(this.pos) < 10 && (!lead || e.id < lead.id)) lead = e;
+        ai.lead = lead;
+      }
+      want = ai.dir; vy = ai.vy;
+    }
+    if (ai.idle) speed *= 0.15;
+    const L = ai.lead;
+    if (L && !L.dead && !L.deathT) {
+      const lx = L.pos.x - this.pos.x, ly = L.pos.y - this.pos.y, lz = L.pos.z - this.pos.z, ld = Math.hypot(lx, ly, lz);
+      if (ld > 2.2) { want = Math.atan2(lx, lz) + Math.sin(this.id * 7 + this.animT) * 0.4; vy = clamp(ly, -1, 1); speed = s.speed * (ld > 5 ? 1.3 : 0.9); } else { want = L.yaw; speed = Math.hypot(L.vel.x, L.vel.z); vy = L.vel.y; }
+    }
+    if (s.hostile && survival && pInWater && dist < 18) {                       // tiburón: caza a quien nada
+      want = Math.atan2(dx, dz); vy = clamp((p.pos.y + 0.6 - this.pos.y) * 1.5, -2.5, 2.5); speed = s.speed * 1.25;
+      if (dist < this.hw + 1.3 && ai.attackCd <= 0) { ai.attackCd = 1.3; p.damage(s.melee, FISH_CAUGHT, this.pos); sfx.play('hit', { pos: this.pos }); }
+    } else if (s.shy && dist < 4 || ai.panic > 0) {                             // huye
+      ai.panic = Math.max(0, (ai.panic || 0) - dt); want = Math.atan2(-dx, -dz); speed = s.speed * 1.8; ai.idle = false;
+    } else if (s.friendly && pInWater && dist < 9) {                            // delfín: te acompaña y te da velocidad
+      if (dist > 3.5) { want = Math.atan2(dx, dz); vy = clamp(p.pos.y - this.pos.y, -1.5, 1.5); speed = s.speed; } else want += dt;
+      if (dist < 5 && (ai.giftT = (ai.giftT || 0) - dt) <= 0) { ai.giftT = 4; game.applyEffect('speed', 1, 8); }
+    }
+    if (s.puffer) {                                                             // pez globo: se hincha y pincha
+      const near = dist < 3.2; this.puff = (this.puff || 0) + ((near ? 1 : 0) - (this.puff || 0)) * Math.min(1, dt * 6);
+      this.mesh.scale.setScalar(1 + this.puff * 0.9);
+      if (near && survival && dist < 1.5 && ai.attackCd <= 0) { ai.attackCd = 1.5; p.damage(2, 'Te pinchó un pez globo', this.pos); }
+      if (near) speed *= 0.3;
+    }
+    // no salir del agua ni chocar: mira arriba, abajo y al frente
+    const hx = Math.sin(want), hz = Math.cos(want), top = this.pos.y + this.h + 0.45, deepMin = s.deep ? 1.6 : 0.45;
+    if (!wet(this.pos.x, top + (s.deep ? 1.2 : 0), this.pos.z)) vy = Math.min(vy, -0.6);
+    if (!wet(this.pos.x, this.pos.y - deepMin, this.pos.z)) vy = Math.max(vy, 0.5);
+    if (!wet(this.pos.x + hx * (this.hw + 0.9), this.pos.y + this.h * 0.5, this.pos.z + hz * (this.hw + 0.9))) { ai.dir = want + Math.PI * (0.6 + Math.random() * 0.8); want = ai.dir; ai.t = Math.max(ai.t, 1); ai.lead = null; speed *= 0.4; }
+    const k = Math.min(1, dt * (s.calm ? 2 : 4));
+    this.yaw += ((((want - this.yaw) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI) * k;
+    this.vel.x += (Math.sin(this.yaw) * speed - this.vel.x) * k; this.vel.z += (Math.cos(this.yaw) * speed - this.vel.z) * k; this.vel.y += (vy - this.vel.y) * k;
+    this.pitchV = (this.pitchV || 0) + (Math.atan2(this.vel.y, Math.max(0.4, Math.hypot(this.vel.x, this.vel.z))) * 0.7 - (this.pitchV || 0)) * k;
+  }
+  moveBody(this, this.vel.x * dt, this.vel.y * dt, this.vel.z * dt, false);
+  this.walk += (Math.hypot(this.vel.x, this.vel.z) + 0.6) * dt * 4;
+  this.syncMesh(dt, null);
+  if (this.model.anim) this.model.anim(this, dt);
+};
+// ---------- Inteligencia de las aves ----------
+Mob.prototype.birdAI = function (dt, game, p, dist, dx, dz) {
+  const s = this.spec, ai = this.ai, m = this.model;
+  if (ai.fly == null) { ai.fly = true; ai.dir = Math.random() * 6.28; ai.turn = 0; ai.t = 0; ai.alt = s.alt[0] + Math.random() * (s.alt[1] - s.alt[0]); ai.landT = 15 + Math.random() * 40; }
+  ai.t -= dt;
+  if (ai.fly) {
+    if (ai.t <= 0) { ai.t = 2 + Math.random() * 4; ai.turn = (Math.random() - 0.5) * (s.glide ? 0.7 : 1.4); ai.alt = s.alt[0] + Math.random() * (s.alt[1] - s.alt[0]); }
+    ai.dir += ai.turn * dt;
+    // no se aleja del jugador indefinidamente: vuelve en círculos amplios
+    if (dist > 40) ai.dir += ((((Math.atan2(dx, dz) - ai.dir) % 6.283) + 9.425) % 6.283 - 3.1416) * dt * 0.8;
+    const gx = Math.floor(this.pos.x + Math.sin(ai.dir) * 4), gz = Math.floor(this.pos.z + Math.cos(ai.dir) * 4);
+    const ground = world.isLoaded(gx, gz) ? Math.max(world.heightAt(gx, gz), SEA) : this.pos.y - ai.alt;
+    let vy = clamp((ground + ai.alt - this.pos.y) * 1.2, -3, 3.5);
+    ai.landT -= dt;
+    if (!s.noLand && ai.landT <= 0) {                                 // baja a posarse si hay suelo firme
+      const below = world.get(Math.floor(this.pos.x), world.heightAt(Math.floor(this.pos.x), Math.floor(this.pos.z)), Math.floor(this.pos.z));
+      if (below === WATER) ai.landT = 6; else { vy = -3.2; if (this.onGround) { ai.fly = false; ai.t = 5 + Math.random() * 9; this.vel.set(0, 0, 0); } }
+    }
+    const k = Math.min(1, dt * 3);
+    this.yaw += ((((ai.dir - this.yaw) % 6.283) + 9.425) % 6.283 - 3.1416) * k;
+    this.vel.x += (Math.sin(this.yaw) * s.speed - this.vel.x) * k; this.vel.z += (Math.cos(this.yaw) * s.speed - this.vel.z) * k; this.vel.y += (vy - this.vel.y) * k;
+    const ox = this.pos.x, oz = this.pos.z;
+    moveBody(this, this.vel.x * dt, this.vel.y * dt, this.vel.z * dt, false);
+    if (Math.hypot(this.pos.x - ox, this.pos.z - oz) < s.speed * dt * 0.3) { ai.dir += 1.2 + Math.random(); ai.alt += 3; }     // chocó: gira y sube
+    this.walk += dt * 6;
+    this.syncMesh(dt, null);
+    // aleteo (las planeadoras baten despacio) e inclinación en los giros
+    const flap = s.glide ? Math.sin(this.animT * 5) * 0.28 + 0.1 : Math.sin(this.animT * 22) * 0.85;
+    m.arms[0].rotation.z = -flap; m.arms[1].rotation.z = flap;
+    m.root.rotation.z = clamp(-ai.turn * 0.5, -0.5, 0.5); m.root.rotation.x = clamp(-this.vel.y * 0.08, -0.4, 0.4);
+    m.legs.forEach((l) => (l.rotation.x = 1.2));
+  } else {
+    // posada: picotea y da saltitos; echa a volar si te acercas o pasa un rato
+    if (ai.t <= 0 || dist < 4.5 || this.hurtT > 0) { ai.fly = true; ai.t = 0; ai.landT = 20 + Math.random() * 40; this.vel.y = 5; this.onGround = false; }
+    else if (Math.random() < dt * 0.8) { this.yaw += (Math.random() - 0.5) * 2; this.vel.x = Math.sin(this.yaw) * 1.5; this.vel.z = Math.cos(this.yaw) * 1.5; this.vel.y = 2.5; }
+    this.vel.x *= 0.9; this.vel.z *= 0.9;
+    this.physics(dt);
+    this.syncMesh(dt, null);
+    m.arms[0].rotation.z = 1.35; m.arms[1].rotation.z = -1.35; m.root.rotation.z = 0; m.root.rotation.x = 0;
+    m.head.rotation.x = Math.max(0, Math.sin(this.animT * 3)) * 0.7;
+    m.legs.forEach((l) => (l.rotation.x = 0));
+  }
+};
+// Al recibir un golpe: los peces huyen y el calamar suelta una nube de tinta
+{
+  const baseHurt = Mob.prototype.hurt;
+  Mob.prototype.hurt = function (dmg, from) {
+    const r = baseHurt.call(this, dmg, from);
+    if (r && this.spec.ai === 'fish') {
+      this.ai.panic = 3; this.ai.lead = null;
+      if (this.spec.ink) game.particles.emit(this.pos.x, this.pos.y + 0.5, this.pos.z, [0.05, 0.05, 0.08], 26, { gravity: 0.3, speed: 1.6, life: 1.6, size: 0.22 });
+    }
+    return r;
+  };
+}
+
+// ---------- Aparición de fauna acuática y aves ----------
+EntityManager.prototype.spawnWildlife = function (p, nw, nb) {
+  const capW = IS_TOUCH ? 10 : 18, capB = IS_TOUCH ? 4 : 7;
+  if (nw < capW && Math.random() < 0.5) {
+    const a = Math.random() * 6.283, r = 10 + Math.random() * 30, x = Math.floor(p.pos.x + Math.cos(a) * r), z = Math.floor(p.pos.z + Math.sin(a) * r);
+    if (world.isLoaded(x, z)) {
+      let top = SEA + 1; while (top > 2 && !B_WATERY[world.get(x, top, z)]) top--;
+      let bot = top; while (bot > 1 && B_WATERY[world.get(x, bot - 1, z)]) bot--;
+      const depth = top - bot + 1;
+      if (world.get(x, top, z) === WATER && depth >= 2 && top >= SEA - 2) {
+        const list = depth >= 6 ? SEA_LIFE.deep : SEA_LIFE.shallow;
+        let type = list[Math.floor(Math.random() * list.length)];
+        if (MOBS[type].deep && depth < 6) type = 'fish';
+        if (type === 'shark' && (depth < 8 || this.list.some((e) => e.type === 'shark'))) type = 'fish';
+        const n = type === 'fish' ? 4 + Math.floor(Math.random() * 4) : type === 'dolphin' ? 2 + Math.floor(Math.random() * 2) : type === 'clownfish' ? 2 : 1;
+        const y = bot + 0.4 + Math.random() * Math.max(0.2, depth - 1.6 - MOBS[type].h);
+        for (let i = 0; i < n; i++) {
+          const sx = x + 0.5 + (Math.random() - 0.5) * 2, sz = z + 0.5 + (Math.random() - 0.5) * 2;
+          if (B_WATERY[world.get(Math.floor(sx), Math.floor(y), Math.floor(sz))]) this.spawnMob(type, sx, y, sz);
+        }
+      }
+    }
+  }
+  if (nb < capB && Math.random() < 0.25 && sharedUniforms.uDay.value > 0.4) {           // las aves salen de día
+    const a = Math.random() * 6.283, r = 22 + Math.random() * 24, x = Math.floor(p.pos.x + Math.cos(a) * r), z = Math.floor(p.pos.z + Math.sin(a) * r);
+    if (world.isLoaded(x, z)) {
+      const h = world.heightAt(x, z), water = world.get(x, h, z) === WATER || h <= SEA + 1;
+      if (world.skyAt(x, Math.min(WY - 1, h + 12), z) >= 14) {
+        const list = water ? BIRDS.water : h > 62 ? BIRDS.high : BIRDS.default, type = list[Math.floor(Math.random() * list.length)];
+        const n = type === 'eagle' ? 1 : 1 + Math.floor(Math.random() * 3), y = Math.min(WY - 3, Math.max(h, SEA) + MOBS[type].alt[0] + 2);
+        for (let i = 0; i < n && nb + i < capB; i++) this.spawnMob(type, x + 0.5 + i * 1.5, y + i * 0.5, z + 0.5);
+      }
+    }
+  }
+};
+
+// ---------- Armas de jefe: habilidades ----------
+const abilityCd = new Map();        // id del objeto → momento en que vuelve a estar lista
+function useAbility(stack) {
+  const it = ITEMS[stack.id], ab = it.ability, p = game.player, now = performance.now() / 1000;
+  const left = (abilityCd.get(stack.id) || 0) - now;
+  if (left > 0) { if (!useAbility.warn || now - useAbility.warn > 0.8) { useAbility.warn = now; hud.toast(`${ab.name}: lista en ${Math.ceil(left)} s`, 900); } return true; }
+  abilityCd.set(stack.id, now + ab.cd);
+  const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+  const eye = camera.position, hits = [];
+  const mobs = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !(e instanceof Villager) && !e.isPlayer);
+  if (ab.id === 'quake') {
+    // Martillo ancestral: onda expansiva en el suelo
+    for (const e of mobs) { const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z); if (d < 6 && Math.abs(e.pos.y - p.pos.y) < 4) hits.push([e, 12 * (1 - d / 9)]); }
+    for (const [e, dmg] of hits) { if (e.hurt(dmg, p.pos) && !e.isBoss) { e.vel.y = 9; const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) || 1; e.vel.x += (e.pos.x - p.pos.x) / d * 6; e.vel.z += (e.pos.z - p.pos.z) / d * 6; } }
+    for (let i = 0; i < 28; i++) { const a = i / 28 * 6.283; game.particles.emit(p.pos.x + Math.cos(a) * 2.5, p.pos.y + 0.2, p.pos.z + Math.sin(a) * 2.5, [0.55, 0.5, 0.42], 3, { up: 4, speed: 2.5, life: 0.7, size: 0.16 }); }
+    game.shake = 0.5; sfx.play('explode', { pos: p.pos }); sfx.play('roar', { pos: p.pos });
+  } else if (ab.id === 'beam') {
+    // Tridente abisal: rayo recto que atraviesa enemigos; bajo el agua te impulsa
+    const wall = raycastBlocks(eye, dir, 28), max = wall ? wall.dist : 28;
+    for (const e of mobs) {
+      const vx = e.pos.x - eye.x, vy = e.pos.y + e.h / 2 - eye.y, vz = e.pos.z - eye.z, t = vx * dir.x + vy * dir.y + vz * dir.z;
+      if (t < 0 || t > max) continue;
+      if (Math.hypot(vx - dir.x * t, vy - dir.y * t, vz - dir.z * t) < e.hw + 0.9) hits.push([e, 14]);
+    }
+    for (const [e, dmg] of hits) e.hurt(dmg, p.pos);
+    for (let t = 1; t < max; t += 0.6) game.particles.emit(eye.x + dir.x * t, eye.y - 0.2 + dir.y * t, eye.z + dir.z * t, [0.4, 0.95, 0.9], 1, { gravity: 0, speed: 0.2, life: 0.45, size: 0.14 });
+    if (p.inWater || p.headInWater) { p.vel.x += dir.x * 16; p.vel.y += dir.y * 12; p.vel.z += dir.z * 16; }
+    sfx.play('guardian', { pos: p.pos }); sfx.play('levelup', { vol: 0.3 });
+  } else if (ab.id === 'breath') {
+    // Espada del dragón: cono de fuego
+    for (const e of mobs) {
+      const vx = e.pos.x - eye.x, vy = e.pos.y + e.h / 2 - eye.y, vz = e.pos.z - eye.z, d = Math.hypot(vx, vy, vz);
+      if (d < 9 && (vx * dir.x + vy * dir.y + vz * dir.z) / (d || 1) > 0.72) hits.push([e, 9]);
+    }
+    for (const [e, dmg] of hits) { if (e.hurt(dmg, p.pos)) e.burnT = Math.max(e.burnT || 0, 7); }
+    for (let i = 0; i < 46; i++) { const t = 1 + Math.random() * 7, sp = t * 0.32; game.particles.emit(eye.x + dir.x * t + (Math.random() - 0.5) * sp, eye.y - 0.3 + dir.y * t + (Math.random() - 0.5) * sp, eye.z + dir.z * t + (Math.random() - 0.5) * sp, Math.random() < 0.5 ? [1, 0.55, 0.1] : [1, 0.85, 0.25], 1, { gravity: -1.5, speed: 0.8, life: 0.5 + Math.random() * 0.4, size: 0.2 }); }
+    sfx.play('dragon', { pos: p.pos }); sfx.play('fire', { pos: p.pos });
+  }
+  game.swing = 1;
+  if (game.mode === 'survival') { stack.dmg = (stack.dmg || 0) + 3; if (stack.dmg >= it.tool.dur) { p.inv.slots[p.selected] = null; sfx.play('toolBreak'); } }
+  hud.update();
+  hud.toast(hits.length ? `${ab.name}: ${hits.length} ${hits.length === 1 ? 'enemigo alcanzado' : 'enemigos alcanzados'}` : ab.name, 1200);
+  return true;
+}
+// Indicador de recarga bajo la mira
+function updateAbilityHud() {
+  const el = $('#abilityCd'); if (!el) return;
+  const s = game.player && game.state === 'playing' ? game.player.held() : null, ab = s && ITEMS[s.id].ability;
+  if (!ab) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+  const left = (abilityCd.get(s.id) || 0) - performance.now() / 1000, f = clamp(1 - left / ab.cd, 0, 1);
+  el.style.display = 'block'; el.firstChild.style.width = (f * 100).toFixed(0) + '%'; el.classList.toggle('ready', f >= 1);
+  el.title = ab.name;
 }
 
 /* ==========================================================================
@@ -5971,6 +6477,7 @@ function initSettingsUI() {
     ['preset', 'Preajuste gráfico', 'select', ['personalizado', 'rendimiento', 'equilibrado', 'calidad']],
     ['renderDistance', 'Distancia de renderizado', 'range', 2, 8, 1, (v) => v + ' chunks'],
     ['fov', 'Campo de visión', 'range', 55, 100, 1, (v) => v + '°'],
+    ['brightness', 'Brillo', 'range', -1, 1, 0.05, (v) => (v > 0 ? '+' : '') + Math.round(v * 100) + '%'],
     ['sensitivity', 'Sensibilidad del ratón', 'range', 0.2, 2.5, 0.05, (v) => Math.round(v * 100) + '%'],
     ['touchSensitivity', 'Sensibilidad táctil', 'range', 0.3, 2.5, 0.05, (v) => Math.round(v * 100) + '%'],
     ['volume', 'Volumen', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
@@ -6017,6 +6524,8 @@ function initSettingsUI() {
 }
 function openSettings() { buildKeyBindingsUI(); showScreen('settingsScreen'); }
 function applySettings(key) {
+  // Brillo: sube el mínimo de luz y aclara las sombras (o las oscurece si es negativo)
+  { const b = clamp(+settings.brightness || 0, -1, 1); sharedUniforms.uBr.value.set(0.03 + Math.max(0, b) * 0.15, b >= 0 ? 1 - 0.5 * b : 1 - 0.6 * b); }
   if (key === 'minimap') minimap.apply();
   if (key === 'menuPanorama') { if (game.state === 'menu') { if (settings.menuPanorama) startPanorama(); else stopPanorama(true); } }
   if (key === 'volume') sfx.setVolume(settings.volume);
@@ -6350,6 +6859,7 @@ class Player {
       n *= 1 - Math.min(0.6, prot * 0.05);
       this.armor.slots.forEach((a, i) => { if (a && Math.random() >= 1 / (1 + enchLevel(a, 'unb'))) { a.dmg = (a.dmg || 0) + 1; if (a.dmg >= durOf(a.id)) { this.armor.slots[i] = null; sfx.play('toolBreak'); hud.toast(`¡Se rompió: ${itemName(a.id)}!`); } } });
     }
+    if (kind === 'fall' && ITEMS[this.armor.slots[3]?.id]?.featherFall) return false;
     if (kind === 'fall') n *= 1 - Math.min(0.75, enchLevel(this.armor.slots[3], 'fall') * 0.25);
     n *= 1 - 0.2 * game.effLvl('resist');
     n = Math.round(n * 2) / 2;
@@ -6384,7 +6894,7 @@ class Player {
       if (this.regenT >= 4) { this.regenT = 0; if (this.health > 1) this.damage(1, 'Moriste de hambre', null, 'starve'); }   // inanición controlada: no baja de medio corazón
     } else this.regenT = Math.min(this.regenT, 4);
     // Ahogamiento
-    const breathe = game.effLvl('water') > 0 || ITEMS[this.held()?.id]?.holdEffect === 'water';
+    const breathe = game.effLvl('water') > 0 || ITEMS[this.held()?.id]?.holdEffect === 'water' || ITEMS[this.armor.slots[0]?.id]?.wearEffect === 'water';
     if (this.headInWater && !breathe) {
       this.air = Math.max(0, this.air - dt / 1.5 / (1 + enchLevel(this.armor.slots[0], 'resp')));
       if (this.air <= 0) { this.drownT += dt; if (this.drownT >= 1) { this.drownT = 0; this.damage(2, 'Te ahogaste', null, 'drown'); } }
@@ -6869,6 +7379,7 @@ const game = {
   // Usos de objetos que no colocan bloques: azada, pala, hacha, cubos, botellas, abono, armaduras
   useItem() {
     const p = this.player, s = p.held(), t = this.target; if (!s) return false;
+    if (ITEMS[s.id].ability && useAbility(s)) return true;      // armas de jefe: habilidad especial (§26)
     const it = ITEMS[s.id], consume = () => { if (this.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; } };
     const give = (id) => { if (this.mode !== 'survival') return; if (!p.inv.slots[p.selected]) p.inv.slots[p.selected] = { id, count: 1, dmg: 0 }; else { const left = p.inv.add(id, 1); if (left) this.entities.dropItem({ id, count: 1 }, p.pos.x, p.pos.y + 1.2, p.pos.z, p.lookVel(2)); } };
     if (t && it.tool) {
@@ -7022,7 +7533,7 @@ const game = {
     const c = bodyContacts(p);
     p.inWater = c.water;
     const eyeId = world.get(Math.floor(p.pos.x), Math.floor(p.pos.y + EYE_H), Math.floor(p.pos.z));
-    const wasHead = p.headInWater; p.headInWater = eyeId === WATER;
+    const wasHead = p.headInWater; p.headInWater = !!B_WATERY[eyeId];
     if (p.headInWater && !wasHead && p.vel.y < -4) sfx.play('splash');
     const ox = p.pos.x, oz = p.pos.z, wasGround = p.onGround;
     // sentado en una silla: cualquier movimiento o salto te levanta
@@ -7051,7 +7562,7 @@ const game = {
       p.fallStart = null;
       if (moving) p.exhaust(0.01 * Math.hypot(p.pos.x - ox, p.pos.z - oz));
     } else {
-      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1);
+      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1) * (1 + (ITEMS[p.armor.slots[1]?.id]?.speedBonus || 0));
       const groundId = world.get(Math.floor(p.pos.x), Math.floor(p.pos.y - 0.1), Math.floor(p.pos.z));
       const slip = BLOCKS[groundId]?.slippery;
       const accel = p.onGround ? (slip ? 2.5 : 14) : 3.5;
@@ -7139,7 +7650,7 @@ const game = {
             p.exhaust(0.1); this.stats.add('damage', dmg);
             if (tool) { this.wearTool(tool.type === 'sword' ? 1 : 2); if (tool.fire) mt.burnT = 5; if (tool.knock && !mt.isBoss) { const k = new THREE.Vector3().subVectors(mt.pos, p.pos).setY(0).normalize(); mt.vel.x += k.x * 8; mt.vel.z += k.z * 8; mt.vel.y = 7; } }
           }
-          this.attackCd = tool && tool.type === 'sword' ? 0.45 : 0.6; this.swing = 1;
+          this.attackCd = tool && tool.type === 'sword' ? (tool.fast ? 0.45 * tool.fast : 0.45) : 0.6; this.swing = 1;
         }
       } else if (this.target) {
         const t = this.target, def = BLOCKS[t.id];
@@ -7415,6 +7926,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
+  updateAbilityHud();
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -7442,7 +7954,7 @@ function boot() {
   const tiles = [T.grass_side, T.dirt, T.stone, T.cobble, T.oak_planks, T.stone, T.coal_ore, T.dirt];
   for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) bx.drawImage(tileCanvas(y === 0 ? T.grass_side : tiles[(x * 3 + y * 5) % tiles.length], y === 0 ? null : null), x * 16, y * 16);
   $('#menuBg .fallback').style.backgroundImage = `url(${bg.toDataURL()})`;
-  initMenuLook(); minimap.init(); mobBar.init();
+  initMenuLook(); minimap.init(); mobBar.init(); applySettings('brightness');
   initMenus(); initInventoryInput(); initInput();
   $('#touchHint').style.display = IS_TOUCH ? '' : 'none';
   if (IS_TOUCH) document.body.classList.add('touch');
