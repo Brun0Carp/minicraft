@@ -42,6 +42,7 @@ const cfg = {
   seed: opt('seed', null),
   mode: opt('mode', 'survival') === 'creative' ? 'creative' : 'survival',
   pvp: !/^(off|0|false|no)$/i.test(String(opt('pvp', 'on'))),
+  cheats: !/^(off|0|false|no)$/i.test(String(opt('cheats', 'on'))),
   max: Math.max(1, parseInt(opt('max', 12), 10) || 12),
   password: String(opt('password', '') || ''),
   name: String(opt('name', 'Servidor MiniCraft')).slice(0, 60),
@@ -319,11 +320,22 @@ function handle(c, m) {
   }
 }
 function chatCommand(c, line) {
-  const [cmd] = line.split(/\s+/), tell = (text) => c.send({ type: 'sys', text });
+  const [cmd, ...args] = line.split(/\s+/), tell = (text) => c.send({ type: 'sys', text }), arg = (args[0] || '').toLowerCase();
   switch (cmd.toLowerCase()) {
     case 'list': case 'jugadores': tell(`Conectados (${clients.size}/${cfg.max}): ${[...clients.values()].map((o) => o.name).join(', ')}`); break;
     case 'seed': case 'semilla': tell(`Semilla del mundo: ${W.seed}`); break;
-    case 'help': case 'ayuda': tell('Comandos: /list (jugadores conectados), /seed (semilla del mundo)'); break;
+    case 'time': case 'tiempo': {
+      if (!cfg.cheats) return tell('Este servidor no permite cambiar la hora (opción --cheats=off)');
+      const t = arg === 'day' ? 0.1 : arg === 'night' ? 0.6 : parseFloat(arg);
+      if (!(t >= 0 && t < 1)) return tell('Uso: /time day | night | 0..1');
+      W.time = t; dirty = true; broadcast({ type: 'time', t: W.time, d: W.days }); sys(`${c.name} cambió la hora`); break;
+    }
+    case 'weather': case 'clima': {
+      if (!cfg.cheats) return tell('Este servidor no permite cambiar el clima (opción --cheats=off)');
+      if (!WEATHERS.includes(arg)) return tell('Uso: /weather clear | rain | storm | fog');
+      W.weather = arg; W.weatherT = 600; dirty = true; broadcast({ type: 'weather', w: arg }); sys(`${c.name} cambió el clima`); break;
+    }
+    case 'help': case 'ayuda': tell('Comandos del servidor: /list (jugadores conectados), /seed (semilla)' + (cfg.cheats ? ', /time, /weather' : '')); break;
     default: tell(`Comando desconocido: /${cmd}. Escribe /help`);
   }
 }

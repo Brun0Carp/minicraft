@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1d1d1d">
-<title>MiniCraft 3.2</title>
+<title>MiniCraft 3.3</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -496,7 +496,7 @@
   .mpHelp { margin-top: 12px; font-size: 12.5px; color: #aab0bb; text-align: center; line-height: 1.4; }
   .netOnly { display: none !important; } body.net-on .netOnly { display: block !important; }
   #chatLog { position: absolute; left: 8px; bottom: 104px; width: min(420px, 60vw); max-height: 32vh; overflow: hidden; display: none; flex-direction: column; justify-content: flex-end; gap: 2px; pointer-events: none; }
-  body.net-on #chatLog { display: flex; }
+  #hud #chatLog { display: flex; }
   body.touch #chatLog { bottom: auto; top: calc(64px + env(safe-area-inset-top)); width: min(300px, 56vw); max-height: 24vh; }
   .chatLine { align-self: flex-start; max-width: 100%; padding: 2px 7px; font-size: 14px; color: #fff; background: rgba(0,0,0,.5); border-radius: 3px; text-shadow: 0 1px 0 #000; overflow-wrap: anywhere; transition: opacity .8s; }
   .chatLine.sys { color: #ffe14d; } .chatLine.me { color: #bfe8ff; }
@@ -525,6 +525,52 @@
   body.cinematic #hud::before, body.cinematic #hud::after { height: 11vh; }
   body.cinematic #bottomHud, body.cinematic #touchUI, body.cinematic #minimapContainer, body.cinematic #crosshair { opacity: 0; transition: opacity .4s; }
   body.cinematic #bossBar { top: calc(11vh + 10px); }
+  /* §30: mano secundaria */
+  #hotbarRow { position: relative; }
+  #offhandHud { position: absolute; right: calc(100% + 6px); bottom: 0; width: var(--h); height: var(--h); padding: 3px; background: rgba(0,0,0,.55); border: 2px solid #000; box-shadow: inset 0 0 0 1px #777; box-sizing: content-box; }
+  #offhandHud.empty { visibility: hidden; }
+  body.touch #offhandHud { right: auto; left: 0; bottom: calc(100% + 36px); }
+  body.touch #hudClock { left: 12px; transform: none; }
+  #offhandHud .ct { font-size: calc(var(--h) * 0.36); }
+  .offSlot { margin-top: 6px; }
+  .tbtn.small { font-size: 11px; }
+  /* §31: diálogos, misiones y seguimiento */
+  .dlgCard { width: min(560px, 100%); }
+  .dlgHead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .dlgHead > div:nth-child(2) { flex: 1; min-width: 0; } .dlgHead b { display: block; font-size: 22px; } .dlgHead span#dlgProf { font-size: 13px; color: #b9bcc6; }
+  #dlgFace { flex: none; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: #fff; border: 2px solid #000; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); text-shadow: 0 2px 0 #000; }
+  #dlgRep { flex: none; padding: 2px 8px; font-size: 12px; border: 1px solid; border-radius: 999px; white-space: nowrap; }
+  #dlgText { min-height: 54px; padding: 10px 12px; margin: 0 0 8px; font-size: 16px; line-height: 1.4; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 4px; }
+  #dlgGoods { font-size: 12px; color: #b9bcc6; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 4px; margin-bottom: 4px; }
+  #dlgGoods .tIcon { width: 20px; height: 20px; display: inline-block; background: center/contain no-repeat; image-rendering: pixelated; }
+  #dlgOpts .btn { justify-content: flex-start; text-align: left; font-size: 16px; } #dlgOpts .btn em { margin-left: auto; font-style: normal; font-size: 12px; color: #c9ccd4; }
+  .projList { margin: 6px 0; padding-left: 18px; font-size: 14px; line-height: 1.6; } .projList .ok { color: #7be06a; } .projList .bad { color: #ff8a7a; } .projList em { color: #aab; font-style: normal; }
+  .questCard { display: flex; flex-direction: column; max-height: min(92vh, 760px); overflow: hidden; }
+  #questList { flex: 1 1 auto; min-height: 120px; overflow: auto; margin: 6px 0; padding-right: 4px; }
+  .qCard { position: relative; padding: 10px 12px; margin-bottom: 8px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .qCard.main { border-color: #b98a2a; background: rgba(60,40,0,.35); } .qCard.ready { box-shadow: inset 0 0 0 1px #7be06a; } .qCard.tracked { outline: 2px solid #ffe14d; outline-offset: -2px; }
+  .qHead { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; } .qHead b { font-size: 17px; } .qHead span { font-size: 12px; color: #b9bcc6; }
+  .qCard p { margin: 4px 0; font-size: 13px; color: #d6d8de; } .qGoal { margin-top: 4px; font-size: 14px; }
+  .qCard u { display: block; height: 7px; margin: 5px 0 2px; background: #222; border: 1px solid #000; text-decoration: none; } .qCard u s { display: block; height: 100%; background: #7be06a; text-decoration: none; }
+  .qCard em { font-style: normal; font-size: 12px; color: #c9ccd4; } .qRew { margin-top: 4px; font-size: 12.5px; color: #ffe08a; }
+  .qAct { display: flex; gap: 6px; margin-top: 8px; } .qDone { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,.08); } .qDone b { display: block; } .qDone span { font-size: 12px; color: #9ca0aa; }
+  #questTracker { position: absolute; left: calc(8px + env(safe-area-inset-left)); top: 34%; max-width: min(260px, 46vw); display: none; padding: 6px 9px; background: rgba(0,0,0,.45); border-left: 3px solid #ffe14d; pointer-events: none; text-shadow: 0 1px 0 #000; }
+  #questTracker b { display: block; font-size: 13px; color: #ffe14d; } #questTracker span { display: block; font-size: 12px; color: #eee; } #questTracker em { display: block; font-style: normal; font-size: 12px; color: #c9ccd4; }
+  #questTracker.ready em { color: #7be06a; }
+  body.touch #questTracker { top: auto; bottom: calc(46% + env(safe-area-inset-bottom)); }
+  body.inv-open #questTracker, body.cinematic #questTracker { display: none !important; }
+  /* §32: comandos y novedades */
+  #chatBar { flex-wrap: wrap; } #chatHint { flex: 1 0 100%; display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #ffe08a; }
+  #chatHint span { padding: 2px 6px; background: rgba(0,0,0,.6); align-self: flex-start; }
+  .newsCard { display: flex; flex-direction: column; max-height: min(92vh, 780px); overflow: hidden; }
+  #newsList { flex: 1 1 auto; overflow: auto; margin: 4px 0 8px; padding-right: 4px; }
+  .newsVer { margin-bottom: 8px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .newsVer summary { cursor: pointer; padding: 9px 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; list-style: none; }
+  .newsVer summary::-webkit-details-marker { display: none; } .newsVer summary::before { content: '▸'; color: #ffe14d; } .newsVer[open] summary::before { content: '▾'; }
+  .newsVer summary b { font-size: 17px; } .newsVer summary span { font-size: 13px; color: #b9bcc6; }
+  .newsVer ul { margin: 0; padding: 0 14px 10px 32px; font-size: 14px; line-height: 1.45; color: #e2e4ea; } .newsVer li { margin: 3px 0; }
+  .newsVer.future { border-style: dashed; border-color: #555; } .newsVer.future summary b { color: #9ab8ff; }
+  .newsSub { margin: 14px 0 8px; font-size: 18px; color: #9ab8ff; }
   #bossBar.rage s { animation: bossRage .5s ease-in-out infinite alternate; }
   @keyframes bossRage { from { filter: brightness(1); } to { filter: brightness(1.7) saturate(1.4); } }
   /* --- Minimapa (§24) --- */
@@ -555,7 +601,8 @@
   <div id="bossBar"><b></b><em></em><u><s></s></u></div>
   <div id="compass"><div></div></div>
   <div id="chatLog"></div>
-  <div id="chatBar"><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatSend" class="btn small">Enviar</button></div>
+  <div id="chatBar"><div id="chatHint"></div><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatSend" class="btn small">Enviar</button></div>
+  <div id="questTracker"></div>
   <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
@@ -568,12 +615,13 @@
       <div class="bars"><canvas id="hearts"></canvas><canvas id="hungerBar"></canvas></div>
       <div id="xpBar"><div id="xpFill"></div><span id="xpLevel"></span></div>
     </div>
-    <div id="hotbar"></div>
+    <div id="hotbarRow"><div id="offhandHud" class="slot empty" data-c="offhand" data-i="0"><i class="ic"></i><b class="ct"></b><u class="du"><s></s></u></div><div id="hotbar"></div></div>
   </div>
   <div id="touchUI">
     <div id="lookZone"></div>
     <div id="joy"><div id="joyKnob"></div></div>
     <div class="tbtns">
+      <button class="tbtn small" data-act="swap"><span>⇄</span>Mano</button>
       <button class="tbtn" data-act="place"><span>▣</span>Usar</button>
       <button class="tbtn" data-act="break"><span>⛏</span>Minar</button>
       <button class="tbtn" data-act="dodge"><span>↯</span>Esquivar</button>
@@ -585,7 +633,8 @@
       <button class="tbtn" data-act="down"><span>⇩</span>Bajar</button>
     </div>
     <div class="topBtns">
-      <button class="tbtn netOnly" id="chatBtn" data-act="chat">💬</button>
+      <button class="tbtn" id="chatBtn" data-act="chat">💬</button>
+      <button class="tbtn" data-act="quests">📜</button>
       <button class="tbtn" data-act="map">🗺</button>
       <button class="tbtn" data-act="inv">🎒</button>
       <button class="tbtn" data-act="pause">II</button>
@@ -602,16 +651,17 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.2!</span>
+      <span class="ver">¡Versión 3.3!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
       <button id="btnPlay" class="btn primary big"><i class="bico" data-icon="play"></i>Un jugador</button>
       <button id="btnMulti" class="btn"><i class="bico" data-icon="multi"></i>Multijugador</button>
+      <button id="btnNews" class="btn">📰 Novedades</button>
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.2</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 3.3</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -694,13 +744,37 @@
     <button id="settingsBack" class="btn primary">Hecho</button>
   </div>
 </div>
+<div id="newsScreen" class="screen">
+  <div class="card wideCard newsCard">
+    <div class="cardHead"><h2>📰 Novedades</h2></div>
+    <p class="cardSub">Todo lo añadido desde la primera versión y lo que viene después.</p>
+    <div id="newsList"></div>
+    <button id="newsBack" class="btn primary">Volver</button>
+  </div>
+</div>
+<div id="dialogScreen" class="screen">
+  <div class="card dlgCard">
+    <div class="dlgHead"><div id="dlgFace"></div><div><b id="dlgName"></b><span id="dlgProf"></span></div><span id="dlgRep"></span></div>
+    <p id="dlgText"></p>
+    <div id="dlgGoods"></div>
+    <div id="dlgOpts"></div>
+  </div>
+</div>
+<div id="questScreen" class="screen">
+  <div class="card wideCard questCard">
+    <div class="cardHead"><h2>📜 Registro de aventuras</h2></div>
+    <div class="stabs"><button class="stab on" data-tab="active">Misiones</button><button class="stab" data-tab="done">Completadas</button><button class="stab" data-tab="villages">Aldeas y reputación</button></div>
+    <div id="questList"></div>
+    <button id="questClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
 <div id="pauseScreen" class="screen">
   <div class="card">
     <h2>Juego en pausa</h2>
     <p id="pauseInfo"></p>
     <button id="pResume" class="btn primary">Volver al juego</button>
     <div class="row"><button id="pMap" class="btn">🗺 Mapa</button><button id="pAch" class="btn">🏆 Logros</button></div>
-    <button id="pStats" class="btn">📊 Estadísticas</button>
+    <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
     <button id="pSettings" class="btn">Ajustes</button>
     <button id="pQuit" class="btn">Guardar y salir al menú</button>
   </div>
@@ -4957,7 +5031,7 @@ class EntityManager {
     for (const o of arr || []) {
       if (!o || !Array.isArray(o.p) || o.p.some((v) => !Number.isFinite(v))) continue;
       if (o.k === 'item') { if (ITEMS[o.s?.[0]]) { const e = new ItemDrop({ id: o.s[0], count: o.s[1], dmg: o.s[2], ...(o.s[3] ? { ench: o.s[3] } : {}) }, ...o.p); e.pickupDelay = 0; this.add(e); } }
-      else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; this.add(v); }
+      else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; v.vinv = Array.isArray(o.vi) ? o.vi : null; v.giftDay = o.gd; v.questDay = o.qd; this.add(v); }
       else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; if (o.tm) { m.tamed = true; m.saddled = !!o.sd; m.sitting = !!o.st; } m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.age < 0) m.mesh.scale.setScalar(0.55); }
     }
   }
@@ -6373,6 +6447,7 @@ const hud = {
     $('#xpLevel').textContent = p.level > 0 ? p.level : '';
     const hb = $('#hotbar').children;
     for (let i = 0; i < 9; i++) { paintSlot(hb[i], p.inv.slots[i]); hb[i].classList.toggle('active', i === p.selected); }
+    const off = $('#offhandHud'); paintSlot(off, p.offhand.slots[0]); off.classList.toggle('empty', !p.offhand.slots[0]);
     hud3.update();
   },
   toast(msg, ms = 2200) {
@@ -6388,7 +6463,7 @@ const hud = {
 // ---------- Pantallas ----------
 function showScreen(id) {
   $$('.screen').forEach((s) => s.classList.toggle('show', s.id === id));
-  const MENU = ['mainMenu', 'aboutScreen', 'worldsScreen', 'createScreen', 'loadingScreen'];
+  const MENU = ['mainMenu', 'newsScreen', 'aboutScreen', 'worldsScreen', 'createScreen', 'loadingScreen'];
   const inMenu = MENU.includes(id) || (id === 'settingsScreen' && (game.state === 'menu' || game.state === 'loading'));
   document.body.classList.toggle('in-menu', inMenu);
   document.body.classList.toggle('overlay', !!id && !inMenu);
@@ -6401,6 +6476,7 @@ function containerOf(c) {
   if (c === 'craft') return ui.craft;
   if (c === 'chest' || c === 'furnace' || c === 'enchant' || c === 'brew') return ui.tile.inv;
   if (c === 'armor') return game.player.armor;
+  if (c === 'offhand') return game.player.offhand;
   return null;
 }
 function stackAt(c, i) { if (c === 'hot') c = 'inv'; const ct = containerOf(c); return ct ? ct.slots[i] : null; }
@@ -6448,12 +6524,12 @@ function buildInventoryUI() {
   if (['enchant', 'brew', 'trade'].includes(ui.mode)) buildInventory3(left, false);
   else if (creative) {
     const tabs = document.createElement('div'); tabs.className = 'tabs';
-    for (const t of ['Bloques', 'Herramientas', 'Comida', 'Materiales']) {
+    for (const t of ['Bloques', 'Herramientas', 'Comida', 'Materiales', 'Huevos']) {
       const b = document.createElement('button'); b.textContent = t; b.className = t === ui.creativeTab ? 'on' : '';
       b.onclick = () => { ui.creativeTab = t; buildInventoryUI(); }; tabs.append(b);
     }
     const grid = document.createElement('div'); grid.className = 'grid9 creative';
-    const list = ITEMS.filter((it) => it && (ui.creativeTab === 'Bloques' ? it.block : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : (!it.block && !it.tool && !it.food)));
+    const list = ITEMS.filter((it) => it && (ui.creativeTab === 'Bloques' ? it.block : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : ui.creativeTab === 'Huevos' ? it.egg : (!it.block && !it.tool && !it.food && !it.egg)));
     list.forEach((it) => { const el = slotEl('creative', it.id); paintSlot(el, { id: it.id, count: 1 }); grid.append(el); });
     left.append(tabs, grid);
   } else if (ui.mode === 'chest') {
@@ -6648,6 +6724,8 @@ function quickMove(c, i) {
     const slot = SMELT[s.id] ? 0 : ITEMS[s.id].fuel ? 1 : -1;
     if (slot >= 0) { const cur = t.slots[slot]; if (!cur) { t.slots[slot] = s; setStackAt(c, i, null); } else if (sameKind(cur, s)) { const k = Math.min(maxStack(s.id) - cur.count, s.count); cur.count += k; s.count -= k; if (!s.count) setStackAt(c, i, null); } }
     return;
+  } else if (c === 'inv' && ITEMS[s.id].shield && !p.offhand.slots[0]) {
+    p.offhand.slots[0] = s; setStackAt(c, i, null); sfx.play('equip'); return;
   } else if (c === 'inv' && ITEMS[s.id].armor && !p.armor.slots[ITEMS[s.id].armor.idx]) {
     p.armor.slots[ITEMS[s.id].armor.idx] = s; setStackAt(c, i, null); sfx.play('equip'); return;
   } else {
@@ -6931,6 +7009,7 @@ function buildInventory3(left, creative) {
     // columna de armadura junto a la cuadrícula 2×2
     const col = document.createElement('div'); col.className = 'armorCol';
     ['Casco', 'Peto', 'Grebas', 'Botas'].forEach((n, i) => { const el = slotEl('armor', i, 'armorSlot'); el.dataset.hint = ['⛑', '🎽', '👖', '🥾'][i]; el.title = n; col.append(el); });
+    const off = slotEl('offhand', 0, 'armorSlot offSlot'); off.dataset.hint = '🛡'; off.title = `Mano secundaria (escudo, antorchas, flechas…) · ${keyName(settings.keys.swapHand)} intercambia`; col.append(off);
     left.firstChild ? left.prepend(col) : left.append(col);
     left.classList.add('withArmor');
     return true;
@@ -6977,10 +7056,10 @@ function renderInventory3() {
   if (ui.mode === 'brew' && ui.tile) { const s = $('#invScreen .brewBar s'); if (s) s.style.width = (ui.tile.t / BREW_TIME * 100) + '%'; }
   if (ui.mode === 'trade') {
     const v = ui.villager, list = $('#tradeList'), p = game.player; if (!list) return;
-    const key = v.uses.join() + p.inv.slots.map((s) => (s ? s.id + 'x' + s.count : '')).join();
+    const key = v.uses.join() + priceMult(v.planId).toFixed(2) + p.inv.slots.map((s) => (s ? s.id + 'x' + s.count : '')).join();
     if (list._k === key) return; list._k = key;
     list.innerHTML = '';
-    TRADES[v.prof].forEach(([[a, an], [b, bn], max], i) => {
+    villagerTrades(v).forEach(([[a, an], [b, bn], max], i) => {
       const left = max - v.uses[i], afford = p.inv.count(a) >= an;
       const row = document.createElement('button'); row.className = 'tradeRow' + (left <= 0 ? ' out' : afford ? '' : ' poor');
       const icon = (id, n) => (id === 'reveal' ? '<i class="tIcon map">🗺</i>' : `<i class="tIcon" style="background-image:url(${ICON[id]})"></i>`) + (n > 1 ? `<b>${n}</b>` : '');
@@ -7166,7 +7245,7 @@ class Player {
     this.inWater = false; this.headInWater = false; this.walkDist = 0; this.stepDist = 0;
     this.eatT = 0; this.score = 0;
     // 3.0
-    this.armor = new Inventory(4); this.effects = new Map(); this.stats = {}; this.ach = new Set(); this.pois = new Map(); this.markers = [];
+    this.armor = new Inventory(4); this.offhand = new Inventory(1); this.effects = new Map(); this.stats = {}; this.ach = new Set(); this.pois = new Map(); this.markers = [];
     this.biomes = new Set(); this.seat = null; this.bowT = 0; this.enchSeed = Math.floor(Math.random() * 1e6);
   }
   held() { return this.inv.slots[this.selected]; }
@@ -7234,7 +7313,7 @@ class Player {
   toJSON() {
     return { p: [this.pos.x, this.pos.y, this.pos.z].map((v) => +v.toFixed(3)), yaw: game.yaw(), pitch: game.pitch(), hp: this.health, hu: this.hunger, sat: this.sat, exh: this.exh,
       lv: this.level, xp: this.xp, air: this.air, inv: this.inv.toJSON(), sel: this.selected, fly: this.flying, sp: this.spawn, disc: [...this.discovered], score: this.score,
-      armor: this.armor.toJSON(), fx: [...this.effects].map(([k, e]) => [k, e.lvl, Math.round(e.t), e.max]), stats: this.stats, ach: [...this.ach],
+      armor: this.armor.toJSON(), off: this.offhand.toJSON(), fx: [...this.effects].map(([k, e]) => [k, e.lvl, Math.round(e.t), e.max]), stats: this.stats, ach: [...this.ach],
       pois: [...this.pois], markers: this.markers, biomes: [...this.biomes], es: this.enchSeed };
   }
   load(o) {
@@ -7242,7 +7321,7 @@ class Player {
     this.level = o.lv ?? 0; this.xp = o.xp ?? 0; this.air = o.air ?? MAX_AIR; this.inv.load(o.inv); this.selected = o.sel ?? 0;
     this.flying = !!o.fly; this.spawn = Array.isArray(o.sp) && o.sp.every(Number.isFinite) ? o.sp : null; this.discovered = new Set(o.disc || []); this.score = o.score || 0;
     if (!Number.isFinite(this.health) || this.health <= 0) this.health = 20;
-    this.armor.load(o.armor || []);
+    this.armor.load(o.armor || []); this.offhand.load(o.off || []);
     this.effects = new Map((o.fx || []).filter((e) => EFFECTS[e[0]]).map(([k, l, t, m]) => [k, { lvl: l, t, max: m }]));
     this.stats = o.stats && typeof o.stats === 'object' ? o.stats : {}; this.ach = new Set(o.ach || []);
     this.pois = new Map(Array.isArray(o.pois) ? o.pois : []); this.markers = Array.isArray(o.markers) ? o.markers.filter((m) => Number.isFinite(m.x) && Number.isFinite(m.z)) : [];
@@ -7518,7 +7597,7 @@ const game = {
     p.dead = true; this.state = 'dead'; bus.emit('died', {}); this.releaseInputs(); sfx.stopAmbient(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
     sfx.play('death');
     if (!this.meta.keepInventory) {
-      for (const inv of [p.inv, p.armor]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
+      for (const inv of [p.inv, p.armor, p.offhand]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
       p.level = 0; p.xp = 0;
     }
     $('#deathCause').textContent = cause; $('#deathScore').textContent = `Puntuación: ${p.score}`;
@@ -7765,7 +7844,7 @@ const game = {
     if (e instanceof Villager) {
       if (e.sleeping) { hud.toast(`${e.vname} está durmiendo… Zzz`); return true; }
       if (e.threat) { hud.toast(`¡${e.vname} está huyendo de un monstruo!`); return true; }
-      sfx.play('villager', { pos: e.pos }); openInventory('trade', e); return true;
+      dialog.open(e); return true;                       // conversación (§31): comerciar, misiones y proyecto de la aldea
     }
     if (tameInteract(e, s)) return true;
     const food = BREED_FOOD[e.type];
@@ -8104,12 +8183,13 @@ const game = {
       } else { heldMesh = handArm; handArm.rotation.set(0.55, 0.4, 0.1); handArm.position.set(0.2, -0.3, -0.2); }
       handGroup.add(heldMesh);
     }
+    updateOffhandView(p, dt, this.blocking && combat.blockHand === 'off');
     this.swing = Math.max(0, this.swing - dt * 3.2);
     const sw = Math.sin((1 - this.swing) * Math.PI) * (this.swing > 0 ? 1 : 0);
     const walk = Math.hypot(p.vel.x, p.vel.z), bob = p.onGround ? Math.sin(p.walkDist * 2.2) : 0;
     const eat = p.eatT ? Math.sin(p.eatT * 18) * 0.03 : 0;
     // animación según el arma (§29): tajo, golpe de arriba abajo, estocada o escudo en alto
-    const pose = attackPose(attackStyle(p.held()), sw, this.blocking), pk = Math.min(1, dt * 14);
+    const pose = attackPose(attackStyle(p.held()), sw, this.blocking && combat.blockHand === 'main'), pk = Math.min(1, dt * 14);
     this.pose = this.pose || [0, 0, 0, 0, 0, 0]; for (let i = 0; i < 6; i++) this.pose[i] += (pose[i] - this.pose[i]) * (this.blocking || this.pose.blk ? pk : 1); this.pose.blk = this.blocking;
     const P = this.pose;
     handGroup.position.set(0.42 + bob * 0.015 * walk / 4 - (p.eatT ? 0.25 : 0) + P[0], -0.38 + Math.abs(bob) * 0.02 * walk / 4 + P[1] + eat + (p.eatT ? 0.12 : 0), -0.62 + P[2]);
@@ -8226,6 +8306,8 @@ function initInput() {
       if (act === 'place') { input.secondary = true; game.useCd = 0; }
       if (act === 'down') input.flyDown = true;
       if (act === 'sneak') { input.sneakToggle = !input.sneakToggle; btn.classList.toggle('on', input.sneakToggle); }
+      if (act === 'swap') game.swapHands();
+      if (act === 'quests' && game.state === 'playing') questUI.show();
       if (act === 'fly' && game.mode === 'creative') { game.player.flying = !game.player.flying; game.player.vel.y = 0; }
       if (act === 'inv' && game.state === 'playing') openInventory('inv');
       if (act === 'map' && game.state === 'playing') mapUI.show();
@@ -8267,7 +8349,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -8278,7 +8360,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.2  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.3  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -8303,7 +8385,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI };
 }
 
 /* ==========================================================================
@@ -9123,7 +9205,7 @@ function doEnchant(i) {
 
 /* ---------- Comercio ---------- */
 function doTrade(v, idx) {
-  const p = game.player, offer = TRADES[v.prof][idx]; if (!offer) return;
+  const p = game.player, offer = villagerTrades(v)[idx]; if (!offer) return;
   const [[payId, payN], [getId, getN], max] = offer;
   if (v.uses[idx] >= max) { hud.toast('Este intercambio está agotado. Vuelve mañana.'); return; }
   if (p.inv.count(payId) < payN) { hud.toast(`Necesitas ${payN}× ${itemName(payId)}`); sfx.play('villager', { pitch: 0.8 }); return; }
@@ -9149,7 +9231,7 @@ function doTrade(v, idx) {
     if (left) game.entities.dropItem({ id: getId, count: left }, p.pos.x, p.pos.y + 1.2, p.pos.z, p.lookVel(2));
     p.discover(getId);
   }
-  v.uses[idx]++; p.addXp(1); game.stats.add('trades'); game.unlock('trade');
+  v.uses[idx]++; p.addXp(1); game.stats.add('trades'); game.unlock('trade'); addRep(v.planId, 1);
   sfx.play('villager', { pos: v.pos, pitch: 1.2 }); sfx.play('pop');
   renderInventory();
 }
@@ -9208,7 +9290,7 @@ const KEY_ACTIONS = [
   ['attack', 'Minar / atacar', 'Mouse0'], ['use', 'Usar / colocar / comer', 'Mouse2'],
   ['lookUp', 'Mirar arriba', 'ArrowUp'], ['lookDown', 'Mirar abajo', 'ArrowDown'], ['lookLeft', 'Mirar a la izquierda', 'ArrowLeft'], ['lookRight', 'Mirar a la derecha', 'ArrowRight'],
   ['inventory', 'Inventario', 'KeyE'], ['drop', 'Soltar objeto', 'KeyQ'], ['map', 'Mapa', 'KeyM'], ['achievements', 'Logros', 'KeyL'],
-  ['chat', 'Chat (multijugador)', 'KeyT'], ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
+  ['chat', 'Chat (multijugador)', 'KeyT'], ['swapHand', 'Cambiar de mano', 'KeyX'], ['quests', 'Registro de misiones', 'KeyJ'], ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
   ['hotbarNext', 'Siguiente espacio', 'WheelDown'], ['hotbarPrev', 'Espacio anterior', 'WheelUp'],
   ...Array.from({ length: 9 }, (_, i) => [`hotbar${i + 1}`, `Espacio ${i + 1} de la barra`, `Digit${i + 1}`]),
 ];
@@ -9262,6 +9344,8 @@ function pressCode(code, ev) {
       case 'achievements': game.pause(); openAchievements(); break;
       case 'pause': game.pause(); break;
       case 'chat': chatUI.open(); break;
+      case 'swapHand': game.swapHands(); break;
+      case 'quests': questUI.show(); break;
       case 'dodge': combat.dodge(); break;
       case 'fly': if (game.mode === 'creative') { p.flying = !p.flying; p.vel.y = 0; } break;
       case 'debug': settings.showFps = !settings.showFps; saveSettings(); break;
@@ -9298,6 +9382,8 @@ function initControls() {
     sfx.init();
     const acts = actionsFor(e.code);
     if (game.state === 'map' && (acts.includes('map') || e.code === 'Escape')) { e.preventDefault(); mapUI.hide(); return; }
+    if (game.state === 'dialog' && e.code === 'Escape') { e.preventDefault(); dialog.close(); return; }
+    if (game.state === 'quests' && (acts.includes('quests') || e.code === 'Escape')) { e.preventDefault(); questUI.hide(); return; }
     if (game.state === 'inventory' && (acts.includes('inventory') || e.code === 'Escape')) { e.preventDefault(); closeInventory(); return; }
     if (game.state !== 'playing') return;
     if (e.code === 'Escape' && !controlsLocked()) { game.pause(); return; }
@@ -9414,7 +9500,7 @@ function startRebind(id, btn) {
 }
 
 /* ---------- Editor de la disposición táctil ---------- */
-const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['sneak', '[data-act=sneak]'], ['dodge', '[data-act=dodge]'], ['fly', '[data-act=fly]'],
+const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['sneak', '[data-act=sneak]'], ['swap', '[data-act=swap]'], ['quests', '[data-act=quests]'], ['dodge', '[data-act=dodge]'], ['fly', '[data-act=fly]'],
   ['down', '[data-act=down]'], ['map', '[data-act=map]'], ['inv', '[data-act=inv]'], ['pause', '[data-act=pause]']];
 const orient = () => (window.innerWidth > window.innerHeight ? 'land' : 'port');
 function applyTouchLayout() {
@@ -9818,7 +9904,7 @@ const ARROW_TYPES = [I.ARROW, I.FIRE_ARROW, I.POISON_ARROW, I.ICE_ARROW];
 const ARROW_FX = { [I.FIRE_ARROW]: 'fire', [I.POISON_ARROW]: 'poison', [I.ICE_ARROW]: 'slow' };
 const ARROW_TINT = { fire: [1.6, 0.7, 0.2], poison: [0.5, 1.3, 0.3], slow: [0.6, 1.1, 1.6] };
 // El arco y la ballesta usan la primera flecha que haya en el inventario (ordénalas para elegir)
-function pickArrow(p) { for (const s of p.inv.slots) if (s && ARROW_TYPES.includes(s.id)) return s.id; return game.mode === 'survival' ? 0 : I.ARROW; }
+function pickArrow(p) { const o = p.offhand.slots[0]; if (o && ARROW_TYPES.includes(o.id)) return o.id; for (const s of p.inv.slots) if (s && ARROW_TYPES.includes(s.id)) return s.id; return game.mode === 'survival' ? 0 : I.ARROW; }
 function tintArrow(a) { if (a.effect && ARROW_TINT[a.effect]) a.mesh.scale.setScalar(1.15); a.fxTint = ARROW_TINT[a.effect]; }
 function arrowEffect(e, fx) {
   if (!fx || !e || e.dead) return;
@@ -9878,7 +9964,8 @@ function onPlayerHit(mt, tool, dmg) {
       const d = new THREE.Vector3(); camera.getWorldDirection(d);
       const dx = from.x - this.pos.x, dz = from.z - this.pos.z, l = Math.hypot(dx, dz) || 1;
       if ((dx * d.x + dz * d.z) / l > 0.2) {                        // el golpe viene de frente
-        const s = this.held(); s.dmg = (s.dmg || 0) + 1; if (s.dmg >= durOf(s.id)) { this.inv.slots[this.selected] = null; sfx.play('toolBreak'); hud.toast('¡Se rompió el escudo!'); }
+        const inv = combat.blockHand === 'off' ? this.offhand : this.inv, si = combat.blockHand === 'off' ? 0 : this.selected, s = inv.slots[si];
+        s.dmg = (s.dmg || 0) + 1; if (s.dmg >= durOf(s.id)) { inv.slots[si] = null; sfx.play('toolBreak'); hud.toast('¡Se rompió el escudo!'); }
         sfx.play('arrowHit'); game.particles.emit(this.pos.x + d.x * 0.6, this.pos.y + 1.2, this.pos.z + d.z * 0.6, [0.9, 0.9, 0.7], 6, { speed: 2, life: 0.3, size: 0.07 }); hud.update();
         if (performance.now() - combat.blockStart < 280) {            // parada perfecta
           if (att && !att.isBoss) { att.stunT = 2; att.vel.x += dx / l * 9; att.vel.z += dz / l * 9; att.vel.y = 5; }
@@ -9923,7 +10010,11 @@ function fireCrossbow(stack) {
 combat.update = function (dt) {
   dmgText.update(dt);
   const p = game.player; if (!p || game.state !== 'playing') { game.blocking = false; return; }
-  const held = p.held(), blocking = !!(input.secondary && held && ITEMS[held.id].shield && !p.dead);
+  // escudo en la mano principal, o en la secundaria si la principal está vacía o lleva un arma o herramienta
+  const held = p.held(), off = p.offhand.slots[0], hi = held && ITEMS[held.id];
+  const main = !!(hi && hi.shield), offOk = !!(off && ITEMS[off.id].shield && (!held || hi.tool || hi.shield || hi.crossbow));
+  const blocking = !!(input.secondary && (main || offOk) && !p.dead);
+  combat.blockHand = main ? 'main' : 'off';
   if (blocking && !combat.wasBlocking) combat.blockStart = performance.now();
   combat.wasBlocking = game.blocking = blocking;
   $('#crosshair').classList.toggle('block', blocking);
@@ -10177,6 +10268,7 @@ function sweepAttack(mt, tool, dmg) {
   const baseHit = onPlayerHit;
   onPlayerHit = function (mt, tool, dmg) {
     baseHit(mt, tool, dmg);
+    if (mt instanceof Villager && combat.petTarget === mt) combat.petTarget = null;     // las mascotas no atacan a los aldeanos
     if (combat.crit) game.shake = Math.max(game.shake, 0.18);
     sweepAttack(mt, tool, dmg);
   };
@@ -10251,6 +10343,1035 @@ const bossFx = {
     if (s % 2 === 0 || b.phase >= 2) sfx.tone(d, 'square', n(arp), n(arp), t, beat * 0.8, 0.022, { filter: 2400 });                     // arpegio
   },
 };
+
+/* ==========================================================================
+   §30 MANO SECUNDARIA
+   --------------------------------------------------------------------------
+   Un espacio extra junto a la armadura (y a la izquierda de la barra rápida).
+   · Escudo en la mano secundaria: bloquea con Usar si la principal está vacía
+     o lleva un arma o una herramienta (ver combat.update en §28).
+   · Flechas en la mano secundaria: el arco y la ballesta las usan primero.
+   · Cambiar de mano: tecla X (configurable) o el botón ⇄ en pantallas táctiles.
+   ========================================================================== */
+game.swapHands = function () {
+  const p = this.player; if (!p || this.state !== 'playing' || p.dead) return;
+  const a = p.inv.slots[p.selected], b = p.offhand.slots[0];
+  if (!a && !b) return;
+  p.inv.slots[p.selected] = b; p.offhand.slots[0] = a;
+  sfx.play('equip'); hud.update(); hud.itemName(p.held());
+};
+const offGroup = new THREE.Group(); viewScene.add(offGroup);
+let offMesh = null, offId = -1, offRaise = 0;
+function updateOffhandView(p, dt, blocking) {
+  const s = p.offhand.slots[0], id = s ? s.id : -1;
+  if (id !== offId) {
+    offId = id;
+    if (offMesh) { offGroup.remove(offMesh); if (offMesh.material !== handMat) offMesh.material.dispose(); offMesh = null; }
+    if (s) {
+      const info = itemModel(id);
+      offMesh = new THREE.Mesh(info.geo, info.textured ? new THREE.MeshBasicMaterial({ map: atlasTex, vertexColors: true, alphaTest: 0.5 }) : handMat);
+      if (info.flat) { offMesh.scale.setScalar(0.3); offMesh.rotation.set(0, 1.3, -0.3); offMesh.position.set(-0.14, -0.04, -0.05); }
+      else { offMesh.scale.setScalar(0.22); offMesh.rotation.set(0.1, -0.8, 0); offMesh.position.set(-0.08, -0.04, -0.05); }
+      offGroup.add(offMesh);
+    }
+  }
+  offGroup.visible = !!offMesh && game.state !== 'menu';
+  if (!offMesh) return;
+  offRaise += ((blocking ? 1 : 0) - offRaise) * Math.min(1, dt * 14);
+  const r = offRaise, walk = Math.hypot(p.vel.x, p.vel.z), bob = p.onGround ? Math.sin(p.walkDist * 2.2 + 1) : 0;
+  offGroup.position.set(-0.5 + r * 0.28 - bob * 0.012 * walk / 4, -0.47 + r * 0.19 + Math.abs(bob) * 0.02 * walk / 4, -0.62 + r * 0.1);
+  offGroup.rotation.set(r * 0.1, r * 1.0, 0);
+  const L = lightLevel(p.pos.x, p.pos.y + 1.2, p.pos.z);
+  if (offMesh.material !== handMat) offMesh.material.color.setRGB(...L);
+}
+
+/* ==========================================================================
+   §31 MINICRAFT 3.3 — AVENTURAS
+   --------------------------------------------------------------------------
+   · Diálogos: al usar un aldeano se abre una conversación con frases que
+     dependen de su oficio, la hora, el clima, tu reputación, el nivel de la
+     aldea y tus hazañas (jefes derrotados).
+   · Misiones principales (una cadena con recompensas fijas) y secundarias
+     que ofrece cada aldeano una vez al día: recolección, combate,
+     exploración, construcción y entregas. Registro con la tecla J, el botón
+     📜 o desde la pausa; la misión seguida se muestra en pantalla.
+   · Reputación por aldea (de Hostil a Héroe del pueblo): cambia los precios,
+     los regalos, si te ofrecen misiones y si los guardias te atacan.
+   · Aldeas que crecen: Asentamiento → Aldea → Pueblo → Villa → Ciudad
+     fortificada aportando materiales al proyecto de la aldea. Los
+     constructores levantan torres, mercado, casas, empalizada y muralla, y
+     llegan aldeanos nuevos (guardias, comerciantes…).
+   · Oficios con actividad propia: el agricultor cosecha y resiembra, el
+     herrero trabaja en su forja, el explorador se aleja de la aldea y el
+     guardia patrulla y combate. Cada aldeano lleva un pequeño inventario.
+   El progreso (misiones, reputación y aldeas) se guarda con el jugador, así
+   que también se conserva en los servidores multijugador.
+   ► AÑADIR UNA MISIÓN PRINCIPAL: nueva entrada en MAIN_QUESTS.
+   ► AÑADIR UN TIPO DE MISIÓN SECUNDARIA: plantilla en QUEST_POOL.
+   ========================================================================== */
+Object.assign(I, { HERO_CROWN: 495 });
+ARMOR_STATS.crown = { name: 'corona', pts: [3, 0, 0, 0], dur: 40, color: [250, 210, 70] };
+defItem(I.HERO_CROWN, 'Corona del héroe', 'Recompensa por derrotar al Dragón. Regenera tu vida poco a poco y los aldeanos te reciben como a un héroe.', { stack: 1, armor: { mat: 'crown', slot: 'helmet', idx: 0, pts: 3, dur: 900 }, wearEffect: 'regen' });
+ITEMS[I.HERO_CROWN].rarity = 5;
+ICON_OVERRIDE[I.HERO_CROWN] = () => { const p = new Pix(); p.poly([[2, 13], [14, 13], [14, 6], [11, 9], [8, 4], [5, 9], [2, 6]], (x, y) => (y > 11 ? [200, 150, 40] : x < 8 ? [255, 222, 90] : [236, 190, 60])); p.set(8, 9, [220, 40, 60]); p.set(4.5, 11, [80, 160, 240]); p.set(11.5, 11, [80, 200, 120]); return p.canvas(); };
+
+// ---------- Oficio nuevo: guardia ----------
+PROFESSIONS.guard = { name: 'Guardia', robe: rgb(70, 76, 96), trim: rgb(180, 182, 190), hat: 'none' };
+TRADES.guard = [[[I.ROTTEN_FLESH, 20], [I.EMERALD, 1], 10], [[I.BONE, 12], [I.EMERALD, 1], 10], [[I.EMERALD, 4], [I.SHIELD, 1], 2], [[I.EMERALD, 5], [I.SPEAR_IRON, 1], 2]];
+{
+  const baseModel = villagerModel;
+  villagerModel = function (mat, prof) {
+    const m = baseModel(mat, prof);
+    if (prof === 'guard') {
+      const IR = rgb(196, 198, 206), ID = rgb(140, 142, 150);
+      part(m.head, mat, 0, 0, 0, [[9, 3, 9, 0, 9.5, 0, IR], [9.2, 1, 9.2, 0, 8, 0, ID], [1.2, 3, 1.2, 0, 12, 0, rgb(200, 40, 40)], [1, 3, 1, 0, 6, 4.6, ID]]);
+      part(m.body, mat, 0, 0, 0, [[8.6, 8, 6.6, 0, 2, 0, IR], [3, 3, 0.4, 0, 2, 3.4, rgb(60, 90, 170)]]);
+      m.sword = part(m.body, mat, 5.2, 0, 3, [[1, 12, 1, 0, 2, 0, IR], [3.4, 0.8, 1.2, 0, -4, 0, ID], [1, 3, 1, 0, -5.8, 0, rgb(90, 60, 36)]]);
+    }
+    return m;
+  };
+}
+// Lo que llevan encima los aldeanos al aparecer
+const VILLAGER_GOODS = {
+  farmer: [[I.WHEAT, 6], [I.BREAD, 2]], smith: [[I.IRON_INGOT, 2], [I.COAL, 6]], merchant: [[I.EMERALD, 2], [TORCH, 8]],
+  builder: [[COBBLE, 16], [OAK_PLANKS, 12]], explorer: [[I.ARROW, 6], [I.APPLE, 2]], guard: [[I.BREAD, 3], [I.IRON_INGOT, 1]],
+};
+// Intercambios extra a partir del nivel 3 (Pueblo)
+const TRADES_PLUS = {
+  farmer: [[[I.EMERALD, 4], [I.GOLDEN_APPLE, 1], 3], [[I.EMERALD, 1], [I.MELON_SLICE, 8], 10]],
+  smith: [[[I.EMERALD, 12], [armorId('diamond', 'chest'), 1], 1], [[I.EMERALD, 4], [I.SHIELD, 1], 3]],
+  merchant: [[[I.EMERALD, 3], [I.SADDLE, 1], 2], [[I.EMERALD, 6], [I.CROSSBOW, 1], 2]],
+  builder: [[[I.EMERALD, 2], [SEA_LANTERN, 4], 6], [[I.EMERALD, 1], [CHERRY_PLANKS, 16], 8]],
+  explorer: [[[I.EMERALD, 3], [I.FIRE_ARROW, 8], 6], [[I.EMERALD, 4], [potionId('water', 0), 1], 4]],
+  guard: [[[I.EMERALD, 8], [I.BATTLE_AXE_IRON, 1], 2]],
+};
+
+/* ---------- Aldeas: nombre, nivel y reputación ---------- */
+const VN_A = ['Val', 'Pino', 'Roble', 'Monte', 'Río', 'Fuente', 'Peña', 'Villa', 'Campo', 'Torre', 'Sierra', 'Prado', 'Castro', 'Mira'];
+const VN_B = ['dulce', 'alto', 'claro', 'verde', 'sol', 'rubio', 'hondo', 'frío', 'luna', 'mayor', 'nuevo', 'real', 'flor', 'bravo'];
+const strHash = (s) => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
+function villageName(id) { const n = getPlan(id)?.poi?.name; if (n && /^Aldea\s+\S/.test(n)) return n.replace(/^Aldea\s+/, ''); const h = strHash(id); return VN_A[h % VN_A.length] + VN_B[(h >> 8) % VN_B.length]; }
+const VILLAGE_LEVELS = ['', 'Asentamiento', 'Aldea', 'Pueblo', 'Villa', 'Ciudad fortificada'];
+const REP_TIERS = [[-100, 'Hostil', '#ff5a4a'], [-39, 'Desconfiado', '#ff9a4a'], [-9, 'Neutral', '#d4d4d4'], [15, 'Amistoso', '#7be06a'], [40, 'Venerado', '#5ab4ff'], [70, 'Héroe del pueblo', '#ffb43c']];
+function repTier(r) { let t = REP_TIERS[0]; for (const x of REP_TIERS) if (r >= x[0]) t = x; return t; }
+function vrec(planId, create = true) {
+  const p = game.player; if (!p || planId == null) return null;
+  p.villages ||= {};
+  let r = p.villages[planId];
+  if (!r && create) r = p.villages[planId] = { rep: 0, lvl: 1, proj: {}, bq: null, bi: 0, spawn: [] };
+  return r;
+}
+function addRep(planId, n, why) {
+  const r = vrec(planId); if (!r || !n) return;
+  const before = repTier(r.rep)[1];
+  r.rep = clamp(r.rep + n, -100, 100);
+  const after = repTier(r.rep);
+  if (after[1] !== before) notify(n > 0 ? '🤝 Reputación' : '⚠ Reputación', `${villageName(planId)}: ahora eres ${after[1]}`, n > 0 ? 'poi' : 'info');
+  else if (why && Math.abs(n) >= 3) hud.toast(`${why} (${n > 0 ? '+' : ''}${n} reputación en ${villageName(planId)})`, 1800);
+}
+// Precio según la reputación: hasta un 30 % más barato o un 50 % más caro
+function priceMult(planId) {
+  const r = vrec(planId, false)?.rep ?? 0, crown = ITEMS[game.player.armor.slots[0]?.id]?.wearEffect === 'regen' ? 0.9 : 1;
+  return (r >= 0 ? 1 - 0.3 * Math.min(r, 100) / 100 : 1 + 0.5 * Math.min(-r, 100) / 100) * crown;
+}
+function villagerTrades(v) {
+  const lvl = vrec(v.planId, false)?.lvl || 1, m = priceMult(v.planId);
+  const base = [...(TRADES[v.prof] || []), ...(lvl >= 3 ? TRADES_PLUS[v.prof] || [] : [])];
+  while (v.uses.length < base.length) v.uses.push(0);
+  return base.map(([[a, an], b, max]) => [[a, Math.max(1, Math.round(an * m))], b, max]);
+}
+function villageInfo(planId) {
+  const plan = getPlan(planId); if (!plan || !plan.poi) return null;
+  const c = plan.poi; let S = 26;
+  for (const n of plan.npcs) S = Math.max(S, Math.abs(n.home[0] - c.x) + 9, Math.abs(n.home[2] - c.z) + 9);
+  return { plan, x: c.x, z: c.z, y: c.y, S: Math.min(46, S) };
+}
+const maxVillageLevel = (p) => Object.values(p.villages || {}).reduce((m, r) => Math.max(m, r.lvl || 1), 1);
+
+/* ---------- Mejoras de aldea: coste y requisitos ---------- */
+const LOG_ANY = [...LOGS, JUNGLE_LOG, ACACIA_LOG, CHERRY_LOG, ENCH_LOG];
+const VILLAGE_UPGRADES = {
+  2: { rep: 0, need: [['Tablones', PLANKS_ANY, 48], ['Piedra labrada', [COBBLE], 32], ['Antorchas', [TORCH], 8]], what: 'dos torres de vigilancia y un guardia' },
+  3: { rep: 15, need: [['Piedra labrada', [COBBLE], 64], ['Vidrio', [GLASS], 24], ['Lana', [WOOL, RED_WOOL], 12], ['Esmeraldas', [I.EMERALD], 8]], what: 'un mercado, un comerciante y nuevos intercambios' },
+  4: { rep: 30, need: [['Troncos', LOG_ANY, 64], ['Lingotes de hierro', [I.IRON_INGOT], 12], ['Faroles', [LANTERN], 4]], what: 'una empalizada, dos casas, un guardia y un constructor' },
+  5: { rep: 50, need: [['Ladrillos de piedra', [STONE_BRICKS], 128], ['Lingotes de hierro', [I.IRON_INGOT], 24], ['Lingotes de oro', [I.GOLD_INGOT], 8], ['Diamantes', [I.DIAMOND], 3]], what: 'una muralla de piedra con torreones y más guardias' },
+};
+const countAny = (inv, ids) => ids.reduce((n, id) => n + inv.count(id), 0);
+function removeAny(inv, ids, n) { for (const id of ids) { const k = Math.min(n, inv.count(id)); if (k) { inv.remove(id, k); n -= k; } if (n <= 0) break; } }
+// Entrega lo que tengas para el siguiente nivel; si se completa, empieza la obra
+function contribute(planId) {
+  const r = vrec(planId), up = VILLAGE_UPGRADES[r.lvl + 1], p = game.player; if (!up) return 'max';
+  if (r.rep < up.rep) return 'rep';
+  let gave = 0;
+  for (const [name, ids, n] of up.need) {
+    const have = r.proj[name] || 0, want = n - have; if (want <= 0) continue;
+    const k = game.mode === 'creative' ? want : Math.min(want, countAny(p.inv, ids));
+    if (k > 0) { if (game.mode === 'survival') removeAny(p.inv, ids, k); r.proj[name] = have + k; gave += k; }
+  }
+  if (gave) { addRep(planId, Math.max(1, Math.floor(gave / 24)), 'Aportaste materiales'); sfx.play('pop'); hud.update(); }
+  if (up.need.every(([name, , n]) => (r.proj[name] || 0) >= n)) { startUpgrade(planId); return 'start'; }
+  return gave ? 'gave' : 'none';
+}
+
+/* ---------- Construcción: planos de cada mejora ---------- */
+const NATURAL_TOP = new Set([GRASS, DIRT, SAND, SNOWY_GRASS, GRAVEL, STONE, RED_SAND, MYCELIUM, ASH, CLAY, SNOW, SANDSTONE, TERRACOTTA, TERRACOTTA_ORANGE, TERRACOTTA_LIGHT, BASALT, MOSS, ANDESITE, GRANITE, DIORITE]);
+const LOG_SET = new Set(LOG_ANY);
+const isNaturalAbove = (id) => !id || id === WATER ? !id : (BLOCKS[id].leaves || BLOCKS[id].replaceable || BLOCKS[id].shape === 'cross' || LOG_SET.has(id));
+function groundAt(x, z) {
+  if (!world.isLoaded(x, z)) return { y: world.gen.column(x, z).h, loaded: false, top: GRASS };
+  for (let y = Math.min(WY - 2, world.heightAt(x, z) + 3); y > 2; y--) {
+    const id = world.get(x, y, z);
+    if (id === WATER || id === ICE) return { y, water: true, loaded: true, top: id };
+    if (id && B_SOLID[id] && !BLOCKS[id].leaves && !LOG_SET.has(id)) return { y, loaded: true, top: id };
+  }
+  return { y: -1, loaded: true };
+}
+// ¿Se puede construir en el rectángulo? Devuelve la altura del suelo o null
+function areaFree(x0, z0, x1, z1, occ) {
+  const ys = [];
+  for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) {
+    if (occ && occ.has(x + ',' + z)) return null;
+    const g = groundAt(x, z); if (g.water || g.y < 3) return null;
+    if (g.loaded) { if (!NATURAL_TOP.has(g.top)) return null; for (let y = g.y + 1; y <= g.y + 7; y++) if (!isNaturalAbove(world.get(x, y, z))) return null; }
+    ys.push(g.y);
+  }
+  ys.sort((a, b) => a - b);
+  if (ys[ys.length - 1] - ys[0] > 3) return null;
+  return ys[ys.length >> 1];
+}
+function findSpot(c, rMin, rMax, w, d, rnd, occ, taken) {
+  for (let k = 0; k < 140; k++) {
+    const a = rnd() * Math.PI * 2, r = rMin + rnd() * (rMax - rMin), x = Math.round(c.x + Math.cos(a) * r), z = Math.round(c.z + Math.sin(a) * r);
+    if (taken.some(([tx, tz, tw, td]) => x - 2 < tx + tw && x + w + 2 > tx && z - 2 < tz + td && z + d + 2 > tz)) continue;
+    const g = areaFree(x - 1, z - 1, x + w, z + d, occ);
+    if (g != null) { taken.push([x, z, w, d]); return { x, z, g }; }
+  }
+  return null;
+}
+// Lista plana [x, y, z, id, meta, …]
+function bpHouse(L, x0, z0, g, wood) {
+  for (let dx = -1; dx <= 5; dx++) for (let dz = -1; dz <= 6; dz++) for (let y = g + 1; y <= g + 7; y++) L.push(x0 + dx, y, z0 + dz, AIR, 0);
+  for (let dx = 0; dx < 5; dx++) for (let dz = 0; dz < 5; dz++) {
+    const edge = dx === 0 || dx === 4 || dz === 0 || dz === 4, corner = (dx === 0 || dx === 4) && (dz === 0 || dz === 4);
+    L.push(x0 + dx, g, z0 + dz, edge ? COBBLE : wood, 0);
+    if (edge) for (let y = 1; y <= 3; y++) {
+      const win = y === 2 && !corner && ((dx === 2 && dz === 4) || (dz === 2 && (dx === 0 || dx === 4)));
+      L.push(x0 + dx, g + y, z0 + dz, corner ? OAK_LOG : win ? GLASS : wood, 0);
+    }
+    L.push(x0 + dx, g + 4, z0 + dz, edge ? COBBLE_SLAB : wood, 0);
+  }
+  L.push(x0 + 2, g + 5, z0 + 2, OAK_SLAB, 0);
+  L.push(x0 + 2, g + 1, z0, DOOR, 0, x0 + 2, g + 2, z0, DOOR, 8);                                   // puerta (fachada norte)
+  L.push(x0 + 1, g + 1, z0 + 3, BED, 1, x0 + 2, g + 1, z0 + 3, BED, 9);                               // cama
+  L.push(x0 + 3, g + 1, z0 + 1, TORCH, 0, x0 + 2, g, z0 - 1, DIRT_PATH, 0);
+  return { home: [x0 + 1, g + 1, z0 + 3], work: [x0 + 2, g + 1, z0 - 2] };
+}
+function bpWatchtower(L, x0, z0, g, stone) {
+  const W = stone ? STONE_BRICKS : OAK_PLANKS, P = stone ? STONE_BRICKS : OAK_LOG, H = stone ? 8 : 6;
+  for (let dx = -1; dx <= 3; dx++) for (let dz = -1; dz <= 3; dz++) for (let y = g + 1; y <= g + H + 3; y++) L.push(x0 + dx, y, z0 + dz, AIR, 0);
+  for (let dx = 0; dx < 3; dx++) for (let dz = 0; dz < 3; dz++) {
+    L.push(x0 + dx, g, z0 + dz, COBBLE, 0);
+    if ((dx !== 1 && dz !== 1) || (stone && (dx !== 1 || dz !== 1))) for (let y = 1; y < H; y++) L.push(x0 + dx, g + y, z0 + dz, P, 0);
+  }
+  for (let dx = -1; dx <= 3; dx++) for (let dz = -1; dz <= 3; dz++) {
+    L.push(x0 + dx, g + H, z0 + dz, W, 0);
+    const rim = dx === -1 || dx === 3 || dz === -1 || dz === 3;
+    if (rim) { if (stone) { if ((dx + dz) % 2 === 0) L.push(x0 + dx, g + H + 1, z0 + dz, STONE_BRICKS, 0); } else L.push(x0 + dx, g + H + 1, z0 + dz, FENCE, 0); }
+  }
+  for (const [dx, dz] of [[-1, -1], [3, -1], [-1, 3], [3, 3]]) { if (!stone) L.push(x0 + dx, g + H + 2, z0 + dz, LANTERN, 0); else L.push(x0 + dx, g + H + 1, z0 + dz, STONE_BRICKS, 0, x0 + dx, g + H + 2, z0 + dz, LANTERN, 0); }
+}
+function bpStall(L, x0, z0, g, wool) {
+  for (let dx = 0; dx < 3; dx++) for (let dz = 0; dz < 3; dz++) { for (let y = g + 1; y <= g + 4; y++) L.push(x0 + dx, y, z0 + dz, AIR, 0); L.push(x0 + dx, g, z0 + dz, DIRT_PATH, 0); }
+  for (const [dx, dz] of [[0, 0], [2, 0], [0, 2], [2, 2]]) L.push(x0 + dx, g + 1, z0 + dz, FENCE, 0, x0 + dx, g + 2, z0 + dz, FENCE, 0);
+  for (let dx = 0; dx < 3; dx++) for (let dz = 0; dz < 3; dz++) L.push(x0 + dx, g + 3, z0 + dz, dx === 1 ? WOOL : wool, 0);
+  L.push(x0 + 1, g + 1, z0, OAK_SLAB, 0, x0 + 1, g + 1, z0 + 2, BARREL, 0);
+}
+// Empalizada (nivel 4) o muralla de piedra (nivel 5) alrededor de la aldea, con puertas en los caminos
+function bpWall(L, info, stone) {
+  const { x: cx, z: cz, S, plan } = info, H = stone ? 4 : 3;
+  const col = (x, z, i) => {
+    const ox = x - cx, oz = z - cz;
+    if (Math.abs(ox) <= 2 || Math.abs(oz) <= 2) {                         // puerta: pilares con farol
+      if (Math.abs(ox) === 3 || Math.abs(oz) === 3) { const g = groundAt(x, z); if (g.water || g.y < 3) return; for (let y = 1; y <= H + 1; y++) L.push(x, g.y + y, z, stone ? STONE_BRICKS : OAK_LOG, 0); L.push(x, g.y + H + 2, z, LANTERN, 0); }
+      return;
+    }
+    if (plan.occ.has(x + ',' + z)) return;
+    const g = groundAt(x, z); if (g.water || g.y < 3) return;
+    if (g.loaded) { if (!NATURAL_TOP.has(g.top) && g.top !== DIRT_PATH) return; for (let y = g.y + 1; y <= g.y + H; y++) { const id = world.get(x, y, z); if (!isNaturalAbove(id) && id !== OAK_LOG) return; } }
+    for (let y = 1; y <= H; y++) L.push(x, g.y + y, z, stone ? (y === 1 ? COBBLE : STONE_BRICKS) : OAK_LOG, 0);
+    if (stone && i % 2 === 0) L.push(x, g.y + H + 1, z, STONE_BRICKS, 0);
+    else if (!stone && i % 6 === 0) L.push(x, g.y + H + 1, z, TORCH, 0);
+  };
+  let i = 0;
+  for (let t = -S; t <= S; t++) { col(cx + t, cz - S, i++); col(cx + t, cz + S, i++); }
+  for (let t = -S + 1; t < S; t++) { col(cx - S, cz + t, i++); col(cx + S, cz + t, i++); }
+}
+function startUpgrade(planId) {
+  const r = vrec(planId), info = villageInfo(planId); if (!info) return;
+  const lvl = r.lvl + 1, rnd = mulberry32(strHash(planId) ^ (lvl * 7919)), L = [], spawn = [], taken = [], occ = info.plan.occ;
+  const wood = [OAK_PLANKS, SPRUCE_PLANKS, BIRCH_PLANKS][strHash(planId) % 3];
+  const house = (prof) => { const s = findSpot(info, 12, info.S - 6, 5, 6, rnd, occ, taken); if (!s) return; const h = bpHouse(L, s.x, s.z, s.g, wood); spawn.push([prof, ...h.home, ...h.work]); };
+  if (lvl === 2) {
+    for (let k = 0; k < 2; k++) { const s = findSpot(info, info.S - 12, info.S - 4, 3, 3, rnd, occ, taken); if (s) bpWatchtower(L, s.x, s.z, s.g, false); }
+    house('guard');
+  } else if (lvl === 3) {
+    for (let k = 0; k < 3; k++) { const s = findSpot(info, 5, 16, 3, 3, rnd, occ, taken); if (s) bpStall(L, s.x, s.z, s.g, [RED_WOOL, WOOL][k % 2]); }
+    house('merchant');
+  } else if (lvl === 4) {
+    bpWall(L, info, false);
+    house('guard'); house('builder');
+  } else if (lvl === 5) {
+    bpWall(L, info, true);
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const x = info.x + sx * info.S - 1, z = info.z + sz * info.S - 1, g = groundAt(x + 1, z + 1);
+      if (!g.water && g.y > 2) bpWatchtower(L, x, z, g.y, true);
+    }
+    house('guard'); house('guard');
+  }
+  r.lvl = lvl; r.proj = {}; r.bq = (r.bq && r.bi < r.bq.length ? r.bq.slice(r.bi) : []).concat(L); r.bi = 0; r.spawn = (r.spawn || []).concat(spawn); r.sentT = 0;
+  addRep(planId, 10);
+  notify('🏗 ¡La aldea crece!', `${villageName(planId)} será ${VILLAGE_LEVELS[lvl]}: ${VILLAGE_UPGRADES[lvl].what}.`, 'poi');
+  sfx.play('levelup'); game.stats.add('villageUps');
+  if (lvl >= 3) game.unlock('village_town'); if (lvl >= 5) game.unlock('village_city');
+}
+// Los constructores trabajan siempre: unos 45 bloques por segundo; fuera del área cargada se anota como cambio pendiente
+function tickConstruction() {
+  const now = performance.now(), dt = Math.min(1, (now - (tickConstruction.last || now)) / 1000); tickConstruction.last = now;   // tiempo real
+  const p = game.player; if (!p || !p.villages) return;
+  for (const [id, r] of Object.entries(p.villages)) {
+    if (r.bq && r.bi < r.bq.length) {
+      r.acc = (r.acc || 0) + dt * 45;
+      let n = 0;
+      while (r.acc >= 1 && r.bi < r.bq.length) {
+        const [x, y, z, b, m] = r.bq.slice(r.bi, r.bi + 5); r.bi += 5; r.acc--;
+        if (world.isLoaded(x, z)) {
+          const cur = world.get(x, y, z);
+          if (b === AIR && (!cur || !isNaturalAbove(cur))) continue;   // no se derriba nada que no sea vegetación
+          world.set(x, y, z, b, m);
+          if (b && n++ < 2 && Math.random() < 0.3) { game.particles.emit(x + 0.5, y + 0.5, z + 0.5, [0.85, 0.8, 0.7], 3, { speed: 1.5, life: 0.4, size: 0.08 }); if (Math.hypot(x - p.pos.x, z - p.pos.z) < 24) sfx.play('place', { mat: BLOCKS[b].sound, pos: { x, y, z } }); }
+        } else if (b) {
+          const key = (x >> 4) + ',' + (z >> 4), i = (x & 15) | ((z & 15) << 4) | (y << 8);
+          let ed = world.edits.get(key); if (!ed) { ed = new Map(); world.edits.set(key, ed); }
+          ed.set(i, b | (m << 8));
+        }
+      }
+      if (r.bi >= r.bq.length) { r.bq = null; r.bi = 0; notify('🏘 Obra terminada', `${villageName(id)} ya es ${VILLAGE_LEVELS[r.lvl]}`, 'poi'); }
+    }
+    // aldeanos nuevos: llegan cuando su casa está terminada y cargada
+    if ((!r.bq) && r.spawn && r.spawn.length) {
+      const keep = [];
+      for (const s of r.spawn) {
+        const [prof, hx, hy, hz, wx, wy, wz] = s;
+        if (!world.isLoaded(hx, hz)) { keep.push(s); continue; }
+        const v = new Villager(hx + 0.5, hy + 0.1, hz + 0.5, { prof, home: [hx, hy, hz], work: [wx, wy, wz], planId: id }); game.entities.add(v);
+        hud.toast(`${v.vname} (${PROFESSIONS[prof].name}) se ha mudado a ${villageName(id)}`, 2600);
+      }
+      r.spawn = keep;
+    }
+  }
+}
+
+/* ---------- Actividades de cada oficio ---------- */
+{
+  const baseUpdate = Villager.prototype.update;
+  Villager.prototype.update = function (dt, game) {
+    this.vinv ||= (VILLAGER_GOODS[this.prof] || []).map(([id, n]) => [id, n]);
+    if (this.prof === 'guard' && !this.deathT) return guardAI.call(this, dt, game);
+    const r = baseUpdate.call(this, dt, game);
+    if (this.deathT || this.sleeping || this.trading || this.threat) return r;
+    const t = game.env.time, day = t > 0.05 && t < 0.44;
+    this.actT = (this.actT ?? 4 + Math.random() * 6) - dt;
+    const nearWork = this.work && Math.hypot(this.work[0] + 0.5 - this.pos.x, this.work[2] + 0.5 - this.pos.z) < 5;
+    if (this.actT <= 0 && day) {
+      this.actT = 6 + Math.random() * 8;
+      if (this.prof === 'farmer') {                                          // cosecha lo maduro y vuelve a sembrar
+        const bx = Math.floor(this.pos.x), by = Math.floor(this.pos.y), bz = Math.floor(this.pos.z);
+        outer: for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) for (let dy = -1; dy <= 1; dy++) {
+          const id = world.get(bx + dx, by + dy, bz + dz), def = BLOCKS[id];
+          if (def && def.crop && world.getMeta(bx + dx, by + dy, bz + dz) >= def.stages.length - 1) {
+            world.set(bx + dx, by + dy, bz + dz, id, 0);
+            const crop = id === WHEAT ? I.WHEAT : id === CARROTS ? I.CARROT : id === POTATOES ? I.POTATO : I.BEETROOT;
+            villagerGive(this, crop, 2 + Math.floor(Math.random() * 2));
+            game.particles.emit(bx + dx + 0.5, by + dy + 0.5, bz + dz + 0.5, [0.8, 0.75, 0.3], 6, { up: 1.5, life: 0.5, size: 0.08 }); sfx.play('dig', { mat: 'grass', pos: this.pos });
+            break outer;
+          }
+        }
+      } else if (this.prof === 'smith' && nearWork) {                        // trabaja en la forja
+        for (let k = 0; k < 3; k++) setTimeout(() => { if (this.dead) return; game.particles.emit(this.pos.x + Math.sin(this.yaw) * 0.6, this.pos.y + 1, this.pos.z + Math.cos(this.yaw) * 0.6, [1, 0.7, 0.2], 6, { speed: 2.5, up: 2, life: 0.35, size: 0.06 }); sfx.play('hit', { pos: this.pos, pitch: 1.6 }); this.model.arms[0].rotation.x = -0.9; }, k * 350);
+        if (Math.random() < 0.3) villagerGive(this, I.IRON_INGOT, 1);
+      } else if (this.prof === 'explorer' && Math.random() < 0.5) {           // se aleja a explorar los alrededores
+        const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 18; this.target = [this.home[0] + Math.cos(a) * d, this.home[2] + Math.sin(a) * d]; this.idleT = 30;
+      } else if (this.prof === 'builder' && vrec(this.planId, false)?.bq) {    // supervisa la obra
+        game.particles.emit(this.pos.x, this.pos.y + 2.2, this.pos.z, [1, 0.85, 0.3], 4, { gravity: -0.5, up: 0.8, life: 0.6, size: 0.08 });
+      }
+    }
+    return r;
+  };
+  const baseJSON = Villager.prototype.toJSON;
+  Villager.prototype.toJSON = function () { const o = baseJSON.call(this); o.vi = this.vinv; o.gd = this.giftDay; o.qd = this.questDay; return o; };
+  const baseHurt = Villager.prototype.hurt;
+  Villager.prototype.hurt = function (dmg, from) {
+    const r = baseHurt.call(this, dmg, from);
+    if (r && this.lastHit === 'player') { this.lastHit = null; this.hitByPlayer = true; addRep(this.planId, -8, `¡Has golpeado a ${this.vname}!`); alarmGuards(this, game); }
+    return r;
+  };
+}
+function villagerGive(v, id, n) { const e = v.vinv.find((x) => x[0] === id); if (e) e[1] = Math.min(64, e[1] + n); else if (v.vinv.length < 5) v.vinv.push([id, n]); }
+function alarmGuards(v, game) { for (const e of game.entities.list) if (e instanceof Villager && e.prof === 'guard' && e.planId === v.planId && e.pos.distanceTo(v.pos) < 24) e.angryT = 25; }
+// Guardia: patrulla día y noche, combate a los monstruos y a ti si te ganas su enemistad
+function guardAI(dt, game) {
+  const p = game.player, s = this.spec;
+  this.invuln -= dt; this.hurtT -= dt; this.gCd = (this.gCd || 0) - dt; this.angryT = (this.angryT || 0) - dt;
+  if ((this.scanT = (this.scanT || 0) - dt) <= 0) {
+    this.scanT = 0.5; this.foe = null; let best = 18;
+    for (const e of game.entities.list) if (e.kind === 'mob' && e.spec.hostile && !e.deathT && !e.dead && !e.isBoss && !e.remote && !e.tamed) { const d = e.pos.distanceTo(this.pos); if (d < best) { best = d; this.foe = e; } }
+    const rep = vrec(this.planId, false)?.rep ?? 0;
+    if (!this.foe && game.mode === 'survival' && !p.dead && (rep <= -40 || this.angryT > 0) && p.pos.distanceTo(this.pos) < 16) this.foe = 'player';
+  }
+  const f = this.foe === 'player' ? p : this.foe;
+  if (f && f !== p && (f.dead || f.deathT)) this.foe = null;
+  let goal = null, speed = 0;
+  if (f && (f !== p || !p.dead)) {
+    const d = Math.hypot(f.pos.x - this.pos.x, f.pos.z - this.pos.z);
+    goal = [f.pos.x, f.pos.z]; speed = d > 1.6 ? 3.1 : 0;
+    if (d < 1.9 && Math.abs(f.pos.y - this.pos.y) < 2 && this.gCd <= 0) {
+      this.gCd = 0.9; this.model.arms[0].rotation.x = -1.6; if (this.model.sword) this.model.sword.rotation.x = -1.2;
+      if (f === p) p.damage(4, `Te derrotó ${this.vname}, guardia de ${villageName(this.planId)}`, this.pos);
+      else { f.lastHit = null; f.hurt(7, this.pos); }
+      sfx.play('swing', { pos: this.pos });
+    }
+  } else {
+    // patrulla alrededor de su puesto
+    this.patrolT = (this.patrolT || 0) - dt;
+    const w = this.work || this.home;
+    if (!this.patrol || this.patrolT <= 0) { const a = Math.random() * Math.PI * 2, d = 3 + Math.random() * 12; this.patrol = [w[0] + 0.5 + Math.cos(a) * d, w[2] + 0.5 + Math.sin(a) * d]; this.patrolT = 6 + Math.random() * 10; }
+    if (Math.hypot(this.patrol[0] - this.pos.x, this.patrol[1] - this.pos.z) > 0.8) { goal = this.patrol; speed = 1.4; }
+  }
+  if (this.model.sword) this.model.sword.rotation.x *= 0.85;
+  if (goal) { const want = Math.atan2(goal[0] - this.pos.x, goal[1] - this.pos.z), dy = ((want - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI; this.yaw += clamp(dy, -6 * dt, 6 * dt); }
+  const k = Math.min(1, (this.onGround ? 10 : 2) * dt);
+  this.vel.x += (Math.sin(this.yaw) * speed - this.vel.x) * k; this.vel.z += (Math.cos(this.yaw) * speed - this.vel.z) * k;
+  if (this.hitH && this.onGround && speed) this.vel.y = JUMP_SPEED;
+  this.physics(dt, { swimUp: true });
+  if (this.hp < s.hp && (this.regT = (this.regT || 0) + dt) > 5) { this.regT = 0; this.hp++; }
+  this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4;
+  this.syncMesh(dt);
+  this.mesh.rotation.x = 0;
+}
+
+/* ---------- Misiones ---------- */
+const MAIN_QUESTS = [
+  { title: 'Un nuevo comienzo', desc: 'Los aldeanos comercian con esmeraldas. Haz tu primer intercambio con uno de ellos.', goal: 'Comercia con un aldeano', check: (p) => [Math.min(1, p.stats.trades || 0), 1], reward: { em: 3, xp: 10 } },
+  { title: 'Herramientas de hierro', desc: 'Para llegar lejos necesitas buen equipo. Fabrica un pico de hierro.', goal: 'Consigue un pico de hierro', check: (p) => [p.discovered.has(toolId('iron', 'pickaxe')) ? 1 : 0, 1], reward: { em: 5, xp: 15, items: [[I.SHIELD, 1]] } },
+  { title: 'Rumores lejanos', desc: 'Los exploradores hablan de lugares olvidados. Descubre tres lugares del mundo.', goal: 'Descubre lugares', check: (p) => [Math.min(3, p.pois.size), 3], reward: { em: 8, xp: 20, items: [[I.COMPASS, 1]] } },
+  { title: 'Una aldea próspera', desc: 'Habla con un aldeano y aporta materiales al proyecto de su aldea hasta que llegue al nivel 2.', goal: 'Mejora una aldea al nivel 2', check: (p) => [maxVillageLevel(p) >= 2 ? 1 : 0, 1], reward: { em: 10, xp: 25, items: [[I.GOLDEN_APPLE, 1]] } },
+  { title: 'El Gólem ancestral', desc: 'En lo alto de una torre antigua duerme un gólem de piedra. Despiértalo y derrótalo.', goal: 'Derrota al Gólem ancestral', check: (p) => [p.ach.has('boss_golem') ? 1 : 0, 1], reward: { em: 16, xp: 40, items: [[I.GOLDEN_APPLE, 2]] } },
+  { title: 'El Guardián del abismo', desc: 'Bajo el mar se esconde un santuario sumergido. Vence a su Guardián.', goal: 'Derrota al Guardián del abismo', check: (p) => [p.ach.has('boss_guardian') ? 1 : 0, 1], reward: { em: 20, xp: 50, items: [[I.TOTEM, 1]] } },
+  { title: 'El Dragón de las ruinas', desc: 'La última amenaza: el dragón que domina unas ruinas lejanas.', goal: 'Derrota al Dragón de las ruinas', check: (p) => [p.ach.has('boss_dragon') ? 1 : 0, 1], reward: { em: 32, xp: 80, items: [[I.HERO_CROWN, 1]] } },
+];
+// Plantillas de misiones secundarias por oficio. type: gather | hunt | explore | build | talk
+const QUEST_POOL = {
+  farmer: [['gather', [I.WHEAT], 16, 32, 'trigo'], ['gather', [I.CARROT], 10, 20, 'zanahorias'], ['gather', [I.POTATO], 10, 20, 'patatas'], ['gather', [I.BREAD], 6, 12, 'panes'], ['talk']],
+  smith: [['gather', [I.IRON_INGOT], 6, 12, 'lingotes de hierro'], ['gather', [I.COAL], 16, 32, 'carbón'], ['gather', [I.GOLD_INGOT], 3, 6, 'lingotes de oro'], ['hunt', 'zombie', 4, 8], ['hunt', 'skeleton', 3, 6]],
+  merchant: [['gather', [I.LEATHER], 5, 10, 'cuero'], ['gather', [WOOL, RED_WOOL], 6, 12, 'lana'], ['gather', [I.STRING], 6, 12, 'hilo'], ['explore'], ['talk']],
+  builder: [['build', [COBBLE], 24, 48, 'piedra labrada'], ['build', PLANKS_ANY, 24, 48, 'tablones'], ['build', [GLASS], 8, 16, 'vidrio'], ['build', [TORCH, LANTERN], 6, 10, 'antorchas o faroles'], ['gather', LOG_ANY, 16, 32, 'troncos']],
+  explorer: [['explore'], ['explore'], ['biome'], ['hunt', 'spider', 3, 6], ['gather', [I.FEATHER], 6, 12, 'plumas']],
+  guard: [['hunt', 'hostile', 6, 12], ['hunt', 'zombie', 5, 10], ['hunt', 'spider', 4, 8], ['hunt', 'brute', 1, 1], ['hunt', 'shaman', 1, 2]],
+};
+const HUNT_NAMES = { hostile: 'monstruos', zombie: 'zombis', skeleton: 'esqueletos', spider: 'arañas', brute: 'brutos', shaman: 'chamanes' };
+const POI_NAMES = { village: 'Aldea', dragon: 'Ruinas del dragón', temple: 'Templo del desierto', tower: 'Torre antigua', ruins: 'Ruinas', camp: 'Campamento de saqueadores', mine: 'Mina abandonada', dungeon: 'Mazmorra', abyss: 'Santuario sumergido', jtemple: 'Templo de la selva', shrine: 'Santuario encantado', forge: 'Forja volcánica' };
+const BONUS_LOOT = [[I.GOLDEN_APPLE, 1], [I.SHIELD, 1], [I.CROSSBOW, 1], [I.SADDLE, 1], [I.FIRE_ARROW, 8], [I.DIAMOND, 1], [potionId('regen', 0), 1], [potionId('strength', 0), 1], [I.EMERALD, 6]];
+function questState(p) { p.quests ||= { main: 0, active: [], done: [], count: 0, track: null }; return p.quests; }
+function makeSideQuest(v) {
+  const p = game.player, day = game.env.days, rnd = mulberry32(strHash(v.vname + v.planId) ^ Math.imul(day + 1, 2654435761));
+  const pool = QUEST_POOL[v.prof] || QUEST_POOL.farmer;
+  const id = `${v.planId}:${v.vname}:${day}`;
+  for (let tries = 0; tries < 6; tries++) {
+    const t = pool[Math.floor(rnd() * pool.length)], q = { id, kind: 'side', type: t[0], giver: v.vname, gprof: v.prof, village: v.planId, prog: 0, status: 'active', day };
+    const n = t[2] != null ? t[2] + Math.floor(rnd() * (t[3] - t[2] + 1)) : 1;
+    if (t[0] === 'gather') Object.assign(q, { items: t[1], n, title: `Encargo: ${t[4]}`, goal: `Trae ${n} ${t[4]} a ${v.vname}` });
+    else if (t[0] === 'hunt') Object.assign(q, { mob: t[1], n, title: `Cacería: ${HUNT_NAMES[t[1]]}`, goal: `Derrota ${n} ${n === 1 ? (MOBS[t[1]]?.name || 'monstruo').toLowerCase() : HUNT_NAMES[t[1]]}` });
+    else if (t[0] === 'build') Object.assign(q, { blocks: t[1], n, title: `Obras en ${villageName(v.planId)}`, goal: `Coloca ${n} bloques de ${t[4]} en la aldea` });
+    else if (t[0] === 'talk') {
+      const others = game.entities.list.filter((e) => e instanceof Villager && e !== v && e.planId === v.planId && !e.deathT);
+      if (!others.length) continue;
+      const o = others[Math.floor(rnd() * others.length)];
+      Object.assign(q, { to: o.vname, title: `Recado para ${o.vname}`, goal: `Lleva el mensaje de ${v.vname} a ${o.vname} (${PROFESSIONS[o.prof].name.toLowerCase()})` });
+    } else if (t[0] === 'explore') {
+      let best = null;
+      for (const S of STRUCTS) {
+        if (S.type === 'village') continue;
+        const gx0 = Math.floor(p.pos.x / S.region), gz0 = Math.floor(p.pos.z / S.region);
+        for (let gx = gx0 - 2; gx <= gx0 + 2; gx++) for (let gz = gz0 - 2; gz <= gz0 + 2; gz++) {
+          const c = world.gen.structCandidate(S, gx, gz); if (!c || p.pois.has(c.id)) continue;
+          const d = Math.hypot(c.x - p.pos.x, c.z - p.pos.z); if (d < 60 || d > 900) continue;
+          if (!best || d < best.d) best = { d, c, S };
+        }
+      }
+      if (!best) continue;
+      Object.assign(q, { poi: best.c.id, px: best.c.x, pz: best.c.z, title: `Expedición: ${POI_NAMES[best.S.type] || 'lugar perdido'}`, goal: `Descubre ${POI_NAMES[best.S.type] || 'el lugar'} (marcado en tu mapa, a unos ${Math.round(best.d)} bloques)`, ptype: best.S.type });
+    } else if (t[0] === 'biome') {
+      let best = null;
+      for (let r = 80; r <= 640 && !best; r += 80) for (let a = 0; a < 6.28; a += 0.5) {
+        const x = Math.floor(p.pos.x + Math.cos(a) * r), z = Math.floor(p.pos.z + Math.sin(a) * r), b = world.gen.column(x, z).b;
+        if (!p.biomes.has(b) && b !== BIOME.OCEAN && b !== BIOME.RIVER && b !== BIOME.BEACH) { best = { b, x, z, r }; break; }
+      }
+      if (!best) continue;
+      Object.assign(q, { biome: best.b, px: best.x, pz: best.z, title: `Tierras lejanas: ${BIOMES[best.b].name}`, goal: `Visita el bioma ${BIOMES[best.b].name} (marcado en tu mapa)` });
+    }
+    const diff = { gather: 1, hunt: 1.3, explore: 1.6, biome: 1.4, build: 1.1, talk: 0.5 }[q.type] || 1;
+    q.reward = { em: Math.max(1, Math.round((2 + rnd() * 4) * diff)), xp: Math.round((6 + rnd() * 10) * diff), rep: q.type === 'talk' ? 3 : 6, items: rnd() < 0.25 * diff ? [BONUS_LOOT[Math.floor(rnd() * BONUS_LOOT.length)]] : [] };
+    return q;
+  }
+  return null;
+}
+function questProgress(q, p) {
+  if (q.kind === 'main') return MAIN_QUESTS[q.idx].check(p);
+  if (q.type === 'gather') return [Math.min(q.n, countAny(p.inv, q.items)), q.n];
+  if (q.type === 'explore') return [p.pois.has(q.poi) ? 1 : 0, 1];
+  if (q.type === 'biome') return [p.biomes.has(q.biome) ? 1 : 0, 1];
+  if (q.type === 'talk') return [q.prog, 1];
+  return [Math.min(q.n, q.prog), q.n];
+}
+function giveReward(rw, planId) {
+  const p = game.player, give = (id, n) => { const left = p.inv.add(id, n); if (left) game.entities.dropItem({ id, count: left }, p.pos.x, p.pos.y + 1.2, p.pos.z); p.discover(id); };
+  if (rw.em) give(I.EMERALD, rw.em);
+  for (const [id, n] of rw.items || []) give(id, n);
+  if (rw.xp) p.addXp(rw.xp);
+  if (rw.rep && planId != null) addRep(planId, rw.rep);
+  hud.update();
+}
+const rewardText = (rw) => [rw.em ? `${rw.em} esmeralda${rw.em > 1 ? 's' : ''}` : '', rw.xp ? `${rw.xp} de experiencia` : '', ...(rw.items || []).map(([id, n]) => `${n > 1 ? n + '× ' : ''}${itemName(id)}`), rw.rep ? `+${rw.rep} reputación` : ''].filter(Boolean).join(' · ');
+function completeQuest(q) {
+  const p = game.player, Q = questState(p);
+  q.status = 'done'; Q.active = Q.active.filter((x) => x !== q); Q.done.unshift({ id: q.id, title: q.title, giver: q.giver, village: q.village, kind: q.kind, t: game.env.days }); Q.done.length = Math.min(Q.done.length, 60);
+  if (Q.track === q.id) Q.track = null;
+  if (q.type === 'gather' && game.mode === 'survival') removeAny(p.inv, q.items, q.n);
+  giveReward(q.reward, q.village);
+  Q.count++; game.stats.add('quests'); game.unlock('quest_first'); if (Q.count >= 10) game.unlock('quest_10');
+  notify(q.kind === 'main' ? '📜 Misión principal completada' : '✔ Misión completada', `${q.title} · ${rewardText(q.reward)}`, 'ach');
+  sfx.play('levelup');
+  if (q.kind === 'main') { Q.main++; if (Q.main >= MAIN_QUESTS.length) { game.unlock('hero'); notify('👑 ¡Héroe del reino!', 'Has completado la historia principal.', 'ach'); } }
+}
+// La misión principal en curso como objeto de misión
+function mainQuest(p) { const Q = questState(p), i = Q.main; if (i >= MAIN_QUESTS.length) return null; const m = MAIN_QUESTS[i]; return { id: 'main:' + i, idx: i, kind: 'main', title: m.title, goal: m.goal, desc: m.desc, reward: m.reward, status: 'active' }; }
+
+/* ---------- Seguimiento de objetivos ---------- */
+{
+  const baseKilled = game.onMobKilled.bind(game);
+  game.onMobKilled = function (m) {
+    baseKilled(m);
+    const p = this.player;
+    if (m instanceof Villager && m.hitByPlayer) addRep(m.planId, -30, `${m.vname} ha muerto por tu culpa`);
+    if (m.lastHit !== 'player' || !p) return;
+    for (const q of questState(p).active) if (q.type === 'hunt' && (q.mob === m.type || (q.mob === 'hostile' && m.spec.hostile))) { q.prog++; questUI.dirty = true; }
+    // defender una aldea sube tu reputación en ella
+    if (m.spec.hostile) for (const e of this.entities.list) if (e instanceof Villager && e.pos.distanceTo(m.pos) < 20) { addRep(e.planId, 1); break; }
+  };
+  const basePlace = game.afterPlace.bind(game);
+  game.afterPlace = function (s, def, x, y, z) {
+    const r = basePlace(s, def, x, y, z);
+    for (const q of questState(this.player).active) if (q.type === 'build' && q.blocks.includes(def.id)) {
+      const info = villageInfo(q.village); if (info && Math.hypot(x - info.x, z - info.z) < info.S + 16) { q.prog++; questUI.dirty = true; }
+    }
+    return r;
+  };
+}
+
+/* ---------- Diálogos ---------- */
+const PROF_LINES = {
+  farmer: ['La cosecha viene buena este año.', 'Si ves conejos cerca de mis zanahorias, avísame.', 'El pan de esta aldea es el mejor de la comarca.'],
+  smith: ['El acero no se templa solo.', 'Tráeme hierro y te haré algo que dure.', 'Mi forja nunca se apaga.'],
+  merchant: ['Todo tiene un precio, amigo.', 'Tengo de todo… o casi.', 'Las esmeraldas abren todas las puertas.'],
+  builder: ['Con buenos materiales, esta aldea puede llegar a ser una ciudad.', 'Cada piedra cuenta.', 'Sueño con levantar una muralla de verdad.'],
+  explorer: ['He visto ruinas más allá de las colinas.', 'El mundo es enorme: nunca dejes de caminar.', 'Dicen que bajo el mar hay un santuario…'],
+  guard: ['Mantente alerta: de noche salen los monstruos.', 'Nadie hará daño a esta aldea mientras yo vigile.', 'Si ves algo raro, avísame.'],
+};
+function greeting(v) {
+  const p = game.player, r = vrec(v.planId), tier = repTier(r.rep), t = game.env.time, rain = game.env.rainAmt > 0.4, lvl = r.lvl;
+  const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+  if (r.rep <= -40) return rnd(['¡Fuera de aquí! No eres bienvenido en esta aldea.', '¡Guardias! ¡Es el que nos ha atacado!', 'No pienso hablar contigo.']);
+  if (r.rep < -9) return rnd(['Te tengo vigilado, forastero…', '¿Qué quieres? Habla rápido.', 'No me fío de ti.']);
+  const lines = [];
+  const h = p.held(), weapon = h && ITEMS[h.id].tool && ITEMS[h.id].tool.type === 'sword';
+  if (weapon && r.rep < 15) lines.push('¿Podrías guardar ese arma? Me pone nervioso.');
+  if (t > 0.5 && t < 0.97) lines.push('Es muy tarde… deberías buscar refugio antes de que salgan los monstruos.');
+  if (rain) lines.push('¡Qué manera de llover! Pasa, pasa.');
+  if (ITEMS[p.armor.slots[0]?.id]?.wearEffect === 'regen') lines.push('¡La Corona del héroe! Es un honor tenerte aquí.');
+  if (p.ach.has('boss_dragon')) lines.push('¡Eres quien derrotó al Dragón! Los niños cantan canciones sobre ti.');
+  else if (p.ach.has('boss_guardian')) lines.push('Dicen que venciste al Guardián del abismo… ¿es verdad?');
+  else if (p.ach.has('boss_golem')) lines.push('He oído que derrotaste al Gólem ancestral. ¡Impresionante!');
+  if (r.bq) lines.push('¿Has visto las obras? ¡La aldea está creciendo gracias a ti!');
+  else if (lvl >= 4) lines.push(`Desde que tenemos murallas, ${villageName(v.planId)} duerme tranquila.`);
+  if (tier[1] === 'Héroe del pueblo') lines.push(`¡${p.name || 'Héroe'}! Toda ${villageName(v.planId)} te está agradecida.`);
+  else if (tier[1] === 'Venerado') lines.push('¡Qué alegría verte de nuevo, amigo!');
+  else if (tier[1] === 'Amistoso') lines.push('¡Hola de nuevo! ¿En qué puedo ayudarte?');
+  else lines.push(`Bienvenido a ${villageName(v.planId)}, forastero.`);
+  lines.push(...(PROF_LINES[v.prof] || []));
+  return lines.slice(0, 3)[Math.floor(Math.random() * Math.min(3, lines.length))];
+}
+const dialog = {
+  v: null,
+  open(v) {
+    this.v = v; v.trading = true;
+    game.releaseInputs(); game.state = 'dialog';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('dialogScreen');
+    sfx.play('villager', { pos: v.pos });
+    this.say(greeting(v)); this.menu();
+  },
+  close(resume = true) {
+    if (this.v) this.v.trading = false; this.v = null;
+    if (resume) { showScreen(null); game.state = 'playing'; game.resume(); }
+  },
+  say(text) {
+    const el = $('#dlgText'); el.textContent = ''; clearInterval(this._ti);
+    let i = 0; this._ti = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(this._ti); }, 16);
+  },
+  header() {
+    const v = this.v, r = vrec(v.planId), tier = repTier(r.rep), P = PROFESSIONS[v.prof];
+    $('#dlgName').textContent = v.vname;
+    $('#dlgProf').textContent = `${P.name} · ${villageName(v.planId)} (${VILLAGE_LEVELS[r.lvl]})`;
+    $('#dlgRep').textContent = `${tier[1]} · ${r.rep > 0 ? '+' : ''}${r.rep}`; $('#dlgRep').style.color = tier[2]; $('#dlgRep').style.borderColor = tier[2];
+    $('#dlgFace').style.background = `rgb(${P.robe.map((c) => Math.round(c * 255)).join(',')})`;
+    $('#dlgFace').textContent = v.vname[0];
+    $('#dlgGoods').innerHTML = v.vinv?.length ? 'Lleva: ' + v.vinv.map(([id, n]) => `<i class="tIcon" style="background-image:url(${ICON[id]})" title="${itemName(id)}"></i><b>${n}</b>`).join(' ') : '';
+  },
+  menu() {
+    const v = this.v, p = game.player, r = vrec(v.planId), Q = questState(p), box = $('#dlgOpts'); box.innerHTML = '';
+    this.header();
+    const opt = (label, fn, cls = '') => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.innerHTML = label; b.onclick = fn; box.append(b); };
+    const hostile = r.rep <= -40;
+    // entregar misiones (de cualquier aldeano) y recados para este
+    for (const q of Q.active) {
+      if (q.type === 'talk' && q.to === v.vname && q.village === v.planId && !q.prog) opt(`✉ Entregar el mensaje de ${escapeHtml(q.giver)}`, () => { q.prog = 1; this.say(`¿Un mensaje de ${q.giver}? ¡Gracias por traerlo hasta aquí!`); completeQuest(q); this.menu(); }, 'primary');
+      const [a, b] = questProgress(q, p);
+      if (q.kind === 'side' && q.type !== 'talk' && a >= b && q.village === v.planId) opt(`✔ Entregar «${escapeHtml(q.title)}»`, () => { this.say(q.giver === v.vname ? '¡Justo lo que necesitaba! Toma, te lo has ganado.' : `Se lo haré llegar a ${q.giver}. ¡Gracias!`); completeQuest(q); this.menu(); }, 'primary');
+    }
+    if (!hostile && TRADES[v.prof]?.length) opt('💱 Comerciar', () => { this.close(false); openInventory('trade', v); });
+    if (!hostile && r.rep > -10) opt('📜 ¿Tienes algún trabajo para mí?', () => this.offerQuest());
+    if (!hostile) opt(`🏗 Proyecto de la aldea <em>${VILLAGE_LEVELS[r.lvl]}${r.lvl < 5 ? ' → ' + VILLAGE_LEVELS[r.lvl + 1] : ''}</em>`, () => this.project());
+    if (!hostile && r.rep >= 40 && v.giftDay !== game.env.days) opt('🎁 Saludar', () => this.gift());
+    if (r.rep < -9 && r.rep > -40 || hostile) opt('🙏 Disculparse <em>(3 esmeraldas)</em>', () => {
+      if (game.mode === 'survival' && p.inv.count(I.EMERALD) < 3) { this.say('Las palabras no bastan. Vuelve cuando puedas compensarnos.'); return; }
+      if (game.mode === 'survival') p.inv.remove(I.EMERALD, 3); addRep(v.planId, 15); hud.update(); this.say('Está bien… te daremos otra oportunidad.'); this.menu();
+    });
+    opt('👋 Adiós', () => this.close());
+  },
+  offerQuest() {
+    const v = this.v, p = game.player, Q = questState(p), box = $('#dlgOpts');
+    if (Q.active.some((q) => q.kind === 'side' && q.giver === v.vname && q.village === v.planId)) { this.say('Primero termina lo que te pedí, por favor.'); return; }
+    if (v.questDay === game.env.days) { this.say('Por hoy no necesito nada más. ¡Vuelve mañana!'); return; }
+    if (Q.active.filter((q) => q.kind === 'side').length >= 5) { this.say('Ya llevas demasiados encargos. Termina alguno antes.'); return; }
+    const q = makeSideQuest(v);
+    if (!q) { this.say('Ahora mismo no se me ocurre nada… vuelve mañana.'); return; }
+    this.say(`${q.goal}. ¿Me ayudarás? Te daré ${rewardText(q.reward)}.`);
+    box.innerHTML = '';
+    const yes = document.createElement('button'); yes.className = 'btn primary'; yes.textContent = '✔ Aceptar';
+    yes.onclick = () => {
+      Q.active.push(q); Q.track = q.id; v.questDay = game.env.days;
+      if (q.px != null) p.markers.push({ name: q.title, x: q.px, z: q.pz, icon: q.ptype || 'marker', ref: q.poi || 'q:' + q.id });
+      questUI.dirty = true; sfx.play('xp'); this.say('¡Gracias! Cuento contigo.'); this.menu();
+    };
+    const no = document.createElement('button'); no.className = 'btn'; no.textContent = 'Ahora no'; no.onclick = () => { this.say('Bueno, si cambias de idea, aquí estaré.'); this.menu(); };
+    box.append(yes, no);
+  },
+  project() {
+    const v = this.v, r = vrec(v.planId), up = VILLAGE_UPGRADES[r.lvl + 1], box = $('#dlgOpts'), p = game.player;
+    box.innerHTML = '';
+    if (!up) { this.say(`${villageName(v.planId)} ya es una ciudad fortificada. ¡No podríamos pedir más!`); }
+    else if (r.bq) { this.say(`Los constructores ya están trabajando: ${Math.floor(r.bi / Math.max(1, r.bq.length) * 100)} % terminado.`); }
+    else {
+      const lines = up.need.map(([name, ids, n]) => { const have = r.proj[name] || 0, inv = countAny(p.inv, ids); return `<li class="${have >= n ? 'ok' : ''}">${name}: <b>${have}/${n}</b>${have < n && inv ? ` <em>(tienes ${inv})</em>` : ''}</li>`; }).join('');
+      this.say(`Para que ${villageName(v.planId)} sea ${VILLAGE_LEVELS[r.lvl + 1]} necesitamos materiales. A cambio construiremos ${up.what}.`);
+      const list = document.createElement('ul'); list.className = 'projList'; list.innerHTML = lines + (r.rep < up.rep ? `<li class="bad">Reputación necesaria: ${repTier(up.rep)[1]} (${up.rep})</li>` : ''); box.append(list);
+      const b = document.createElement('button'); b.className = 'btn primary'; b.textContent = 'Aportar materiales';
+      b.onclick = () => {
+        const res = contribute(v.planId);
+        if (res === 'rep') this.say('Todavía no confiamos lo suficiente en ti para un proyecto así.');
+        else if (res === 'start') { this.say('¡Lo tenemos todo! Los constructores se ponen manos a la obra.'); this.menu(); return; }
+        else if (res === 'none') this.say('No llevas nada de lo que necesitamos.');
+        else this.say('¡Gracias! Cada aportación nos acerca a la meta.');
+        this.project();
+      };
+      box.append(b);
+    }
+    const back = document.createElement('button'); back.className = 'btn'; back.textContent = 'Volver'; back.onclick = () => this.menu(); box.append(back);
+  },
+  gift() {
+    const v = this.v, p = game.player; v.giftDay = game.env.days;
+    const g = v.vinv?.length && Math.random() < 0.7 ? v.vinv[Math.floor(Math.random() * v.vinv.length)] : [I.EMERALD, 2];
+    const n = Math.max(1, Math.min(g[1], Math.ceil(g[1] / 2))); if (g !== undefined && v.vinv?.includes(g)) { g[1] -= n; if (g[1] <= 0) v.vinv.splice(v.vinv.indexOf(g), 1); }
+    const left = p.inv.add(g[0], n); if (left) game.entities.dropItem({ id: g[0], count: left }, p.pos.x, p.pos.y + 1.2, p.pos.z);
+    p.discover(g[0]); hud.update(); sfx.play('pop');
+    this.say(`¡Toma, para ti! ${n}× ${itemName(g[0])}. Un pequeño regalo por todo lo que haces por nosotros.`); this.menu();
+  },
+};
+
+/* ---------- Registro de aventuras ---------- */
+const questUI = {
+  tab: 'active', dirty: true, open: false,
+  show() {
+    if (game.state !== 'playing') return;
+    this.open = true; game.releaseInputs(); game.state = 'quests';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('questScreen'); this.render();
+  },
+  hide() { this.open = false; showScreen(null); game.state = 'playing'; game.resume(); },
+  render() {
+    const p = game.player, Q = questState(p), box = $('#questList'); box.innerHTML = '';
+    $$('#questScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.tab === this.tab));
+    const card = (q) => {
+      const [a, b] = questProgress(q, p), ready = a >= b, d = document.createElement('div');
+      d.className = 'qCard' + (q.kind === 'main' ? ' main' : '') + (ready ? ' ready' : '') + (Q.track === q.id ? ' tracked' : '');
+      const who = q.kind === 'main' ? 'Misión principal' : `${escapeHtml(q.giver)} · ${villageName(q.village)}`;
+      d.innerHTML = `<div class="qHead"><b>${escapeHtml(q.title)}</b><span>${who}</span></div>${q.desc ? `<p>${escapeHtml(q.desc)}</p>` : ''}
+        <div class="qGoal">${escapeHtml(q.goal)}</div><u><s style="width:${b ? a / b * 100 : 0}%"></s></u><em>${a} / ${b}${ready && q.kind === 'side' ? ' · ¡Listo! Vuelve a la aldea para entregarlo' : ''}</em>
+        <div class="qRew">Recompensa: ${rewardText(q.reward)}</div>`;
+      const act = document.createElement('div'); act.className = 'qAct';
+      const tr = document.createElement('button'); tr.className = 'btn small'; tr.textContent = Q.track === q.id ? 'Dejar de seguir' : 'Seguir'; tr.onclick = () => { Q.track = Q.track === q.id ? null : q.id; this.render(); };
+      act.append(tr);
+      if (q.kind === 'side') { const ab = document.createElement('button'); ab.className = 'btn small danger'; ab.textContent = 'Abandonar'; ab.onclick = () => { if (!ab.dataset.sure) { ab.dataset.sure = 1; ab.textContent = '¿Seguro?'; return; } Q.active = Q.active.filter((x) => x !== q); p.markers = p.markers.filter((m) => m.ref !== (q.poi || 'q:' + q.id)); this.render(); }; act.append(ab); }
+      d.append(act); return d;
+    };
+    if (this.tab === 'active') {
+      const m = mainQuest(p); if (m) box.append(card(m)); else box.insertAdjacentHTML('beforeend', '<div class="qCard main ready"><div class="qHead"><b>👑 Historia completada</b><span>Misión principal</span></div><p>Has derrotado a todas las amenazas del reino.</p></div>');
+      if (!Q.active.length) box.insertAdjacentHTML('beforeend', '<p class="muted">No tienes encargos. Habla con los aldeanos: cada uno puede ofrecerte un trabajo al día.</p>');
+      for (const q of Q.active) box.append(card(q));
+    } else if (this.tab === 'done') {
+      if (!Q.done.length) box.innerHTML = '<p class="muted">Todavía no has completado ninguna misión.</p>';
+      for (const d of Q.done) box.insertAdjacentHTML('beforeend', `<div class="qDone"><b>${escapeHtml(d.title)}</b><span>${d.kind === 'main' ? 'Misión principal' : `${escapeHtml(d.giver || '')} · ${villageName(d.village)}`} · día ${d.t + 1}</span></div>`);
+    } else {
+      const vs = Object.entries(p.villages || {});
+      if (!vs.length) box.innerHTML = '<p class="muted">Aún no conoces ninguna aldea. Habla con sus habitantes para empezar a ganarte su confianza.</p>';
+      for (const [id, r] of vs) {
+        const t = repTier(r.rep), pct = (r.rep + 100) / 2;
+        box.insertAdjacentHTML('beforeend', `<div class="qCard"><div class="qHead"><b>🏘 ${villageName(id)}</b><span>${VILLAGE_LEVELS[r.lvl]}${r.bq ? ' · en obras' : ''}</span></div>
+          <div class="qGoal" style="color:${t[2]}">${t[1]} (${r.rep > 0 ? '+' : ''}${r.rep})</div><u class="rep"><s style="width:${pct}%;background:${t[2]}"></s></u>
+          <div class="qRew">Precios ×${priceMult(id).toFixed(2)}${r.lvl < 5 ? ` · Siguiente nivel: ${VILLAGE_LEVELS[r.lvl + 1]} (reputación ${VILLAGE_UPGRADES[r.lvl + 1].rep})` : ''}</div></div>`);
+      }
+    }
+    this.dirty = false;
+  },
+};
+// Misión seguida en pantalla
+function updateQuestTracker() {
+  const el = $('#questTracker'), p = game.player;
+  if (!p || game.state === 'menu') { el.style.display = 'none'; return; }
+  const Q = questState(p), q = Q.active.find((x) => x.id === Q.track) || mainQuest(p);
+  if (!q) { el.style.display = 'none'; return; }
+  const [a, b] = questProgress(q, p), key = q.id + a + '/' + b;
+  el.style.display = 'block';
+  if (el._k === key) return; el._k = key;
+  el.innerHTML = `<b>${q.kind === 'main' ? '📜 ' : ''}${escapeHtml(q.title)}</b><span>${escapeHtml(q.goal)}</span><em>${a >= b ? (q.kind === 'side' ? '✔ ¡Listo! Entrégalo en la aldea' : '✔ Completado') : `${a} / ${b}`}</em>`;
+  el.classList.toggle('ready', a >= b);
+}
+
+/* ---------- Bucle de aventuras ---------- */
+const adventure = {
+  t: 0,
+  update(dt) {
+    const p = game.player;
+    if (!p || game.state === 'menu' || game.state === 'loading') { $('#questTracker').style.display = 'none'; return; }
+    if (game.state === 'playing') tickConstruction(); else tickConstruction.last = performance.now();
+    if ((this.t -= dt) > 0) return;
+    this.t = 0.5;
+    // misión principal: se completa sola
+    const Q = questState(p), m = mainQuest(p);
+    if (m && game.state === 'playing') { const [a, b] = m.check ? m.check(p) : MAIN_QUESTS[m.idx].check(p); if (a >= b) completeQuest(m); }
+    // corona del héroe: regenera la vida poco a poco
+    if (ITEMS[p.armor.slots[0]?.id]?.wearEffect === 'regen' && game.mode === 'survival' && !p.dead && p.health < 20 && (this.regT = (this.regT || 0) + 0.5) >= 4) { this.regT = 0; p.health = Math.min(20, p.health + 1); hud.update(); }
+    // conocer una aldea: la registra al estar cerca de sus habitantes
+    for (const e of game.entities.list) if (e instanceof Villager && e.planId != null && !p.villages?.[e.planId] && e.pos.distanceTo(p.pos) < 16) vrec(e.planId);
+    updateQuestTracker();
+    if (questUI.open && questUI.dirty) questUI.render();
+  },
+};
+ACHIEVEMENTS.push(['quest_first', 'Al servicio del pueblo', 'Completa tu primera misión.'], ['quest_10', 'Aventurero', 'Completa 10 misiones.'],
+  ['village_town', 'Arquitecto', 'Ayuda a una aldea a convertirse en Pueblo.'], ['village_city', 'Fundador', 'Convierte una aldea en Ciudad fortificada.'], ['hero', 'Héroe del reino', 'Completa la historia principal.']);
+{
+  const baseJSON = Player.prototype.toJSON, baseLoad = Player.prototype.load;
+  Player.prototype.toJSON = function () { const o = baseJSON.call(this); o.q = this.quests || null; o.vil = this.villages || {}; return o; };
+  Player.prototype.load = function (o) {
+    baseLoad.call(this, o);
+    this.quests = o.q && typeof o.q === 'object' ? { main: o.q.main | 0, active: Array.isArray(o.q.active) ? o.q.active : [], done: Array.isArray(o.q.done) ? o.q.done : [], count: o.q.count | 0, track: o.q.track ?? null } : null;
+    this.villages = o.vil && typeof o.vil === 'object' ? o.vil : {};
+  };
+}
+function initAdventureUI() {
+  $('#pQuests').onclick = () => { showScreen(null); game.state = 'playing'; questUI.show(); };
+  $('#questClose').onclick = () => questUI.hide();
+  $$('#questScreen .stab').forEach((b) => (b.onclick = () => { questUI.tab = b.dataset.tab; questUI.render(); }));
+}
+
+initAdventureUI();
+
+/* ==========================================================================
+   §32 COMANDOS, HUEVOS DE APARICIÓN Y NOVEDADES
+   --------------------------------------------------------------------------
+   · La tecla T (configurable) abre la línea de chat y comandos también en
+     un jugador. Los comandos empiezan por «/»: /ayuda muestra la lista.
+   · Huevos de aparición: una pestaña nueva del inventario creativo. Úsalos
+     sobre un bloque para que aparezca la criatura (en creativo no se gastan).
+   · Novedades: botón en el menú principal con todo lo añadido en cada
+     versión y lo que viene en la hoja de ruta.
+   ► AÑADIR UN COMANDO: nueva entrada en COMMANDS.
+   ► AÑADIR UNA VERSIÓN A NOVEDADES: nueva entrada al principio de CHANGELOG.
+   ========================================================================== */
+const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+
+/* ---------- Huevos de aparición ---------- */
+const EGG_COLORS = {
+  cow: [[90, 60, 40], [235, 235, 230]], pig: [[240, 160, 160], [200, 110, 120]], sheep: [[235, 235, 228], [240, 180, 190]], chicken: [[245, 245, 240], [210, 30, 30]],
+  zombie: [[40, 150, 160], [80, 140, 70]], husk: [[170, 150, 110], [110, 90, 60]], drowned: [[80, 160, 150], [40, 110, 50]], skeleton: [[200, 200, 196], [110, 110, 108]],
+  stray: [[180, 200, 210], [100, 118, 126]], fish: [[150, 176, 200], [220, 228, 236]], clownfish: [[245, 130, 40], [250, 250, 250]], puffer: [[226, 190, 60], [150, 110, 30]],
+  squid: [[52, 70, 104], [120, 140, 170]], turtle: [[70, 140, 80], [220, 214, 160]], dolphin: [[120, 140, 160], [226, 232, 238]], shark: [[96, 110, 124], [200, 60, 60]],
+  rabbit: [[170, 130, 90], [244, 240, 232]], deer: [[172, 116, 66], [240, 232, 214]], fox: [[222, 124, 48], [246, 242, 232]], frog: [[96, 160, 70], [226, 220, 150]],
+  duck: [[150, 120, 90], [40, 110, 70]], bear: [[110, 74, 46], [60, 40, 24]], bird: [[60, 110, 200], [236, 170, 50]], seagull: [[244, 244, 240], [150, 156, 166]],
+  eagle: [[96, 66, 40], [246, 244, 236]], spider: [[40, 34, 34], [200, 30, 30]], shaman: [[88, 44, 120], [150, 190, 140]], brute: [[120, 132, 96], [96, 96, 104]],
+  bat: [[58, 46, 44], [30, 24, 24]], horse: [[134, 86, 48], [226, 220, 206]], wolf: [[196, 196, 200], [150, 150, 156]], panda: [[244, 244, 240], [26, 26, 28]],
+};
+const EGGS = {};
+{
+  let id = 600;
+  for (const [type, s] of Object.entries(MOBS)) {
+    if (s.boss || type.startsWith('__') || type === 'villager' || !s.model) continue;
+    EGGS[type] = id;
+    defItem(id, `Huevo de ${s.name.toLowerCase()}`, `Úsalo sobre un bloque para que aparezca ${/a$/.test(s.name) ? 'una' : 'un'} ${s.name.toLowerCase()}. En creativo no se gasta.`, { egg: type, stack: 64 });
+    ITEMS[id].rarity = 1;
+    const [c1, c2] = EGG_COLORS[type] || [[(strHash(type) & 255), (strHash(type) >> 8 & 255), (strHash(type) >> 16 & 255)], [240, 240, 240]];
+    ICON_OVERRIDE[id] = () => {
+      const p = new Pix();
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const e = ((x - 7.5) / 5.2) ** 2 + ((y - 8.8) / (y < 9 ? 7 : 5.8)) ** 2; if (e > 1) continue;
+        const spot = strHash(type + x + ',' + y) % 7 === 0 || ((x + y * 3) % 9 === 0 && y > 3);
+        p.set(x, y, spot ? c2 : c1);
+      }
+      return p.canvas();
+    };
+    id++;
+  }
+}
+{
+  const baseUse = game.useItem;
+  game.useItem = function () {
+    const p = this.player, s = p.held(), t = this.target;
+    if (s && ITEMS[s.id].egg) {
+      if (!t) return false;
+      const type = ITEMS[s.id].egg, x = t.x + t.normal[0] + 0.5, y = t.y + t.normal[1] + (t.normal[1] < 0 ? -MOBS[type].h : 0), z = t.z + t.normal[2] + 0.5;
+      const m = this.entities.spawnMob(type, x, y + 0.05, z);
+      if (m) { m.persistent = true; this.particles.emit(x, y + 0.5, z, [1, 1, 1], 10, { up: 2, speed: 1.5, life: 0.5, size: 0.1 }); sfx.play('pop', { pos: m.pos }); }
+      if (this.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; hud.update(); }
+      this.swing = 1; return true;
+    }
+    return baseUse.call(this);
+  };
+}
+
+/* ---------- Comandos ---------- */
+function findMob(name) {
+  const n = norm(name); if (!n) return null;
+  const list = Object.entries(MOBS).filter(([k, s]) => !s.boss && !k.startsWith('__') && k !== 'villager');
+  return (list.find(([k, s]) => k === n || norm(s.name) === n) || list.find(([k, s]) => norm(s.name).startsWith(n) || k.startsWith(n)) || list.find(([, s]) => norm(s.name).includes(n)) || [])[0] || null;
+}
+function findItem(name) {
+  const n = norm(name); if (!n) return null;
+  if (/^\d+$/.test(n) && ITEMS[+n]) return +n;
+  const list = ITEMS.filter(Boolean);
+  return (list.find((it) => norm(it.name) === n) || list.find((it) => norm(it.name).startsWith(n)) || list.find((it) => norm(it.name).includes(n)))?.id ?? null;
+}
+const say = (t) => chatUI.add(t, 'sys');
+const TIMES = { dia: 0.1, day: 0.1, manana: 0.06, amanecer: 0.01, sunrise: 0.01, mediodia: 0.25, noon: 0.25, tarde: 0.36, atardecer: 0.46, sunset: 0.46, noche: 0.6, night: 0.6, medianoche: 0.75, midnight: 0.75 };
+const WEATHERS = { despejado: 'clear', sol: 'clear', clear: 'clear', 'no': 'clear', lluvia: 'rain', llover: 'rain', rain: 'rain', tormenta: 'storm', storm: 'storm', thunder: 'storm', niebla: 'fog', fog: 'fog' };
+const COMMANDS = [
+  { n: 'ayuda', a: ['help', '?', 'comandos'], use: '/ayuda', d: 'Muestra esta lista.', run: () => { say('Comandos disponibles:'); for (const c of COMMANDS) say(`${c.use} — ${c.d}`); } },
+  { n: 'modo', a: ['gamemode', 'gm'], use: '/modo supervivencia | creativo', d: 'Cambia el modo de juego.', run: ([m]) => {
+    const k = norm(m), mode = ['supervivencia', 'survival', 's', '0'].includes(k) ? 'survival' : ['creativo', 'creative', 'c', '1'].includes(k) ? 'creative' : null;
+    if (!mode) return say('Uso: /modo supervivencia | creativo');
+    const p = game.player; game.mode = mode; if (game.meta) game.meta.mode = mode;
+    if (mode === 'survival') { p.flying = false; p.vel.y = 0; }
+    hud.update(true); saveGame(true); say(`Modo de juego: ${mode === 'creative' ? 'creativo' : 'supervivencia'}`);
+  } },
+  { n: 'tiempo', a: ['time', 'hora'], use: '/tiempo día | noche | mediodía | medianoche | amanecer | atardecer | <hora 0-24>', d: 'Cambia la hora del día.', net: true, run: (args) => {
+    const k = norm(args.filter((a) => norm(a) !== 'set').join(' ')), h = parseFloat(k);
+    const t = TIMES[k] ?? (Number.isFinite(h) && h >= 0 && h <= 24 ? (((h - 6) / 24) % 1 + 1) % 1 : null);
+    if (t == null) return say('Uso: /tiempo día | noche | mediodía | medianoche | amanecer | atardecer | <hora 0-24>');
+    if (net.active) { net.send({ type: 'chat', text: '/time ' + t.toFixed(4) }); return; }
+    game.env.time = t; const hh = Math.floor((t * 24 + 6) % 24), mm = Math.floor(((t * 24 + 6) % 1) * 60);
+    say(`Hora cambiada a las ${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+  } },
+  { n: 'clima', a: ['weather', 'tiempoatmosferico'], use: '/clima despejado | lluvia | tormenta | niebla', d: 'Cambia el clima (/clima despejado quita la lluvia).', net: true, run: ([w]) => {
+    const k = WEATHERS[norm(w)];
+    if (!k) return say('Uso: /clima despejado | lluvia | tormenta | niebla');
+    if (net.active) { net.send({ type: 'chat', text: '/weather ' + k }); return; }
+    game.env.weather = k; game.env.weatherT = 900; if (k === 'clear') { game.env.rainAmt = Math.min(game.env.rainAmt, 0.3); }
+    say(`Clima: ${WEATHER_NAMES[k] || k}`);
+  } },
+  { n: 'invocar', a: ['summon', 'generar', 'spawn'], use: '/invocar <criatura> [cantidad]', d: 'Hace aparecer criaturas delante de ti (/criaturas para ver los nombres).', run: (args) => {
+    let n = 1; if (/^\d+$/.test(args[args.length - 1] || '')) n = Math.min(20, +args.pop());
+    const type = findMob(args.join(' '));
+    if (!type) return say(`No conozco esa criatura. Escribe /criaturas. (Los jefes solo aparecen en sus guaridas.)`);
+    const p = game.player, yaw = camera.rotation.y;
+    for (let i = 0; i < n; i++) {
+      const x = p.pos.x - Math.sin(yaw) * 3 + (Math.random() - 0.5) * 2, z = p.pos.z - Math.cos(yaw) * 3 + (Math.random() - 0.5) * 2;
+      const m = game.entities.spawnMob(type, x, p.pos.y + 0.5, z); if (m) m.persistent = true;
+    }
+    say(`Aparecieron ${n} × ${MOBS[type].name}`);
+  } },
+  { n: 'criaturas', a: ['mobs'], use: '/criaturas', d: 'Lista los nombres de criaturas para /invocar.', run: () => say(Object.entries(MOBS).filter(([k, s]) => !s.boss && !k.startsWith('__') && k !== 'villager').map(([, s]) => s.name).join(', ')) },
+  { n: 'dar', a: ['give', 'objeto'], use: '/dar <objeto> [cantidad]', d: 'Te da un objeto (por su nombre, aunque sea parcial).', run: (args) => {
+    let n = 1; if (/^\d+$/.test(args[args.length - 1] || '') && args.length > 1) n = Math.min(64 * 36, +args.pop());
+    const id = findItem(args.join(' '));
+    if (id == null) return say('No encuentro ese objeto. Prueba con parte de su nombre: /dar diamante 5');
+    const p = game.player, left = p.inv.add(id, n); if (left) game.entities.dropItem({ id, count: left }, p.pos.x, p.pos.y + 1.2, p.pos.z);
+    p.discover(id); hud.update(); say(`Recibiste ${n} × ${itemName(id)}`);
+  } },
+  { n: 'tp', a: ['teletransportar', 'ir'], use: '/tp <x> <y> <z>', d: 'Te teletransporta a unas coordenadas (~ = posición actual).', run: (args) => {
+    const p = game.player, cur = [p.pos.x, p.pos.y, p.pos.z];
+    const v = args.slice(0, 3).map((a, i) => (a?.startsWith('~') ? cur[i] + (parseFloat(a.slice(1)) || 0) : parseFloat(a)));
+    if (v.length < 3 || !v.every(Number.isFinite)) return say('Uso: /tp <x> <y> <z>');
+    p.pos.set(v[0], clamp(v[1], 1, WY + 20), v[2]); p.vel.set(0, 0, 0); p.fallStart = null; say(`Teletransportado a ${v.map((n) => Math.round(n)).join(' ')}`);
+  } },
+  { n: 'curar', a: ['heal', 'sanar'], use: '/curar', d: 'Recupera toda la vida y el hambre.', run: () => { const p = game.player; p.health = 20; p.hunger = 20; p.sat = 10; p.air = MAX_AIR; hud.update(true); say('Vida y hambre al máximo'); } },
+  { n: 'matar', a: ['kill', 'limpiar'], use: '/matar', d: 'Elimina los monstruos en 64 bloques a la redonda.', run: () => {
+    let n = 0; for (const e of game.entities.list) if (e.kind === 'mob' && e.spec.hostile && !e.isBoss && !e.remote && !e.dead && e.pos.distanceTo(game.player.pos) < 64) { e.dead = true; n++; }
+    say(`Monstruos eliminados: ${n}`);
+  } },
+  { n: 'semilla', a: ['seed'], use: '/semilla', d: 'Muestra la semilla del mundo.', run: () => say(`Semilla: ${world.seed}`) },
+  { n: 'pos', a: ['coordenadas', 'donde'], use: '/pos', d: 'Muestra tus coordenadas.', run: () => { const p = game.player.pos; say(`Estás en ${Math.floor(p.x)} ${Math.floor(p.y)} ${Math.floor(p.z)}`); } },
+];
+function findCommand(word) {
+  const w = norm(word); if (!w) return null;
+  const exact = COMMANDS.find((c) => c.n === w || c.a.includes(w)); if (exact) return exact;
+  const pre = COMMANDS.filter((c) => c.n.startsWith(w)); return pre.length === 1 ? pre[0] : null;   // abreviaturas: /ay → /ayuda
+}
+function runCommand(line) {
+  const parts = line.trim().split(/\s+/), c = findCommand(parts.shift());
+  if (!c) return false;
+  try { c.run(parts); } catch (e) { console.error(e); say('No se pudo ejecutar el comando.'); }
+  return true;
+}
+// La línea de chat funciona siempre: comandos en un jugador, chat y comandos del servidor en multijugador
+chatUI.open = function () {
+  if (this.isOpen || game.state !== 'playing') return;
+  this.isOpen = true; game.releaseInputs(); document.body.classList.add('chat-open');
+  const i = $('#chatInput'); i.value = ''; i.focus(); setTimeout(() => i.focus(), 30); chatHint();
+};
+chatUI.submit = function () {
+  const t = $('#chatInput').value.trim(); this.close(); if (!t) return;
+  if (t[0] === '/') {
+    chatUI.add('> ' + t, 'me');
+    if (runCommand(t.slice(1))) return;
+    if (net.active) net.send({ type: 'chat', text: t }); else say('Comando desconocido. Escribe /ayuda');
+    return;
+  }
+  if (net.active) net.send({ type: 'chat', text: t });
+  else say('Estás jugando solo: el chat es para el multijugador. Los comandos empiezan por / (prueba /ayuda).');
+};
+function chatHint() {
+  const v = $('#chatInput').value, h = $('#chatHint');
+  if (!v.startsWith('/')) { h.textContent = ''; return; }
+  const w = norm(v.slice(1).split(/\s+/)[0]), list = COMMANDS.filter((c) => c.n.startsWith(w) || c.a.some((a) => a.startsWith(w))).slice(0, 4);
+  h.innerHTML = list.map((c) => `<span>${escapeHtml(c.use)}</span>`).join('');
+}
+$('#chatInput').addEventListener('input', chatHint);
+$('#chatInput').addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab') return; e.preventDefault();
+  const v = e.target.value; if (!v.startsWith('/') || v.includes(' ')) return;
+  const w = norm(v.slice(1)), c = COMMANDS.find((c) => c.n.startsWith(w)); if (c) { e.target.value = '/' + c.n + ' '; chatHint(); }
+});
+$('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
+
+/* ---------- Novedades ---------- */
+const CHANGELOG = [
+  { v: '3.3', name: 'Aventuras', date: 'noviembre de 2026', items: [
+    'Diálogos con los aldeanos: sus frases cambian según su oficio, la hora, el clima, tu reputación, el nivel de la aldea y los jefes que hayas derrotado.',
+    'Misiones principales: una historia de 7 capítulos, desde tu primer intercambio hasta derrotar al Dragón de las ruinas, con recompensas fijas.',
+    'Misiones secundarias: cada aldeano ofrece un encargo al día según su oficio: recolección, cacería, exploración (marcada en el mapa), construcción y recados.',
+    'Registro de aventuras (tecla J, botón 📜 o desde la pausa) con misiones activas, completadas y la reputación de cada aldea; la misión seguida se ve en pantalla.',
+    'Reputación por aldea, de Hostil a Héroe del pueblo: cambia los precios (hasta un 30 % más barato), los regalos, las misiones y si los guardias te atacan. Puedes disculparte pagando esmeraldas.',
+    'Aldeas que crecen en 5 niveles (Asentamiento, Aldea, Pueblo, Villa y Ciudad fortificada) aportando materiales al proyecto de la aldea: torres de vigilancia, mercado, casas nuevas, empalizada y muralla de piedra con torreones.',
+    'Oficio nuevo, el guardia: patrulla día y noche y combate a los monstruos. Los agricultores cosechan y resiembran, los herreros trabajan en la forja y los exploradores se alejan de la aldea.',
+    'Cada aldeano lleva un pequeño inventario y, si te aprecia, a veces te hace un regalo. Desde el nivel Pueblo hay intercambios nuevos.',
+    'Corona del héroe (mítica): recompensa final que regenera la vida.',
+    'Mano secundaria: un espacio extra para el escudo, antorchas o flechas. La tecla X (o el botón ⇄) cambia de mano.',
+    'Comandos con la tecla T: /modo, /tiempo, /clima, /invocar, /dar, /tp, /curar, /matar, /semilla, /pos y /ayuda.',
+    'Huevos de aparición de todas las criaturas en una pestaña nueva del inventario creativo.',
+    'Esta pantalla de novedades.',
+  ] },
+  { v: '3.2', name: 'Combate y criaturas', date: 'noviembre de 2026', items: [
+    'Escudo con bloqueo frontal y parada perfecta que aturde; esquiva (tecla R) con invulnerabilidad breve.',
+    'Golpes críticos al caer, números de daño flotantes, barrido de espada y animación propia de cada arma (tajo, golpe de arriba abajo, estocada).',
+    'Armas nuevas: hachas de combate (pueden aturdir), lanzas (más alcance), ballesta y flechas de fuego, envenenadas y de hielo.',
+    'Estados alterados: veneno, lentitud y aturdimiento.',
+    'Enemigos nuevos: araña (salta y envenena), chamán (maleficios y cura a los suyos), bruto acorazado y versiones de élite de cualquier enemigo.',
+    'Animales: caballo (se doma, se ensilla y se monta), lobo (mascota que lucha contigo y se sienta), panda y murciélagos de cueva.',
+    'Rarezas de objetos: común, poco común, raro, épico, legendario y mítico.',
+    'Jefes con presentación cinematográfica, marcas de fase en la barra, música propia que acelera por fases y furia en la última.',
+    'Volumen de música separado del de efectos.',
+  ] },
+  { v: '3.1', name: 'Expansión del mundo', date: 'noviembre de 2026', items: [
+    'Biomas nuevos (en mundos nuevos): selva tropical, sabana, bosque de cerezos, badlands con mesetas, bosque de hongos gigantes, región volcánica, montañas volcánicas con cráter y bosque encantado.',
+    'Cuevas frondosas (musgo, helechos, enredaderas luminosas) y cuevas de cristales, con cavernas más amplias.',
+    'Árboles propios: selva, acacia, cerezo, hongos gigantes, encantado y calcinado; 32 bloques nuevos.',
+    'Estructuras: templo de la selva, santuario encantado y forja volcánica.',
+    'Recursos: maderas nuevas, melón, bayas luminosas, cristales, sopa de hongos, magma (quema y es combustible), oro en las badlands y diamantes bajo los volcanes.',
+    'Ambiente sonoro por bioma y aviso al cambiar de bioma.',
+  ] },
+  { v: '3.0.6', name: 'Vida salvaje', items: [
+    'Brillo ajustable en Ajustes → Gráficos.',
+    'Fondo marino con hierba marina, bosques de algas, arrecifes de coral y nenúfares.',
+    'Peces en cardumen, peces payaso, peces globo, calamares, tortugas, delfines y tiburones.',
+    'Conejos, ciervos, zorros, ranas, patos y osos; pájaros, gaviotas y águilas.',
+    'Botín con recetas: casco de tortuga, botas emplumadas, abrigo de zorro, daga, lanza de asta, garras de oso, sushi y estofado.',
+    'Armas de jefe con habilidad: golpe sísmico, rayo abisal y aliento de dragón.',
+  ] },
+  { v: '3.0.5', name: 'Multijugador', items: [
+    'Servidor externo real (Node.js, sin dependencias) con WebSocket: mundo, cofres, jugadores, chat, criaturas, hora y clima sincronizados.',
+    'Objetos del suelo compartidos y un único jefe para todos; contraseña, límite de jugadores y PvP opcional.',
+  ] },
+  { v: '3.0.4', name: 'Combate a la vista', items: ['Barra de vida al apuntar a criaturas.', 'Agacharse: más bajo, más lento y sin caerte de los bordes. Correr pasa a Ctrl.'] },
+  { v: '3.0.3', name: 'Aspecto HD', items: ['Texturas con relieve y sombreado, iconos con volumen.', 'Animales y enemigos más detallados con animación orgánica.', 'Minimapa en tiempo real.'] },
+  { v: '3.0.2', name: 'Interfaz renovada', items: ['Menú con paisaje 3D en vivo, botones de piedra y paneles de cristal.', 'Mundos en tarjetas con miniatura, ajustes en pestañas y transiciones suaves.'] },
+  { v: '3.0.1', name: 'Controles', items: ['Cámara sin captura del ratón para navegadores que la bloquean.', 'Teclas configurables y controles táctiles que se pueden mover y redimensionar.', 'Arreglado el sonido de la lluvia que seguía con el juego cerrado.'] },
+  { v: '3.0', name: 'Mundo vivo y aventuras', items: [
+    'Aldeas con aldeanos, oficios, rutinas de día y noche y comercio con esmeraldas.',
+    'Estructuras: torres antiguas, ruinas, templos, minas, mazmorras, campamentos, santuario sumergido y ruinas del dragón.',
+    'Tres jefes: Gólem ancestral, Guardián del abismo y Dragón de las ruinas.',
+    'Cultivos, cría de animales, armaduras, encantamientos y pociones.',
+    'Mapa del mundo con marcadores, logros, carteles, cuadros, camas, sillas y lámparas.',
+    'Exportar e importar mundos, copias de seguridad y validación de partidas.',
+  ] },
+  { v: '2.0', name: 'Gran actualización', items: [
+    'Supervivencia: vida, hambre, ahogo y daño por caída.',
+    'Inventario, fabricación 2×2 y en mesa 3×3, recetario.',
+    'Muchos bloques nuevos, biomas, ciclo de día y noche, agua, lluvia y nieve.',
+    'Criaturas pacíficas y hostiles, herramientas por material.',
+    'Modos supervivencia y creativo, menús y guardado de varios mundos.',
+  ] },
+  { v: '1.1', name: 'Pantallas táctiles', items: ['Controles táctiles: joystick, zona para mirar y botones de saltar, minar y colocar.'] },
+  { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
+];
+const ROADMAP = [
+  { v: '3.4', name: 'Construcción', items: ['Nuevas escaleras, losas, muebles, ventanas, lámparas, vallas, portones, techos y columnas.', 'Mecanismos: interruptores, palancas, puertas automáticas, trampas, pistones, circuitos, sensores y elevadores que guardan su estado.'] },
+  { v: '3.5', name: 'Dimensiones', items: ['Inframundo: terreno volcánico, lagos de lava, bosques carmesíes, fortalezas, minerales exclusivos y un jefe final.', 'Vacío: islas flotantes, ruinas suspendidas, cristales mágicos, criaturas voladoras y un jefe con varias fases.', 'Portales que conservan tu posición, inventario y progreso.'] },
+  { v: '3.6', name: 'Multijugador', items: ['Salas con código de invitación y límite de jugadores elegido por el anfitrión.', 'Permisos de construcción, reconexión y gestión del anfitrión.'] },
+  { v: '4.0', name: 'Gran actualización', items: ['Eventos dinámicos: lluvia de meteoritos, invasiones nocturnas, tormentas eléctricas y fenómenos mágicos.', 'Catálogo de objetos, panel de criaturas y registro de exploración.', 'Música por bioma y por dimensión.', 'Guardado en IndexedDB, optimización y pulido general.'] },
+];
+function openNews() {
+  const box = $('#newsList'); box.innerHTML = '';
+  const sec = (e, future, open) => {
+    const d = document.createElement('details'); d.className = 'newsVer' + (future ? ' future' : ''); d.open = open;
+    d.innerHTML = `<summary><b>${future ? 'Próximamente · ' : ''}MiniCraft ${e.v}</b><span>${escapeHtml(e.name)}${e.date ? ' · ' + e.date : ''}</span></summary><ul>${e.items.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+    box.append(d);
+  };
+  CHANGELOG.forEach((e, i) => sec(e, false, i === 0));
+  const h = document.createElement('h3'); h.className = 'newsSub'; h.textContent = 'Hoja de ruta'; box.append(h);
+  ROADMAP.forEach((e) => sec(e, true, false));
+  showScreen('newsScreen');
+}
+$('#btnNews').onclick = openNews;
+$('#newsBack').onclick = () => showScreen('mainMenu');
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)

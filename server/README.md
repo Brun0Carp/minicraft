@@ -36,6 +36,7 @@ Se pasan como `--opcion=valor` o como variable de entorno en mayúsculas (`PORT=
 | `pvp` | `on` | `off` para que los jugadores no puedan golpearse |
 | `max` | `12` | Jugadores a la vez |
 | `password` | ninguna | Contraseña para entrar |
+| `cheats` | `on` | `off` impide que los jugadores cambien la hora y el clima con /tiempo y /clima |
 | `name` | Servidor MiniCraft | Nombre que ven los jugadores |
 | `data` | `./data` | Carpeta donde se guarda el mundo |
 | `game` | automático | Ruta del `index.html` del juego |
@@ -46,7 +47,7 @@ Ejemplo: `node server.js --port=9000 --seed=12345 --pvp=off --password=amigos`
 
 En la consola del servidor: `help`, `list`, `say <texto>`, `kick <nombre>`, `time <day|night|0..1>`, `weather <clear|rain|storm|fog>`, `save`, `stop`.
 
-En el chat del juego: `/list`, `/seed`, `/help`.
+En el chat del juego (tecla T): `/list`, `/seed`, `/help`, y `/tiempo` y `/clima` si el servidor lo permite. Los comandos personales del juego (`/modo`, `/dar`, `/invocar`, `/tp`, `/curar`…) funcionan igual que en un jugador.
 
 ## Qué se comparte
 
