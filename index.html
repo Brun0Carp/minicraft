@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1d1d1d">
-<title>MiniCraft 3.3</title>
+<title>MiniCraft 3.4</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -651,7 +651,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.3!</span>
+      <span class="ver">¡Versión 3.4!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -661,7 +661,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.3</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 3.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1753,6 +1753,431 @@ function paintExtraTiles(h) {
   paint(T.campfire_side, (x, y) => { const n = (rnd() - 0.5) * 16; if (y > 11) return [100 + n, 76 + n, 46]; return y > 3 && rnd() < 0.7 ? (rnd() < 0.5 ? [255, 160, 40] : [250, 90, 20]) : [0, 0, 0, 0]; });
   paint(T.campfire_top, (x, y) => { const n = (rnd() - 0.5) * 16; if (x === y || x === 15 - y || x === y + 1 || x === 14 - y) return [100 + n, 76 + n, 46]; return Math.hypot(x - 7.5, y - 7.5) < 5 ? [255, 140 + n, 30] : [60, 50, 40]; });
 }
+/* ==========================================================================
+   §2c CONSTRUCCIÓN Y MECANISMOS (3.4)
+   --------------------------------------------------------------------------
+   Bloques nuevos registrados con defBlock(). Las formas especiales devuelven
+   sus cajas con def.boxes(meta, nb, modo) (ver blockBoxes en §7); nb(f, dy)
+   da el vecino en FACING_DIR[f] (f = 4 arriba, 5 abajo).
+   Metadatos:
+     palanca/botón: bits0-2 apoyo (0 suelo, 1 techo, 2-5 pared hacia FACING_DIR[n-2]) · bit3 activo
+     placa/sensores: bit3 activo · sensor de luz: bit2 invertido
+     cable: bit0 con energía · inversor/repetidor: bits0-1 salida, bit2 encendido, bits4-5 retardo
+     pistón: bits0-2 dirección (0-3 horizontal, 4 arriba, 5 abajo), bit3 extendido · cabeza: bit3 pegajosa
+     portón: bits0-1 orientación, bit2 abierto · puertas/trampillas/lámparas/portones: bit4 = última energía
+     pinchos: bit3 levantados · lanzaflechas: bits0-1 frente, bit4 última energía
+   ========================================================================== */
+for (const n of ['roof_red', 'roof_slate', 'smooth_stone', 'marble', 'marble_bricks', 'pol_basalt', 'tiles_checker', 'tiles_blue', 'plaster', 'parquet',
+  'window', 'stained', 'wardrobe_front', 'nightstand_front', 'stove_front', 'stove_top', 'lampshade', 'glowstone', 'light_block', 'light_panel', 'pot',
+  'wire_off', 'wire_on', 'power_block', 'logic_off', 'logic_on', 'repeater_off', 'repeater_on', 'piston_front', 'piston_side', 'piston_back', 'piston_sticky',
+  'auto_door_bottom', 'auto_door_top', 'spikes', 'arrow_trap', 'elevator_top', 'elevator_side', 'sensor_off', 'sensor_on', 'day_sensor']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+
+const JUNGLE_STAIRS = 158, ACACIA_STAIRS = 159, CHERRY_STAIRS = 160, STONE_STAIRS = 161, MARBLE_STAIRS = 162, TERRA_STAIRS = 163,
+  ROOF_RED = 164, ROOF_RED_STAIRS = 165, ROOF_RED_SLAB = 166, ROOF_SLATE = 167, ROOF_SLATE_STAIRS = 168, ROOF_SLATE_SLAB = 169,
+  JUNGLE_SLAB = 170, ACACIA_SLAB = 171, CHERRY_SLAB = 172, MARBLE_SLAB = 173, TERRA_SLAB = 174,
+  SMOOTH_STONE = 175, MARBLE = 176, MARBLE_BRICKS = 177, POL_BASALT = 178, TILES_CHECKER = 179, TILES_BLUE = 180, PLASTER = 181, PARQUET = 182,
+  GLASS_PANE = 183, WINDOW = 184, STAINED_RED = 185, STAINED_BLUE = 186, STAINED_GREEN = 187, STAINED_YELLOW = 188,
+  BIRCH_FENCE = 189, SPRUCE_FENCE = 190, DARK_FENCE = 191, CHERRY_FENCE = 192,
+  OAK_GATE = 193, SPRUCE_GATE = 194, BIRCH_GATE = 195, DARK_GATE = 196, IRON_GATE = 197,
+  COBBLE_WALL = 198, STONEBRICK_WALL = 199, BRICK_WALL = 200, SANDSTONE_WALL = 201,
+  STONE_COLUMN = 202, MARBLE_COLUMN = 203, WOOD_COLUMN = 204, SANDSTONE_COLUMN = 205,
+  SOFA_RED = 206, SOFA_BLUE = 207, STOOL = 208, ROUND_TABLE = 209, WARDROBE = 210, NIGHTSTAND = 211, FLOWER_POT = 212, STOVE = 213, BENCH = 214,
+  TABLE_LAMP = 215, FLOOR_LAMP = 216, CHANDELIER = 217, GARDEN_LAMP = 218, GLOWSTONE = 219,
+  LIGHT_RED = 220, LIGHT_BLUE = 221, LIGHT_GREEN = 222, LIGHT_YELLOW = 223, LIGHT_PANEL = 224,
+  LEVER = 225, BUTTON_STONE = 226, BUTTON_WOOD = 227, PLATE_STONE = 228, PLATE_WOOD = 229, PROX_SENSOR = 230, DAY_SENSOR = 231,
+  WIRE = 232, POWER_BLOCK = 233, INVERTER = 234, REPEATER = 235, PISTON = 236, STICKY_PISTON = 237, PISTON_HEAD = 238,
+  AUTO_DOOR = 239, SPIKES = 240, ARROW_TRAP = 241, ELEVATOR = 242;
+const AUTO_DOOR_ITEM = 520;          // objeto que coloca la puerta automática (2 bloques)
+
+// ---------- Ayudas de formas ----------
+const B34 = (list, f = 0) => list.map((b) => rotBox(px16(b), f));
+// Rota una caja diseñada con el frente hacia -z a una de las 6 direcciones (0-3 horizontales, 4 arriba, 5 abajo)
+function rot6(b, d) {
+  if (d < 4) return rotBox(b, d);
+  return d === 4 ? [b[0], 1 - b[5], b[1], b[3], 1 - b[2], b[4]] : [b[0], b[2], b[1], b[3], b[5], b[4]];
+}
+const DIR6 = [[0, 0, -1], [1, 0, 0], [0, 0, 1], [-1, 0, 0], [0, 1, 0], [0, -1, 0]];
+const DIR_FACE = [4, 1, 5, 0, 3, 2];          // dirección → índice de cara (FACES)
+const flipY = (b) => [b[0], 1 - b[4], b[2], b[3], 1 - b[1], b[5]];
+// Palancas y botones: cajas según el apoyo (bits 0-2)
+function attachBoxes(meta, wall, floor) {
+  const a = meta & 7;
+  if (a >= 2) return wall.map((b) => rotBox(px16(b), a - 2));
+  const out = floor.map(px16);
+  return a === 1 ? out.map(flipY) : out;
+}
+// Conexiones
+const isFenceLike = (n) => n === FENCE || !!BLOCKS[n]?.fenceLike;
+const isFullOpaque = (n) => !!(B_OPAQUE[n] && B_CUBE[n]);
+const wallConnects = (n) => !!BLOCKS[n]?.wallLike || !!BLOCKS[n]?.gateLike || !!BLOCKS[n]?.paneLike || n === IRON_BARS || isFullOpaque(n);
+const paneConnects = (n) => !!BLOCKS[n]?.paneLike || n === GLASS || n === IRON_BARS || !!BLOCKS[n]?.wallLike || isFullOpaque(n) || (BLOCKS[n]?.shape === 'cube' && BLOCKS[n]?.cullSelf);
+
+const SHAPES34 = {
+  wall(meta, nb, mode) {
+    const h = mode === 'collide' ? 24 : 14, ph = mode === 'collide' ? 24 : 16;
+    const c = [0, 1, 2, 3].map((f) => !!(nb && wallConnects(nb(f))));
+    const up = nb ? nb(4) : 0;
+    const straight = ((c[0] && c[2] && !c[1] && !c[3]) || (c[1] && c[3] && !c[0] && !c[2])) && !(up && B_SOLID[up]);
+    if (straight && mode !== 'collide') return [rotBox(px16([5, 0, 0, 11, h, 16]), c[0] ? 0 : 1)];
+    const out = [px16([4, 0, 4, 12, ph, 12])];
+    for (let f = 0; f < 4; f++) if (c[f]) out.push(rotBox(px16([5, 0, 0, 11, h, 4]), f));
+    return out;
+  },
+  pane(meta, nb) {
+    const c = [0, 1, 2, 3].map((f) => !!(nb && paneConnects(nb(f))));
+    if (!c.some(Boolean)) return [px16([0, 0, 7, 16, 16, 9])];
+    if (c.filter(Boolean).length === 1) { const f = c.indexOf(true); c[(f + 2) % 4] = true; }
+    const out = [px16([7, 0, 7, 9, 16, 9])];
+    for (let f = 0; f < 4; f++) if (c[f]) out.push(rotBox(px16([7, 0, 0, 9, 16, 7]), f));
+    return out;
+  },
+  column(meta, nb, mode, id) {
+    const up = nb ? nb(4) : 0, dn = nb ? nb(5) : 0;
+    const out = [px16([3, dn === id ? 0 : 3, 3, 13, up === id ? 16 : 13, 13])];
+    if (dn !== id) out.push(px16([1, 0, 1, 15, 3, 15]));
+    if (up !== id) out.push(px16([1, 13, 1, 15, 16, 15]));
+    return out;
+  },
+  gate(meta, nb, mode) {
+    const f = meta & 3, open = meta & 4;
+    if (mode === 'collide') return open ? [] : [rotBox(px16([0, 0, 6, 16, 24, 10]), f)];
+    if (mode === 'select') return open ? B34([[0, 5, 7, 2, 16, 9], [14, 5, 7, 16, 16, 9]], f) : [rotBox(px16([0, 5, 6, 16, 16, 10]), f)];
+    const posts = [[0, 5, 7, 2, 16, 9], [14, 5, 7, 16, 16, 9]];
+    const leaves = open ? [[0, 6, 9, 2, 9, 15], [0, 12, 9, 2, 15, 15], [0, 9, 13, 2, 12, 15], [14, 6, 9, 16, 9, 15], [14, 12, 9, 16, 15, 15], [14, 9, 13, 16, 12, 15]]
+      : [[2, 6, 7, 14, 9, 9], [2, 12, 7, 14, 15, 9], [6, 9, 7, 7, 12, 9], [9, 9, 7, 10, 12, 9]];
+    return B34([...posts, ...leaves], f);
+  },
+  lever(meta) {
+    const on = meta & 8;
+    return attachBoxes(meta, [[5, 4, 0, 11, 12, 3], on ? [7, 8, 2, 9, 14, 4] : [7, 2, 2, 9, 8, 4]],
+      [[5, 0, 4, 11, 3, 12], on ? [7, 3, 4, 9, 10, 6] : [7, 3, 10, 9, 10, 12]]);
+  },
+  button(meta) {
+    const d = meta & 8 ? 1 : 2;
+    return attachBoxes(meta, [[5, 6, 0, 11, 10, d]], [[5, 0, 6, 11, d, 10]]);
+  },
+  plate(meta) { return [px16([1, 0, 1, 15, meta & 8 ? 0.5 : 1, 15])]; },
+  wire(meta, nb, mode) {
+    if (mode === 'collide') return [];
+    const c = [0, 1, 2, 3].map((f) => !!(nb && wireLinks(nb, f)));
+    const n = c.filter(Boolean).length;
+    if (n === 0) c.fill(true); else if (n === 1) c[(c.indexOf(true) + 2) % 4] = true;
+    const out = [px16([6, 0, 6, 10, 1, 10])];
+    for (let f = 0; f < 4; f++) if (c[f]) {
+      out.push(rotBox(px16([7, 0, 0, 9, 1, 6]), f));
+      if (nb && nb(f, 1) === WIRE && !B_OPAQUE[nb(4)]) out.push(rotBox(px16([7, 0, 0, 9, 16, 0.6]), f));   // sube por la pared
+    }
+    return out;
+  },
+  logic(meta, nb, mode, id) {
+    const f = meta & 3, base = [[0, 0, 0, 16, 2, 16]];
+    if (mode === 'collide') return B34(base);
+    if (id === INVERTER) return B34([...base, [7, 2, 2, 9, 7, 4], [6, 2, 12, 10, 3, 14]], f);
+    const z0 = 6 + ((meta >> 4) & 3) * 2;
+    return B34([...base, [7, 2, 2, 9, 6, 4], [7, 2, z0, 9, 6, z0 + 2]], f);
+  },
+  piston(meta, nb, mode) {
+    const d = meta & 7;
+    if (!(meta & 8)) return [FULL_BOX[0]];
+    return [rot6(px16([0, 0, 4, 16, 16, 16]), d), rot6(px16([6, 6, 0, 10, 10, 4]), d)];
+  },
+  head(meta) { const d = meta & 7; return [rot6(px16([0, 0, 0, 16, 16, 4]), d), rot6(px16([6, 6, 4, 10, 10, 16]), d)]; },
+  spikes(meta, nb, mode) {
+    if (mode === 'collide') return [];
+    const up = meta & 8, t = up ? 12 : 3;
+    const out = [px16([0, 0, 0, 16, 1, 16])];
+    if (mode === 'select') return [px16([0, 0, 0, 16, up ? 10 : 2, 16])];
+    for (const [x, z] of [[2, 2], [11, 2], [2, 11], [11, 11], [6.5, 6.5]]) { out.push(px16([x, 1, z, x + 3, t - 4, z + 3])); out.push(px16([x + 1, t - 4, z + 1, x + 2, t, z + 2])); }
+    return out;
+  },
+};
+// Cable: ¿se conecta en la dirección f? (mismo nivel, un escalón arriba o abajo, o un mecanismo)
+function wireLinks(nb, f) {
+  const n = nb(f);
+  if (n === WIRE || BLOCKS[n]?.src || BLOCKS[n]?.consumer || BLOCKS[n]?.logicGate) return true;
+  if (nb(f, 1) === WIRE && !B_OPAQUE[nb(4)]) return true;
+  if (!B_OPAQUE[n] && nb(f, -1) === WIRE) return true;
+  return false;
+}
+
+// ---------- Definiciones ----------
+{
+  const WOODP = { hardness: 2, tool: 'axe', sound: 'wood' }, STONEP2 = { hardness: 1.5, tool: 'pickaxe', level: 0 };
+  // Escalones y losas nuevas
+  defBlock(JUNGLE_STAIRS, 'Escalones de selva', 'Escalones de madera tropical.', T.jungle_planks, STAIRS('axe', -1, 'wood'));
+  defBlock(ACACIA_STAIRS, 'Escalones de acacia', 'Escalones de madera anaranjada.', T.acacia_planks, STAIRS('axe', -1, 'wood'));
+  defBlock(CHERRY_STAIRS, 'Escalones de cerezo', 'Escalones de madera rosada.', T.cherry_planks, STAIRS('axe', -1, 'wood'));
+  defBlock(STONE_STAIRS, 'Escalones de piedra lisa', 'Escalones de piedra pulida.', T.smooth_stone, STAIRS('pickaxe', 0, 'stone'));
+  defBlock(MARBLE_STAIRS, 'Escalones de mármol', 'Escalones blancos y elegantes.', T.marble, STAIRS('pickaxe', 0, 'stone'));
+  defBlock(TERRA_STAIRS, 'Escalones de terracota', 'Escalones de arcilla cocida.', T.terracotta, STAIRS('pickaxe', 0, 'stone'));
+  defBlock(JUNGLE_SLAB, 'Losa de selva', 'Media altura.', T.jungle_planks, SLAB(JUNGLE_PLANKS, 'axe', -1, 'wood'));
+  defBlock(ACACIA_SLAB, 'Losa de acacia', 'Media altura.', T.acacia_planks, SLAB(ACACIA_PLANKS, 'axe', -1, 'wood'));
+  defBlock(CHERRY_SLAB, 'Losa de cerezo', 'Media altura.', T.cherry_planks, SLAB(CHERRY_PLANKS, 'axe', -1, 'wood'));
+  defBlock(MARBLE_SLAB, 'Losa de mármol', 'Media altura.', T.marble, SLAB(MARBLE, 'pickaxe', 0, 'stone'));
+  defBlock(TERRA_SLAB, 'Losa de terracota', 'Media altura.', T.terracotta, SLAB(TERRACOTTA, 'pickaxe', 0, 'stone'));
+  // Techos
+  defBlock(ROOF_RED, 'Tejas rojas', 'Tejas de arcilla para techos.', T.roof_red, STONEP2);
+  defBlock(ROOF_RED_STAIRS, 'Tejado de tejas rojas', 'Escalones de tejas: ideales para techos a dos aguas.', T.roof_red, STAIRS('pickaxe', 0, 'stone'));
+  defBlock(ROOF_RED_SLAB, 'Losa de tejas rojas', 'Remate plano de tejado.', T.roof_red, SLAB(ROOF_RED, 'pickaxe', 0, 'stone'));
+  defBlock(ROOF_SLATE, 'Tejas de pizarra', 'Tejas oscuras de pizarra.', T.roof_slate, STONEP2);
+  defBlock(ROOF_SLATE_STAIRS, 'Tejado de pizarra', 'Escalones de pizarra para techos.', T.roof_slate, STAIRS('pickaxe', 0, 'stone'));
+  defBlock(ROOF_SLATE_SLAB, 'Losa de pizarra', 'Remate plano de tejado.', T.roof_slate, SLAB(ROOF_SLATE, 'pickaxe', 0, 'stone'));
+  // Bloques decorativos
+  defBlock(SMOOTH_STONE, 'Piedra lisa', 'Piedra pulida de bordes marcados.', T.smooth_stone, STONEP2);
+  defBlock(MARBLE, 'Mármol', 'Piedra blanca con vetas grises.', T.marble, STONEP2);
+  defBlock(MARBLE_BRICKS, 'Ladrillos de mármol', 'Mármol tallado en ladrillos.', T.marble_bricks, STONEP2);
+  defBlock(POL_BASALT, 'Basalto pulido', 'Piedra volcánica pulida.', T.pol_basalt, STONEP2);
+  defBlock(TILES_CHECKER, 'Baldosas ajedrezadas', 'Suelo blanco y negro.', T.tiles_checker, STONEP2);
+  defBlock(TILES_BLUE, 'Azulejos', 'Cerámica blanca y azul pintada a mano.', T.tiles_blue, STONEP2);
+  defBlock(PLASTER, 'Estuco blanco', 'Pared lisa y luminosa.', T.plaster, { hardness: 1, tool: 'pickaxe', level: 0 });
+  defBlock(PARQUET, 'Parqué', 'Suelo de madera en espiga.', T.parquet, WOODP);
+  // Ventanas
+  defBlock(GLASS_PANE, 'Panel de vidrio', 'Ventana fina que se une a los bloques vecinos.', T.glass,
+    { shape: 'pane', boxes: SHAPES34.pane, opaque: false, hardness: 0.3, sound: 'glass', drop: null, paneLike: true });
+  defBlock(WINDOW, 'Ventana de madera', 'Ventana con marco y parteluz.', T.window, { opaque: false, cullSelf: true, hardness: 0.6, tool: 'axe', sound: 'glass' });
+  for (const [id, n, c] of [[STAINED_RED, 'roja', [0.95, 0.35, 0.32]], [STAINED_BLUE, 'azul', [0.35, 0.55, 1]], [STAINED_GREEN, 'verde', [0.4, 0.9, 0.42]], [STAINED_YELLOW, 'amarilla', [1, 0.86, 0.3]]]) {
+    defBlock(id, `Vidriera ${n}`, 'Vidrio de colores con varillas de plomo.', T.stained, { opaque: false, cullSelf: true, hardness: 0.3, sound: 'glass', drop: null, tint: c });
+  }
+  // Vallas, portones y muros
+  for (const [id, n, t] of [[BIRCH_FENCE, 'abedul', T.birch_planks], [SPRUCE_FENCE, 'abeto', T.spruce_planks], [DARK_FENCE, 'roble oscuro', T.dark_planks], [CHERRY_FENCE, 'cerezo', T.cherry_planks]]) {
+    defBlock(id, `Valla de ${n}`, 'Cerca que no se puede saltar.', t, { shape: 'fence', opaque: false, hardness: 2, tool: 'axe', sound: 'wood', fenceLike: true });
+  }
+  for (const [id, n, t, iron] of [[OAK_GATE, 'roble', T.oak_planks], [SPRUCE_GATE, 'abeto', T.spruce_planks], [BIRCH_GATE, 'abedul', T.birch_planks], [DARK_GATE, 'roble oscuro', T.dark_planks], [IRON_GATE, 'hierro', T.iron_block, 1]]) {
+    defBlock(id, `Portón de ${n}`, 'Úsalo para abrirlo. También se abre con energía.', t,
+      { shape: 'gate', boxes: SHAPES34.gate, opaque: false, hardness: iron ? 5 : 2, tool: iron ? 'pickaxe' : 'axe', level: iron ? 0 : -1, sound: iron ? 'metal' : 'wood', fenceLike: true, gateLike: true, consumer: 'gate', interact: 'gate34' });
+  }
+  for (const [id, n, t] of [[COBBLE_WALL, 'piedra labrada', T.cobble], [STONEBRICK_WALL, 'ladrillos de piedra', T.stone_bricks], [BRICK_WALL, 'ladrillos', T.bricks], [SANDSTONE_WALL, 'arenisca', { side: T.sandstone_side, top: T.sandstone_top }]]) {
+    defBlock(id, `Muro de ${n}`, 'Muro bajo que se une a sus vecinos. No se puede saltar.', t, { shape: 'wall', boxes: SHAPES34.wall, opaque: false, ...STONEP2, hardness: 2, wallLike: true });
+  }
+  // Columnas
+  for (const [id, n, t, wood] of [[STONE_COLUMN, 'piedra lisa', T.smooth_stone], [MARBLE_COLUMN, 'mármol', T.marble], [WOOD_COLUMN, 'roble', { side: T.stripped_oak, top: T.oak_log_top }, 1], [SANDSTONE_COLUMN, 'arenisca', { side: T.smooth_sandstone, top: T.sandstone_top }]]) {
+    defBlock(id, `Columna de ${n}`, 'Al apilarlas forman un fuste continuo con basa y capitel.', t,
+      { shape: 'column', boxes: (m, nb, mode) => SHAPES34.column(m, nb, mode, id), opaque: false, hardness: 2, tool: wood ? 'axe' : 'pickaxe', level: wood ? -1 : 0, sound: wood ? 'wood' : 'stone' });
+  }
+  // Muebles
+  const sofa = [[1, 0, 1, 3, 3, 3], [13, 0, 1, 15, 3, 3], [1, 0, 13, 3, 3, 15], [13, 0, 13, 15, 3, 15], [0, 3, 0, 16, 8, 13], [0, 3, 13, 16, 16, 16], [0, 8, 0, 2, 12, 13], [14, 8, 0, 16, 12, 13]];
+  for (const [id, n, c] of [[SOFA_RED, 'rojo', [0.85, 0.25, 0.22]], [SOFA_BLUE, 'azul', [0.3, 0.45, 0.85]]]) {
+    defBlock(id, `Sofá ${n}`, 'Úsalo para sentarte cómodamente.', T.wool, { shape: 'sofa', opaque: false, hardness: 1, sound: 'cloth', oriented: true, interact: 'sit', tint: c,
+      boxes: (m, nb, mode) => (mode === 'collide' ? [px16([0, 0, 0, 16, 8, 16])] : B34(sofa, m & 3)) });
+  }
+  defBlock(STOOL, 'Taburete', 'Asiento pequeño de madera.', T.oak_planks, { shape: 'stool', opaque: false, hardness: 1, tool: 'axe', sound: 'wood', interact: 'sit',
+    boxes: (m, nb, mode) => (mode === 'collide' ? [px16([3, 0, 3, 13, 10, 13])] : B34([[3, 8, 3, 13, 10, 13], [3, 0, 3, 5, 8, 5], [11, 0, 3, 13, 8, 5], [3, 0, 11, 5, 8, 13], [11, 0, 11, 13, 8, 13]])) });
+  defBlock(ROUND_TABLE, 'Mesa redonda', 'Mesa de un solo pie.', { side: T.dark_planks, top: T.dark_planks }, { shape: 'rtable', opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood',
+    boxes: (m, nb, mode) => (mode !== 'render' ? [FULL_BOX[0]] : B34([[1, 13, 3, 15, 16, 13], [3, 13, 1, 13, 16, 15], [6, 1, 6, 10, 13, 10], [3, 0, 3, 13, 1, 13]])) });
+  defBlock(BENCH, 'Banco', 'Banco de plaza. Úsalo para sentarte.', T.spruce_planks, { shape: 'bench', opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood', oriented: true, interact: 'sit',
+    boxes: (m, nb, mode) => (mode === 'collide' ? [rotBox(px16([0, 0, 3, 16, 8, 13]), m & 3)] : B34([[0, 6, 3, 16, 8, 12], [1, 0, 4, 3, 6, 11], [13, 0, 4, 15, 6, 11], [0, 8, 11, 16, 15, 13], [1, 6, 12, 3, 8, 13], [13, 6, 12, 15, 8, 13]], m & 3)) });
+  defBlock(WARDROBE, 'Armario', 'Guarda 27 objetos detrás de sus puertas.', { side: T.oak_planks, front: T.wardrobe_front, top: T.oak_planks }, { hardness: 2.5, tool: 'axe', sound: 'wood', oriented: true, interact: 'chest', tileTitle: 'Armario' });
+  defBlock(NIGHTSTAND, 'Mesita de noche', 'Cajones para guardar 27 objetos junto a la cama.', { side: T.oak_planks, front: T.nightstand_front, top: T.oak_planks },
+    { shape: 'nstand', opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood', oriented: true, interact: 'chest', tileTitle: 'Mesita de noche', boxes: () => [px16([1, 0, 1, 15, 14, 15])] });
+  defBlock(FLOWER_POT, 'Maceta con flores', 'Una planta para alegrar la casa.', T.pot, { shape: 'pot', opaque: false, hardness: 0.3, sound: 'stone',
+    boxes: (m, nb, mode) => (mode !== 'render' ? [px16([5, 0, 5, 11, 6, 11])] : B34([[5, 0, 5, 11, 6, 11], [7.5, 6, 7.5, 8.5, 11, 8.5], [5.5, 8, 7.5, 7.5, 9, 8.5], [8.5, 7, 7.5, 10.5, 8, 8.5], [6, 11, 6, 10, 13, 10]])),
+    tileFn: (f, m, bi) => (bi === 0 ? null : bi === 4 ? T.red_wool : T.moss) });
+  defBlock(STOVE, 'Cocina', 'Cocina de hierro: funciona como un horno.', { side: T.iron_block, front: T.stove_front, top: T.stove_top, bottom: T.iron_block },
+    { hardness: 3.5, tool: 'pickaxe', level: 0, sound: 'metal', oriented: true, interact: 'furnace', tileTitle: 'Cocina' });
+  // Iluminación
+  const metalBits = (f, m, bi) => (bi < 2 ? T.gold_block : null);
+  defBlock(TABLE_LAMP, 'Lámpara de mesa', 'Luz cálida para escritorios y mesitas.', T.lampshade, { shape: 'tlamp', opaque: false, solid: false, hardness: 0.5, sound: 'glass', light: 13,
+    boxes: () => B34([[5, 0, 5, 11, 1, 11], [7, 1, 7, 9, 7, 9], [4, 7, 4, 12, 13, 12]]), tileFn: metalBits });
+  defBlock(FLOOR_LAMP, 'Lámpara de pie', 'Lámpara alta para salones.', T.lampshade, { shape: 'flamp', opaque: false, hardness: 0.5, sound: 'glass', light: 14,
+    boxes: (m, nb, mode) => (mode === 'collide' ? [px16([5, 0, 5, 11, 16, 11])] : B34([[5, 0, 5, 11, 1, 11], [7, 1, 7, 9, 11, 9], [3, 10, 3, 13, 16, 13]])), tileFn: metalBits });
+  defBlock(CHANDELIER, 'Candelabro', 'Lámpara de techo con velas.', T.wool, { shape: 'chand', opaque: false, solid: false, hardness: 0.5, sound: 'metal', light: 15,
+    boxes: () => B34([[7.5, 11, 7.5, 8.5, 16, 8.5], [6, 8, 6, 10, 11, 10], [2, 8, 7, 14, 9, 9], [7, 8, 2, 9, 9, 14], [2, 9, 7, 4, 12, 9], [12, 9, 7, 14, 12, 9], [7, 9, 2, 9, 12, 4], [7, 9, 12, 9, 12, 14],
+      [2.5, 12, 7.5, 3.5, 13.5, 8.5], [12.5, 12, 7.5, 13.5, 13.5, 8.5], [7.5, 12, 2.5, 8.5, 13.5, 3.5], [7.5, 12, 12.5, 8.5, 13.5, 13.5]]),
+    tileFn: (f, m, bi) => (bi < 4 ? T.gold_block : bi >= 8 ? T.lampshade : null) });
+  defBlock(GARDEN_LAMP, 'Farola de jardín', 'Farola baja para caminos y jardines.', T.glowstone, { shape: 'glamp', opaque: false, hardness: 1, tool: 'pickaxe', sound: 'metal', light: 15,
+    boxes: (m, nb, mode) => (mode === 'collide' ? [px16([4, 0, 4, 12, 16, 12])] : B34([[6, 0, 6, 10, 9, 10], [4, 9, 4, 12, 15, 12], [3, 15, 3, 13, 16, 13], [5, 0, 5, 11, 1, 11]])),
+    tileFn: (f, m, bi) => (bi === 1 ? null : T.pol_basalt) });
+  defBlock(GLOWSTONE, 'Piedra luminosa', 'Roca que brilla con luz propia.', T.glowstone, { hardness: 0.4, sound: 'glass', light: 15 });
+  for (const [id, n, c] of [[LIGHT_RED, 'roja', [1, 0.45, 0.42]], [LIGHT_BLUE, 'azul', [0.5, 0.7, 1]], [LIGHT_GREEN, 'verde', [0.5, 1, 0.55]], [LIGHT_YELLOW, 'amarilla', [1, 0.92, 0.5]]]) {
+    defBlock(id, `Luz ${n}`, 'Bloque luminoso de color.', T.light_block, { hardness: 0.4, sound: 'glass', light: 15, tint: c });
+  }
+  defBlock(LIGHT_PANEL, 'Panel de luz', 'Luz plana que se coloca en el techo.', T.light_panel, { shape: 'panel', opaque: false, solid: false, hardness: 0.3, sound: 'glass', light: 15,
+    boxes: () => [px16([2, 15, 2, 14, 16, 14])] });
+
+  // ---------- Mecanismos ----------
+  const MECH = { opaque: false, solid: false, mech: true };
+  defBlock(LEVER, 'Palanca', 'Fuente de energía: úsala para encenderla o apagarla. Se coloca en suelo, techo o paredes.', T.cobble,
+    { ...MECH, mech: false, shape: 'lever', boxes: SHAPES34.lever, hardness: 0.5, sound: 'wood', src: 'lever', attach: true, interact: 'lever34',
+      tileFn: (f, m, bi) => (bi === 1 ? (m & 8 ? T.wire_on : T.oak_planks) : null) });
+  defBlock(BUTTON_STONE, 'Botón de piedra', 'Da un pulso de energía de 1 segundo.', T.stone, { ...MECH, shape: 'button', boxes: SHAPES34.button, hardness: 0.5, src: 'button', attach: true, interact: 'button34', pulse: 1 });
+  defBlock(BUTTON_WOOD, 'Botón de madera', 'Da un pulso de energía de 1,5 segundos.', T.oak_planks, { ...MECH, shape: 'button', boxes: SHAPES34.button, hardness: 0.5, sound: 'wood', src: 'button', attach: true, interact: 'button34', pulse: 1.5 });
+  defBlock(PLATE_STONE, 'Placa de presión de piedra', 'Da energía mientras un jugador o una criatura la pisa.', T.smooth_stone, { ...MECH, shape: 'plate', boxes: SHAPES34.plate, hardness: 0.5, src: 'plate', support: true });
+  defBlock(PLATE_WOOD, 'Placa de presión de madera', 'Se activa con jugadores, criaturas y objetos tirados.', T.oak_planks, { ...MECH, shape: 'plate', boxes: SHAPES34.plate, hardness: 0.5, sound: 'wood', src: 'plate', support: true, items: true });
+  defBlock(PROX_SENSOR, 'Sensor de presencia', 'Da energía cuando un jugador o una criatura está a 4 bloques o menos.', { side: T.sensor_off, top: T.iron_block, bottom: T.iron_block },
+    { mech: true, hardness: 2, tool: 'pickaxe', level: 0, sound: 'metal', src: 'sensor', tileFn: (f, m) => (f === 2 || f === 3 ? null : m & 8 ? T.sensor_on : T.sensor_off) });
+  defBlock(DAY_SENSOR, 'Sensor de luz solar', 'Da energía de día. Úsalo para invertirlo (energía de noche).', { side: T.oak_planks, top: T.day_sensor, bottom: T.oak_planks },
+    { ...MECH, solid: true, shape: 'daysensor', boxes: () => [px16([0, 0, 0, 16, 6, 16])], hardness: 0.5, tool: 'axe', sound: 'wood', src: 'day', interact: 'day34',
+      tileFn: (f, m) => (f === 3 && (m & 4) ? T.sensor_off : null) });
+  defBlock(WIRE, 'Cable de cobre', 'Lleva la energía entre mecanismos. Sube y baja escalones.', T.wire_off,
+    { opaque: false, solid: false, shape: 'wire', boxes: SHAPES34.wire, hardness: 0, sound: 'metal', support: true, tileFn: (f, m) => (m & 1 ? T.wire_on : T.wire_off) });
+  defBlock(POWER_BLOCK, 'Bloque de energía', 'Fuente de energía permanente.', T.power_block, { hardness: 3, tool: 'pickaxe', level: 0, sound: 'metal', src: 'power', light: 7 });
+  defBlock(INVERTER, 'Inversor', 'Circuito: da energía hacia delante solo cuando NO la recibe por detrás.', T.logic_off,
+    { ...MECH, solid: true, shape: 'logic', boxes: (m, nb, mode) => SHAPES34.logic(m, nb, mode, INVERTER), hardness: 0.3, support: true, logicGate: 'not',
+      tileFn: (f, m, bi) => (bi > 0 ? (m & 4 ? T.wire_on : T.wire_off) : f === 3 ? (m & 4 ? T.logic_on : T.logic_off) : T.smooth_stone) });
+  defBlock(REPEATER, 'Repetidor', 'Circuito: repite la energía hacia delante con retardo. Úsalo para cambiar el retardo (0,1–0,4 s).', T.repeater_off,
+    { ...MECH, solid: true, shape: 'logic', boxes: (m, nb, mode) => SHAPES34.logic(m, nb, mode, REPEATER), hardness: 0.3, support: true, logicGate: 'rep', interact: 'rep34',
+      tileFn: (f, m, bi) => (bi > 0 ? (m & 4 ? T.wire_on : T.wire_off) : f === 3 ? (m & 4 ? T.repeater_on : T.repeater_off) : T.smooth_stone) });
+  const pistonTile = (sticky) => (f, m, bi) => {
+    const d = m & 7, front = DIR_FACE[d];
+    if (bi === 1) return T.piston_side;
+    if (f === front) return m & 8 ? T.piston_back : sticky ? T.piston_sticky : T.piston_front;
+    if (f === (front ^ 1)) return T.piston_back;
+    return T.piston_side;
+  };
+  defBlock(PISTON, 'Pistón', 'Con energía empuja hasta 12 bloques.', T.piston_side,
+    { shape: 'piston', boxes: SHAPES34.piston, opaque: false, hardness: 1.5, tool: 'pickaxe', sound: 'stone', consumer: 'piston', tileFn: pistonTile(false) });
+  defBlock(STICKY_PISTON, 'Pistón pegajoso', 'Empuja bloques y los vuelve a traer al apagarse.', T.piston_side,
+    { shape: 'piston', boxes: SHAPES34.piston, opaque: false, hardness: 1.5, tool: 'pickaxe', sound: 'stone', consumer: 'piston', sticky: true, tileFn: pistonTile(true) });
+  defBlock(PISTON_HEAD, 'Cabeza de pistón', '', T.piston_side, { shape: 'phead', boxes: SHAPES34.head, opaque: false, hardness: 1.5, sound: 'stone', hidden: true, drop: null,
+    tileFn: (f, m, bi) => (bi === 0 && f === DIR_FACE[m & 7] ? (m & 8 ? T.piston_sticky : T.piston_front) : T.piston_side) });
+  defBlock(AUTO_DOOR, 'Puerta automática', 'Se abre sola cuando alguien se acerca, o con energía.', T.auto_door_bottom,
+    { shape: 'door', opaque: false, hardness: 4, tool: 'pickaxe', level: 0, sound: 'metal', hidden: true, mech: true, consumer: 'door', support: true,
+      drop: (r, tool, m) => (m & 8 ? [] : [[AUTO_DOOR_ITEM, 1]]), tileFn: (f, m) => (m & 8 ? T.auto_door_top : T.auto_door_bottom) });
+  defBlock(SPIKES, 'Trampa de pinchos', 'Con energía saca pinchos que hieren a quien los pisa.', T.spikes,
+    { ...MECH, shape: 'spikes', boxes: SHAPES34.spikes, hardness: 2, tool: 'pickaxe', level: 0, sound: 'metal', consumer: 'spikes', support: true });
+  defBlock(ARROW_TRAP, 'Lanzaflechas', 'Dispara una flecha cada vez que recibe energía.', { side: T.cobble, front: T.arrow_trap },
+    { hardness: 3, tool: 'pickaxe', level: 0, oriented: true, consumer: 'arrow' });
+  defBlock(ELEVATOR, 'Elevador', 'Párate encima: salta para subir al siguiente elevador y agáchate para bajar.', { side: T.elevator_side, top: T.elevator_top },
+    { hardness: 3, tool: 'pickaxe', level: 0, sound: 'metal' });
+  // Bloques existentes que ahora responden a la energía
+  BLOCKS[DOOR].consumer = 'door'; BLOCKS[TRAPDOOR].consumer = 'trapdoor'; BLOCKS[LAMP_ON].consumer = 'lamp'; BLOCKS[LAMP_OFF].consumer = 'lamp';
+  BLOCKS[FENCE].fenceLike = true;
+}
+rebuildBlockTables();
+
+// ---------- Texturas ----------
+{
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { px, get, paint, copy, rnd, clear, planks, bricks, metal } = h;
+    const N = (v) => (rnd() - 0.5) * v;
+    const shingles = (t, c) => paint(t, (x, y) => {
+      const row = y >> 2, off = (row & 1) * 4, rx = (x + off) & 7, ry = y & 3;
+      const s = ry === 3 ? -42 : ry === 0 ? 16 : 0, e = rx === 0 ? -20 : rx === 7 ? -8 : 0, n = N(14) + (hash2(x >> 3, row, t) - 0.5) * 16;
+      return [c[0] + s + e + n, c[1] + s + e + n * 0.7, c[2] + s + e + n * 0.6];
+    });
+    shingles(T.roof_red, [170, 66, 46]); shingles(T.roof_slate, [72, 78, 96]);
+    paint(T.smooth_stone, (x, y) => { const b = y === 0 || y === 15 || x === 0 || x === 15 ? -22 : 0, n = N(8); return [162 + b + n, 162 + b + n, 165 + b + n]; });
+    paint(T.marble, (x, y) => { const v = Math.abs(Math.sin(x * 0.55 + y * 0.32 + Math.sin(y * 0.45) * 2.3)), vein = v < 0.09 ? -60 : v < 0.18 ? -24 : 0, n = N(6); return [234 + vein + n, 232 + vein + n, 228 + vein + n]; });
+    bricks(T.marble_bricks, 8, 8, [182, 180, 176], [236, 234, 230], 8);
+    paint(T.pol_basalt, (x, y) => { const b = x === 0 || y === 0 ? 18 : x === 15 || y === 15 ? -16 : 0, n = N(8); return [66 + b + n, 66 + b + n, 74 + b + n]; });
+    paint(T.tiles_checker, (x, y) => { const w = ((x >> 3) ^ (y >> 3)) & 1, g = (x & 7) === 0 || (y & 7) === 0 ? -14 : 0, n = N(6); return w ? [232 + g + n, 228 + g + n, 220 + g + n] : [42 + g * 0.3 + n, 42 + n, 48 + n]; });
+    paint(T.tiles_blue, (x, y) => {
+      const d = Math.abs(x - 7.5) + Math.abs(y - 7.5), edge = x === 0 || y === 0, n = N(6);
+      if (edge) return [200 + n, 200 + n, 196 + n];
+      if (d < 2) return [236, 196, 60];
+      if (d < 4.5 || (d > 6 && d < 7.2) || x === 1 || y === 1 || x === 15 || y === 15) return [38 + n, 78 + n, 168 + n];
+      return [238 + n, 238 + n, 232 + n];
+    });
+    paint(T.plaster, () => { const n = N(7); return [236 + n, 232 + n, 222 + n]; });
+    paint(T.parquet, (x, y) => {
+      const cell = ((x >> 2) + (y >> 2)) & 1, a = cell ? x & 3 : y & 3, line = a === 0 ? -26 : 0, tone = (hash2(x >> 2, y >> 2, 91) - 0.5) * 26, n = N(10);
+      return [176 + line + tone + n, 124 + line + tone * 0.8 + n, 70 + line + tone * 0.5 + n];
+    });
+    paint(T.window, (x, y) => {
+      const frame = x < 2 || y < 2 || x > 13 || y > 13 || x === 7 || x === 8 || y === 7 || y === 8;
+      if (frame) { const n = N(10), b = x === 0 || y === 0 ? 14 : 0; return [122 + n + b, 84 + n + b, 48 + n + b, 255]; }
+      if ((x - y === 3 || x - y === 4) && x > 2 && y < 13) return [210, 236, 248, 255];
+      return [0, 0, 0, 0];
+    });
+    paint(T.stained, (x, y) => {
+      const lead = x === 0 || y === 0 || x === 15 || y === 15 || x === y || x + y === 15;
+      if (lead) return [64, 64, 70, 255];
+      const g = 200 + (hash2(x >> 2, y >> 2, 93) - 0.5) * 50 + (x + y === 6 || x + y === 24 ? 40 : 0);
+      return [g, g, g, 255];
+    });
+    planks(T.wardrobe_front, [150, 106, 62]);
+    paint(T.wardrobe_front, (x, y) => {
+      if (x === 0 || x === 15 || y === 0 || y === 15) return [92, 62, 34];
+      if (x === 7 || x === 8) return [84, 56, 30];
+      if ((x === 6 || x === 9) && (y === 7 || y === 8)) return [232, 196, 80];
+      if (x === 2 || x === 13 || y === 2 || y === 13) return [126, 88, 50];
+      return null;
+    });
+    planks(T.nightstand_front, [158, 112, 66]);
+    paint(T.nightstand_front, (x, y) => {
+      if (x === 0 || x === 15 || y === 0 || y === 15 || y === 5 || y === 10) return [96, 64, 36];
+      if ((x === 7 || x === 8) && (y === 2 || y === 7 || y === 12)) return [232, 196, 80];
+      return null;
+    });
+    paint(T.stove_front, (x, y) => {
+      const n = N(8);
+      if (y < 4) return y === 2 && (x === 3 || x === 6 || x === 9 || x === 12) ? [220, 220, 224] : [84 + n, 84 + n, 90 + n];
+      if (x >= 3 && x <= 12 && y >= 6 && y <= 13) { const glow = y >= 11 ? [230, 120, 40] : [34, 34, 40]; return x === 3 || x === 12 || y === 6 || y === 13 ? [150, 150, 156] : glow; }
+      return [70 + n, 70 + n, 76 + n];
+    });
+    paint(T.stove_top, (x, y) => {
+      const n = N(8);
+      for (const [cx, cy] of [[4, 4], [11.5, 4], [4, 11.5], [11.5, 11.5]]) { const d = Math.hypot(x + 0.5 - cx, y + 0.5 - cy); if (d < 3) return d > 2 ? [26, 26, 28] : d < 1 ? [200, 60, 30] : [50, 50, 54]; }
+      return [96 + n, 96 + n, 102 + n];
+    });
+    paint(T.lampshade, (x, y) => { const n = N(6), s = x % 3 === 0 ? -10 : 0, b = y === 0 || y === 15 ? -30 : 0; return [252 + n + s + b, 236 + n + s + b, 186 + n + s + b]; });
+    paint(T.glowstone, (x, y) => { const v = hash2(x >> 1, y >> 1, 95), c = Math.abs(Math.sin(x * 1.1 + Math.sin(y * 0.9) * 2)) < 0.22 ? -60 : 0, n = N(16); return [244 + c + n, 196 + c + v * 40 + n, 108 + c + v * 50 + n]; });
+    paint(T.light_block, (x, y) => { const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)), b = d > 6.5 ? -34 : d > 5 ? -12 : 0, n = N(5); return [246 + b + n, 246 + b + n, 246 + b + n]; });
+    paint(T.light_panel, (x, y) => { const g = x % 4 === 0 || y % 4 === 0 ? -26 : 0, n = N(4); return [248 + g + n, 248 + g + n, 240 + g + n]; });
+    paint(T.pot, (x, y) => { const n = N(10), r = y < 3 ? 18 : y === 3 ? -24 : 0; return [172 + n + r, 92 + n * 0.6 + r, 62 + n * 0.5 + r]; });
+    paint(T.wire_off, (x, y) => { const n = N(16), c = (x === 7 || x === 8 || y === 7 || y === 8) ? 14 : 0; return [128 + n + c, 66 + n * 0.6 + c, 40 + n * 0.4]; });
+    paint(T.wire_on, (x, y) => { const n = N(16), c = (x === 7 || x === 8 || y === 7 || y === 8) ? 40 : 0; return [255, 158 + n + c, 60 + n * 0.5 + c]; });
+    paint(T.power_block, (x, y) => {
+      const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)), n = N(10);
+      if (d > 6) return [150 + n, 76 + n, 48 + n];
+      if (d < 2.6 || ((x === 7 || x === 8 || y === 7 || y === 8) && d < 5.5)) return [255, 190 + n, 90 + n];
+      return [196 + n, 98 + n, 60 + n];
+    });
+    const board = (t, on, rep) => paint(t, (x, y) => {
+      const n = N(6), trace = rep ? (x === 7 || x === 8) || ((y === 4 || y === 11) && x > 3 && x < 12) : (x === 7 || x === 8) || (y === 12 && x > 4 && x < 11);
+      if (trace) return on ? [255, 160 + n, 60] : [126 + n, 64 + n, 40];
+      return [170 + n, 170 + n, 172 + n];
+    });
+    board(T.logic_off, 0, 0); board(T.logic_on, 1, 0); board(T.repeater_off, 0, 1); board(T.repeater_on, 1, 1);
+    planks(T.piston_front, [178, 142, 92]);
+    paint(T.piston_front, (x, y) => (x < 2 || y < 2 || x > 13 || y > 13 ? [158 + N(10), 158, 164] : (x === 7 || x === 8) && (y === 7 || y === 8) ? [120, 120, 126] : null));
+    copy(T.piston_sticky, T.piston_front);
+    paint(T.piston_sticky, (x, y) => (x >= 3 && x <= 12 && y >= 3 && y <= 12 ? [98 + N(20), 186 + N(20), 84] : null));
+    paint(T.piston_side, (x, y) => { const n = N(14), band = y === 3 || y === 12 ? -30 : 0, rivet = (x === 2 || x === 13) && (y === 1 || y === 14) ? 60 : 0; return [118 + n + band + rivet, 118 + n + band + rivet, 122 + n + band + rivet]; });
+    paint(T.piston_back, (x, y) => { const n = N(14), plate = x >= 4 && x <= 11 && y >= 4 && y <= 11; return plate ? [168 + n, 168 + n, 174 + n] : [108 + n, 108 + n, 112 + n]; });
+    const autoDoor = (t, top) => paint(t, (x, y) => {
+      const n = N(6);
+      if (x < 2 || x > 13 || (top ? y < 2 : y > 13)) return [176 + n, 182 + n, 194 + n, 255];
+      if (top && y === 3 && (x === 7 || x === 8)) return [230, 60, 50, 255];
+      if (x === 7 || x === 8) return [150 + n, 156 + n, 168 + n, 255];
+      if ((x + y) % 9 === 0 && x > 2 && x < 13) return [230, 246, 255, 255];
+      return [160 + n, 206 + n, 230 + n, 255];
+    });
+    autoDoor(T.auto_door_bottom, false); autoDoor(T.auto_door_top, true);
+    paint(T.spikes, (x, y) => { const n = N(16), h = (x + y) % 5 === 0 ? 40 : 0; return [168 + n + h, 168 + n + h, 178 + n + h]; });
+    copy(T.arrow_trap, T.cobble);
+    paint(T.arrow_trap, (x, y) => {
+      const d = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5));
+      if (d < 2) return [18, 18, 20];
+      if (d < 3) return [70, 70, 74];
+      if (y === 7 && (x < 4 || x > 11)) return [56, 56, 60];
+      return null;
+    });
+    metal(T.elevator_side, [190, 190, 198]);
+    paint(T.elevator_side, (x, y) => (x % 5 === 2 ? [120, 124, 136] : null));
+    metal(T.elevator_top, [196, 196, 204]);
+    paint(T.elevator_top, (x, y) => {
+      const up = y >= 1 && y <= 6 && Math.abs(x - 7.5) <= (y - 1) * 0.9 + 0.5, dn = y >= 9 && y <= 14 && Math.abs(x - 7.5) <= (14 - y) * 0.9 + 0.5;
+      return up ? [60, 170, 90] : dn ? [200, 70, 60] : null;
+    });
+    const sensor = (t, on) => paint(t, (x, y) => {
+      const d = Math.hypot(x - 7.5, y - 7.5), n = N(8);
+      if (d < 1.6) return on ? [255, 255, 220] : [20, 20, 24];
+      if (d < 3.6) return on ? [255, 120, 50] : [60, 120, 150];
+      if (d < 4.6) return [220 + n, 220 + n, 226 + n];
+      return [64 + n, 64 + n, 72 + n];
+    });
+    sensor(T.sensor_off, 0); sensor(T.sensor_on, 1);
+    paint(T.day_sensor, (x, y) => {
+      const n = N(8);
+      if (x === 0 || y === 0 || x === 15 || y === 15) return [150 + n, 112 + n, 70 + n];
+      if (x % 5 === 0 || y % 5 === 0) return [200, 200, 210];
+      return [70 + n, 110 + n, 176 + n];
+    });
+  };
+}
 
 /* ==========================================================================
    §5 BIOMAS Y GENERACIÓN PROCEDURAL
@@ -2208,9 +2633,9 @@ class Chunk {
 
 // Tipos de bloque que se siguen por índice (cultivos, tierra arada, generadores, decoración)
 const SPECIAL = new Uint8Array(256);
-for (const b of BLOCKS) if (b) SPECIAL[b.id] = b.crop ? 1 : b.id === FARMLAND ? 2 : b.id === SPAWNER ? 3 : (b.id === SIGN || b.id === PAINTING) ? 4 : 0;
+for (const b of BLOCKS) if (b) SPECIAL[b.id] = b.crop ? 1 : b.id === FARMLAND ? 2 : b.id === SPAWNER ? 3 : (b.id === SIGN || b.id === PAINTING) ? 4 : b.mech ? 5 : 0;
 function trackSpecial(ch, i, k, add) {
-  const set = k === 1 ? ch.crops : k === 2 ? ch.farmland : k === 3 ? ch.spawners : ch.decor;
+  const set = k === 1 ? ch.crops : k === 2 ? ch.farmland : k === 3 ? ch.spawners : k === 5 ? (ch.mech ||= new Set()) : ch.decor;
   if (add) set.add(i); else set.delete(i);
 }
 
@@ -2984,11 +3409,12 @@ const LADDER_BASE = [0, 0, 0, 1, 1, 1 / 16];
 const FENCE_POST = px16([6, 0, 6, 10, 16, 10]), FENCE_ARM_A = px16([7, 12, 0, 9, 15, 6]), FENCE_ARM_B = px16([7, 6, 0, 9, 9, 6]);
 const FENCE_POST_C = px16([6, 0, 6, 10, 24, 10]), FENCE_ARM_C = px16([6, 0, 0, 10, 24, 6]);
 const STAIR_LOW = [0, 0, 0, 1, 0.5, 1], STAIR_HIGH = [0, 0.5, 0, 1, 1, 0.5];
-const fenceConnects = (n) => n === FENCE || (B_OPAQUE[n] && B_CUBE[n]);
+const fenceConnects = (n) => isFenceLike(n) || (B_OPAQUE[n] && B_CUBE[n]);
 
 // Devuelve las cajas del bloque. nb(i) da el id vecino en la dirección FACING_DIR[i].
 function blockBoxes(id, meta, nb, mode) {
   const def = BLOCKS[id];
+  if (def.boxes) return def.boxes(meta, nb, mode);     // formas de la 3.4 (§2c)
   switch (def.shape) {
     case 'cube': return FULL_BOX;
     case 'liquid': return mode === 'collide' ? [] : FULL_BOX;
@@ -3266,6 +3692,7 @@ function emitCube(x, y, z, p, id, def, fancy) {
     if (def.leaves && !fancy && BLOCKS[n].leaves) continue;
     let tile = f === 3 ? tex.top : f === 2 ? tex.bottom : tex.side;
     if (def.oriented && f === FACE_OF_FACING[pMeta[p] & 3]) tile = tex.front;
+    if (def.tileFn) tile = def.tileFn(f, pMeta[p], 0) ?? tile;
     const [u0, v0, us] = tileUV(tile);
     if (def.tint && (!def.tintTop || f === 3)) tintFor(def, x, z, _tint); else { _tint[0] = _tint[1] = _tint[2] = 1; }
     const face = FACES[f], offs = CORNER_OFFS[f], shade = face.shade;
@@ -3338,7 +3765,7 @@ function emitCustom(x, y, z, p, id, def) {
     }
     if (def.shape === 'crop') return;
   }
-  const nb = (f) => pIds[p + FACING_DIR[f][0] + FACING_DIR[f][1] * PAD];
+  const nb = (f, dy = 0) => (f > 3 ? pIds[p + (f === 4 ? PAD2 : -PAD2)] : pIds[p + FACING_DIR[f][0] + FACING_DIR[f][1] * PAD + dy * PAD2]);
   const boxes = def.shape === 'brewing' ? [px16([2, 0, 2, 14, 2, 14])] : blockBoxes(id, meta, nb, 'render');
   const tex = def.tex;
   const isDoorTop = def.shape === 'door' && (meta & 8);
@@ -3354,7 +3781,7 @@ function emitCustom(x, y, z, p, id, def) {
       if (def.shape === 'door') tile = isDoorTop ? T.door_top : T.door_bottom;
       if (f === frontFace) tile = tex.front;
       if (def.shape === 'brewing') tile = T.cobble;
-      if (def.tileFn) tile = def.tileFn(f, meta) ?? tile;
+      if (def.tileFn) tile = def.tileFn(f, meta, bi) ?? tile;
       const [u0, v0, us] = tileUV(tile);
       const face = FACES[f], sh = face.shade;
       solidBuf.grow(40, 6);
@@ -3494,7 +3921,7 @@ class ChunkManager {
    ========================================================================== */
 let world = null;   // instancia activa de World (la crea §20)
 
-const nbOf = (x, y, z) => (f) => world.get(x + FACING_DIR[f][0], y, z + FACING_DIR[f][1]);
+const nbOf = (x, y, z) => (f, dy = 0) => (f > 3 ? world.get(x, y + (f === 4 ? 1 : -1), z) : world.get(x + FACING_DIR[f][0], y + dy, z + FACING_DIR[f][1]));
 
 // Intersección rayo-caja; devuelve [t, eje, signo] o null
 function rayBox(ox, oy, oz, dx, dy, dz, b) {
@@ -6518,18 +6945,18 @@ function buildInventoryUI() {
   const left = $('#invLeft'), creative = game.mode === 'creative' && (ui.mode === 'inv');
   left.innerHTML = '';
   left.classList.remove('withArmor');
-  $('#invTitle').textContent = { inv: creative ? 'Inventario creativo' : 'Inventario', table: 'Mesa de fabricación', chest: ui.tile?.title || 'Cofre', furnace: 'Horno',
+  $('#invTitle').textContent = { inv: creative ? 'Inventario creativo' : 'Inventario', table: 'Mesa de fabricación', chest: ui.tile?.title || 'Cofre', furnace: ui.tile?.title || 'Horno',
     enchant: 'Mesa de encantamientos', brew: 'Soporte de pociones', trade: 'Comercio' }[ui.mode];
   $('#bookToggle').style.display = (ui.mode === 'inv' || ui.mode === 'table') && !creative ? '' : 'none';
   if (['enchant', 'brew', 'trade'].includes(ui.mode)) buildInventory3(left, false);
   else if (creative) {
     const tabs = document.createElement('div'); tabs.className = 'tabs';
-    for (const t of ['Bloques', 'Herramientas', 'Comida', 'Materiales', 'Huevos']) {
+    for (const t of ['Bloques', 'Mecanismos', 'Herramientas', 'Comida', 'Materiales', 'Huevos']) {
       const b = document.createElement('button'); b.textContent = t; b.className = t === ui.creativeTab ? 'on' : '';
       b.onclick = () => { ui.creativeTab = t; buildInventoryUI(); }; tabs.append(b);
     }
     const grid = document.createElement('div'); grid.className = 'grid9 creative';
-    const list = ITEMS.filter((it) => it && (ui.creativeTab === 'Bloques' ? it.block : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : ui.creativeTab === 'Huevos' ? it.egg : (!it.block && !it.tool && !it.food && !it.egg)));
+    const list = ITEMS.filter((it) => it && (ui.creativeTab === 'Bloques' ? it.block && !it.mech : ui.creativeTab === 'Mecanismos' ? it.mech : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : ui.creativeTab === 'Huevos' ? it.egg : (!it.block && !it.tool && !it.food && !it.egg && !it.mech)));
     list.forEach((it) => { const el = slotEl('creative', it.id); paintSlot(el, { id: it.id, count: 1 }); grid.append(el); });
     left.append(tabs, grid);
   } else if (ui.mode === 'chest') {
@@ -8349,7 +8776,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -8360,7 +8787,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.3  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.4  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -8385,7 +8812,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -11284,6 +11711,28 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '3.4', name: 'Construcción y mecanismos', date: 'noviembre de 2026', items: [
+    'Escalones nuevos: selva, acacia, cerezo, piedra lisa, mármol y terracota. Losas nuevas: selva, acacia, cerezo, mármol y terracota.',
+    'Techos: tejas rojas y tejas de pizarra, en bloque, escalón (para tejados a dos aguas) y losa.',
+    'Bloques decorativos: piedra lisa (se obtiene al hornear piedra), mármol, ladrillos de mármol, basalto pulido, baldosas ajedrezadas, azulejos, estuco blanco y parqué.',
+    'Ventanas: paneles de vidrio finos que se unen entre sí, ventana de madera con marco y vidrieras de cuatro colores.',
+    'Vallas de abedul, abeto, roble oscuro y cerezo; portones de cuatro maderas y de hierro que se abren con clic o con energía.',
+    'Muros bajos de piedra labrada, ladrillos de piedra, ladrillos y arenisca: se unen a sus vecinos y no se pueden saltar.',
+    'Columnas de piedra lisa, mármol, roble y arenisca: al apilarlas forman un fuste continuo con basa y capitel.',
+    'Muebles: sofás rojo y azul, taburete y banco (para sentarse), mesa redonda, armario y mesita de noche (guardan 27 objetos), maceta con flores y cocina de hierro que funciona como horno.',
+    'Iluminación: lámpara de mesa, lámpara de pie, candelabro de techo, farola de jardín, piedra luminosa, bloques de luz roja, azul, verde y amarilla, y panel de luz para el techo.',
+    'Energía: palanca, botones de piedra y de madera (pulsos de 1 y 1,5 s) y bloque de energía. Palancas y botones se colocan en suelo, techo o paredes y cargan el bloque donde se apoyan.',
+    'Cable de cobre: lleva la energía entre mecanismos, sube y baja escalones y se ilumina cuando está activo.',
+    'Sensores: placas de presión de piedra y de madera (la de madera detecta también objetos tirados), sensor de presencia (4 bloques) y sensor de luz solar, que se puede invertir para la noche.',
+    'Circuitos: inversor (da energía solo cuando no la recibe) y repetidor con retardo ajustable de 0,1 a 0,4 s. Con ellos se arman relojes y lógica.',
+    'Pistón y pistón pegajoso: empujan hasta 12 bloques en las seis direcciones, mueven a jugadores y criaturas, y el pegajoso trae el bloque de vuelta.',
+    'Puerta automática: se abre sola cuando alguien se acerca o al recibir energía. Las puertas de madera, las trampillas, los portones y las lámparas de cobre también responden a la energía.',
+    'Trampas: trampa de pinchos que hiere a quien la pisa cuando está activa y lanzaflechas que dispara al recibir energía.',
+    'Elevador: párate encima y salta para subir al siguiente elevador de la columna, o agáchate para bajar (hasta 32 bloques).',
+    'Todos los mecanismos guardan su estado con el mundo y se sincronizan en multijugador como cualquier bloque.',
+    'Inventario creativo: pestaña «Mecanismos». Los bloques con forma (escalones, losas, muros, muebles, palancas…) ahora muestran su figura real en el inventario, en la mano y tirados en el suelo.',
+    'Recetas para todos los bloques nuevos en la mesa de fabricación y logros «Ingeniería» y «Sube y baja».',
+  ] },
   { v: '3.3', name: 'Aventuras', date: 'noviembre de 2026', items: [
     'Diálogos con los aldeanos: sus frases cambian según su oficio, la hora, el clima, tu reputación, el nivel de la aldea y los jefes que hayas derrotado.',
     'Misiones principales: una historia de 7 capítulos, desde tu primer intercambio hasta derrotar al Dragón de las ruinas, con recompensas fijas.',
@@ -11353,7 +11802,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [
-  { v: '3.4', name: 'Construcción', items: ['Nuevas escaleras, losas, muebles, ventanas, lámparas, vallas, portones, techos y columnas.', 'Mecanismos: interruptores, palancas, puertas automáticas, trampas, pistones, circuitos, sensores y elevadores que guardan su estado.'] },
   { v: '3.5', name: 'Dimensiones', items: ['Inframundo: terreno volcánico, lagos de lava, bosques carmesíes, fortalezas, minerales exclusivos y un jefe final.', 'Vacío: islas flotantes, ruinas suspendidas, cristales mágicos, criaturas voladoras y un jefe con varias fases.', 'Portales que conservan tu posición, inventario y progreso.'] },
   { v: '3.6', name: 'Multijugador', items: ['Salas con código de invitación y límite de jugadores elegido por el anfitrión.', 'Permisos de construcción, reconexión y gestión del anfitrión.'] },
   { v: '4.0', name: 'Gran actualización', items: ['Eventos dinámicos: lluvia de meteoritos, invasiones nocturnas, tormentas eléctricas y fenómenos mágicos.', 'Catálogo de objetos, panel de criaturas y registro de exploración.', 'Música por bioma y por dimensión.', 'Guardado en IndexedDB, optimización y pulido general.'] },
@@ -11372,6 +11820,657 @@ function openNews() {
 }
 $('#btnNews').onclick = openNews;
 $('#newsBack').onclick = () => showScreen('mainMenu');
+/* ==========================================================================
+   §33 CONSTRUCCIÓN Y MECANISMOS (3.4)
+   --------------------------------------------------------------------------
+   Bloques en §2c. Aquí: objetos, iconos y modelos en 3D de las formas nuevas,
+   recetas, colocación especial (palancas, cables, pistones, puertas), y el
+   sistema de energía (circuit):
+     · Fuentes: palanca, botones, placas de presión, sensores, bloque de energía.
+       Las palancas, botones y placas cargan también el bloque en el que se apoyan.
+     · Cables: una red de cables tiene energía si algún tramo toca una fuente.
+     · Inversor y repetidor: leen por detrás y dan energía hacia delante con
+       retardo (permiten relojes y lógica).
+     · Receptores: puertas, trampillas, portones, lámparas, pistones, pinchos,
+       lanzaflechas. Guardan su última energía en el bit 4 del metadato y solo
+       cambian en los flancos, así no pisan lo que hace el jugador a mano.
+   Todo el estado vive en los metadatos de los bloques, así que se guarda con
+   el mundo y viaja por la red como cualquier otro cambio de bloque. Los
+   temporizadores que se pierden al recargar se reconstruyen solos (botones
+   pulsados y compuertas desfasadas). En multijugador, sensores y relojes los
+   procesa solo el jugador más cercano a cada mecanismo, para no duplicar.
+   ========================================================================== */
+defItem(AUTO_DOOR_ITEM, 'Puerta automática', BLOCKS[AUTO_DOOR].desc, { place: AUTO_DOOR });
+ICON_OVERRIDE[AUTO_DOOR_ITEM] = () => {
+  const c = document.createElement('canvas'); c.width = c.height = 16; const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(tileCanvas(T.auto_door_top), 0, 0, 16, 16, 4, 0, 8, 8); ctx.drawImage(tileCanvas(T.auto_door_bottom), 0, 0, 16, 16, 4, 8, 8, 8);
+  return c;
+};
+const MECH_ITEMS = [LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER,
+  PISTON, STICKY_PISTON, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR];
+for (const id of MECH_ITEMS) ITEMS[id].mech = true;
+// Iconos de vista previa de cada bloque nuevo (y orientación para que se vea el frente)
+for (const id of [SOFA_RED, SOFA_BLUE, BENCH, NIGHTSTAND]) BLOCKS[id].iconMeta = 2;
+for (const id of [OAK_GATE, SPRUCE_GATE, BIRCH_GATE, DARK_GATE, IRON_GATE]) BLOCKS[id].iconMeta = 1;
+for (const id of [BIRCH_FENCE, SPRUCE_FENCE, DARK_FENCE, CHERRY_FENCE, COBBLE_WALL, STONEBRICK_WALL, BRICK_WALL, SANDSTONE_WALL]) BLOCKS[id].iconNb = [1, 3];
+BLOCKS[LEVER].iconMeta = 8; BLOCKS[INVERTER].iconMeta = 1 | 4; BLOCKS[REPEATER].iconMeta = 1; BLOCKS[PISTON].iconMeta = 4; BLOCKS[STICKY_PISTON].iconMeta = 4;
+BLOCKS[SPIKES].iconMeta = 8; BLOCKS[LIGHT_PANEL].iconFlip = true; BLOCKS[WIRE].iconMeta = 1;
+
+const BOXED_ICON = (def) => def && !def.hidden && (def.boxes || def.shape === 'stairs' || def.shape === 'slab' || (def.shape === 'fence' && def.id !== FENCE));
+// Dibujo isométrico de las cajas de un bloque (mismo encuadre que isoIcon)
+function boxIconCanvas(def) {
+  const c = document.createElement('canvas'); c.width = c.height = 48;
+  const ctx = c.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  const meta = def.iconMeta ?? 0, self = def.id, tint = defTint(def), cache = new Map();
+  const nb = (f, dy = 0) => (def.iconNb && !dy && def.iconNb.includes(f) ? self : 0);
+  let boxes = blockBoxes(def.id, meta, nb, 'render');
+  if (def.iconFlip) boxes = boxes.map((b) => [b[0], b[1] - 0.9, b[2], b[3], b[4] - 0.9, b[5]]);
+  const tileOf = (f, bi) => {
+    let t = f === 3 ? def.tex.top : def.tex.side;
+    if (def.oriented && f === FACE_OF_FACING[meta & 3]) t = def.tex.front;
+    if (def.tileFn) t = def.tileFn(f, meta, bi) ?? t;
+    if (!cache.has(t)) cache.set(t, tileCanvas(t, tint));
+    return cache.get(t);
+  };
+  const k = 22 / 16, h = 11 / 16;
+  const order = boxes.map((b, i) => [b, i]).sort((a, b) => (a[0][0] + a[0][3] + a[0][1] + a[0][4] + a[0][2] + a[0][5]) - (b[0][0] + b[0][3] + b[0][1] + b[0][4] + b[0][2] + b[0][5]));
+  const face = (img, m, sx, sy, sw, sh, dark) => {
+    if (sw <= 0.01 || sh <= 0.01) return;
+    ctx.setTransform(...m); ctx.drawImage(img, sx, sy, Math.max(sw, 0.5), Math.max(sh, 0.5), sx, sy, sw, sh);
+    if (dark) { ctx.fillStyle = `rgba(0,0,0,${dark})`; ctx.fillRect(sx, sy, sw, sh); }
+  };
+  for (const [b, bi] of order) {
+    const [x0, y0, z0, x1, y1, z1] = b;
+    face(tileOf(3, bi), [k, h, -k, h, 24, 2 + 22 * (1 - y1)], x0 * 16, z0 * 16, (x1 - x0) * 16, (z1 - z0) * 16, 0);
+    face(tileOf(5, bi), [k, h, 0, k, 24 - 22 * z1, 2 + 11 * z1], x0 * 16, (1 - y1) * 16, (x1 - x0) * 16, (y1 - y0) * 16, 0.2);
+    face(tileOf(1, bi), [k, -h, 0, k, 2 + 22 * x1, 13 + 11 * x1], (1 - z1) * 16, (1 - y1) * 16, (z1 - z0) * 16, (y1 - y0) * 16, 0.38);
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  // reencuadre: las piezas pequeñas (palancas, botones) se agrandan para que se vean
+  const d = ctx.getImageData(0, 0, 48, 48).data; let ax = 48, ay = 48, bx = -1, by = -1;
+  for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) if (d[(y * 48 + x) * 4 + 3] > 20) { ax = Math.min(ax, x); ay = Math.min(ay, y); bx = Math.max(bx, x); by = Math.max(by, y); }
+  if (bx < 0) return c;
+  const w = bx - ax + 1, hh = by - ay + 1, s = Math.min(1.8, 44 / Math.max(w, hh));
+  if (s <= 1.05) return c;
+  const o = document.createElement('canvas'); o.width = o.height = 48; const octx = o.getContext('2d'); octx.imageSmoothingEnabled = false;
+  octx.drawImage(c, ax, ay, w, hh, 24 - w * s / 2, 24 - hh * s / 2, w * s, hh * s);
+  return o;
+}
+{
+  const _buildIcons = buildIcons;
+  buildIcons = function () {
+    _buildIcons();
+    for (const it of ITEMS) if (it && it.block && BOXED_ICON(BLOCKS[it.block]) && !ICON_OVERRIDE[it.id]) ICON[it.id] = boxIconCanvas(BLOCKS[it.block]).toDataURL();
+  };
+  // En la mano y en el suelo: modelo 3D con las mismas cajas que en el mundo
+  const _blockItemGeo = blockItemGeo;
+  blockItemGeo = function (def) {
+    if (!BOXED_ICON(def)) return _blockItemGeo(def);
+    const meta = def.iconMeta ?? 0, self = def.id, tint = defTint(def) || [1, 1, 1];
+    const nb = (f, dy = 0) => (def.iconNb && !dy && def.iconNb.includes(f) ? self : 0);
+    const boxes = blockBoxes(def.id, meta, nb, 'render');
+    const pos = [], uvs = [], col = [], idx = [];
+    boxes.forEach((bx, bi) => {
+      for (let f = 0; f < 6; f++) {
+        let tile = f === 3 ? def.tex.top : f === 2 ? def.tex.bottom : def.tex.side;
+        if (def.oriented && f === FACE_OF_FACING[meta & 3]) tile = def.tex.front;
+        if (def.tileFn) tile = def.tileFn(f, meta, bi) ?? tile;
+        const [u0, v0, us] = tileUV(tile), fc = FACES[f], base = pos.length / 3;
+        for (const cr of fc.corners) {
+          const qx = cr[0] ? bx[3] : bx[0], qy = cr[1] ? bx[4] : bx[1], qz = cr[2] ? bx[5] : bx[2];
+          const [uu, vv] = FACE_UV[f](qx, qy, qz);
+          pos.push(qx - 0.5, qy - 0.5, qz - 0.5); uvs.push(u0 + uu * us, v0 + vv * us);
+          col.push(fc.shade * tint[0], fc.shade * tint[1], fc.shade * tint[2]);
+        }
+        idx.push(base, base + 1, base + 2, base + 2, base + 1, base + 3);
+      }
+    });
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+    g.setIndex(idx);
+    return g;
+  };
+}
+
+// ---------- Recetas ----------
+{
+  const WOOD_SLABS = [OAK_SLAB, BIRCH_SLAB, SPRUCE_SLAB, DARK_SLAB, JUNGLE_SLAB, ACACIA_SLAB, CHERRY_SLAB];
+  const ALL_PLANKS = [...PLANKS_ANY, JUNGLE_PLANKS, ACACIA_PLANKS, CHERRY_PLANKS];
+  const FENCES = [FENCE, BIRCH_FENCE, SPRUCE_FENCE, DARK_FENCE, CHERRY_FENCE];
+  const WHITE_STONE = [POL_DIORITE, MARBLE, SMOOTH_STONE];
+  const first = []; const sh = (...a) => { const n0 = RECIPES.length; shaped(...a); first.push(RECIPES.splice(n0, 1)[0]); };
+  for (const [s, m] of [[JUNGLE_STAIRS, JUNGLE_PLANKS], [ACACIA_STAIRS, ACACIA_PLANKS], [CHERRY_STAIRS, CHERRY_PLANKS], [STONE_STAIRS, SMOOTH_STONE], [MARBLE_STAIRS, MARBLE],
+    [TERRA_STAIRS, TERRACOTTA], [ROOF_RED_STAIRS, ROOF_RED], [ROOF_SLATE_STAIRS, ROOF_SLATE]]) shaped(s, 4, ['#  ', '## ', '###'], { '#': m }, 'Construcción');
+  for (const [s, m] of [[JUNGLE_SLAB, JUNGLE_PLANKS], [ACACIA_SLAB, ACACIA_PLANKS], [CHERRY_SLAB, CHERRY_PLANKS], [MARBLE_SLAB, MARBLE], [TERRA_SLAB, TERRACOTTA],
+    [ROOF_RED_SLAB, ROOF_RED], [ROOF_SLATE_SLAB, ROOF_SLATE]]) shaped(s, 6, ['###'], { '#': m }, 'Construcción');
+  shaped(ROOF_RED, 4, ['bbb', 'b b'], { b: I.BRICK }, 'Construcción');
+  shaped(ROOF_SLATE, 4, ['sss', 's s'], { s: [COBBLE, STONE] }, 'Construcción');
+  SMELT[STONE] = [SMOOTH_STONE, 0.1];
+  shaped(MARBLE, 4, ['dd', 'dd'], { d: POL_DIORITE }, 'Construcción');
+  shaped(MARBLE_BRICKS, 4, ['mm', 'mm'], { m: MARBLE }, 'Construcción');
+  shaped(POL_BASALT, 4, ['bb', 'bb'], { b: BASALT }, 'Construcción');
+  shaped(TILES_CHECKER, 4, ['wc', 'cw'], { w: WHITE_STONE, c: COAL_ANY }, 'Construcción');
+  shaped(TILES_BLUE, 4, ['wb', 'bw'], { w: WHITE_STONE, b: BLUE_ORCHID }, 'Construcción');
+  shaped(PLASTER, 4, ['sb', 'bs'], { s: SAND, b: I.BONE_MEAL }, 'Construcción');
+  shaped(PARQUET, 4, ['ss', 'ss'], { s: WOOD_SLABS }, 'Construcción');
+  shaped(GLASS_PANE, 16, ['###', '###'], { '#': GLASS }, 'Construcción');
+  shaped(WINDOW, 2, ['pgp'], { p: ALL_PLANKS, g: GLASS }, 'Construcción');
+  for (const [id, d] of [[STAINED_RED, POPPY], [STAINED_BLUE, BLUE_ORCHID], [STAINED_GREEN, CACTUS], [STAINED_YELLOW, DANDELION]]) shaped(id, 8, ['ggg', 'gdg', 'ggg'], { g: GLASS, d }, 'Construcción');
+  for (const [id, p] of [[BIRCH_FENCE, BIRCH_PLANKS], [SPRUCE_FENCE, SPRUCE_PLANKS], [DARK_FENCE, DARK_PLANKS], [CHERRY_FENCE, CHERRY_PLANKS]]) sh(id, 3, ['psp', 'psp'], { p, s: I.STICK }, 'Construcción');
+  for (const [id, p] of [[OAK_GATE, OAK_PLANKS], [SPRUCE_GATE, SPRUCE_PLANKS], [BIRCH_GATE, BIRCH_PLANKS], [DARK_GATE, DARK_PLANKS]]) sh(id, 1, ['sps', 'sps'], { p, s: I.STICK }, 'Construcción');
+  shaped(OAK_GATE, 1, ['sps', 'sps'], { p: [JUNGLE_PLANKS, ACACIA_PLANKS, CHERRY_PLANKS], s: I.STICK }, 'Construcción');
+  shaped(IRON_GATE, 1, ['iri', 'iri'], { i: I.IRON_INGOT, r: IRON_BARS }, 'Construcción');
+  for (const [id, m] of [[COBBLE_WALL, COBBLE], [STONEBRICK_WALL, STONE_BRICKS], [BRICK_WALL, BRICKS], [SANDSTONE_WALL, SANDSTONE]]) shaped(id, 6, ['###', '###'], { '#': m }, 'Construcción');
+  for (const [id, m] of [[STONE_COLUMN, SMOOTH_STONE], [MARBLE_COLUMN, MARBLE], [WOOD_COLUMN, STRIPPED_OAK], [SANDSTONE_COLUMN, SMOOTH_SANDSTONE]]) shaped(id, 3, ['#', '#', '#'], { '#': m }, 'Construcción');
+  shaped(SOFA_RED, 1, ['wr', 'pp'], { w: WOOL, r: POPPY, p: ALL_PLANKS }, 'Muebles');
+  shaped(SOFA_BLUE, 1, ['wb', 'pp'], { w: WOOL, b: BLUE_ORCHID, p: ALL_PLANKS }, 'Muebles');
+  shaped(STOOL, 2, ['p', 's'], { p: WOOD_SLABS, s: I.STICK }, 'Muebles');
+  shaped(ROUND_TABLE, 1, ['sss', ' f '], { s: WOOD_SLABS, f: FENCES }, 'Muebles');
+  shaped(BENCH, 1, ['sss', 'f f'], { s: WOOD_SLABS, f: I.STICK }, 'Muebles');
+  shaped(WARDROBE, 1, ['ppp', 'pcp', 'ppp'], { p: ALL_PLANKS, c: CHEST }, 'Muebles');
+  shaped(NIGHTSTAND, 1, ['s', 'c'], { s: WOOD_SLABS, c: CHEST }, 'Muebles');
+  shaped(FLOWER_POT, 1, ['f', 'b'], { f: [POPPY, DANDELION, BLUE_ORCHID], b: I.BRICK }, 'Muebles');
+  shaped(STOVE, 1, ['iii', 'ifi'], { i: I.IRON_INGOT, f: FURNACE }, 'Muebles');
+  shaped(TABLE_LAMP, 2, ['w', 't', 'i'], { w: WOOL, t: TORCH, i: I.IRON_INGOT }, 'Iluminación');
+  shaped(FLOOR_LAMP, 1, ['w', 't', 's'], { w: WOOL, t: TORCH, s: I.STICK }, 'Iluminación');
+  shaped(CHANDELIER, 1, [' g ', 'ttt'], { g: I.GOLD_INGOT, t: TORCH }, 'Iluminación');
+  shaped(GARDEN_LAMP, 1, ['l', 'f'], { l: LANTERN, f: FENCES }, 'Iluminación');
+  shaped(GLOWSTONE, 1, ['tt', 'tt'], { t: TORCH }, 'Iluminación');
+  for (const [id, d] of [[LIGHT_RED, POPPY], [LIGHT_BLUE, BLUE_ORCHID], [LIGHT_GREEN, CACTUS], [LIGHT_YELLOW, DANDELION]]) shapeless(id, 1, [GLOWSTONE, d], 'Iluminación');
+  shaped(LIGHT_PANEL, 6, ['ggg'], { g: GLOWSTONE }, 'Iluminación');
+  // Mecanismos
+  shapeless(WIRE, 8, [I.COPPER_INGOT], 'Mecanismos');
+  shaped(POWER_BLOCK, 1, ['www', 'www', 'www'], { w: WIRE }, 'Mecanismos');
+  shapeless(WIRE, 9, [POWER_BLOCK], 'Mecanismos');
+  shaped(LEVER, 1, ['s', 'c'], { s: I.STICK, c: COBBLE }, 'Mecanismos');
+  shaped(BUTTON_STONE, 1, ['s'], { s: STONE }, 'Mecanismos');
+  shaped(BUTTON_WOOD, 1, ['p'], { p: ALL_PLANKS }, 'Mecanismos');
+  shaped(PLATE_STONE, 1, ['ss'], { s: [STONE, SMOOTH_STONE] }, 'Mecanismos');
+  shaped(PLATE_WOOD, 1, ['pp'], { p: ALL_PLANKS }, 'Mecanismos');
+  shaped(PROX_SENSOR, 1, [' g ', 'iwi'], { g: GLASS, i: I.IRON_INGOT, w: WIRE }, 'Mecanismos');
+  shaped(DAY_SENSOR, 1, ['ggg', 'sws'], { g: GLASS, s: WOOD_SLABS, w: WIRE }, 'Mecanismos');
+  shaped(INVERTER, 1, ['wtw', 'sss'], { w: WIRE, t: TORCH, s: [STONE, SMOOTH_STONE] }, 'Mecanismos');
+  shaped(REPEATER, 1, ['twt', 'sss'], { w: WIRE, t: TORCH, s: [STONE, SMOOTH_STONE] }, 'Mecanismos');
+  shaped(PISTON, 1, ['ppp', 'cic', 'cwc'], { p: ALL_PLANKS, c: COBBLE, i: I.IRON_INGOT, w: WIRE }, 'Mecanismos');
+  shapeless(STICKY_PISTON, 1, [PISTON, I.STRING], 'Mecanismos');
+  shaped(AUTO_DOOR_ITEM, 1, ['ig', 'ig', 'iw'], { i: I.IRON_INGOT, g: GLASS, w: WIRE }, 'Mecanismos');
+  shaped(SPIKES, 2, ['iii', 'sws'], { i: I.IRON_INGOT, s: [STONE, SMOOTH_STONE, COBBLE], w: WIRE }, 'Mecanismos');
+  shaped(ARROW_TRAP, 1, ['ccc', 'cbc', 'cwc'], { c: COBBLE, b: I.BOW, w: WIRE }, 'Mecanismos');
+  shaped(ELEVATOR, 1, ['iii', 'iwi', 'iii'], { i: I.IRON_INGOT, w: WIRE }, 'Mecanismos');
+  RECIPES.unshift(...first);     // las maderas concretas antes que las recetas genéricas de roble
+}
+
+// ---------- Sonidos nuevos ----------
+{
+  const _play = sfx.play.bind(sfx);
+  const SFX34 = {
+    lever: (s, d, t) => { s.tone(d, 'square', 520, 380, t, 0.05, 0.08); s.burst(d, t, 0.06, 0.25, 'highpass', 2200); },
+    button: (s, d, t) => s.tone(d, 'square', 760, 600, t, 0.04, 0.06),
+    piston: (s, d, t) => { s.burst(d, t, 0.22, 0.45, 'lowpass', 500); s.tone(d, 'sawtooth', 120, 70, t, 0.18, 0.1, { filter: 600 }); },
+    elevator: (s, d, t, p) => { for (let i = 0; i < 3; i++) s.tone(d, 'sine', (520 + i * 160) * p, (560 + i * 160) * p, t + i * 0.06, 0.12, 0.08); },
+    spikes: (s, d, t) => { s.burst(d, t, 0.12, 0.4, 'highpass', 3000); s.tone(d, 'triangle', 900, 400, t, 0.08, 0.06); },
+  };
+  sfx.play = function (name, opts = {}) {
+    const fx = SFX34[name]; if (!fx) return _play(name, opts);
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const d = this.out(opts); if (!d) return;
+    fx(this, d, this.ctx.currentTime, opts.pitch ?? 1);
+  };
+}
+
+// ---------- Sistema de energía ----------
+const K34 = (x, y, z) => `${x},${y},${z}`;
+function supportOf34(x, y, z, meta) {
+  const a = meta & 7;
+  if (a === 0) return [x, y - 1, z];
+  if (a === 1) return [x, y + 1, z];
+  return [x + FACING_DIR[a - 2][0], y, z + FACING_DIR[a - 2][1]];
+}
+const circuit = {
+  time: 0, timers: new Map(), queue: [], queued: new Set(), doneWires: null, scanT: 0, presT: 0, slowT: 0,
+  srcActive(id, meta) { const s = BLOCKS[id].src; return s === 'power' ? true : !!(meta & 8); },
+  // Bloque macizo cargado por una palanca/botón/placa apoyados en él o por una compuerta que lo apunta
+  strong(x, y, z) {
+    for (let f = 0; f < 6; f++) {
+      const [dx, dy, dz] = DIR6[f], nx = x + dx, ny = y + dy, nz = z + dz, id = world.get(nx, ny, nz);
+      if (!id) continue;
+      const d = BLOCKS[id], m = world.getMeta(nx, ny, nz);
+      if (d.attach && (m & 8)) { const s = supportOf34(nx, ny, nz, m); if (s[0] === x && s[1] === y && s[2] === z) return true; }
+      if (d.src === 'plate' && (m & 8) && dy === 1) return true;
+      if (d.logicGate && (m & 4) && dy === 0 && nx + FACING_DIR[m & 3][0] === x && nz + FACING_DIR[m & 3][1] === z) return true;
+    }
+    return false;
+  },
+  weak(x, y, z) { return world.get(x, y + 1, z) === WIRE && !!(world.getMeta(x, y + 1, z) & 1); },
+  // ¿El bloque en (bx,by,bz) entrega energía a la posición vecina (tx,ty,tz)?
+  emitsTo(bx, by, bz, tx, ty, tz, toWire) {
+    const id = world.get(bx, by, bz); if (!id) return false;
+    const d = BLOCKS[id], m = world.getMeta(bx, by, bz);
+    if (d.src) return this.srcActive(id, m);
+    if (id === WIRE) return !toWire && !!(m & 1);
+    if (d.logicGate) return !!(m & 4) && by === ty && bx + FACING_DIR[m & 3][0] === tx && bz + FACING_DIR[m & 3][1] === tz;
+    if (B_OPAQUE[id] && B_CUBE[id]) return this.strong(bx, by, bz) || (!toWire && this.weak(bx, by, bz));
+    return false;
+  },
+  poweredAt(x, y, z) {
+    for (let f = 0; f < 6; f++) { const [dx, dy, dz] = DIR6[f]; if (this.emitsTo(x + dx, y + dy, z + dz, x, y, z, false)) return true; }
+    return false;
+  },
+  // Avisa de un cambio: reevalúa cables, receptores y compuertas en un radio de 2 bloques
+  notify(x, y, z) {
+    for (let dy = -2; dy <= 2; dy++) for (let dz = -2; dz <= 2; dz++) for (let dx = -2; dx <= 2; dx++) {
+      const id = world.get(x + dx, y + dy, z + dz);
+      if (id && (id === WIRE || BLOCKS[id].consumer || BLOCKS[id].logicGate)) this.enqueue(x + dx, y + dy, z + dz);
+    }
+  },
+  enqueue(x, y, z) { const k = K34(x, y, z); if (!this.queued.has(k)) { this.queued.add(k); this.queue.push([x, y, z]); } },
+  flush() {
+    if (!this.queue.length) return;
+    this.doneWires = new Set();
+    let budget = 4000;
+    while (this.queue.length && budget-- > 0) {
+      const [x, y, z] = this.queue.shift(); this.queued.delete(K34(x, y, z));
+      const id = world.get(x, y, z); if (!id) continue;
+      const d = BLOCKS[id];
+      if (id === WIRE) this.evalWire(x, y, z);
+      else if (d.consumer) this.evalConsumer(x, y, z, id, world.getMeta(x, y, z));
+      else if (d.logicGate) this.evalGate(x, y, z, id, world.getMeta(x, y, z));
+    }
+    if (this.queue.length > 2000) { this.queue.length = 0; this.queued.clear(); }
+  },
+  wireNet(x, y, z) {
+    const net = [], seen = new Set([K34(x, y, z)]), stack = [[x, y, z]];
+    const add = (a, b, c) => { const k = K34(a, b, c); if (!seen.has(k) && world.get(a, b, c) === WIRE) { seen.add(k); stack.push([a, b, c]); } };
+    while (stack.length && net.length < 800) {
+      const [cx, cy, cz] = stack.pop(); net.push([cx, cy, cz]);
+      const upFree = !B_OPAQUE[world.get(cx, cy + 1, cz)];
+      for (const [dx, dz] of FACING_DIR) {
+        const nx = cx + dx, nz = cz + dz;
+        add(nx, cy, nz);
+        if (upFree) add(nx, cy + 1, nz);
+        if (!B_OPAQUE[world.get(nx, cy, nz)]) add(nx, cy - 1, nz);
+      }
+    }
+    return net;
+  },
+  evalWire(x, y, z) {
+    if (this.doneWires.has(K34(x, y, z))) return;
+    const net = this.wireNet(x, y, z);
+    for (const [a, b, c] of net) this.doneWires.add(K34(a, b, c));
+    let on = false;
+    outer: for (const [a, b, c] of net) for (let f = 0; f < 6; f++) {
+      const [dx, dy, dz] = DIR6[f];
+      if (world.get(a + dx, b + dy, c + dz) === WIRE) continue;
+      if (this.emitsTo(a + dx, b + dy, c + dz, a, b, c, true)) { on = true; break outer; }
+    }
+    for (const [a, b, c] of net) {
+      const m = world.getMeta(a, b, c);
+      if (!!(m & 1) !== on) {
+        world.set(a, b, c, WIRE, on ? m | 1 : m & ~1);
+        // vecinos del cable y del bloque sobre el que está (energía débil)
+        for (let f = 0; f < 6; f++) { const [dx, dy, dz] = DIR6[f]; this.enqueueIf(a + dx, b + dy, c + dz); this.enqueueIf(a + dx, b - 1 + dy, c + dz); }
+      }
+    }
+  },
+  enqueueIf(x, y, z) { const id = world.get(x, y, z); if (id && id !== WIRE && (BLOCKS[id].consumer || BLOCKS[id].logicGate)) this.enqueue(x, y, z); },
+  evalConsumer(x, y, z, id, meta) {
+    const d = BLOCKS[id];
+    switch (d.consumer) {
+      case 'door': {
+        const by = meta & 8 ? y - 1 : y; if (world.get(x, by, z) !== id) return;
+        const mb = world.getMeta(x, by, z), P = this.poweredAt(x, by, z) || this.poweredAt(x, by + 1, z), mem = !!(mb & 16);
+        if (P === mem) return;
+        const open = id === AUTO_DOOR ? P || autoDoorPresence(x, by, z) : P;
+        this.setDoor(x, by, z, id, (mb & ~(4 | 16)) | (open ? 4 : 0) | (P ? 16 : 0));
+        if (P) game.unlock('engineer');
+        return;
+      }
+      case 'trapdoor': case 'gate': {
+        const P = this.poweredAt(x, y, z), mem = !!(meta & 16); if (P === mem) return;
+        world.set(x, y, z, id, (meta & ~(4 | 16)) | (P ? 4 | 16 : 0));
+        sfx.play('door', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+        if (P) game.unlock('engineer');
+        return;
+      }
+      case 'lamp': {
+        const P = this.poweredAt(x, y, z), mem = !!(meta & 16); if (P === mem) return;
+        world.set(x, y, z, P ? LAMP_ON : LAMP_OFF, P ? 16 : 0); sfx.play('lamp', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+        return;
+      }
+      case 'piston': {
+        const P = this.poweredAt(x, y, z);
+        if (P && !(meta & 8)) { if (pistonExtend(x, y, z, id, meta)) game.unlock('engineer'); }
+        else if (!P && (meta & 8)) pistonRetract(x, y, z, id, meta);
+        return;
+      }
+      case 'spikes': {
+        const P = this.poweredAt(x, y, z); if (P === !!(meta & 8)) return;
+        world.set(x, y, z, SPIKES, P ? meta | 8 : meta & ~8); if (P) sfx.play('spikes', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+        return;
+      }
+      case 'arrow': {
+        const P = this.poweredAt(x, y, z), mem = !!(meta & 16); if (P === mem) return;
+        world.set(x, y, z, ARROW_TRAP, P ? meta | 16 : meta & ~16);
+        if (P) fireArrowTrap(x, y, z, meta);
+        return;
+      }
+    }
+  },
+  setDoor(x, by, z, id, m) {
+    const was = world.getMeta(x, by, z) & 4;
+    world.set(x, by, z, id, m);
+    if (world.get(x, by + 1, z) === id) world.set(x, by + 1, z, id, m | 8);
+    if (was !== (m & 4)) sfx.play('door', { pos: { x: x + 0.5, y: by + 1, z: z + 0.5 } });
+  },
+  gateDesired(x, y, z, id, meta) {
+    const f = meta & 3, bx = x - FACING_DIR[f][0], bz = z - FACING_DIR[f][1];
+    const input = this.emitsTo(bx, y, bz, x, y, z, false);
+    return id === INVERTER ? !input : input;
+  },
+  evalGate(x, y, z, id, meta) {
+    const want = this.gateDesired(x, y, z, id, meta), k = 'g' + K34(x, y, z);
+    if (want === !!(meta & 4) || this.timers.has(k)) return;
+    const delay = id === INVERTER ? 0.1 : 0.1 * (1 + ((meta >> 4) & 3));
+    this.timers.set(k, { at: this.time + delay, kind: 'gate', x, y, z });
+  },
+  fire(tm) {
+    const { x, y, z } = tm, id = world.get(x, y, z), meta = world.getMeta(x, y, z);
+    if (tm.kind === 'gate') {
+      if (!BLOCKS[id]?.logicGate) return;
+      const want = this.gateDesired(x, y, z, id, meta);
+      if (want === !!(meta & 4)) return;
+      world.set(x, y, z, id, want ? meta | 4 : meta & ~4);
+      const f = meta & 3; this.notify(x + FACING_DIR[f][0], y, z + FACING_DIR[f][1]);
+    } else if (tm.kind === 'button') {
+      if (BLOCKS[id]?.src !== 'button' || !(meta & 8)) return;
+      world.set(x, y, z, id, meta & ~8); sfx.play('button', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 }, pitch: 0.8 });
+      this.notifySource(x, y, z, meta);
+    } else if (tm.kind === 'notify') this.notify(x, y, z);
+  },
+  // Cambió una fuente: avisar alrededor de ella y del bloque donde se apoya
+  notifySource(x, y, z, meta) {
+    this.notify(x, y, z);
+    const id = world.get(x, y, z);
+    if (BLOCKS[id]?.attach) { const s = supportOf34(x, y, z, meta); this.notify(s[0], s[1], s[2]); }
+    else if (BLOCKS[id]?.src === 'plate') this.notify(x, y - 1, z);
+  },
+  later(x, y, z, dt = 0.05) { this.timers.set('n' + K34(x, y, z), { at: this.time + dt, kind: 'notify', x, y, z }); },
+};
+
+// ¿Hay alguien junto a la puerta automática? (jugadores, aldeanos y criaturas)
+function autoDoorPresence(x, by, z) {
+  const near = (e) => Math.abs(e.pos.x - (x + 0.5)) < 1.9 && Math.abs(e.pos.z - (z + 0.5)) < 1.9 && e.pos.y > by - 1.2 && e.pos.y < by + 2.2;
+  const p = game.player; if (p && !p.dead && near(p)) return true;
+  for (const e of game.entities.list) if (e.kind === 'mob' && !e.dead && !e.deathT && (e.isPlayer || e instanceof Villager || e.tamed) && near(e)) return true;
+  return false;
+}
+// En multijugador, el jugador más cercano procesa cada mecanismo (evita acciones duplicadas)
+function ownsMech(x, y, z) {
+  if (!net.active) return true;
+  const p = game.player.pos, d0 = (p.x - x) ** 2 + (p.y - y) ** 2 + (p.z - z) ** 2;
+  for (const r of net.remote.values()) if (r.pos && (r.pos.x - x) ** 2 + (r.pos.y - y) ** 2 + (r.pos.z - z) ** 2 < d0 - 0.01) return false;
+  return true;
+}
+
+// ---------- Pistones ----------
+function pistonMoveKind(id, x, y, z) {
+  if (!id) return 'air';
+  const d = BLOCKS[id];
+  if (d.replaceable || d.shape === 'liquid') return 'air';
+  if (d.hardness < 0 || id === OBSIDIAN || id === PISTON_HEAD || id === SPAWNER || d.shape === 'door' || d.shape === 'bed' || world.tiles.has(K34(x, y, z))) return 'stop';
+  if ((id === PISTON || id === STICKY_PISTON) && (world.getMeta(x, y, z) & 8)) return 'stop';
+  if (!d.solid || d.attach || d.shape === 'cross' || d.shape === 'torch' || d.shape === 'sign' || d.shape === 'ladder' || d.shape === 'painting') return 'break';
+  return 'move';
+}
+function pushEntities34(cells, dx, dy, dz) {
+  const hit = (e) => { const a = aabbOf(e); return cells.some(([cx, cy, cz]) => a[0] < cx + 1 && a[3] > cx && a[1] < cy + 1 && a[4] > cy && a[2] < cz + 1 && a[5] > cz); };
+  const p = game.player;
+  if (p && !p.dead && hit(p)) { p.pos.x += dx; p.pos.y += dy + (dy > 0 ? 0.02 : 0); p.pos.z += dz; if (dy > 0) p.vel.y = Math.max(p.vel.y, 0); p.fallStart = null; }
+  for (const e of game.entities.list) if (e.kind === 'mob' && !e.remote && !e.dead && hit(e)) { e.pos.x += dx; e.pos.y += dy; e.pos.z += dz; }
+}
+function pistonExtend(x, y, z, id, meta) {
+  const d = meta & 7, [dx, dy, dz] = DIR6[d], line = [];
+  let cx = x + dx, cy = y + dy, cz = z + dz;
+  for (;;) {
+    if (cy < 1 || cy >= WY - 1 || !world.isLoaded(cx, cz)) return false;
+    const bid = world.get(cx, cy, cz), kind = pistonMoveKind(bid, cx, cy, cz);
+    if (kind === 'air') break;
+    if (kind === 'stop') return false;
+    if (kind === 'break') { game.breakBlock(cx, cy, cz, false); break; }
+    if (line.length >= 12) return false;
+    line.push([cx, cy, cz, bid, world.getMeta(cx, cy, cz)]);
+    cx += dx; cy += dy; cz += dz;
+  }
+  for (let i = line.length - 1; i >= 0; i--) { const [bx, by, bz, bid, bm] = line[i]; world.set(bx + dx, by + dy, bz + dz, bid, bm); }
+  world.set(x + dx, y + dy, z + dz, PISTON_HEAD, d | (id === STICKY_PISTON ? 8 : 0));
+  world.set(x, y, z, id, meta | 8);
+  pushEntities34([[x + dx, y + dy, z + dz], ...line.map(([bx, by, bz]) => [bx + dx, by + dy, bz + dz])], dx, dy, dz);
+  sfx.play('piston', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+  circuit.later(x + dx, y + dy, z + dz); if (line.length) circuit.later(cx, cy, cz);
+  return true;
+}
+function pistonRetract(x, y, z, id, meta) {
+  const d = meta & 7, [dx, dy, dz] = DIR6[d], fx = x + dx, fy = y + dy, fz = z + dz;
+  if (world.get(fx, fy, fz) === PISTON_HEAD) world.set(fx, fy, fz, AIR, 0);
+  world.set(x, y, z, id, meta & ~8);
+  if (id === STICKY_PISTON) {
+    const bx = fx + dx, by = fy + dy, bz = fz + dz, bid = world.get(bx, by, bz);
+    if (pistonMoveKind(bid, bx, by, bz) === 'move' && !world.get(fx, fy, fz)) { world.set(fx, fy, fz, bid, world.getMeta(bx, by, bz)); world.set(bx, by, bz, AIR, 0); circuit.later(bx, by, bz); }
+  }
+  sfx.play('piston', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 }, pitch: 0.8 });
+  circuit.later(fx, fy, fz);
+}
+
+// ---------- Lanzaflechas ----------
+class TrapArrow extends Arrow {
+  update(dt, g) {
+    if (!this.stuck) for (const e of g.entities.list) {
+      if (e.kind !== 'mob' || e.remote || e.deathT || e.dead) continue;
+      const b = aabbOf(e);
+      if (this.pos.x > b[0] - 0.1 && this.pos.x < b[3] + 0.1 && this.pos.y > b[1] && this.pos.y < b[4] && this.pos.z > b[2] - 0.1 && this.pos.z < b[5] + 0.1) {
+        e.hurt(this.dmg, this.pos.clone().sub(this.vel)); this.dead = true; return;
+      }
+    }
+    super.update(dt, g);
+  }
+}
+function fireArrowTrap(x, y, z, meta) {
+  const [dx, dz] = FACING_DIR[meta & 3], sp = 24;
+  if (B_SOLID[world.get(x + dx, y, z + dz)]) return;
+  const ar = new TrapArrow(x + 0.5 + dx * 0.7, y + 0.55, z + 0.5 + dz * 0.7, dx * sp, 1.2, dz * sp, 4, 'trap');
+  game.entities.add(ar);
+  sfx.play('bow', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+}
+
+// ---------- Colocación ----------
+{
+  const _placeHeld = game.placeHeld;
+  game.placeHeld = function () {
+    const p = this.player, s = p.held(), t = this.target;
+    if (!s || !t) return _placeHeld.call(this);
+    const it = ITEMS[s.id], bid = it && !it.plant && (it.place ?? it.block), def = bid && BLOCKS[bid];
+    let x = t.x + t.normal[0], y = t.y + t.normal[1], z = t.z + t.normal[2];
+    if (BLOCKS[t.id].replaceable && t.id !== WATER) { x = t.x; y = t.y; z = t.z; }
+    const custom = def && (def.attach || def.src === 'plate' || bid === WIRE || def.logicGate || bid === SPIKES || def.gateLike || bid === PISTON || bid === STICKY_PISTON || bid === AUTO_DOOR);
+    if (!custom) {
+      const r = _placeHeld.call(this);
+      if (r) circuit.notify(x, y, z);
+      return r;
+    }
+    if (y < 1 || y >= WY - 1) return false;
+    const cur = world.get(x, y, z); if (cur && !BLOCKS[cur].replaceable) return false;
+    const [nx, ny, nz] = t.normal, below = world.get(x, y - 1, z), pf = this.playerFacing();
+    let meta = 0;
+    if (def.attach) {
+      if (ny === 1) { if (!B_SOLID[below]) return false; meta = 0; }
+      else if (ny === -1) { if (!B_SOLID[world.get(x, y + 1, z)]) return false; meta = 1; }
+      else { const wf = FACING_DIR.findIndex(([dx, dz]) => dx === -nx && dz === -nz); if (wf < 0 || !B_SOLID[world.get(x + FACING_DIR[wf][0], y, z + FACING_DIR[wf][1])]) return false; meta = 2 + wf; }
+    } else if (def.src === 'plate' || bid === WIRE || def.logicGate || bid === SPIKES) {
+      if (!B_SOLID[below]) { hud.toast('Necesita un bloque sólido debajo'); return false; }
+      if (def.logicGate) meta = pf;
+    } else if (def.gateLike) meta = pf;
+    else if (bid === PISTON || bid === STICKY_PISTON) {
+      const d = new THREE.Vector3(); camera.getWorldDirection(d);
+      meta = d.y < -0.75 ? 4 : d.y > 0.75 ? 5 : (pf + 2) % 4;
+    }
+    if (def.solid && boxHitsBody(x, y, z, p)) return false;
+    if (bid === AUTO_DOOR) {
+      const above = world.get(x, y + 1, z);
+      if (!B_SOLID[below] || (above && !BLOCKS[above].replaceable) || y + 1 >= WY) return false;
+      if (boxHitsBody(x, y + 1, z, p)) return false;
+      world.set(x, y, z, AUTO_DOOR, pf); world.set(x, y + 1, z, AUTO_DOOR, pf | 8);
+    } else world.set(x, y, z, bid, meta);
+    const r = this.afterPlace(s, def, x, y, z);
+    circuit.notify(x, y, z);
+    if (def.logicGate) circuit.evalGate(x, y, z, bid, meta);
+    return r;
+  };
+}
+
+// ---------- Uso (clic derecho) ----------
+{
+  const _interact = game.interact;
+  game.interact = function () {
+    const t = this.target; if (!t || down('sneak')) return _interact.call(this);
+    const def = BLOCKS[t.id], pos = { x: t.x + 0.5, y: t.y + 0.5, z: t.z + 0.5 };
+    switch (def.interact) {
+      case 'lever34':
+        world.set(t.x, t.y, t.z, LEVER, t.meta ^ 8); sfx.play('lever', { pos, pitch: t.meta & 8 ? 0.8 : 1 });
+        circuit.notifySource(t.x, t.y, t.z, t.meta); circuit.flush(); return true;
+      case 'button34':
+        if (!(t.meta & 8)) {
+          world.set(t.x, t.y, t.z, t.id, t.meta | 8); sfx.play('button', { pos });
+          circuit.timers.set('b' + K34(t.x, t.y, t.z), { at: circuit.time + def.pulse, kind: 'button', x: t.x, y: t.y, z: t.z });
+          circuit.notifySource(t.x, t.y, t.z, t.meta); circuit.flush();
+        }
+        return true;
+      case 'gate34': world.set(t.x, t.y, t.z, t.id, t.meta ^ 4); sfx.play('door', { pos }); return true;
+      case 'rep34': {
+        const d = ((t.meta >> 4) + 1) & 3; world.set(t.x, t.y, t.z, t.id, (t.meta & ~48) | (d << 4));
+        sfx.play('click', { pos }); hud.toast(`Retardo del repetidor: ${((d + 1) / 10).toFixed(1).replace('.', ',')} s`); return true;
+      }
+      case 'day34': {
+        const inv = !(t.meta & 4); world.set(t.x, t.y, t.z, t.id, t.meta ^ 4); sfx.play('click', { pos });
+        hud.toast(inv ? 'Sensor invertido: da energía de noche' : 'Sensor normal: da energía de día'); circuit.slowT = 0; return true;
+      }
+    }
+    if (def.tileTitle) {
+      const key = K34(t.x, t.y, t.z), tile = this.getTile(t.x, t.y, t.z) || makeTile(def.interact);
+      tile.title = def.tileTitle; world.tiles.set(key, tile); openInventory(def.interact, tile); return true;
+    }
+    if (t.id === AUTO_DOOR) { hud.toast('La puerta automática se abre sola al acercarte (o con energía)'); return true; }
+    return _interact.call(this);
+  };
+}
+
+// ---------- Romper ----------
+{
+  const _breakBlock = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z), meta = world.getMeta(x, y, z);
+    _breakBlock.call(this, x, y, z, byPlayer);
+    if (!id || world.get(x, y, z) === id) return;
+    if (id === AUTO_DOOR && (meta & 8) && world.get(x, y - 1, z) === AUTO_DOOR) this.breakBlock(x, y - 1, z, false);
+    if (id === PISTON_HEAD) {
+      const [dx, dy, dz] = DIR6[meta & 7], bx = x - dx, by = y - dy, bz = z - dz, b = world.get(bx, by, bz);
+      if ((b === PISTON || b === STICKY_PISTON) && (world.getMeta(bx, by, bz) & 8)) { world.set(bx, by, bz, b, world.getMeta(bx, by, bz) & ~8); this.breakBlock(bx, by, bz, byPlayer); }
+    }
+    if ((id === PISTON || id === STICKY_PISTON) && (meta & 8)) {
+      const [dx, dy, dz] = DIR6[meta & 7];
+      if (world.get(x + dx, y + dy, z + dz) === PISTON_HEAD) world.set(x + dx, y + dy, z + dz, AIR, 0);
+    }
+    // palancas y botones apoyados en el bloque roto
+    for (let f = 0; f < 6; f++) {
+      const [dx, dy, dz] = DIR6[f], nx = x + dx, ny = y + dy, nz = z + dz, n = world.get(nx, ny, nz);
+      if (n && BLOCKS[n].attach) { const s = supportOf34(nx, ny, nz, world.getMeta(nx, ny, nz)); if (s[0] === x && s[1] === y && s[2] === z) this.breakBlock(nx, ny, nz, false); }
+    }
+    circuit.notify(x, y, z);
+    if (BLOCKS[id].attach || BLOCKS[id].src === 'plate') circuit.notifySource(x, y, z, meta);
+  };
+}
+
+// ---------- Actualización: temporizadores, sensores, elevadores y pinchos ----------
+const build34 = {
+  jumpPrev: false, sneakPrev: false, spikeCd: 0, lastElev: null,
+  update(dt) {
+    if (!world || !game.player || game.state === 'menu' || game.state === 'loading' || (game.state === 'paused' && !net.active)) return;
+    const C = circuit; C.time = performance.now() / 1000;     // tiempo real: los pulsos duran lo mismo aunque haya pocos FPS
+    for (const [k, tm] of C.timers) if (tm.at <= C.time) { C.timers.delete(k); C.fire(tm); }
+    C.flush();
+    if (C.time >= C.scanT) { const pres = C.time >= C.presT, slow = C.time >= C.slowT; C.scanT = C.time + 0.1; if (pres) C.presT = C.time + 0.25; if (slow) C.slowT = C.time + 1; this.scan(pres, slow); C.flush(); }
+    this.elevator(); this.spikes(dt);
+  },
+  // Recorre los mecanismos de los chunks cercanos
+  scan(presence, slow) {
+    const p = game.player, pcx = Math.floor(p.pos.x) >> 4, pcz = Math.floor(p.pos.z) >> 4, C = circuit;
+    const ents = game.entities.list;
+    for (const ch of world.chunks.values()) {
+      if (!ch.mech || !ch.mech.size || Math.abs(ch.cx - pcx) > 4 || Math.abs(ch.cz - pcz) > 4) continue;
+      for (const i of ch.mech) {
+        const id = ch.blocks[i], d = BLOCKS[id];
+        if (!d.mech) { ch.mech.delete(i); continue; }
+        const x = ch.cx * 16 + (i & 15), z = ch.cz * 16 + ((i >> 4) & 15), y = i >> 8, meta = ch.meta[i];
+        if (!ownsMech(x + 0.5, y + 0.5, z + 0.5)) continue;
+        if (d.src === 'plate') {
+          const inCell = (e) => e.pos.x > x - 0.25 && e.pos.x < x + 1.25 && e.pos.z > z - 0.25 && e.pos.z < z + 1.25 && e.pos.y >= y - 0.05 && e.pos.y < y + 0.6;
+          let on = !p.dead && !p.flying && inCell(p);
+          if (!on) for (const e of ents) if (!e.dead && (e.kind === 'mob' || (d.items && e.kind === 'item')) && inCell(e)) { on = true; break; }
+          if (on !== !!(meta & 8)) { world.set(x, y, z, id, on ? meta | 8 : meta & ~8); sfx.play('button', { pos: { x: x + 0.5, y, z: z + 0.5 }, pitch: on ? 1 : 0.8 }); C.notifySource(x, y, z, meta); }
+        } else if (d.src === 'button') {
+          const k = 'b' + K34(x, y, z);
+          if ((meta & 8) && !C.timers.has(k)) C.timers.set(k, { at: C.time + d.pulse, kind: 'button', x, y, z });
+        } else if (d.logicGate) {
+          if (C.gateDesired(x, y, z, id, meta) !== !!(meta & 4)) C.evalGate(x, y, z, id, meta);
+        } else if (id === PROX_SENSOR && presence) {
+          const cx = x + 0.5, cy = y + 0.5, cz = z + 0.5, near = (e) => (e.pos.x - cx) ** 2 + (e.pos.y + 0.8 - cy) ** 2 + (e.pos.z - cz) ** 2 < 16;
+          let on = !p.dead && near(p);
+          if (!on) for (const e of ents) if (e.kind === 'mob' && !e.dead && !e.deathT && near(e)) { on = true; break; }
+          if (on !== !!(meta & 8)) { world.set(x, y, z, id, on ? meta | 8 : meta & ~8); C.notify(x, y, z); }
+        } else if (id === DAY_SENSOR && slow) {
+          const day = game.env.daylight > 0.45, on = meta & 4 ? !day : day;
+          if (on !== !!(meta & 8)) { world.set(x, y, z, id, on ? meta | 8 : meta & ~8); C.notify(x, y, z); }
+        } else if (id === AUTO_DOOR && presence && !(meta & 8)) {
+          const open = !!(meta & 16) || autoDoorPresence(x, y, z);
+          if (open !== !!(meta & 4)) C.setDoor(x, y, z, id, open ? meta | 4 : meta & ~4);
+        }
+      }
+    }
+  },
+  elevator() {
+    const p = game.player, jump = down('jump') || input.flyUp, sneak = down('sneak');
+    const jEdge = jump && !this.jumpPrev, sEdge = sneak && !this.sneakPrev;
+    this.jumpPrev = jump; this.sneakPrev = sneak;
+    const now = performance.now() / 1000;
+    // recuerda el último elevador pisado: al saltar, la física ya despegó al jugador en este mismo cuadro
+    if (p.onGround && !p.dead) { const ex = Math.floor(p.pos.x), ey = Math.floor(p.pos.y - 0.05), ez = Math.floor(p.pos.z); if (world.get(ex, ey, ez) === ELEVATOR) this.lastElev = [ex, ey, ez, now]; }
+    if (game.state !== 'playing' || p.dead || p.flying || (!jEdge && !sEdge)) return;
+    const L = this.lastElev; if (!L || now - L[3] > 0.7) return;
+    const [x, by, z] = L;
+    if (Math.floor(p.pos.x) !== x || Math.floor(p.pos.z) !== z || world.get(x, by, z) !== ELEVATOR) return;
+    const free = (yy) => !B_SOLID[world.get(x, yy + 1, z)] && !B_SOLID[world.get(x, yy + 2, z)];
+    const step = jEdge ? 1 : -1;
+    for (let k = 2; k <= 32; k++) {
+      const yy = by + k * step; if (yy < 1 || yy >= WY - 2) break;
+      if (world.get(x, yy, z) === ELEVATOR && free(yy)) {
+        p.pos.set(x + 0.5, yy + 1.001, z + 0.5); p.vel.set(0, 0, 0); p.fallStart = null; p.onGround = true; this.lastElev = [x, yy, z, now];
+        sfx.play('elevator', { pitch: jEdge ? 1.2 : 0.8 });
+        game.particles.emit(x + 0.5, yy + 1.2, z + 0.5, [0.6, 0.85, 1], 10, { gravity: -1, up: 1 });
+        game.unlock('elevator');
+        return;
+      }
+    }
+  },
+  spikes(dt) {
+    if (circuit.time < this.spikeCd) return; this.spikeCd = circuit.time + 0.5;
+    const on = (e) => { const id = world.get(Math.floor(e.pos.x), Math.floor(e.pos.y + 0.05), Math.floor(e.pos.z)); return id === SPIKES && (world.getMeta(Math.floor(e.pos.x), Math.floor(e.pos.y + 0.05), Math.floor(e.pos.z)) & 8); };
+    const p = game.player;
+    if (!p.dead && !p.flying && game.mode === 'survival' && on(p)) p.damage(3, 'Cayó en una trampa de pinchos');
+    for (const e of game.entities.list) if (e.kind === 'mob' && !e.remote && !e.dead && !e.deathT && on(e) && ownsMech(e.pos.x, e.pos.y, e.pos.z)) e.hurt(3, e.pos.clone().add(new THREE.Vector3(0, -1, 0)));
+  },
+};
+ACHIEVEMENTS.push(['engineer', 'Ingeniería', 'Abre una puerta o mueve un pistón con un circuito.'], ['elevator', 'Sube y baja', 'Usa un elevador.']);
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
