@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1d1d1d">
-<title>MiniCraft 3.1</title>
+<title>MiniCraft 3.2</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -512,6 +512,21 @@
   #abilityCd { position: absolute; left: 50%; top: calc(50% + 18px); width: 46px; height: 5px; transform: translateX(-50%); display: none; background: rgba(0,0,0,.55); border: 1px solid #000; pointer-events: none; }
   #abilityCd i { display: block; height: 100%; background: #9aa0aa; }
   #abilityCd.ready i { background: #ffe14d; box-shadow: 0 0 6px rgba(255,225,77,.8); }
+  /* --- Combate 3.2: números de daño, bloqueo y jefe enfurecido --- */
+  .dmgNum { position: fixed; left: 0; top: 0; z-index: 3; pointer-events: none; font-size: 17px; font-weight: 700; color: #fff; text-shadow: 0 2px 0 #000, 0 0 4px rgba(0,0,0,.8); white-space: nowrap; will-change: transform; }
+  .dmgNum.crit { color: #ffe14d; font-size: 21px; } .dmgNum.fx { color: #9be06a; font-size: 14px; }
+  #crosshair.block { outline: 2px solid #fff; outline-offset: 5px; border-radius: 50%; }
+  /* §29: rareza, marcas de fase y presentación de jefes */
+  .rar { display: inline-block; margin-left: 6px; padding: 0 5px; font-size: 11px; font-weight: 600; vertical-align: middle; border: 1px solid; border-radius: 3px; text-shadow: none; }
+  #bossBar u { position: relative; }
+  #bossBar u i { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px #000; z-index: 1; }
+  #hud::before, #hud::after { content: ''; position: absolute; left: 0; right: 0; height: 0; background: #000; z-index: 20; transition: height .6s ease; pointer-events: none; }
+  #hud::before { top: 0; } #hud::after { bottom: 0; }
+  body.cinematic #hud::before, body.cinematic #hud::after { height: 11vh; }
+  body.cinematic #bottomHud, body.cinematic #touchUI, body.cinematic #minimapContainer, body.cinematic #crosshair { opacity: 0; transition: opacity .4s; }
+  body.cinematic #bossBar { top: calc(11vh + 10px); }
+  #bossBar.rage s { animation: bossRage .5s ease-in-out infinite alternate; }
+  @keyframes bossRage { from { filter: brightness(1); } to { filter: brightness(1.7) saturate(1.4); } }
   /* --- Minimapa (§24) --- */
   #minimapContainer { position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(10px + env(safe-area-inset-top)); display: none; padding: 2px;
     background: rgba(0,0,0,.6); border: 2px solid #0b0b0b; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 rgba(0,0,0,.45), 0 6px 14px rgba(0,0,0,.35); pointer-events: none; image-rendering: pixelated; }
@@ -561,6 +576,7 @@
     <div class="tbtns">
       <button class="tbtn" data-act="place"><span>▣</span>Usar</button>
       <button class="tbtn" data-act="break"><span>⛏</span>Minar</button>
+      <button class="tbtn" data-act="dodge"><span>↯</span>Esquivar</button>
       <button class="tbtn" data-act="sneak"><span>⤓</span>Agachar</button>
       <button class="tbtn" data-act="jump"><span>⇧</span>Saltar</button>
     </div>
@@ -586,7 +602,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.1!</span>
+      <span class="ver">¡Versión 3.2!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -595,7 +611,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 3.2</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -4702,7 +4718,7 @@ class Mob extends Entity {
     this.mesh.position.copy(this.pos); this.mesh.rotation.y = this.yaw;
     animateModel(this, dt, lookYaw);
   }
-  toJSON() { return { k: this.type, p: [+this.pos.x.toFixed(2), +this.pos.y.toFixed(2), +this.pos.z.toFixed(2)], hp: this.hp, a: Math.round(this.age), pe: this.persistent ? 1 : 0, lc: Math.round(this.loveCd), pl: this.planId }; }
+  toJSON() { return { k: this.type, p: [+this.pos.x.toFixed(2), +this.pos.y.toFixed(2), +this.pos.z.toFixed(2)], hp: this.hp, a: Math.round(this.age), pe: this.persistent ? 1 : 0, ...(this.tamed ? { tm: 1, sd: this.saddled ? 1 : 0, st: this.sitting ? 1 : 0 } : {}), lc: Math.round(this.loveCd), pl: this.planId }; }
 }
 
 class ItemDrop extends Entity {
@@ -4758,18 +4774,18 @@ class Arrow extends Entity {
         if (this.owner === 'player') {
           let hit = null;
           for (const e of game.entities.list) if (e.kind === 'mob' && !e.deathT) { const b = aabbOf(e); if (this.pos.x > b[0] - 0.1 && this.pos.x < b[3] + 0.1 && this.pos.y > b[1] && this.pos.y < b[4] && this.pos.z > b[2] - 0.1 && this.pos.z < b[5] + 0.1) { hit = e; break; } }
-          if (hit) { hit.lastHit = 'player'; hit.hurt(this.dmg, this.pos.clone().sub(this.vel)); game.stats.add('damage', this.dmg); this.dead = true; break; }
+          if (hit) { hit.lastHit = 'player'; hit.hurt(this.dmg, this.pos.clone().sub(this.vel)); arrowEffect(hit, this.effect); game.stats.add('damage', this.dmg); this.dead = true; break; }
           continue;
         }
         const p = game.player, a = aabbOf(p);
         if (!p.dead && this.pos.x > a[0] && this.pos.x < a[3] && this.pos.y > a[1] && this.pos.y < a[4] && this.pos.z > a[2] && this.pos.z < a[5]) {
-          p.damage(this.dmg, 'Te disparó un esqueleto', this.pos.clone().sub(this.vel)); this.dead = true; break;
+          const hp0 = p.health; p.damage(this.dmg, this.effect ? 'Te alcanzó un maleficio' : 'Te disparó un esqueleto', this.pos.clone().sub(this.vel)); if (this.effect && p.health < hp0) game.applyEffect(this.effect === 'slow' ? 'slow' : 'poison', 1, 6); this.dead = true; break;
         }
       }
       this.mesh.position.copy(this.pos);
       this.mesh.lookAt(this.pos.x + this.vel.x, this.pos.y + this.vel.y, this.pos.z + this.vel.z);
     }
-    this.updateLight(dt); this.mat.color.setRGB(...this.light);
+    this.updateLight(dt); this.mat.color.setRGB(...this.light); if (this.fxTint) this.mat.color.setRGB(this.fxTint[0], this.fxTint[1], this.fxTint[2]);
     if (this.life > (this.stuck ? 15 : 8)) this.dead = true;
   }
   toJSON() { return null; }
@@ -4805,6 +4821,7 @@ class EntityManager {
     const speed = 18, t = d / speed;
     const vy = ty / t + 0.5 * 18 * t;
     const e = new Arrow(sx + tx / d * 0.6, sy, sz + tz / d * 0.6, tx / d * speed + (Math.random() - 0.5), vy + (Math.random() - 0.5), tz / d * speed + (Math.random() - 0.5), 2 + Math.floor(Math.random() * 2));
+    if (mob.spec.arrowEffect) { e.effect = mob.spec.arrowEffect; e.fxTint = [0.8, 0.4, 1.6]; e.dmg = 2; }
     this.add(e); sfx.play('bow', { pos: mob.pos });
   }
   onMobDeath(m) {
@@ -4941,7 +4958,7 @@ class EntityManager {
       if (!o || !Array.isArray(o.p) || o.p.some((v) => !Number.isFinite(v))) continue;
       if (o.k === 'item') { if (ITEMS[o.s?.[0]]) { const e = new ItemDrop({ id: o.s[0], count: o.s[1], dmg: o.s[2], ...(o.s[3] ? { ench: o.s[3] } : {}) }, ...o.p); e.pickupDelay = 0; this.add(e); } }
       else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; this.add(v); }
-      else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.age < 0) m.mesh.scale.setScalar(0.55); }
+      else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; if (o.tm) { m.tamed = true; m.saddled = !!o.sd; m.sitting = !!o.st; } m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.age < 0) m.mesh.scale.setScalar(0.55); }
     }
   }
 }
@@ -5790,6 +5807,7 @@ function useAbility(stack) {
   const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
   const eye = camera.position, hits = [];
   const mobs = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !(e instanceof Villager) && !e.isPlayer);
+  if (ab.id === 'crossbow') { if (!fireCrossbow(stack)) abilityCd.delete(stack.id); return true; }
   if (ab.id === 'quake') {
     // Martillo ancestral: onda expansiva en el suelo
     for (const e of mobs) { const d = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z); if (d < 6 && Math.abs(e.pos.y - p.pos.y) < 4) hits.push([e, 12 * (1 - d / 9)]); }
@@ -6542,7 +6560,7 @@ function showInfo(id) {
   if (it.fuel) extra.push(`Combustible: ${it.fuel} objetos`);
   if (SMELT[id]) extra.push(`Se funde en: ${itemName(SMELT[id][0])}`);
   if (it.block) { const b = BLOCKS[it.block]; if (b.tool && b.level >= 0) extra.push(`Requiere ${TOOL_NAMES[b.tool].toLowerCase()} nivel ${b.level}+`); if (b.light) extra.push(`Luz ${b.light}`); }
-  box.innerHTML = `<h4>${it.name}</h4><p>${it.desc || ''}</p>${extra.length ? `<p class="need">${extra.join(' · ')}</p>` : ''}`;
+  box.innerHTML = `<h4 style="color:${RARITY[rarityOf(id, st)][1]}">${it.name} ${rarityTag(id, st)}</h4><p>${it.desc || ''}</p>${extra.length ? `<p class="need">${extra.join(' · ')}</p>` : ''}`;
 }
 function renderCursor() {
   const el = $('#cursorItem');
@@ -6791,13 +6809,14 @@ function initSettingsUI() {
     ['brightness', 'Brillo', 'range', -1, 1, 0.05, (v) => (v > 0 ? '+' : '') + Math.round(v * 100) + '%'],
     ['sensitivity', 'Sensibilidad del ratón', 'range', 0.2, 2.5, 0.05, (v) => Math.round(v * 100) + '%'],
     ['touchSensitivity', 'Sensibilidad táctil', 'range', 0.3, 2.5, 0.05, (v) => Math.round(v * 100) + '%'],
-    ['volume', 'Volumen', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
+    ['volume', 'Volumen de efectos', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
+    ['music', 'Volumen de la música', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['quality', 'Resolución', 'select', ['baja', 'media', 'alta']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
     ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'], ['mobBars', 'Barra de vida al apuntar', 'check'],
   ];
   // cada ajuste va a su pestaña: Gráficos, Sonido o Controles
-  const TAB = { volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
+  const TAB = { music: '#settingsAudio', volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
   for (const sel of ['#settingsList', '#settingsAudio', '#settingsCtrlRows']) $(sel).innerHTML = '';
   for (const [key, label, type, a, b, step, fmt] of rows) {
     if ((key === 'sensitivity' && IS_TOUCH) || (key === 'touchSensitivity' && !IS_TOUCH)) continue;
@@ -6887,7 +6906,8 @@ const hud3 = {
     if (b && !b.dead) {
       bb.classList.add('show');
       bb.querySelector('b').textContent = b.spec.name;
-      bb.querySelector('em').textContent = b.state === 'intro' ? '¡Prepárate!' : b.phaseName();
+      bb.querySelector('em').textContent = b.state === 'intro' ? '¡Prepárate!' : `${b.phaseName()} · ${Math.max(0, Math.ceil(b.hp))} / ${b.spec.hp}`;
+      bb.classList.toggle('rage', b.hp / b.spec.hp < 0.25);
       bb.querySelector('s').style.width = (b.hp / b.spec.hp * 100).toFixed(1) + '%';
     } else bb.classList.remove('show');
     // brújula (si la llevas en el inventario)
@@ -7747,6 +7767,7 @@ const game = {
       if (e.threat) { hud.toast(`¡${e.vname} está huyendo de un monstruo!`); return true; }
       sfx.play('villager', { pos: e.pos }); openInventory('trade', e); return true;
     }
+    if (tameInteract(e, s)) return true;
     const food = BREED_FOOD[e.type];
     if (food && s && food.includes(s.id)) {
       if (e.age < 0) e.age = Math.min(0, e.age + 60);
@@ -7791,12 +7812,14 @@ const game = {
   fireBow(charge) {
     const p = this.player, s = p.held(); if (!s || !ITEMS[s.id].bow) return;
     const c = Math.min(1, charge); if (c < 0.15) return;
-    if (this.mode === 'survival' && !p.inv.count(I.ARROW)) { hud.toast('No tienes flechas'); return; }
+    const ammo = pickArrow(p);
+    if (!ammo) { hud.toast('No tienes flechas'); return; }
     const d = new THREE.Vector3(); camera.getWorldDirection(d);
     const speed = 14 + 26 * c, dmg = Math.round(2 + 5 * c + enchLevel(s, 'power') * 1.5 + this.effLvl('strength'));
     const o = camera.position.clone().addScaledVector(d, 0.6);
-    this.entities.add(new Arrow(o.x, o.y - 0.1, o.z, d.x * speed, d.y * speed, d.z * speed, dmg, 'player'));
-    if (this.mode === 'survival') { p.inv.remove(I.ARROW, 1); this.wearTool(1); }
+    const ar = new Arrow(o.x, o.y - 0.1, o.z, d.x * speed, d.y * speed, d.z * speed, dmg, 'player'); ar.effect = ARROW_FX[ammo]; tintArrow(ar);
+    this.entities.add(ar);
+    if (this.mode === 'survival') { p.inv.remove(ammo, 1); this.wearTool(1); }
     sfx.play('bow'); this.swing = 0.6; hud.update();
   },
   useBoneMeal() {
@@ -7833,7 +7856,7 @@ const game = {
     const jump = down('jump') || input.flyUp;
     const canSprint = this.mode === 'creative' || p.hunger > 6;
     // Agacharse: más bajo, más lento y sin caerse de los bordes (no al volar, nadar ni sentado)
-    const wantCrouch = (down('sneak') || input.sneakToggle) && !p.flying && !p.seat;
+    const wantCrouch = (down('sneak') || input.sneakToggle) && !p.flying && !p.seat && !p.mount;
     if (wantCrouch && !p.crouching) { p.crouching = true; p.h = PLAYER_H_CROUCH; }
     else if (!wantCrouch && p.crouching) {
       // solo se levanta si hay sitio para la cabeza
@@ -7875,7 +7898,7 @@ const game = {
       p.fallStart = null;
       if (moving) p.exhaust(0.01 * Math.hypot(p.pos.x - ox, p.pos.z - oz));
     } else {
-      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1) * (1 + (ITEMS[p.armor.slots[1]?.id]?.speedBonus || 0));
+      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1) * (1 + (ITEMS[p.armor.slots[1]?.id]?.speedBonus || 0)) * (this.blocking ? 0.4 : 1) * (this.effLvl('slow') ? 0.6 : 1) * (p.mount ? 2 : 1);
       const groundId = world.get(Math.floor(p.pos.x), Math.floor(p.pos.y - 0.1), Math.floor(p.pos.z));
       const slip = BLOCKS[groundId]?.slippery;
       const accel = p.onGround ? (slip ? 2.5 : 14) : 3.5;
@@ -7923,7 +7946,7 @@ const game = {
     // Cámara
     const bob = p.onGround && !p.flying ? Math.sin(p.walkDist * 2.2) * 0.045 * Math.min(1, Math.hypot(p.vel.x, p.vel.z) / 4) : 0;
     p.eyeOff = (p.eyeOff || 0) + ((p.crouching ? -0.3 : 0) - (p.eyeOff || 0)) * Math.min(1, dt * 14);   // la cámara baja suave al agacharse
-    camera.position.set(p.pos.x, p.pos.y + EYE_H + p.eyeOff + bob, p.pos.z);
+    camera.position.set(p.pos.x, p.pos.y + EYE_H + p.eyeOff + bob + (p.mount ? 0.95 : 0), p.pos.z);
     if (this.shake > 0) { this.shake -= dt; camera.position.x += (Math.random() - 0.5) * this.shake * 0.15; }
     const fovT = settings.fov + (sprint ? 8 : 0) + (p.flying && sprint ? 6 : 0) - Math.min(1, p.bowT) * 12;
     if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
@@ -7933,7 +7956,7 @@ const game = {
   updateTarget() {
     const d = new THREE.Vector3(); camera.getWorldDirection(d);
     this.target = raycastBlocks(camera.position, d, REACH);
-    const m = this.entities.raycast(camera.position, d, 3.6);
+    const m = this.entities.raycast(camera.position, d, 3.6 + (ITEMS[this.player.held()?.id]?.tool?.reach || 0));   // las lanzas llegan más lejos
     this.mobTarget = m && (!this.target || m.dist < this.target.dist) ? m.e : null;
     if (this.target && !this.mobTarget) {
       const t = this.target, boxes = blockBoxes(t.id, t.meta, nbOf(t.x, t.y, t.z), 'select');
@@ -7960,7 +7983,7 @@ const game = {
           if (!p.onGround && p.vel.y < 0 && !p.inWater) { dmg *= 1.5; this.particles.emit(this.mobTarget.pos.x, this.mobTarget.pos.y + 1, this.mobTarget.pos.z, [1, 1, 0.6], 8, { up: 2 }); }
           const mt = this.mobTarget;
           if (mt.hurt(dmg, p.pos)) {
-            p.exhaust(0.1); this.stats.add('damage', dmg);
+            p.exhaust(0.1); this.stats.add('damage', dmg); onPlayerHit(mt, tool, dmg);
             if (tool) { this.wearTool(tool.type === 'sword' ? 1 : 2); if (tool.fire) mt.burnT = 5; if (tool.knock && !mt.isBoss) { const k = new THREE.Vector3().subVectors(mt.pos, p.pos).setY(0).normalize(); mt.vel.x += k.x * 8; mt.vel.z += k.z * 8; mt.vel.y = 7; } }
           }
           this.attackCd = tool && tool.type === 'sword' ? (tool.fast ? 0.45 * tool.fast : 0.45) : 0.6; this.swing = 1;
@@ -8085,8 +8108,12 @@ const game = {
     const sw = Math.sin((1 - this.swing) * Math.PI) * (this.swing > 0 ? 1 : 0);
     const walk = Math.hypot(p.vel.x, p.vel.z), bob = p.onGround ? Math.sin(p.walkDist * 2.2) : 0;
     const eat = p.eatT ? Math.sin(p.eatT * 18) * 0.03 : 0;
-    handGroup.position.set(0.42 + bob * 0.015 * walk / 4 - (p.eatT ? 0.25 : 0), -0.38 + Math.abs(bob) * 0.02 * walk / 4 - sw * 0.12 + eat + (p.eatT ? 0.12 : 0), -0.62 - sw * 0.15);
-    handGroup.rotation.set(-sw * 0.9, sw * 0.4, -sw * 0.2);
+    // animación según el arma (§29): tajo, golpe de arriba abajo, estocada o escudo en alto
+    const pose = attackPose(attackStyle(p.held()), sw, this.blocking), pk = Math.min(1, dt * 14);
+    this.pose = this.pose || [0, 0, 0, 0, 0, 0]; for (let i = 0; i < 6; i++) this.pose[i] += (pose[i] - this.pose[i]) * (this.blocking || this.pose.blk ? pk : 1); this.pose.blk = this.blocking;
+    const P = this.pose;
+    handGroup.position.set(0.42 + bob * 0.015 * walk / 4 - (p.eatT ? 0.25 : 0) + P[0], -0.38 + Math.abs(bob) * 0.02 * walk / 4 + P[1] + eat + (p.eatT ? 0.12 : 0), -0.62 + P[2]);
+    handGroup.rotation.set(P[3], P[4], P[5]);
     const L = lightLevel(p.pos.x, p.pos.y + 1.2, p.pos.z);
     handMat.color.setRGB(...L); if (heldMesh && heldMesh.material !== handMat) heldMesh.material.color.setRGB(...L);
   },
@@ -8203,6 +8230,7 @@ function initInput() {
       if (act === 'inv' && game.state === 'playing') openInventory('inv');
       if (act === 'map' && game.state === 'playing') mapUI.show();
       if (act === 'chat') return;
+      if (act === 'dodge') combat.dodge();
       if (act === 'pause') game.pause();
     });
     const up = () => {
@@ -8239,7 +8267,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -8250,7 +8278,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.1  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.2  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -8275,7 +8303,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle };
 }
 
 /* ==========================================================================
@@ -9234,6 +9262,7 @@ function pressCode(code, ev) {
       case 'achievements': game.pause(); openAchievements(); break;
       case 'pause': game.pause(); break;
       case 'chat': chatUI.open(); break;
+      case 'dodge': combat.dodge(); break;
       case 'fly': if (game.mode === 'creative') { p.flying = !p.flying; p.vel.y = 0; } break;
       case 'debug': settings.showFps = !settings.showFps; saveSettings(); break;
       case 'drop': {
@@ -9385,7 +9414,7 @@ function startRebind(id, btn) {
 }
 
 /* ---------- Editor de la disposición táctil ---------- */
-const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['sneak', '[data-act=sneak]'], ['fly', '[data-act=fly]'],
+const TOUCH_CTRLS = [['joy', '#joy'], ['place', '[data-act=place]'], ['break', '[data-act=break]'], ['jump', '[data-act=jump]'], ['sneak', '[data-act=sneak]'], ['dodge', '[data-act=dodge]'], ['fly', '[data-act=fly]'],
   ['down', '[data-act=down]'], ['map', '[data-act=map]'], ['inv', '[data-act=inv]'], ['pause', '[data-act=pause]']];
 const orient = () => (window.innerWidth > window.innerHeight ? 'land' : 'port');
 function applyTouchLayout() {
@@ -9730,6 +9759,497 @@ const mobBar = {
   max(e) { return Math.max(1, Math.round(e.maxHp || e.spec.hp || 1)); },
   frac(e) { return clamp(e.hp / this.max(e), 0, 1); },
   hide() { if (this.el) { this.el.style.display = 'none'; this.shown = 0; this.e = null; this.t = 0; } },
+};
+
+/* ==========================================================================
+   §28 MINICRAFT 3.2 — COMBATE Y CRIATURAS
+   --------------------------------------------------------------------------
+   · Combate: escudo (bloqueo y parada perfecta), esquiva, golpes críticos con
+     aviso, números de daño, hachas de combate (aturden), lanzas (más alcance),
+     ballesta y flechas de fuego, veneno y hielo.
+   · Estados alterados: veneno, lentitud y aturdimiento en criaturas; veneno y
+     lentitud en el jugador.
+   · Enemigos con comportamiento propio: araña (salta y envenena), chamán
+     (dispara maleficios y cura a los suyos), bruto (acorazado, golpea fuerte)
+     y versiones de élite de cualquier enemigo.
+   · Animales: caballo (se doma, se ensilla y se monta), lobo (se doma y lucha
+     a tu lado), panda y murciélagos de cueva.
+   ► AÑADIR UN ARMA: defItem con tool {type:'sword', dmg, fast, reach, stun…}.
+   ========================================================================== */
+Object.assign(I, { SHIELD: 484, CROSSBOW: 485, FIRE_ARROW: 486, POISON_ARROW: 487, ICE_ARROW: 488, BATTLE_AXE_IRON: 489, BATTLE_AXE_DIAMOND: 490, SPEAR_IRON: 491, SPEAR_DIAMOND: 492, SPIDER_EYE: 493, SADDLE: 494 });
+defItem(I.SHIELD, 'Escudo', 'Mantén Usar con el escudo en la mano para bloquear los golpes de frente. Si bloqueas justo antes del golpe, haces una parada perfecta que aturde.', { stack: 1, shield: true, dur: 336 });
+defItem(I.CROSSBOW, 'Ballesta', 'Usar: dispara al instante una flecha muy potente. Tarda en recargar.', { stack: 1, crossbow: true, dur: 465, ability: { id: 'crossbow', name: 'Ballesta', cd: 1.4 } });
+defItem(I.FIRE_ARROW, 'Flecha de fuego', 'Prende fuego al objetivo. El arco usa la primera flecha que encuentre en tu inventario.');
+defItem(I.POISON_ARROW, 'Flecha envenenada', 'Envenena al objetivo durante unos segundos.');
+defItem(I.ICE_ARROW, 'Flecha de hielo', 'Ralentiza al objetivo.');
+defItem(I.BATTLE_AXE_IRON, 'Hacha de combate de hierro', 'Lenta y demoledora. Puede aturdir.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 10, dur: 300, fast: 1.7, stun: 0.3 } });
+defItem(I.BATTLE_AXE_DIAMOND, 'Hacha de combate de diamante', 'Lenta y demoledora. Puede aturdir.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 13, dur: 1200, fast: 1.7, stun: 0.4 } });
+defItem(I.SPEAR_IRON, 'Lanza de hierro', 'Alcanza a enemigos más lejanos.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 6, dur: 280, reach: 1.8 } });
+defItem(I.SPEAR_DIAMOND, 'Lanza de diamante', 'Alcanza a enemigos más lejanos.', { stack: 1, tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 8, dur: 1100, reach: 1.8 } });
+defItem(I.SPIDER_EYE, 'Ojo de araña', 'Sirve para envenenar flechas.');
+defItem(I.SADDLE, 'Montura', 'Úsala sobre un caballo domado para poder montarlo.', { stack: 1 });
+ITEMS[I.ANTLER_SPEAR].tool.reach = 1.4;
+Object.assign(EFFECTS, { poison: { name: 'Veneno', color: [90, 170, 50], icon: '☠' }, slow: { name: 'Lentitud', color: [110, 130, 150], icon: '⌛' } });
+shaped(I.SHIELD, 1, ['#i#', '###', ' # '], { '#': PLANKS_ANY, i: I.IRON_INGOT }, 'Combate');
+shaped(I.CROSSBOW, 1, ['sis', 'tst', ' s '], { s: I.STICK, i: I.IRON_INGOT, t: I.STRING }, 'Combate');
+shaped(I.BATTLE_AXE_IRON, 1, ['mm', 'ms', ' s'], { m: I.IRON_INGOT, s: I.STICK }, 'Combate');
+shaped(I.BATTLE_AXE_DIAMOND, 1, ['mm', 'ms', ' s'], { m: I.DIAMOND, s: I.STICK }, 'Combate');
+shaped(I.SPEAR_IRON, 1, ['  m', ' s ', 's  '], { m: I.IRON_INGOT, s: I.STICK }, 'Combate');
+shaped(I.SPEAR_DIAMOND, 1, ['  m', ' s ', 's  '], { m: I.DIAMOND, s: I.STICK }, 'Combate');
+shaped(I.SADDLE, 1, ['lll', 'l l', 'i i'], { l: I.LEATHER, i: I.IRON_INGOT }, 'Herramientas');
+shapeless(I.FIRE_ARROW, 2, [I.ARROW, I.ARROW, I.COAL], 'Combate');
+shapeless(I.POISON_ARROW, 2, [I.ARROW, I.ARROW, I.SPIDER_EYE], 'Combate');
+shapeless(I.ICE_ARROW, 2, [I.ARROW, I.ARROW, I.SNOWBALL], 'Combate');
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const arrow = (c) => P((p) => { p.line([[3, 13], [11, 5]], 1.2, [130, 96, 56]); p.poly([[10, 3], [13.5, 2.5], [13, 6]], c); p.line([[2, 11], [5, 14]], 1.2, [236, 236, 236]); });
+  const axe = (c) => P((p) => { p.line([[3, 14], [11, 4]], 1.8, [116, 84, 50]); p.poly([[7, 2], [13, 1], [15, 6], [11, 9], [9, 5]], (x, y) => ((x + y) % 4 === 0 ? c.map((v) => v * 0.7) : c)); p.poly([[5, 4], [8, 3], [8, 7], [5, 8]], c.map((v) => v * 0.85)); });
+  const spear = (c) => P((p) => { p.line([[2, 14], [11, 5]], 1.3, [120, 90, 56]); p.poly([[10, 6], [11, 2], [14.5, 1.5], [14, 5]], c); });
+  Object.assign(ICON_OVERRIDE, {
+    [I.SHIELD]: P((p) => { p.poly([[3, 2], [13, 2], [13, 9], [8, 14.5], [3, 9]], (x, y) => (x === 8 || y === 6 ? [190, 190, 196] : x < 8 ? [150, 110, 64] : [124, 88, 50])); p.disk(8, 6.5, 1.4, [226, 226, 232]); }),
+    [I.CROSSBOW]: P((p) => { p.line([[3, 13], [12, 4]], 2, [116, 84, 50]); p.line([[5, 3], [13, 11]], 1.4, [150, 150, 156]); p.line([[5, 3], [8, 8]], 0.8, [236, 236, 236]); p.line([[13, 11], [8, 8]], 0.8, [236, 236, 236]); }),
+    [I.FIRE_ARROW]: arrow([255, 130, 30]), [I.POISON_ARROW]: arrow([110, 190, 60]), [I.ICE_ARROW]: arrow([150, 220, 255]),
+    [I.BATTLE_AXE_IRON]: axe([214, 214, 220]), [I.BATTLE_AXE_DIAMOND]: axe([90, 225, 215]), [I.SPEAR_IRON]: spear([214, 214, 220]), [I.SPEAR_DIAMOND]: spear([90, 225, 215]),
+    [I.SPIDER_EYE]: P((p) => { p.disk(8, 8, 5, (x, y) => (Math.hypot(x - 8, y - 8) < 2.2 ? [30, 10, 10] : [170, 40, 50])); p.set(6, 6, [250, 200, 200]); }),
+    [I.SADDLE]: P((p) => { p.poly([[2, 6], [14, 6], [13, 10], [3, 10]], (x, y) => (y < 8 ? [170, 104, 56] : [130, 76, 40])); p.line([[5, 10], [5, 14]], 1.2, [90, 60, 36]); p.disk(5, 14, 1.3, [190, 190, 196]); p.line([[11, 10], [11, 14]], 1.2, [90, 60, 36]); p.disk(11, 14, 1.3, [190, 190, 196]); }),
+  });
+}
+const ARROW_TYPES = [I.ARROW, I.FIRE_ARROW, I.POISON_ARROW, I.ICE_ARROW];
+const ARROW_FX = { [I.FIRE_ARROW]: 'fire', [I.POISON_ARROW]: 'poison', [I.ICE_ARROW]: 'slow' };
+const ARROW_TINT = { fire: [1.6, 0.7, 0.2], poison: [0.5, 1.3, 0.3], slow: [0.6, 1.1, 1.6] };
+// El arco y la ballesta usan la primera flecha que haya en el inventario (ordénalas para elegir)
+function pickArrow(p) { for (const s of p.inv.slots) if (s && ARROW_TYPES.includes(s.id)) return s.id; return game.mode === 'survival' ? 0 : I.ARROW; }
+function tintArrow(a) { if (a.effect && ARROW_TINT[a.effect]) a.mesh.scale.setScalar(1.15); a.fxTint = ARROW_TINT[a.effect]; }
+function arrowEffect(e, fx) {
+  if (!fx || !e || e.dead) return;
+  if (fx === 'fire') e.burnT = Math.max(e.burnT || 0, 6); else if (fx === 'poison') e.poisonT = 7; else if (fx === 'slow') e.slowT = 5;
+}
+
+/* ---------- Números de daño y avisos de combate ---------- */
+const dmgText = {
+  list: [], v: new THREE.Vector3(),
+  add(x, y, z, text, cls) {
+    if (this.list.length > 24 || camera.position.distanceTo(this.v.set(x, y, z)) > 28) return;
+    const el = document.createElement('div'); el.className = 'dmgNum ' + (cls || ''); el.textContent = text; $('#hud').append(el);
+    this.list.push({ el, x: x + (Math.random() - 0.5) * 0.5, y, z: z + (Math.random() - 0.5) * 0.5, t: 0 });
+  },
+  update(dt) {
+    for (let i = this.list.length - 1; i >= 0; i--) {
+      const d = this.list[i]; d.t += dt; d.y += dt * 1.1;
+      if (d.t > 0.9 || game.state !== 'playing') { d.el.remove(); this.list.splice(i, 1); continue; }
+      this.v.set(d.x, d.y, d.z).project(camera);
+      if (this.v.z > 1) { d.el.style.display = 'none'; continue; }
+      d.el.style.display = 'block'; d.el.style.opacity = d.t > 0.6 ? (0.9 - d.t) / 0.3 : 1;
+      d.el.style.transform = `translate(${(this.v.x * 0.5 + 0.5) * innerWidth}px, ${(-this.v.y * 0.5 + 0.5) * innerHeight}px) translate(-50%, -50%) scale(${1 + Math.max(0, 0.15 - d.t) * 4})`;
+    }
+  },
+};
+
+/* ---------- Golpes del jugador: crítico, aturdir, mascotas ---------- */
+const combat = { blockStart: 0, wasBlocking: false, dodgeCd: 0, petTarget: null, poisonT: 0, crit: false };
+function onPlayerHit(mt, tool, dmg) {
+  if (combat.crit) dmgText.add(mt.pos.x, mt.pos.y + mt.h + 0.9, mt.pos.z, '¡Crítico!', 'crit');
+  if (tool && tool.stun && !mt.isBoss && Math.random() < tool.stun) { mt.stunT = 1.6; dmgText.add(mt.pos.x, mt.pos.y + mt.h + 0.6, mt.pos.z, 'Aturdido', 'fx'); }
+  if (!mt.tamed && !mt.isPlayer) combat.petTarget = mt;
+}
+// Daño recibido por criaturas: armadura del bruto, números de daño y chispas de impacto
+{
+  const baseHurt = Mob.prototype.hurt;
+  Mob.prototype.hurt = function (dmg, from) {
+    if (this.spec.armor && !combat.crit) dmg *= 1 - this.spec.armor;
+    const r = baseHurt.call(this, dmg, from);
+    if (r && !this.remote) {
+      dmgText.add(this.pos.x, this.pos.y + this.h + 0.3, this.pos.z, String(Math.round(dmg * 10) / 10), combat.crit ? 'crit' : '');
+      game.particles.emit(this.pos.x, this.pos.y + this.h * 0.6, this.pos.z, [1, 0.25, 0.2], 5, { speed: 2.2, up: 1.5, life: 0.35, size: 0.08 });
+      if (this.spec.armor && !combat.crit) sfx.play('arrowHit', { pos: this.pos });
+    }
+    return r;
+  };
+}
+// Daño recibido por el jugador: esquiva, bloqueo con escudo, parada perfecta y efectos del atacante
+{
+  const baseDamage = Player.prototype.damage;
+  Player.prototype.damage = function (n, cause, from, kind) {
+    if (game.mode !== 'survival' || this.dead) return;
+    const hit = !kind || kind === 'contact';
+    if (hit && this.dodgeT > 0) return;
+    const att = from && hit ? game.entities.list.find((e) => e.kind === 'mob' && !e.dead && Math.hypot(e.pos.x - from.x, e.pos.z - from.z) < 1.6 && Math.abs(e.pos.y - from.y) < 3) : null;
+    if (game.blocking && from && !kind && this.invuln <= 0) {
+      const d = new THREE.Vector3(); camera.getWorldDirection(d);
+      const dx = from.x - this.pos.x, dz = from.z - this.pos.z, l = Math.hypot(dx, dz) || 1;
+      if ((dx * d.x + dz * d.z) / l > 0.2) {                        // el golpe viene de frente
+        const s = this.held(); s.dmg = (s.dmg || 0) + 1; if (s.dmg >= durOf(s.id)) { this.inv.slots[this.selected] = null; sfx.play('toolBreak'); hud.toast('¡Se rompió el escudo!'); }
+        sfx.play('arrowHit'); game.particles.emit(this.pos.x + d.x * 0.6, this.pos.y + 1.2, this.pos.z + d.z * 0.6, [0.9, 0.9, 0.7], 6, { speed: 2, life: 0.3, size: 0.07 }); hud.update();
+        if (performance.now() - combat.blockStart < 280) {            // parada perfecta
+          if (att && !att.isBoss) { att.stunT = 2; att.vel.x += dx / l * 9; att.vel.z += dz / l * 9; att.vel.y = 5; }
+          else if (att) att.stunT = 0;
+          dmgText.add(this.pos.x + d.x * 1.5, this.pos.y + 1.6, this.pos.z + d.z * 1.5, '¡Parada perfecta!', 'crit'); sfx.play('levelup', { vol: 0.25 });
+          this.invuln = 0.4; return;
+        }
+        n *= 0.25; from = null;                                      // bloqueo: 75 % menos y sin empujón
+      }
+    }
+    const before = this.health;
+    baseDamage.call(this, n, cause, from, kind);
+    if (this.health < before && att) {
+      if (att.spec.poison) game.applyEffect('poison', 1, 6);
+      if (att.spec.heavy) { const dx = this.pos.x - att.pos.x, dz = this.pos.z - att.pos.z, l = Math.hypot(dx, dz) || 1; this.vel.x += dx / l * 9; this.vel.z += dz / l * 9; this.vel.y = 8; game.shake = 0.6; }
+      if (!att.tamed) combat.petTarget = att;
+    }
+  };
+}
+combat.dodge = function () {
+  const p = game.player;
+  if (game.state !== 'playing' || !p || p.dead || combat.dodgeCd > 0 || !p.onGround || p.mount || p.inWater) return;
+  const yaw = camera.rotation.y, f = [-Math.sin(yaw), -Math.cos(yaw)], r = [Math.cos(yaw), -Math.sin(yaw)];
+  let x = (down('forward') ? f[0] : 0) - (down('back') ? f[0] : 0) + (down('right') ? r[0] : 0) - (down('left') ? r[0] : 0) + f[0] * -input.joy.y + r[0] * input.joy.x;
+  let z = (down('forward') ? f[1] : 0) - (down('back') ? f[1] : 0) + (down('right') ? r[1] : 0) - (down('left') ? r[1] : 0) + f[1] * -input.joy.y + r[1] * input.joy.x;
+  if (Math.hypot(x, z) < 0.2) { x = -f[0]; z = -f[1]; }                // sin dirección: salto hacia atrás
+  const l = Math.hypot(x, z); p.vel.x = x / l * 12; p.vel.z = z / l * 12; p.vel.y = 3.2;
+  p.dodgeT = 0.38; combat.dodgeCd = 1.3; p.exhaust(0.4); sfx.play('swing');
+  game.particles.emit(p.pos.x, p.pos.y + 0.2, p.pos.z, [0.85, 0.85, 0.85], 8, { speed: 1.5, life: 0.35, size: 0.1 });
+};
+function fireCrossbow(stack) {
+  const p = game.player, ammo = pickArrow(p);
+  if (!ammo) { hud.toast('No tienes flechas'); return false; }
+  const d = new THREE.Vector3(); camera.getWorldDirection(d);
+  const o = camera.position.clone().addScaledVector(d, 0.6), a = new Arrow(o.x, o.y - 0.1, o.z, d.x * 48, d.y * 48, d.z * 48, 9 + game.effLvl('strength') + enchLevel(stack, 'power') * 1.5, 'player');
+  a.effect = ARROW_FX[ammo]; tintArrow(a); game.entities.add(a);
+  if (game.mode === 'survival') { p.inv.remove(ammo, 1); game.wearTool(1); }
+  sfx.play('bow', { pitch: 0.7 }); game.swing = 0.6; hud.update();
+  return true;
+}
+// Cada fotograma: bloqueo, esquiva, veneno, montura y números de daño
+combat.update = function (dt) {
+  dmgText.update(dt);
+  const p = game.player; if (!p || game.state !== 'playing') { game.blocking = false; return; }
+  const held = p.held(), blocking = !!(input.secondary && held && ITEMS[held.id].shield && !p.dead);
+  if (blocking && !combat.wasBlocking) combat.blockStart = performance.now();
+  combat.wasBlocking = game.blocking = blocking;
+  $('#crosshair').classList.toggle('block', blocking);
+  combat.dodgeCd -= dt; if (p.dodgeT > 0) p.dodgeT -= dt;
+  combat.crit = !p.onGround && p.vel.y < 0 && !p.inWater;
+  if (game.effLvl('poison') > 0 && (combat.poisonT -= dt) <= 0) { combat.poisonT = 1.5; if (p.health > 1) p.damage(1, 'Moriste envenenado', null, 'starve'); }
+  if (combat.petTarget && (combat.petTarget.dead || combat.petTarget.deathT)) combat.petTarget = null;
+  const m = p.mount;
+  if (m) {
+    if (m.dead || p.dead || down('sneak') || input.sneakToggle || p.headInWater) { m.ridden = false; m.pos.copy(p.pos); p.mount = null; input.sneakToggle = false; $('[data-act=sneak]')?.classList.remove('on'); hud.toast('Has desmontado'); }
+    else { m.pos.copy(p.pos); m.vel.copy(p.vel); m.yaw = camera.rotation.y + Math.PI; m.onGround = p.onGround; m.walk += Math.hypot(p.vel.x, p.vel.z) * dt * 4; m.syncMesh(dt, null); p.fallStart = null; }
+  }
+};
+
+/* ---------- Criaturas nuevas ---------- */
+MOB_MODELS.spider = (mat) => {
+  const root = new THREE.Group(), B = rgb(40, 34, 34), D = rgb(26, 22, 22), R = rgb(200, 30, 30);
+  const body = part(root, mat, 0, 6, 0, [[8, 6, 10, 0, 0, -6, B], [6, 4, 5, 0, 0, 0, D], [3, 2, 0.4, 0, 2, -11, R]]);
+  const head = part(root, mat, 0, 6, 2.5, [[7, 5, 6, 0, 0, 3, B], [1.4, 1.4, 0.3, -2, 1, 6.05, R], [1.4, 1.4, 0.3, 2, 1, 6.05, R], [1, 1, 0.3, -0.7, 2.2, 6.05, R], [1, 1, 0.3, 0.7, 2.2, 6.05, R], [1, 2, 1, -1.4, -2.6, 5.6, D], [1, 2, 1, 1.4, -2.6, 5.6, D]]);
+  const legs = [];
+  for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) legs.push(part(root, mat, sx * 3, 7, 2 - i * 2.2, [[8, 1.4, 1.4, sx * 4, 1.5, (i - 1.5) * 1.2, D], [1.4, 8, 1.4, sx * 8, -2.5, (i - 1.5) * 1.6, B]]));
+  return { root, body, head, legs, arms: [] };
+};
+Object.assign(MOBS, {
+  spider: { name: 'Araña', hp: 16, w: 1.1, h: 0.8, speed: 3, xp: 5, sound: 'skeleton', hostile: true, melee: 2, poison: true, leaps: true, drops: [[I.STRING, 0, 2], [I.SPIDER_EYE, 0, 1]], model: (m) => MOB_MODELS.spider(m) },
+  shaman: { name: 'Chamán', hp: 18, w: 0.6, h: 1.95, speed: 2, xp: 8, sound: 'raider', hostile: true, ranged: true, arrowEffect: 'poison', heals: true, drops: [[I.POISON_ARROW, 0, 3], [I.EMERALD, 0, 2], [I.BOTTLE, 0, 1]],
+    model: (m) => { const R = rgb(88, 44, 120), RD = rgb(62, 30, 90), SK = rgb(150, 190, 140), G = rgb(226, 190, 70);
+      return MOB_MODELS.humanoid(m, { limb: 4, eyeHD: true, skin: SK, arm: R, shirt: R, pants: RD, eye: rgb(20, 20, 20), shoe: RD,
+        headExtra: [...eyesHD(4, 4, 2, rgb(240, 240, 200), rgb(160, 30, 160), { w: 2, h: 1.6, pw: 0.9, ph: 1, po: 0 }), [2, 3, 2, 0, 2, 4.6, rgb(120, 160, 110)],
+          [10.4, 1.4, 10.4, 0, 7.6, 0, RD], [7, 3, 7, 0, 9.6, 0, R], [4.4, 3, 4.4, 0, 12.4, 0, R], [2, 2.4, 2, 0.6, 15, 0, RD], [7.2, 1, 7.2, 0, 8.6, 0, G]],
+        bodyExtra: [[8.6, 14, 4.6, 0, -1, 0, R], [9.4, 3, 5.4, 0, -9, 0, RD], [2, 2, 0.4, 0, 3, 2.4, G]], legExtra: [[4.4, 9, 4.4, 0, -4.5, 0, RD]] }); } },
+  brute: { name: 'Bruto', hp: 46, w: 0.9, h: 2.6, speed: 1.7, xp: 12, sound: 'golem', hostile: true, melee: 6, heavy: true, armor: 0.5, drops: [[I.IRON_INGOT, 1, 3], [I.LEATHER, 0, 2], [I.EMERALD, 0, 2]],
+    model: (m) => { const SK = rgb(120, 132, 96), SD = rgb(92, 104, 72), A = rgb(96, 96, 104), AD = rgb(66, 66, 74), T = rgb(236, 230, 210);
+      const mdl = MOB_MODELS.humanoid(m, { limb: 5, eyeHD: true, skin: SK, arm: SK, shirt: A, pants: rgb(74, 54, 40), eye: rgb(20, 10, 10), shoe: AD,
+        headExtra: [...eyesHD(4, 4.4, 2, rgb(40, 20, 20), rgb(255, 200, 60), { w: 2, h: 1.4, pw: 0.8, ph: 0.8, po: 0 }), [8.6, 3, 8.6, 0, 7, 0, AD], [1.2, 4, 1.2, 0, 4.6, 4.5, AD], [4, 2, 1.4, 0, 1.2, 4.6, SD], [1, 2.4, 1, -1.6, 2.6, 5, T], [1, 2.4, 1, 1.6, 2.6, 5, T]],
+        bodyBoxes: [[11, 13, 6, 0, 0, 0, A], [12, 4, 7, 0, 5, 0, AD], [9, 1.4, 6.4, 0, -1, 0, AD], [3, 3, 0.6, 0, 1.6, 3.2, rgb(160, 50, 40)]],
+        armExtra: [[6, 5, 6, 0, 1, 0, AD], [5.6, 3, 5.6, 0, -10, 0, SD]], legExtra: [[5.6, 3, 5.6, 0, -6, 0, AD]] });
+      mdl.root.scale.setScalar(1.3); return mdl; } },
+  bat: { name: 'Murciélago', hp: 3, w: 0.35, h: 0.35, speed: 4.2, xp: 1, sound: 'pop', ai: 'bat', drops: [],
+    model: (m) => MOB_MODELS.bird(m, { s: 0.85, body: rgb(58, 46, 44), wing: rgb(40, 32, 32), tip: rgb(30, 24, 24), belly: rgb(84, 68, 62), beak: rgb(30, 24, 24), tailC: rgb(40, 32, 32) }) },
+  horse: { name: 'Caballo', hp: 22, w: 1, h: 1.6, speed: 2.4, xp: 3, sound: 'cow', tameFood: [I.APPLE, I.WHEAT, I.CARROT, I.GOLDEN_APPLE], drops: [[I.LEATHER, 0, 2]],
+    model: (m) => { const t = Math.floor(Math.random() * 3), C = [rgb(134, 86, 48), rgb(226, 220, 206), rgb(60, 50, 46)][t], D = [rgb(96, 60, 32), rgb(190, 184, 170), rgb(38, 32, 30)][t], M = [rgb(40, 30, 24), rgb(150, 140, 126), rgb(20, 18, 18)][t], K = rgb(14, 12, 10);
+      const mdl = MOB_MODELS.quadruped(m, { legH: 13, legW: 3.4, bodyW: 10, bodyH: 10, bodyL: 22, headW: 6, headH: 6, headL: 11, headY: 8, grazes: true, body: C, leg: D, head: C, hoof: rgb(36, 30, 28),
+        bodyExtra: [[5.6, 10, 6, 0, 7, 9, C], [2, 11, 7, 0, 9, 7, M]],
+        headExtra: [[5, 4, 4, 0, 6.4, 11.4, D], [1, 1, 0.3, -1.3, 6.6, 13.45, K], [1, 1, 0.3, 1.3, 6.6, 13.45, K], ...eyesHD(11, 10, 2.2, rgb(240, 236, 226), K, { w: 1.4, h: 1.4, pw: 0.8, ph: 1 }).map((b) => (b[5] -= 4, b[3] = Math.sign(b[3]) * 3.05, b[0] = 0.3, b[2] = 1.4, b)),
+          [1.4, 3, 1.4, -2, 13, 3, C], [1.4, 3, 1.4, 2, 13, 3, C], [2, 5, 5, 0, 11.6, 0.6, M]],
+        tail: [[2.4, 12, 2.4, 0, -6, -1, M]] });
+      mdl.saddle = part(mdl.root, m, 0, 23.4, 0, [[10.6, 1.6, 9, 0, 0, 0, rgb(150, 86, 44)], [11, 4, 2, 0, -2.4, 2, rgb(110, 60, 30)], [1.4, 1.4, 1.4, 0, 1.4, 4, rgb(200, 200, 206)]]); mdl.saddle.visible = false;
+      return mdl; } },
+  wolf: { name: 'Lobo', hp: 14, w: 0.6, h: 0.85, speed: 3.2, xp: 3, sound: 'pop', tameFood: [I.BONE], drops: [],
+    model: (m) => { const G = rgb(196, 196, 200), D = rgb(150, 150, 156), W = rgb(240, 240, 240), K = rgb(18, 16, 16);
+      const mdl = MOB_MODELS.quadruped(m, { legH: 7, legW: 2.4, bodyW: 7, bodyH: 7, bodyL: 14, headW: 7, headH: 6, headL: 5, headY: 1, body: G, leg: D, head: G,
+        bodyExtra: [[8, 8, 6, 0, 0.4, 3.6, D]],
+        headExtra: [[3.4, 3, 3.6, 0, -1.2, 6.4, W], [1.4, 1, 0.5, 0, -0.2, 8.3, K], [2, 2.6, 1, -2.4, 4, 1.4, D], [2, 2.6, 1, 2.4, 4, 1.4, D], ...eyesHD(5, 1.4, 2.1, rgb(240, 220, 120), K, { w: 1.3, h: 1.1, pw: 0.6, ph: 1, po: 0 })],
+        tail: [[2.6, 2.6, 7, 0, -0.4, -3.4, G], [2, 2, 2, 0, -0.6, -7.4, W]] });
+      mdl.collar = part(mdl.root, m, 0, 11.6, 6, [[7.6, 1.4, 1.6, 0, 0, 0, rgb(206, 40, 40)]]); mdl.collar.visible = false;
+      return mdl; } },
+  panda: { name: 'Panda', hp: 20, w: 1.1, h: 1.2, speed: 1, xp: 3, sound: 'sheep', solo: true, drops: [[I.LEATHER, 0, 1]],
+    model: (m) => { const W = rgb(244, 244, 240), K = rgb(26, 26, 28);
+      return MOB_MODELS.quadruped(m, { legH: 6, legW: 5, bodyW: 13, bodyH: 12, bodyL: 18, headW: 11, headH: 9, headL: 8, headY: -1, grazes: true, body: W, leg: K, head: W,
+        bodyExtra: [[13.2, 12.2, 6, 0, 0, 4, K]],
+        headExtra: [[3.4, 3.4, 1.6, -4.6, 5.4, 1.6, K], [3.4, 3.4, 1.6, 4.6, 5.4, 1.6, K], [3, 3.4, 0.3, -2.6, 1.4, 8.05, K], [3, 3.4, 0.3, 2.6, 1.4, 8.05, K], [1, 1, 0.3, -2.4, 1.6, 8.2, W], [1, 1, 0.3, 2.4, 1.6, 8.2, W],
+          [4, 3, 1.6, 0, -1.6, 8.6, W], [1.6, 1.2, 0.4, 0, -0.8, 9.5, K]],
+        tail: [[3, 3, 2, 0, -1, -0.8, W]] }); } },
+});
+{
+  const add = (name, key, list) => { const b = BIOMES.find((x) => x.name === name); if (b) b[key] = [...b[key], ...list]; };
+  add('Llanuras', 'passive', ['horse']); add('Sabana', 'passive', ['horse', 'horse']); add('Taiga', 'passive', ['wolf']); add('Bosque', 'passive', ['wolf']); add('Montañas nevadas', 'passive', ['wolf']);
+  add('Selva tropical', 'passive', ['panda']); add('Bosque de cerezos', 'passive', ['horse']);
+  for (const n of ['Bosque', 'Bosque oscuro', 'Selva tropical', 'Llanuras', 'Pantano', 'Sabana', 'Taiga', 'Bosque encantado']) add(n, 'hostile', ['spider']);
+  for (const n of ['Pantano', 'Bosque oscuro', 'Bosque encantado', 'Selva tropical']) add(n, 'hostile', ['shaman']);
+  for (const n of ['Montañas', 'Badlands', 'Sabana', 'Taiga', 'Montañas nevadas', 'Región volcánica']) add(n, 'hostile', ['brute']);
+  Object.assign(BREED_FOOD, { horse: [I.GOLDEN_APPLE, I.HAY_BALE ?? I.WHEAT], wolf: [I.BEEF, I.COOKED_BEEF, I.PORK, I.COOKED_PORK, I.MUTTON, I.CHICKEN], panda: [I.MELON_SLICE] });
+}
+// Murciélago: vuelo errático en la oscuridad
+Mob.prototype.batAI = function (dt) {
+  const ai = this.ai, s = this.spec;
+  if ((ai.t -= dt) <= 0) { ai.t = 0.3 + Math.random() * 1.1; ai.dir = Math.random() * 6.283; ai.vy = (Math.random() - 0.5) * 3.4; }
+  const k = Math.min(1, dt * 6), ox = this.pos.x, oy = this.pos.y, oz = this.pos.z;
+  this.yaw += ((((ai.dir - this.yaw) % 6.283) + 9.425) % 6.283 - 3.1416) * k;
+  this.vel.x += (Math.sin(this.yaw) * s.speed - this.vel.x) * k; this.vel.z += (Math.cos(this.yaw) * s.speed - this.vel.z) * k; this.vel.y += ((ai.vy || 0) - this.vel.y) * k;
+  moveBody(this, this.vel.x * dt, this.vel.y * dt, this.vel.z * dt, false);
+  if (Math.hypot(this.pos.x - ox, this.pos.z - oz) < s.speed * dt * 0.3 || Math.abs(this.pos.y - oy) < Math.abs(this.vel.y) * dt * 0.3) { ai.t = 0; }
+  this.onGround = false; this.syncMesh(dt, null);
+  const f = Math.sin(this.animT * 26) * 0.9; this.model.arms[0].rotation.z = -f; this.model.arms[1].rotation.z = f; this.model.legs.forEach((l) => (l.rotation.x = 1.2));
+};
+// Lobo domado: sigue al jugador, ataca a lo que él ataque o le ataque, y se sienta si se lo pides
+function petAI(dt, game) {
+  const p = game.player, s = this.spec; this.invuln -= dt; this.hurtT -= dt; this.ai.attackCd -= dt;
+  let tx = null, tz = null, speed = 0; const t = combat.petTarget;
+  if (!this.sitting && t && !t.dead && !t.deathT && t.pos.distanceTo(this.pos) < 24) {
+    tx = t.pos.x; tz = t.pos.z; speed = s.speed * 1.4;
+    if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt(4, this.pos); } }
+  } else if (!this.sitting) {
+    const d = p.pos.distanceTo(this.pos);
+    if (d > 26 && p.onGround) { this.pos.set(p.pos.x + 1, p.pos.y + 0.2, p.pos.z + 1); this.vel.set(0, 0, 0); }
+    else if (d > 3.2) { tx = p.pos.x; tz = p.pos.z; speed = d > 8 ? s.speed * 1.5 : s.speed; }
+  }
+  if (tx != null) { const want = Math.atan2(tx - this.pos.x, tz - this.pos.z); this.yaw += ((((want - this.yaw) % 6.283) + 9.425) % 6.283 - 3.1416) * Math.min(1, dt * 8); }
+  const ox = this.pos.x, oz = this.pos.z;
+  this.vel.x = Math.sin(this.yaw) * speed; this.vel.z = Math.cos(this.yaw) * speed;
+  this.physics(dt);
+  if (speed > 0 && this.onGround && Math.hypot(this.pos.x - ox, this.pos.z - oz) < speed * dt * 0.4) this.vel.y = 7.4;      // obstáculo: salta
+  if (this.hp < s.hp && (this.regenT = (this.regenT || 0) + dt) > 6) { this.regenT = 0; this.hp++; }
+  this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4;
+  this.syncMesh(dt, this.sitting ? null : Math.atan2(p.pos.x - this.pos.x, p.pos.z - this.pos.z));
+  if (this.sitting) { this.mesh.position.y -= 0.16; this.model.legs[2].rotation.x = this.model.legs[3].rotation.x = -1.3; }
+}
+// Estados alterados y comportamientos propios (envuelve la inteligencia normal)
+{
+  const baseUpdate = Mob.prototype.update;
+  Mob.prototype.update = function (dt, game) {
+    const m = this.model;
+    if (m.collar) m.collar.visible = !!this.tamed;
+    if (m.saddle) m.saddle.visible = !!this.saddled;
+    if (this.ridden) { this.invuln -= dt; this.hurtT -= dt; return; }                 // lo mueve su jinete (combat.update)
+    if (this.poisonT > 0 && !this.deathT) {
+      this.poisonT -= dt;
+      if ((this.poisonTick = (this.poisonTick || 0) - dt) <= 0) { this.poisonTick = 1.2; if (this.hp > 1) { this.hp -= 1; this.hurtT = 0.2; dmgText.add(this.pos.x, this.pos.y + this.h + 0.3, this.pos.z, '1', 'fx'); } game.particles.emit(this.pos.x, this.pos.y + this.h * 0.7, this.pos.z, [0.4, 0.8, 0.2], 3, { gravity: -1, speed: 0.5, life: 0.6, size: 0.08 }); }
+    }
+    if (this.tamed && this.type === 'wolf' && !this.deathT) return petAI.call(this, dt, game);
+    let restore = null;
+    if ((this.stunT > 0 || this.slowT > 0) && !this.deathT) {
+      restore = this.spec;
+      this.spec = this.stunT > 0 ? (this._stun || (this._stun = { ...restore, speed: 0, melee: 0, ranged: false })) : (this._slow || (this._slow = { ...restore, speed: restore.speed * 0.45 }));
+      if (this.stunT > 0 && Math.random() < dt * 8) game.particles.emit(this.pos.x, this.pos.y + this.h + 0.3, this.pos.z, [1, 0.9, 0.3], 1, { gravity: 0, speed: 0.8, life: 0.4, size: 0.08 });
+      this.stunT -= dt; this.slowT -= dt;
+    }
+    const r = baseUpdate.call(this, dt, game);
+    if (restore) this.spec = restore;
+    const s = this.spec, p = game.player;
+    if (!this.deathT && s.hostile && game.mode === 'survival' && !p.dead && !(this.stunT > 0)) {
+      const d = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
+      if (s.leaps && this.onGround && d > 3 && d < 8 && (this.leapCd = (this.leapCd || 0) - dt) <= 0 && Math.abs(p.pos.y - this.pos.y) < 3) {   // araña: salto de ataque
+        this.leapCd = 2.5 + Math.random() * 2; this.vel.x = (p.pos.x - this.pos.x) / d * 9; this.vel.z = (p.pos.z - this.pos.z) / d * 9; this.vel.y = 7;
+      }
+      if (s.heals && (this.healCd = (this.healCd || 4) - dt) <= 0) {                                                                           // chamán: cura a sus aliados
+        this.healCd = 6;
+        for (const e of game.entities.list) if (e !== this && e.kind === 'mob' && e.spec.hostile && !e.spec.boss && !e.deathT && e.hp < e.spec.hp && e.pos.distanceTo(this.pos) < 9) {
+          e.hp = Math.min(e.spec.hp, e.hp + 5); game.particles.emit(e.pos.x, e.pos.y + e.h, e.pos.z, [0.8, 0.3, 0.9], 8, { gravity: -1, up: 1, speed: 0.6, life: 0.7, size: 0.1 });
+        }
+      }
+    }
+    return r;
+  };
+}
+// Enemigos de élite (5 %): más grandes, el triple de vida, golpean más y sueltan esmeraldas
+{
+  const baseSpawn = EntityManager.prototype.spawnMob;
+  EntityManager.prototype.spawnMob = function (type, x, y, z) {
+    const m = baseSpawn.call(this, type, x, y, z);
+    if (m && m.spec.hostile && !m.spec.boss && !m.spec.ai && game.state === 'playing' && game.mode === 'survival' && !net.applying && Math.random() < 0.05) {
+      m.elite = true; m.spec = { ...m.spec, name: m.spec.name + ' de élite', hp: m.spec.hp * 3, melee: Math.ceil((m.spec.melee || 3) * 1.5), xp: m.spec.xp * 4, drops: [...m.spec.drops, [I.EMERALD, 1, 3], [I.GOLD_INGOT, 0, 2]] };
+      m.hp = m.spec.hp; m.mesh.scale.multiplyScalar(1.28); m.h *= 1.25;
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), new THREE.MeshBasicMaterial({ color: 0xffd23c, fog: false })); gem.position.y = m.h / 1.28 + 0.5; m.mesh.add(gem);
+    }
+    return m;
+  };
+  // murciélagos en cuevas, cerca del jugador
+  const baseWild = EntityManager.prototype.spawnWildlife;
+  EntityManager.prototype.spawnWildlife = function (p, nw, nb) {
+    baseWild.call(this, p, nw, nb);
+    const x = Math.floor(p.pos.x), z = Math.floor(p.pos.z);
+    if (Math.random() < 0.2 && world.isLoaded(x, z) && p.pos.y < world.heightAt(x, z) - 6) {
+      let bats = 0; for (const e of this.list) if (e.type === 'bat') bats++;
+      const s = bats < 5 ? this.findSpot(p, 6, 22, true) : null;
+      if (s && s.cave) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) this.spawnMob('bat', s.x + 0.5, s.y + 1 + i * 0.3, s.z + 0.5);
+    }
+  };
+}
+/* ---------- Domar, ensillar, montar y dar órdenes ---------- */
+function tameInteract(e, s) {
+  const spec = e.spec, p = game.player; if (!spec.tameFood || e.deathT) return false;
+  const use = () => { if (game.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; } hud.update(); };
+  const hearts = (ok) => game.particles.emit(e.pos.x, e.pos.y + e.h + 0.2, e.pos.z, ok ? [1, 0.3, 0.4] : [0.4, 0.4, 0.4], ok ? 10 : 5, { gravity: -1, up: 1.2, speed: 0.5, life: 0.9, size: 0.1 });
+  if (!e.tamed) {
+    if (!s || !spec.tameFood.includes(s.id) || e.age < 0) return false;
+    use(); sfx.play('eat', { pos: e.pos });
+    if (Math.random() < 0.34) { e.tamed = true; e.persistent = true; e.ai.panic = 0; hearts(true); sfx.play('levelup', { vol: 0.4 }); hud.toast(e.type === 'horse' ? '¡Has domado al caballo! Ponle una montura para montarlo.' : '¡El lobo ahora es tu compañero! Úsalo para que se siente o te siga.', 3500); game.stats.add('tamed'); }
+    else { hearts(false); hud.toast('Todavía no confía en ti…', 1200); }
+    return true;
+  }
+  if (e.type === 'horse') {
+    if (s && s.id === I.SADDLE && !e.saddled) { e.saddled = true; use(); sfx.play('equip'); return true; }
+    if (s && spec.tameFood.includes(s.id) && e.hp < spec.hp) { e.hp = Math.min(spec.hp, e.hp + 6); use(); hearts(true); return true; }
+    if (s && BREED_FOOD.horse.includes(s.id)) return false;                          // deja pasar la crianza
+    if (!e.saddled) { hud.toast('Necesita una montura (cuero y hierro)'); return true; }
+    if (!p.mount) { p.mount = e; e.ridden = true; p.crouching = false; hud.toast(IS_TOUCH ? 'Montado. Toca Agachar para bajar.' : `Montado. Pulsa ${keyName(settings.keys.sneak)} para bajar.`, 2500); sfx.play('equip'); }
+    return true;
+  }
+  if (e.type === 'wolf') {
+    if (s && BREED_FOOD.wolf.includes(s.id)) { if (e.hp < spec.hp) { e.hp = Math.min(spec.hp, e.hp + 6); use(); hearts(true); return true; } return false; }
+    e.sitting = !e.sitting; hud.toast(e.sitting ? 'El lobo se queda aquí' : 'El lobo te sigue', 1200); return true;
+  }
+  return false;
+}
+// Tecla y botón de esquiva
+KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'sprint') + 1, 0, ['dodge', 'Esquivar', 'KeyR']);
+DEFAULT_KEYS.dodge = 'KeyR'; settings.keys.dodge ??= 'KeyR';
+
+/* ==========================================================================
+   §29 MINICRAFT 3.2 — RAREZAS, ANIMACIONES DE ATAQUE Y JEFES MEJORADOS
+   --------------------------------------------------------------------------
+   · Rarezas: común, poco común, raro, épico, legendario y mítico. Se ven en
+     el color del nombre (al cambiar de objeto y en la ficha del inventario).
+     Un encantamiento sube un nivel la rareza.
+   · Ataques: la espada barre a los enemigos de alrededor; cada tipo de arma
+     tiene su animación (tajo, golpe de arriba abajo, estocada) y el escudo
+     se levanta al bloquear.
+   · Jefes: presentación cinematográfica (cámara, bandas negras y título),
+     marcas de fase en la barra, música propia que acelera en cada fase y
+     furia visible en la última.
+   ► CAMBIAR LA RAREZA DE UN OBJETO: ITEMS[id].rarity = 0…5
+   ========================================================================== */
+settings.music ??= 0.6;
+const RARITY = [['Común', '#ececec'], ['Poco común', '#7be06a'], ['Raro', '#5ab4ff'], ['Épico', '#c37bff'], ['Legendario', '#ffb43c'], ['Mítico', '#ff5f7e']];
+{
+  const set = (r, ids) => ids.forEach((id) => { if (ITEMS[id]) ITEMS[id].rarity = r; });
+  set(1, [I.SHIELD, I.CROSSBOW, I.FIRE_ARROW, I.POISON_ARROW, I.ICE_ARROW, I.SPEAR_IRON, I.BATTLE_AXE_IRON, I.SADDLE, I.TOOTH_DAGGER, I.ANTLER_SPEAR, I.FUR_COAT, I.EMERALD, I.SPIDER_EYE, I.CRYSTAL_SHARD, I.SCUTE]);
+  set(2, [I.DIAMOND, I.GOLDEN_APPLE, I.SPEAR_DIAMOND, I.BATTLE_AXE_DIAMOND, I.BEAR_CLAWS, I.TURTLE_HELMET, I.FEATHER_BOOTS, I.EAGLE_FEATHER, I.RABBIT_FOOT, SEA_LANTERN]);
+  set(3, [I.TOTEM]);
+  set(4, [I.HAMMER, I.TRIDENT]);
+  set(5, [I.DRAGON_SWORD]);
+}
+function rarityOf(id, stack) {
+  const it = ITEMS[id]; if (!it) return 0;
+  let r = it.rarity;
+  if (r == null) r = it.tool ? ({ gold: 1, diamond: 2 }[it.tool.tier] || 0) : it.armor ? ({ gold: 1, diamond: 2 }[it.armor.mat] || 0) : it.potion ? 1 : 0;
+  return Math.min(5, r + (stack && stack.ench ? 1 : 0));
+}
+// Ficha del inventario y nombre al cambiar de objeto: con el color y la etiqueta de su rareza
+{
+  const baseInfo = hud.itemName.bind(hud);
+  hud.itemName = function (s) { baseInfo(s); const el = $('#itemName'); el.style.color = s ? RARITY[rarityOf(s.id, s)][1] : ''; };
+}
+function rarityTag(id, stack) { const [n, c] = RARITY[rarityOf(id, stack)]; return `<span class="rar" style="color:${c};border-color:${c}">${n}</span>`; }
+
+/* ---------- Barrido de espada ---------- */
+function sweepAttack(mt, tool, dmg) {
+  if (!tool || tool.type !== 'sword' || tool.reach || tool.stun || combat.sweepLock) return;
+  const p = game.player, near = game.entities.list.filter((e) => e !== mt && e.kind === 'mob' && !e.dead && !e.deathT && !e.tamed && !e.isPlayer && !(e instanceof Villager) && !e.spec.ai && e.pos.distanceTo(mt.pos) < 2.2 && e.pos.distanceTo(p.pos) < 4.2);
+  if (!near.length) return;
+  combat.sweepLock = true;
+  for (const e of near) { e.lastHit = 'player'; e.hurt(Math.max(1, dmg * 0.4), p.pos); }
+  combat.sweepLock = false;
+  const d = new THREE.Vector3(); camera.getWorldDirection(d);
+  for (let i = -3; i <= 3; i++) { const a = Math.atan2(d.x, d.z) + i * 0.22; game.particles.emit(p.pos.x + Math.sin(a) * 1.6, p.pos.y + 1.1, p.pos.z + Math.cos(a) * 1.6, [0.95, 0.95, 1], 2, { gravity: 0, speed: 0.4, life: 0.28, size: 0.1 }); }
+  sfx.play('swing', { pitch: 0.8 });
+}
+{
+  const baseHit = onPlayerHit;
+  onPlayerHit = function (mt, tool, dmg) {
+    baseHit(mt, tool, dmg);
+    if (combat.crit) game.shake = Math.max(game.shake, 0.18);
+    sweepAttack(mt, tool, dmg);
+  };
+}
+/* ---------- Animaciones de ataque según el arma ---------- */
+function attackStyle(s) {
+  const it = s && ITEMS[s.id]; if (!it) return 'hand';
+  if (it.shield) return 'shield';
+  const t = it.tool; if (!t) return it.crossbow || it.bow ? 'bow' : 'hand';
+  if (t.reach) return 'thrust';
+  if (t.stun || t.type === 'axe' || s.id === I.HAMMER) return 'chop';
+  if (t.type === 'sword') return 'sweep';
+  return 'hand';
+}
+// sw: 0→1→0 durante el golpe. Devuelve [posX, posY, posZ, rotX, rotY, rotZ] añadidos a la mano
+function attackPose(style, sw, blocking) {
+  if (blocking) return [-0.26, 0.1, 0.08, 0.15, -0.9, 0];
+  switch (style) {
+    case 'sweep': return [-sw * 0.32, -sw * 0.02, -sw * 0.12, -sw * 0.35, sw * 1.35, -sw * 0.7];
+    case 'chop': return [-sw * 0.05, sw * 0.08 - sw * sw * 0.22, -sw * 0.1, -sw * 1.7, sw * 0.15, 0];
+    case 'thrust': return [-sw * 0.08, sw * 0.02, -sw * 0.55, -sw * 0.15, 0, 0];
+    default: return [0, -sw * 0.12, -sw * 0.15, -sw * 0.9, sw * 0.4, -sw * 0.2];
+  }
+}
+
+/* ---------- Jefes: presentación, barra con fases, música y furia ---------- */
+const BOSS_PHASES = { guardian: [0.6, 0.25], golem: [0.5, 0.2], dragon: [0.66, 0.33] };
+const bossFx = {
+  cur: null, beatT: 0, step: 0,
+  update(dt) {
+    const b = game.boss, live = b && !b.dead && !b.deathT && game.state !== 'menu';
+    // marcas de fase en la barra
+    if (live && this.cur !== b) {
+      this.cur = b;
+      const u = $('#bossBar u'); u.querySelectorAll('i').forEach((i) => i.remove());
+      for (const f of BOSS_PHASES[b.type] || []) { const i = document.createElement('i'); i.style.left = (f * 100) + '%'; u.append(i); }
+      $('#bossBar').dataset.boss = b.type;
+    }
+    if (!live) { this.cur = null; document.body.classList.remove('cinematic'); return; }
+    // presentación: la cámara mira al jefe, aparecen las bandas y el jugador no se mueve
+    const intro = b.state === 'intro' && game.state === 'playing';
+    document.body.classList.toggle('cinematic', intro);
+    if (intro) {
+      const p = game.player, tx = b.pos.x - camera.position.x, ty = b.pos.y + b.h * 0.6 - camera.position.y, tz = b.pos.z - camera.position.z;
+      const yaw = Math.atan2(-tx, -tz), pitch = clamp(Math.atan2(ty, Math.hypot(tx, tz)), -1.2, 1.2), e = new THREE.Euler(0, 0, 0, 'YXZ').setFromQuaternion(camera.quaternion);
+      const k = Math.min(1, dt * 3.2);
+      e.y += ((((yaw - e.y) % 6.283) + 9.425) % 6.283 - 3.1416) * k; e.x += (pitch - e.x) * k; e.z = 0;
+      camera.quaternion.setFromEuler(e);
+      p.vel.x = 0; p.vel.z = 0; game.releaseInputs();
+    }
+    // furia: última fase con brillo rojo y chispas
+    if (b.phase === 3 && !b.remote) {
+      b.mat.color.r = Math.min(2.2, b.mat.color.r * 1.45 + Math.sin(performance.now() / 120) * 0.15);
+      if (Math.random() < dt * 14) game.particles.emit(b.pos.x + (Math.random() - 0.5) * b.hw * 2, b.pos.y + Math.random() * b.h, b.pos.z + (Math.random() - 0.5) * b.hw * 2, [1, 0.25, 0.15], 1, { gravity: -2, up: 1.5, life: 0.5, size: 0.12 });
+    }
+    this.music(dt, b);
+  },
+  // Música del combate: bajo, percusión y arpegio; el tempo sube con cada fase
+  music(dt, b) {
+    if (!settings.music || !sfx.ctx || sfx.ctx.state !== 'running' || b.state === 'intro') return;
+    const bpm = [0, 112, 128, 146][b.phase] || 112, beat = 60 / bpm / 2;
+    if ((this.beatT -= dt) > 0) return;
+    this.beatT += beat; if (this.beatT < 0) this.beatT = beat;
+    const d = sfx.out({ vol: settings.music * 0.9 }); if (!d) return;
+    const t = sfx.ctx.currentTime + 0.02, s = this.step++ % 16;
+    const KEYS = { guardian: [0, 3, 7, 10], golem: [0, 1, 5, 7], dragon: [0, 3, 6, 10] }, sc = KEYS[b.type] || KEYS.golem;
+    const root = { guardian: 49, golem: 41.2, dragon: 46.25 }[b.type] || 44, n = (st) => root * Math.pow(2, st / 12);
+    if (s % 4 === 0) sfx.tone(d, 'sawtooth', n(0), n(0) * 0.98, t, beat * 1.8, 0.07, { filter: 320 });                                      // bajo
+    if (s % 8 === 4 || (b.phase === 3 && s % 4 === 2)) sfx.burst(d, t, 0.12, 0.09, 'bandpass', 1800, 0.8);                               // caja
+    if (s % 4 === 0) sfx.tone(d, 'sine', 110, 40, t, 0.18, 0.12);                                                                         // bombo
+    const arp = sc[(s + (s >> 2)) % sc.length] + 24 + (b.phase >= 2 && s % 8 > 3 ? 12 : 0);
+    if (s % 2 === 0 || b.phase >= 2) sfx.tone(d, 'square', n(arp), n(arp), t, beat * 0.8, 0.022, { filter: 2400 });                     // arpegio
+  },
 };
 
 /* ==========================================================================
