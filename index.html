@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.1</title>
+<title>MiniCraft 4.2</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -850,7 +850,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.1!</span>
+      <span class="ver">¡Versión 4.2!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -860,7 +860,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.2</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -2604,23 +2604,78 @@ class WorldGen {
     this.nCont = mk(1); this.nTemp = mk(2); this.nHum = mk(3); this.nMnt = mk(4); this.nRidge = mk(5);
     this.nDet = mk(6); this.nRiver = mk(7); this.nCave1 = mk(8); this.nCave2 = mk(9); this.nCave3 = mk(10); this.nPatch = mk(11);
     this.nSp = mk(12); this.nSp2 = mk(13); this.nVol = mk(14); this.nCaveB = mk(15); this.nMesa = mk(16);
+    // generador 3 (4.2): deformación de biomas, erosión/colinas, mesetas, tipo de montaña, dunas, islas, cavernas y barrancos
+    this.nWarp = mk(17); this.nEro = mk(18); this.nPlat = mk(19); this.nMT = mk(20); this.nDune = mk(21); this.nIsl = mk(22);
+    this.nCavern = mk(23); this.nRavine = mk(24);
+    this._lakes = new Map();
   }
 
   // Altura y bioma de una columna (función pura de x, z y la semilla)
   column(x, z) {
+    if (this.gen >= 3) return this.column3(x, z);
+    return this.columnBase(x, z);
+  }
+  // Relieve continuo (altura sin redondear) y factores de una columna. Con g3 = generador 3:
+  // biomas con bordes deformados, colinas y llanos, mesetas, varios tipos de montaña, dunas,
+  // valles fluviales e islas. Sin g3 el resultado es idéntico al de las versiones anteriores.
+  columnBase(x, z, g3 = false, raw = false) {
     const cont = this.nCont.noise2D(x / 700, z / 700) * 0.7 + this.nCont.noise2D(x / 230, z / 230) * 0.3;
-    const temp = this.nTemp.noise2D(x / 620, z / 620);
-    const hum = this.nHum.noise2D(x / 520, z / 520);
+    let bx = x, bz = z;
+    if (g3) {      // las fronteras de temperatura y humedad serpentean en vez de ser manchas redondas
+      bx += this.nWarp.noise2D(x / 95, z / 95) * 40 + this.nWarp.noise2D(x / 24 + 9.1, z / 24 - 5.7) * 8;
+      bz += this.nWarp.noise2D(x / 95 + 41.3, z / 95 - 17.9) * 40 + this.nWarp.noise2D(x / 24 - 3.3, z / 24 + 8.2) * 8;
+    }
+    let temp = this.nTemp.noise2D(bx / 620, bz / 620);
+    let hum = this.nHum.noise2D(bx / 520, bz / 520);
     const mnt = smoothstep(0.12, 0.55, this.nMnt.noise2D(x / 330, z / 330)) * smoothstep(-0.25, 0.05, cont);
     const ridge = 1 - Math.abs(this.nRidge.noise2D(x / 105, z / 105));
     const det = this.nDet.noise2D(x / 46, z / 46) * 0.7 + this.nDet.noise2D(x / 16, z / 16) * 0.3;
+    const land0 = smoothstep(-0.15, 0.05, cont);
+    let hillF = 0, platF = 0, duneF = 0, islF = 0;
 
     let h = SEA + 3 + cont * 14 + det * 3.5;
+    if (g3) {
+      const ero = this.nEro.noise2D(x / 410, z / 410);
+      hillF = smoothstep(-0.05, 0.55, ero) * land0;
+      h = SEA + 3 + cont * 14 + det * 3.5 * (0.4 + smoothstep(-0.6, 0.5, ero) * 1.5);          // llanos muy llanos, zonas agrestes
+      h += hillF * (this.nDet.noise2D(x / 88 + 7.7, z / 88 - 3.1) * 0.5 + 0.5) * 10;            // colinas onduladas
+    }
     if (cont < -0.22) h -= (-0.22 - cont) * 34;                        // océanos profundos
-    h += mnt * (ridge * ridge * 36 + 5);                               // montañas con crestas
+    if (g3) {
+      // tres tipos de montaña según la zona: crestas afiladas, macizos redondeados y agujas
+      const mt = this.nMT.noise2D(x / 480, z / 480);
+      const sharp = ridge * ridge * 36 + 5 + (1 - Math.abs(this.nRidge.noise2D(x / 31 + 5, z / 31 - 9))) * 5 * ridge;
+      const round = (this.nRidge.noise2D(x / 170 + 50, z / 170 + 50) * 0.5 + 0.5) * 24 + 9 + Math.floor((det * 0.5 + 0.5) * 3) * 1.5;
+      h += mnt * lerp(round, sharp, smoothstep(-0.25, 0.15, mt));
+      const spire = smoothstep(0.78, 0.96, 1 - Math.abs(this.nRidge.noise2D(x / 42 - 70, z / 42 + 20))) * smoothstep(0.78, 0.96, 1 - Math.abs(this.nMT.noise2D(x / 38 + 11, z / 38 - 23))) * smoothstep(0.2, 0.5, mt);   // agujas sueltas
+      h += mnt * spire * 14;
+      // mesetas: tierras altas con borde escarpado
+      platF = smoothstep(0.44, 0.53, this.nPlat.noise2D(x / 360, z / 360)) * land0 * (1 - mnt) * smoothstep(-0.02, 0.1, cont);
+      if (platF > 0.001) h = lerp(h, Math.max(h, SEA + 17 + det * 2.2 + this.nDet.noise2D(x / 120 - 4, z / 120 + 4) * 3), platF);
+    } else h += mnt * (ridge * ridge * 36 + 5);                        // montañas con crestas
     const rv = Math.abs(this.nRiver.noise2D(x / 290, z / 290));
-    const riverF = (1 - smoothstep(0.018, 0.055, rv)) * smoothstep(-0.28, -0.08, cont) * (1 - mnt * 0.9);
-    h = lerp(h, SEA - 3, riverF);                                      // ríos
+    let rw = 1;
+    if (g3) {
+      rw = 0.5 + (this.nRiver.noise2D(x / 130 + 300, z / 130 - 300) * 0.5 + 0.5) * 0.8;      // el ancho del río cambia a lo largo del cauce
+      const valley = (1 - smoothstep(0.04 * rw, 0.2, rv)) * smoothstep(-0.28, -0.08, cont) * (1 - mnt * 0.8);
+      h = lerp(h, Math.min(h, SEA + 2 + det), valley * 0.72);          // valle abierto alrededor del río en vez de una zanja
+    }
+    const riverF = (1 - smoothstep(0.018 * rw, 0.055 * rw, rv)) * smoothstep(-0.28, -0.08, cont) * (1 - mnt * (g3 ? 0.55 : 0.9));
+    h = lerp(h, SEA - 3 - (g3 ? (rw - 0.5) * 2 : 0), riverF);       // ríos
+    if (g3) {
+      // islas y archipiélagos en mar abierto
+      const deep = smoothstep(-0.26, -0.38, cont);
+      if (deep > 0.001) {
+        const arch = smoothstep(0.05, 0.4, this.nIsl.noise2D(x / 560, z / 560));
+        const isl = this.nIsl.noise2D(x / 120 + 13, z / 120 - 7) * 0.7 + this.nIsl.noise2D(x / 34, z / 34) * 0.3;
+        const lone = smoothstep(0.8, 0.92, this.nIsl.noise2D(x / 64 - 200, z / 64 + 90));
+        islF = Math.max(smoothstep(0.08, 0.4, isl) * arch, lone) * deep;
+        if (islF > 0.001) h = lerp(h, SEA + 1.2 + Math.max(0, isl - 0.08) * 17 + lone * 5 + det * 1.5, islF);
+      }
+      // dunas alargadas en los desiertos
+      duneF = smoothstep(0.3, 0.42, temp) * smoothstep(0.17, 0.05, hum) * land0 * (1 - mnt) * (1 - riverF) * (1 - platF);
+      if (duneF > 0.001) { const d = 1 - Math.abs(this.nDune.noise2D((x + z * 0.4) / 30, (z - x * 0.4) / 85)); h += duneF * d * d * 5.5 * smoothstep(0.1, 0.6, this.nDune.noise2D(x / 240, z / 240) + 0.45); }
+    }
     const swampF = smoothstep(0.3, 0.55, hum) * smoothstep(-0.25, 0.1, temp) * (1 - smoothstep(0.35, 0.6, temp)) * (1 - mnt) * smoothstep(-0.18, 0.05, cont);
     h = lerp(h, SEA + 0.3 + det * 1.4, swampF * 0.9);                  // pantanos llanos
     // --- Generador 2: relieve de los biomas nuevos (se mezcla con factores suaves para no dejar cortes) ---
@@ -2639,13 +2694,28 @@ class WorldGen {
         h = lerp(h, SEA + 4 + Math.floor(clamp(m, 0, 0.999) * 5) * 4, mesaF);
       }
     }
+    let wl = SEA, lake = 0, oasis = false, ll = 0;
+    if (g3) {
+      if (h > 72) h = 72 + (h - 72) * 0.5;                              // las cumbres ya no quedan cortadas en plano
+      if (raw) return { h, cont, temp, hum, mnt, riverF, volF };
+      const lk = this.lakeAt(x, z);
+      if (lk) {                                                       // lagos por encima del nivel del mar, con su orilla
+        const dx = x - lk.x, dz = z - lk.z;
+        const d = Math.hypot(dx, dz) + this.nDet.noise2D(x / 11 + 60, z / 11 - 60) * 2.2 + Math.sin(Math.atan2(dz, dx) * 3 + lk.R) * lk.R * 0.13;
+        if (d < lk.R) { h = lk.L - 0.6 - lk.depth * (1 - (d / lk.R) * (d / lk.R)); wl = lk.L; lake = 2; }
+        else if (d < lk.R + 6) { lake = 1; const rim = lk.L + 0.2; if (h < rim) h = d < lk.R + 2.5 ? rim : lerp(rim, h, (d - lk.R - 2.5) / 3.5); }
+        oasis = lk.desert && d < lk.R + 9; if (lake) ll = lk.L;
+      }
+      // las fronteras entre biomas se entremezclan unos bloques en vez de ser una línea
+      temp += (hash2(x, z, this.seed + 901) - 0.5) * 0.03; hum += (hash2(x, z, this.seed + 902) - 0.5) * 0.03;
+    }
     h = clamp(Math.floor(h), 4, WY - 14);
 
     let b;
     if (riverF > 0.55 && h < SEA) b = BIOME.RIVER;
     else if (h < SEA - 2) b = BIOME.OCEAN;
     else if (swampF > 0.5) b = BIOME.SWAMP;
-    else if (h <= SEA + 1 && cont < 0.08) b = BIOME.BEACH;
+    else if (h <= SEA + 1 && cont < (g3 ? (islF > 0.3 ? 0.08 : -0.1) : 0.08)) b = BIOME.BEACH;
     else if (mnt > 0.45 && h > SEA + 12) b = (h > 70 || temp < -0.25) ? BIOME.SNOWY : BIOME.MOUNTAINS;
     else if (temp > 0.32 && hum < 0.15) b = BIOME.DESERT;
     else if (temp < -0.45) b = BIOME.TAIGA;
@@ -2655,7 +2725,8 @@ class WorldGen {
     if (this.gen >= 2 && h >= SEA && b !== BIOME.RIVER && b !== BIOME.OCEAN && b !== BIOME.BEACH && b !== BIOME.SWAMP) {
       if (volF > 0.5) b = cone > 0.16 ? BIOME.VOLCANO : BIOME.VOLCANIC;
       else if (b !== BIOME.MOUNTAINS && b !== BIOME.SNOWY) {
-        const sp = this.nSp.noise2D(x / 360, z / 360), sp2 = this.nSp2.noise2D(x / 310, z / 310);
+        const jt = g3 ? (hash2(x, z, this.seed + 903) - 0.5) * 0.05 : 0;
+        const sp = this.nSp.noise2D(bx / 360, bz / 360) + jt, sp2 = this.nSp2.noise2D(bx / 310, bz / 310) + jt;
         if (mesaF > 0.5) b = BIOME.BADLANDS;
         else if (b === BIOME.DESERT) b = BIOME.DESERT;
         else if (temp > 0.22 && hum > 0.16) b = BIOME.JUNGLE;
@@ -2665,7 +2736,45 @@ class WorldGen {
         else if (sp2 > 0.55) b = BIOME.ENCHANTED;
       }
     }
-    return { h, b, temp, crater };
+    if (g3) {      // biomas de la 4.2
+      if (lake === 2) b = BIOME.RIVER;
+      else if (h >= SEA && b !== BIOME.RIVER && b !== BIOME.OCEAN) {
+        if (oasis && (b === BIOME.DESERT || b === BIOME.BEACH)) b = BIOME.OASIS;
+        else if (islF > 0.5 && h > SEA + 1 && temp > -0.2 && b !== BIOME.VOLCANO && b !== BIOME.VOLCANIC) b = BIOME.ISLAND;
+        else if (b === BIOME.DESERT) { if (duneF > 0.5 && this.nDune.noise2D(x / 240, z / 240) > 0.05) b = BIOME.DUNES; }
+        else if (platF > 0.6 && h >= SEA + 13 && (b === BIOME.PLAINS || b === BIOME.FOREST || b === BIOME.TAIGA || b === BIOME.DARK_FOREST)) b = BIOME.HIGHLANDS;
+        else if (b === BIOME.PLAINS) { if (this.nSp2.noise2D(bx / 310, bz / 310) < -0.4) b = BIOME.MEADOW; }
+        else if (b === BIOME.FOREST) { const sp = this.nSp.noise2D(bx / 360, bz / 360); if (sp > 0.1 && sp <= 0.5) b = BIOME.BIRCH; }
+        else if (b === BIOME.TAIGA) { if (temp < -0.6 && hum < 0.05) b = BIOME.TUNDRA; }
+      }
+    }
+    return { h, b, temp, crater, wl, lake, ll };
+  }
+  column3(x, z) { return this.columnBase(x, z, true); }
+  // Lago de la celda que contiene (x, z), o null. Se calcula una vez por celda y se guarda.
+  lakeAt(x, z) {
+    const C = 112, gx = Math.floor(x / C), gz = Math.floor(z / C), key = gx + ',' + gz;
+    let lk = this._lakes.get(key);
+    if (lk === undefined) {
+      lk = null;
+      const s = this.seed + 4242;
+      if (hash2(gx, gz, s) < 0.8) {
+        const cx = gx * C + 28 + Math.floor(hash2(gx, gz, s + 1) * (C - 56)), cz = gz * C + 28 + Math.floor(hash2(gx, gz, s + 2) * (C - 56));
+        const R = 7 + Math.floor(hash2(gx, gz, s + 3) * 10), c = this.columnBase(cx, cz, true, true);
+        if (c.cont > -0.06 && c.riverF < 0.05 && c.mnt < 0.7 && c.volF < 0.3 && c.h > SEA + 3 && c.h < 70 && cx < 29000 && cz < 29000) {
+          let lo = c.h, hi = c.h, ok = true;
+          for (let a = 0; a < 8 && ok; a++) {
+            const q = this.columnBase(cx + Math.round(Math.cos(a * Math.PI / 4) * (R + 1)), cz + Math.round(Math.sin(a * Math.PI / 4) * (R + 1)), true, true);
+            if (q.riverF > 0.3) ok = false; lo = Math.min(lo, q.h); hi = Math.max(hi, q.h);
+          }
+          const L = Math.floor(lo);
+          if (ok && hi - lo <= 9 && L >= SEA + 2) lk = { x: cx, z: cz, R, L, depth: 2 + Math.floor(hash2(gx, gz, s + 4) * 4), desert: c.temp > 0.32 && c.hum < 0.15 };
+        }
+      }
+      if (this._lakes.size > 3000) this._lakes.clear();
+      this._lakes.set(key, lk);
+    }
+    return lk;
   }
 
   // Campo de cuevas a baja resolución (cada 4 bloques) + interpolación trilineal
@@ -2675,8 +2784,20 @@ class WorldGen {
       const x = x0 + i * 4, y = j * 4, z = z0 + k * 4;
       let cheese = this.nCave1.noise3D(x / 26, y / 16, z / 26) - 0.6;
       if (this.gen >= 2 && y > 8 && y < 46) cheese += Math.min(0.28, Math.max(0, Math.abs(this.nCaveB.noise2D(x / 170, z / 170)) - 0.36) * 1.3);   // cavernas amplias en cuevas frondosas y de cristales
-      const tube = Math.min(0.06 - Math.abs(this.nCave2.noise3D(x / 38, y / 22, z / 38)), 0.11 - Math.abs(this.nCave3.noise3D(x / 38, y / 22, z / 38)));
-      f[(i * 5 + k) * NY + j] = Math.max(cheese, tube);
+      const g3 = this.gen >= 3;
+      const tube = Math.min((g3 ? 0.072 : 0.06) - Math.abs(this.nCave2.noise3D(x / 38, y / 22, z / 38)), (g3 ? 0.125 : 0.11) - Math.abs(this.nCave3.noise3D(x / 38, y / 22, z / 38)));
+      let v = Math.max(cheese, tube);
+      if (g3) {
+        // grandes cavernas profundas
+        const df = smoothstep(3, 12, y) * (1 - smoothstep(36, 50, y));
+        if (df > 0) v = Math.max(v, this.nCavern.noise3D(x / 64, y / 28, z / 64) - (0.46 + (1 - df) * 0.6));
+        // barrancos: grietas largas abiertas al cielo, en algunas zonas
+        if (y > 13) {
+          const gate = smoothstep(0.3, 0.42, this.nRavine.noise2D(x / 420 + 90, z / 420 - 90));
+          if (gate > 0) { const w = 1 - Math.abs(this.nRavine.noise2D(x / 150, z / 150)) / 0.03; v = Math.max(v, (w - 0.2 - Math.max(0, 34 - y) / 34 * 0.7) * gate * 0.4); }
+        }
+      }
+      f[(i * 5 + k) * NY + j] = v;
     }
     return { f, NY };
   }
@@ -2686,10 +2807,13 @@ class WorldGen {
     const B = ch.blocks;
     // Alturas con 1 de margen para calcular pendientes
     const HH = new Int16Array(18 * 18), BB = new Uint8Array(18 * 18), TT = new Float32Array(18 * 18), KK = new Float32Array(18 * 18);
+    const g3 = this.gen >= 3, WL = new Int16Array(18 * 18).fill(SEA), LK = new Uint8Array(18 * 18);   // LK: 0 = sin lago; si no, nivel del agua del lago vecino
     for (let dz = -1; dz <= 16; dz++) for (let dx = -1; dx <= 16; dx++) {
       const c = this.column(x0 + dx, z0 + dz), i = (dz + 1) * 18 + dx + 1;
       HH[i] = c.h; BB[i] = c.b; TT[i] = c.temp; KK[i] = c.crater || 0;
+      if (g3) { WL[i] = c.wl; LK[i] = c.lake ? c.ll : 0; }
     }
+    const wet = g3 && this.nCavern.noise2D(x0 / 210 + 5, z0 / 210 - 5) > 0.05;     // zona de lagos subterráneos (si no, lava en el fondo)
     const cave = this.caveField(x0, z0), NY = cave.NY, CF = cave.f;
     const caveAt = (lx, y, lz) => {
       const fx = lx / 4, fy = y / 4, fz = lz / 4;
@@ -2702,7 +2826,7 @@ class WorldGen {
     };
 
     for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
-      const ci = (lz + 1) * 18 + lx + 1, h = HH[ci], b = BB[ci], temp = TT[ci], x = x0 + lx, z = z0 + lz;
+      const ci = (lz + 1) * 18 + lx + 1, h = HH[ci], b = BB[ci], temp = TT[ci], x = x0 + lx, z = z0 + lz, wl = WL[ci];
       ch.biome[lx | (lz << 4)] = b;
       const steep = Math.max(Math.abs(h - HH[ci - 1]), Math.abs(h - HH[ci + 1]), Math.abs(h - HH[ci - 18]), Math.abs(h - HH[ci + 18]));
       const patch = this.nPatch.noise2D(x / 9, z / 9);
@@ -2722,14 +2846,21 @@ class WorldGen {
         case BIOME.SNOWY:
           if (h > 76) { top = SNOW; filler = SNOW; depth = 2; } else if (steep >= 4) { top = filler = STONE; } else top = SNOWY_GRASS; break;
         case BIOME.TAIGA: top = temp < -0.6 ? SNOWY_GRASS : GRASS; break;
+        // --- biomas de la 4.2 ---
+        case BIOME.DUNES: top = filler = SAND; depth = 6; deep = 5; break;
+        case BIOME.OASIS: if (h <= wl) { top = filler = SAND; } break;
+        case BIOME.ISLAND: if (h <= SEA + 2) { top = filler = SAND; depth = 4; } break;
+        case BIOME.TUNDRA: top = patch > 0.5 ? SNOW : SNOWY_GRASS; break;
+        case BIOME.HIGHLANDS: if (steep >= 3) { top = filler = STONE; } else if (patch > 0.62) top = MOSSY_COBBLE; else if (patch < -0.7) top = GRAVEL; break;
       }
-      if (top === GRASS && h < SEA) top = h >= SEA - 2 ? SAND : DIRT;
-      if (top === SNOWY_GRASS && h < SEA) top = DIRT;
-      const noCaveTop = h < SEA + 3 ? h - 5 : h + 1;   // sin cuevas bajo el agua
-      const colTop = Math.max(h, SEA);
+      if (top === GRASS && h < wl) top = h >= wl - 2 ? SAND : DIRT;
+      if (top === SNOWY_GRASS && h < wl) top = DIRT;
+      if (g3 && LK[ci] && h >= wl && top === GRASS && h <= LK[ci] + 1 && patch > 0.1) top = SAND;        // playitas en la orilla de los lagos
+      const noCaveTop = LK[ci] ? Math.min(h, LK[ci]) - 5 : h < wl + 3 ? h - 5 : h + 1;   // sin cuevas bajo el agua ni en la orilla de un lago
+      const colTop = Math.max(h, wl);
       for (let y = 0; y <= colTop; y++) {
         let id;
-        if (y > h) id = y === SEA && (b === BIOME.SNOWY || b === BIOME.TAIGA || temp < -0.55) ? ICE : WATER;
+        if (y > h) id = y === wl && (b === BIOME.SNOWY || b === BIOME.TAIGA || b === BIOME.TUNDRA || temp < -0.55) ? ICE : WATER;
         else if (y === 0 || (y <= 2 && hash3(x, y, z, seed) < 0.6 - y * 0.25)) id = BEDROCK;
         else if (bands && y > h - 16) id = y === h && top ? top : BADLAND_BANDS[y % BADLAND_BANDS.length];
         else if (y === h) id = top;
@@ -2738,7 +2869,7 @@ class WorldGen {
         else id = STONE;
         if (id !== BEDROCK && id !== WATER && id !== ICE && y >= 3 && y < noCaveTop) {
           const c = caveAt(lx, y, lz);
-          if (c > (y > h - 6 ? 0.04 : 0)) id = AIR;
+          if (c > (y > h - 6 ? 0.04 : 0)) id = g3 && y <= (wet ? 11 : 6) ? (wet ? WATER : LAVA) : AIR;   // 4.2: lagos subterráneos o lava en lo más hondo
         }
         if (id) B[lx | (lz << 4) | (y << 8)] = id;
       }
@@ -2746,8 +2877,10 @@ class WorldGen {
 
     this.placeOres(ch);
     if (this.gen >= 2) this.decorateUnderground(ch, HH, BB);
+    if (g3) this.placeWaterfalls(ch, HH, WL);
     this.placeVegetation(ch, HH, BB);
     this.placeTrees(ch);
+    if (g3) this.placeFeatures(ch, HH);
   }
 
   // Vetas de minerales y variedades de piedra (recorrido aleatorio por chunk)
@@ -2759,6 +2892,21 @@ class WorldGen {
       [COAL_ORE, 14, 9, 5, 80], [COPPER_ORE, 8, 7, 8, 60], [IRON_ORE, 10, 6, 4, 52],
       [GOLD_ORE, 3, 6, 3, 30], [DIAMOND_ORE, 1, 5, 2, 14], [OBSIDIAN, 1, 4, 2, 9],
     ];
+    if (this.gen >= 3) {      // 4.2: cada bioma tiene sus riquezas, y de vez en cuando aparece una gran veta
+      const cb = ch.biome[8 | (8 << 4)];
+      veins[5][3] = 5; veins[5][4] = 84; veins[7][1] = 11;
+      if (cb === BIOME.MOUNTAINS || cb === BIOME.SNOWY || cb === BIOME.HIGHLANDS) veins.push([COAL_ORE, 9, 9, 44, 84], [IRON_ORE, 6, 6, 38, 78], [COPPER_ORE, 3, 6, 40, 70]);
+      else if (cb === BIOME.DESERT || cb === BIOME.DUNES || cb === BIOME.BADLANDS || cb === BIOME.SAVANNA) veins.push([COPPER_ORE, 7, 8, 10, 56]);
+      else if (cb === BIOME.JUNGLE || cb === BIOME.ISLAND || cb === BIOME.OASIS) veins.push([GOLD_ORE, 3, 6, 8, 42]);
+      else if (cb === BIOME.SWAMP) veins.push([CLAY, 4, 14, 24, 40], [COAL_ORE, 4, 10, 10, 40]);
+      else if (cb === BIOME.TAIGA || cb === BIOME.TUNDRA) veins.push([IRON_ORE, 5, 6, 8, 50]);
+      veins.push([DIAMOND_ORE, 1, 4, 2, 9]);
+      const lode = hash2(ch.cx, ch.cz, this.seed + 777);
+      if (lode < 0.04) {
+        const pick = hash2(ch.cx, ch.cz, this.seed + 778);
+        veins.push(pick < 0.3 ? [COAL_ORE, 1, 46, 20, 60] : pick < 0.58 ? [IRON_ORE, 1, 38, 12, 44] : pick < 0.8 ? [COPPER_ORE, 1, 38, 14, 50] : pick < 0.94 ? [GOLD_ORE, 1, 26, 6, 26] : [DIAMOND_ORE, 1, 14, 3, 11]);
+      }
+    }
     for (const [id, count, size, ymin, ymax] of veins) {
       for (let v = 0; v < count; v++) {
         let x = rnd() * 16, y = ymin + rnd() * (ymax - ymin), z = rnd() * 16;
@@ -2774,6 +2922,26 @@ class WorldGen {
     }
   }
 
+  // Generador 3: cascadas. El agua cae pegada a un escalón alto del terreno y forma una poza al pie.
+  // Se decide por la columna alta, así que el resultado es el mismo en los bordes de chunk.
+  placeWaterfalls(ch, HH, WL) {
+    const B = ch.blocks, x0 = ch.cx * 16, z0 = ch.cz * 16, s = this.seed;
+    for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+      const ci = (lz + 1) * 18 + lx + 1, h = HH[ci];
+      if (h < WL[ci] || h > 70) continue;
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const hn = HH[ci + dx + dz * 18]; if (hn - h < 7) continue;
+        const hx = x0 + lx + dx, hz = z0 + lz + dz;
+        if (hash2(hx >> 4, hz >> 4, s + 611) > 0.3 || hash2(hx, hz, s + 612) > 0.1) continue;
+        const base = lx | (lz << 4);
+        let y = h; while (y > 2 && B[base | (y << 8)] === AIR) y--;        // si hay una cueva debajo, el agua baja hasta el fondo
+        const g = B[base | (y << 8)]; if (g === WATER || g === LAVA || g === BEDROCK) break;
+        B[base | (y << 8)] = WATER;
+        for (let k = y + 1; k < hn; k++) if (B[base | (k << 8)] === AIR) B[base | (k << 8)] = WATER;
+        break;
+      }
+    }
+  }
   // Generador 2: cuevas frondosas, cuevas de cristales y minerales propios de cada bioma
   decorateUnderground(ch, HH, BB) {
     const B = ch.blocks, x0 = ch.cx * 16, z0 = ch.cz * 16, seed = this.seed;
@@ -2821,7 +2989,7 @@ class WorldGen {
     for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
       const ci = (lz + 1) * 18 + lx + 1, h = HH[ci], biome = BIOMES[BB[ci]];
       const base = lx | (lz << 4), below = B[base | (h << 8)], at = base | ((h + 1) << 8);
-      if (h < SEA && B[at] === WATER) { this.placeSeaLife(B, base, h, x0 + lx, z0 + lz, below); continue; }
+      if ((h < SEA || this.gen >= 3) && B[at] === WATER) { this.placeSeaLife(B, base, h, x0 + lx, z0 + lz, below); continue; }
       if (!biome.plants.length || h + 4 >= WY) continue;
       if (B[at] !== AIR) continue;
       let r = hash2(x0 + lx, z0 + lz, this.seed + 101);
@@ -2857,7 +3025,7 @@ class WorldGen {
         if (px < x0 - 4 || px > x0 + 19 || pz < z0 - 4 || pz > z0 + 19) continue;
         const col = this.column(px, pz), biome = BIOMES[col.b];
         if (!biome.trees.length || hash2(gx, gz, seed + 3) > biome.treeDensity) continue;
-        if (col.h < SEA || col.h > 78 || col.h + 14 >= WY) continue;
+        if (col.h < SEA || col.h > 78 || col.h + 14 >= WY || col.lake === 2) continue;
         if (col.b === BIOME.MOUNTAINS || col.b === BIOME.SNOWY) {
           // en las montañas solo en zonas poco empinadas
           const d = Math.max(Math.abs(this.column(px + 1, pz).h - col.h), Math.abs(this.column(px, pz + 1).h - col.h));
@@ -3645,11 +3813,15 @@ Object.assign(WorldGen.prototype, {
     const key = S.type + gx + ',' + gz;
     if (this._cand.has(key)) return this._cand.get(key);
     let res = null;
-    if (hash2(gx, gz, this.seed + S.salt * 7919) < S.chance) {
+    if (!(S.minGen && this.gen < S.minGen) && hash2(gx, gz, this.seed + S.salt * 7919) < S.chance) {
       const m = S.rad + 8, span = S.region - 2 * m;
       const x = gx * S.region + m + Math.floor(hash2(gx, gz, this.seed + S.salt) * span), z = gz * S.region + m + Math.floor(hash2(gz, gx, this.seed + S.salt * 3) * span);
       const c = this.column(x, z);
-      let ok = S.any || (S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80);
+      let ok = S.any || (S.sea ? c.b === BIOME.OCEAN && c.h <= SEA - 4 && c.h >= SEA - 15 : S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80);
+      if (ok && c.lake) ok = false;
+      if (ok && this.gen >= 3 && !S.land && !S.sea) {                     // ninguna estructura de superficie pisa un lago
+        for (let ox = -112; ox <= 112 && ok; ox += 112) for (let oz = -112; oz <= 112; oz += 112) { const lk = this.lakeAt(x + ox, z + oz); if (lk && Math.hypot(lk.x - x, lk.z - z) < lk.R + S.rad + 8) { ok = false; break; } }
+      }
       if (dimOf(x, z) !== (S.dim || 0)) ok = false;                       // cada estructura pertenece a una dimensión (§34)
       if (ok && S.flat) for (const [dx, dz] of [[-S.flat, 0], [S.flat, 0], [0, -S.flat], [0, S.flat]]) if (Math.abs(this.column(x + dx * 2, z + dz * 2).h - c.h) > S.flat) ok = false;
       // las estructuras de superficie no se pisan con una aldea o con las ruinas del dragón
@@ -7391,6 +7563,319 @@ MOBS.goldstag = {
     return md;
   },
 };
+/* ==========================================================================
+   §36 MUNDO 4.2 — generador 3
+   --------------------------------------------------------------------------
+   Solo para mundos creados a partir de la 4.2 (gen = 3). Los mundos anteriores
+   conservan su generador (1 o 2) y no cambian en nada.
+   El relieve, los ríos, lagos, islas, cavernas, barrancos, cascadas y minerales
+   del generador 3 están en §5 (WorldGen.columnBase / caveField / placeOres).
+   Aquí: biomas nuevos, detalles naturales del terreno (rocas, troncos caídos,
+   charcas, agujas de hielo, geodas…) y estructuras abandonadas y secretos.
+   ========================================================================== */
+const WORLD_GEN = 3;       // generador de los mundos nuevos
+
+// ---------- Biomas nuevos (se añaden al final: los identificadores guardados no cambian) ----------
+{
+  const add = (key, o) => { BIOME[key] = BIOMES.length; BIOMES.push({ precip: 'rain', trees: [], treeDensity: 0, plants: [], passive: [], hostile: ['zombie', 'skeleton'], ...o }); };
+  add('MEADOW', { name: 'Pradera florida', grass: [0.52, 0.9, 0.34], foliage: [0.48, 0.84, 0.3], trees: [['oak', 2], ['birch', 1]], treeDensity: 0.025,
+    plants: [[TALL_GRASS, 0.2], [POPPY, 0.07], [DANDELION, 0.08], [BLUE_ORCHID, 0.035], [PINK_PETALS, 0.05]], passive: ['rabbit', 'sheep', 'cow', 'deer'], ambient: 'birds' });
+  add('BIRCH', { name: 'Bosque de abedules', grass: [0.5, 0.82, 0.36], foliage: [0.5, 0.8, 0.34], trees: [['birch', 1]], treeDensity: 0.5,
+    plants: [[TALL_GRASS, 0.12], [FERN, 0.05], [DANDELION, 0.02], [POPPY, 0.012]], passive: ['deer', 'rabbit', 'fox', 'chicken'], ambient: 'birds' });
+  add('HIGHLANDS', { name: 'Tierras altas', grass: [0.5, 0.74, 0.4], foliage: [0.42, 0.66, 0.36], trees: [['spruce', 3], ['birch', 1]], treeDensity: 0.07,
+    plants: [[TALL_GRASS, 0.14], [FERN, 0.04], [DANDELION, 0.01]], passive: ['sheep', 'deer', 'fox'], hostile: ['skeleton', 'zombie'], fog: [0.72, 0.8, 0.9], ambient: 'wind' });
+  add('DUNES', { name: 'Mar de dunas', grass: [0.75, 0.72, 0.4], foliage: [0.7, 0.68, 0.38], precip: 'none', plants: [[DEAD_BUSH, 0.004]], hostile: ['husk'], fog: [0.97, 0.9, 0.7], ambient: 'wind' });
+  add('ISLAND', { name: 'Isla tropical', grass: [0.36, 0.88, 0.3], foliage: [0.28, 0.8, 0.22], trees: [['jungle_bush', 3], ['jungle', 1], ['acacia', 1]], treeDensity: 0.22,
+    plants: [[FERN, 0.12], [TALL_GRASS, 0.14], [MELON, 0.008], [BLUE_ORCHID, 0.02]], passive: ['chicken', 'pig', 'frog'], hostile: ['zombie', 'drowned'], fog: [0.6, 0.82, 0.9], ambient: 'jungle' });
+  add('OASIS', { name: 'Oasis', grass: [0.44, 0.86, 0.3], foliage: [0.36, 0.8, 0.24], precip: 'none', trees: [['acacia', 2], ['jungle_bush', 2]], treeDensity: 0.3,
+    plants: [[TALL_GRASS, 0.3], [FERN, 0.1], [MELON, 0.02], [BLUE_ORCHID, 0.03]], passive: ['rabbit', 'chicken', 'frog'], hostile: ['husk'], fog: [0.9, 0.9, 0.74] });
+  add('TUNDRA', { name: 'Tundra helada', grass: [0.56, 0.72, 0.6], foliage: [0.46, 0.62, 0.5], precip: 'snow', trees: [['spruce', 1]], treeDensity: 0.02,
+    plants: [[DEAD_BUSH, 0.004]], passive: ['rabbit', 'fox'], hostile: ['stray', 'skeleton'], fog: [0.86, 0.92, 1.0], ambient: 'wind' });
+}
+
+// ¿Existe este bioma en el mundo actual? (los mundos antiguos no tienen los biomas de generadores posteriores)
+const biomeAvailable = (i) => (i >= BIOME.MEADOW ? world.genVersion >= 3 : i >= BIOME.JUNGLE && i <= BIOME.VOLCANO ? world.genVersion >= 2 : true);
+
+// ---------- Detalles naturales ----------
+// Qué puede aparecer en cada bioma: [detalle, probabilidad por celda de 24×24]
+const FEATURES = {
+  [BIOME.PLAINS]: [['boulder', 0.14], ['flowers', 0.16], ['pond', 0.1], ['log', 0.04]],
+  [BIOME.MEADOW]: [['flowers', 0.5], ['pond', 0.12], ['boulder', 0.06]],
+  [BIOME.FOREST]: [['log', 0.22], ['boulder', 0.08], ['pond', 0.06], ['flowers', 0.08]],
+  [BIOME.BIRCH]: [['log', 0.22], ['flowers', 0.14], ['pond', 0.06]],
+  [BIOME.DARK_FOREST]: [['log', 0.25], ['boulder', 0.12], ['shrooms', 0.2]],
+  [BIOME.TAIGA]: [['boulder', 0.22], ['log', 0.16]],
+  [BIOME.TUNDRA]: [['spike', 0.3], ['boulder', 0.1]],
+  [BIOME.SNOWY]: [['spike', 0.12]],
+  [BIOME.MOUNTAINS]: [['boulder', 0.2]],
+  [BIOME.HIGHLANDS]: [['boulder', 0.34], ['pond', 0.08], ['log', 0.05]],
+  [BIOME.DESERT]: [['sandrock', 0.16]],
+  [BIOME.DUNES]: [['sandrock', 0.07]],
+  [BIOME.BADLANDS]: [['hoodoo', 0.3]],
+  [BIOME.SAVANNA]: [['boulder', 0.12], ['pond', 0.05]],
+  [BIOME.JUNGLE]: [['log', 0.2], ['melons', 0.14], ['pond', 0.1]],
+  [BIOME.ISLAND]: [['melons', 0.14], ['boulder', 0.1]],
+  [BIOME.SWAMP]: [['log', 0.18], ['shrooms', 0.14]],
+  [BIOME.CHERRY]: [['flowers', 0.3], ['pond', 0.1]],
+  [BIOME.MUSHROOM]: [['shrooms', 0.4]],
+  [BIOME.VOLCANIC]: [['spring', 0.2], ['boulder', 0.1]],
+  [BIOME.BEACH]: [['boulder', 0.08]],
+  [BIOME.ENCHANTED]: [['flowers', 0.2], ['pond', 0.12], ['log', 0.1]],
+};
+const FEATURE_LOG = { [BIOME.BIRCH]: BIRCH_LOG, [BIOME.DARK_FOREST]: DARK_LOG, [BIOME.TAIGA]: SPRUCE_LOG, [BIOME.HIGHLANDS]: SPRUCE_LOG, [BIOME.JUNGLE]: JUNGLE_LOG, [BIOME.ENCHANTED]: ENCH_LOG };
+
+Object.assign(WorldGen.prototype, {
+  placeFeatures(ch, HH) {
+    const x0 = ch.cx * 16, z0 = ch.cz * 16, B = ch.blocks, seed = this.seed, C = 24, M = 8;
+    const inb = (x, z) => x >= x0 && x < x0 + 16 && z >= z0 && z < z0 + 16;
+    const hAt = (x, z) => (x >= x0 - 1 && x <= x0 + 16 && z >= z0 - 1 && z <= z0 + 16 ? HH[(z - z0 + 1) * 18 + x - x0 + 1] : -1);
+    const idx = (x, y, z) => (x - x0) | ((z - z0) << 4) | (y << 8);
+    // mode 0: solo en aire · 1: también sobre plantas y hojas · 2: sustituye lo que haya
+    const set = (x, y, z, id, mode = 1) => {
+      if (!inb(x, z) || y < 2 || y >= WY - 1) return;
+      const i = idx(x, y, z), cur = B[i];
+      if (mode === 2 || cur === AIR || (mode === 1 && (BLOCKS[cur].replaceable || BLOCKS[cur].leaves))) B[i] = id;
+    };
+    const get = (x, y, z) => (inb(x, z) && y > 0 && y < WY ? B[idx(x, y, z)] : -1);
+    for (let gx = Math.floor((x0 - M) / C); gx <= Math.floor((x0 + 15 + M) / C); gx++) for (let gz = Math.floor((z0 - M) / C); gz <= Math.floor((z0 + 15 + M) / C); gz++) {
+      const px = gx * C + 4 + Math.floor(hash2(gx, gz, seed + 1202) * (C - 8)), pz = gz * C + 4 + Math.floor(hash2(gx, gz, seed + 1203) * (C - 8));
+      if (px < x0 - M || px > x0 + 15 + M || pz < z0 - M || pz > z0 + 15 + M) continue;
+      const col = this.column(px, pz), list = FEATURES[col.b];
+      if (!list || col.lake || col.h < SEA || col.h > 76) continue;
+      let r = hash2(gx, gz, seed + 1201), kind = null;
+      for (const [k, p] of list) { if (r < p) { kind = k; break; } r -= p; }
+      if (!kind) continue;
+      const rnd = mulberry32(Math.imul(px, 2654435761) ^ Math.imul(pz, 40503) ^ seed ^ 0x42), h = col.h;
+      switch (kind) {
+        case 'boulder': case 'sandrock': {
+          const R = 1.2 + rnd() * 1.5, sand = kind === 'sandrock', mossy = col.b !== BIOME.MOUNTAINS && col.b !== BIOME.BEACH && col.b !== BIOME.VOLCANIC && !sand;
+          const n = sand ? 1 + Math.floor(rnd() * 3) : 1;
+          for (let q = 0; q < n; q++) {
+            const ox = px + (q ? Math.floor(rnd() * 7) - 3 : 0), oz = pz + (q ? Math.floor(rnd() * 7) - 3 : 0), rr = q ? R * 0.7 : R, hh = sand ? 1 + Math.floor(rnd() * 3) : 0;
+            for (let dy = -1; dy <= Math.ceil(rr) + hh; dy++) for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) {
+              const v = rnd(), ey = Math.max(0, dy - hh);
+              if (dx * dx + ey * ey * 1.4 + dz * dz > rr * rr + v * 0.9) continue;
+              set(ox + dx, h + dy, oz + dz, sand ? (v < 0.3 ? SMOOTH_SANDSTONE : SANDSTONE) : col.b === BIOME.VOLCANIC ? (v < 0.4 ? OBSIDIAN : BASALT) : mossy && v < 0.45 ? MOSSY_COBBLE : v < 0.75 ? COBBLE : v < 0.9 ? ANDESITE : STONE, 2);
+            }
+          }
+          break;
+        }
+        case 'flowers': {
+          const R = 3 + rnd() * 3.5, kinds = col.b === BIOME.ENCHANTED ? [GLOW_FLOWER, BLUE_ORCHID, FERN] : col.b === BIOME.CHERRY ? [PINK_PETALS, POPPY, PINK_PETALS] : [[POPPY, DANDELION, POPPY], [DANDELION, BLUE_ORCHID, DANDELION], [BLUE_ORCHID, POPPY, PINK_PETALS]][Math.floor(rnd() * 3)];
+          for (let dz = -7; dz <= 7; dz++) for (let dx = -7; dx <= 7; dx++) {
+            const v = rnd(), w = rnd(), d = Math.hypot(dx, dz); if (d > R || v > 0.62 * (1 - d / (R + 1))) continue;
+            const y = hAt(px + dx, pz + dz); if (y < 0 || get(px + dx, y, pz + dz) !== GRASS) continue;
+            set(px + dx, y + 1, pz + dz, kinds[Math.floor(w * kinds.length)], 1);
+          }
+          break;
+        }
+        case 'log': {
+          const dir = rnd() < 0.5, len = 3 + Math.floor(rnd() * 4), wood = FEATURE_LOG[col.b] || (rnd() < 0.35 ? BIRCH_LOG : OAK_LOG);
+          for (let k = 0; k < len; k++) {
+            const x = px + (dir ? k : 0), z = pz + (dir ? 0 : k), v = rnd(), y = hAt(x, z); if (y < 0 || Math.abs(y - h) > 1) continue;
+            const g = get(x, y, z); if (g === WATER || g === AIR) continue;
+            set(x, y + 1, z, wood, 1);
+            if (v < 0.3) set(x, y + 2, z, v < 0.15 ? MUSHROOM_BROWN : MUSHROOM_RED, 0);
+          }
+          break;
+        }
+        case 'shrooms': {
+          for (let k = 0; k < 14; k++) {
+            const x = px + Math.floor(rnd() * 9) - 4, z = pz + Math.floor(rnd() * 9) - 4, v = rnd(), y = hAt(x, z); if (y < 0) continue;
+            const g = get(x, y, z); if (g === GRASS || g === MYCELIUM || g === DIRT) set(x, y + 1, z, v < 0.5 ? MUSHROOM_RED : MUSHROOM_BROWN, 1);
+          }
+          break;
+        }
+        case 'melons': {
+          for (let k = 0; k < 6; k++) {
+            const x = px + Math.floor(rnd() * 7) - 3, z = pz + Math.floor(rnd() * 7) - 3, y = hAt(x, z); if (y < 0) continue;
+            if (get(x, y, z) === GRASS) set(x, y + 1, z, MELON, 1);
+          }
+          break;
+        }
+        case 'spike': {
+          const H = 5 + Math.floor(rnd() * 9), R = 1.3 + rnd() * 1.4;
+          for (let y = -2; y <= H; y++) { const rr = R * (1 - Math.max(0, y) / (H + 1)); for (let dz = -3; dz <= 3; dz++) for (let dx = -3; dx <= 3; dx++) if (dx * dx + dz * dz <= rr * rr + 0.2) set(px + dx, h + y, pz + dz, y > H - 2 || (dx * dx + dz * dz > rr * rr - 0.8 && (dx + dz + y) % 3 === 0) ? SNOW : ICE, 2); }
+          break;
+        }
+        case 'hoodoo': {
+          const n = 1 + Math.floor(rnd() * 3);
+          for (let q = 0; q < n; q++) {
+            const ox = px + (q ? Math.floor(rnd() * 9) - 4 : 0), oz = pz + (q ? Math.floor(rnd() * 9) - 4 : 0), H = 4 + Math.floor(rnd() * 6), base = hAt(ox, oz) >= 0 ? hAt(ox, oz) : h;
+            for (let y = 0; y <= H; y++) {
+              const wide = y >= H - 1 || y < 1;
+              for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (wide ? Math.abs(dx) + Math.abs(dz) < 2 : !dx && !dz) set(ox + dx, base + y, oz + dz, y === H ? TERRACOTTA_LIGHT : BADLAND_BANDS[(base + y) % BADLAND_BANDS.length], 2);
+            }
+          }
+          break;
+        }
+        case 'pond': case 'spring': {
+          // el agua solo entra en columnas a la misma altura y con vecinas que no queden por debajo (no se derrama)
+          const R = 2 + rnd() * 2.2, hot = kind === 'spring';
+          for (let dz = -5; dz <= 5; dz++) for (let dx = -5; dx <= 5; dx++) {
+            const v = rnd(), x = px + dx, z = pz + dz, d = Math.hypot(dx, dz) + v * 0.8;
+            if (d > R + 1.2 || !inb(x, z) || hAt(x, z) !== h) continue;
+            if (d > R) { if (hot && get(x, h, z) !== WATER) set(x, h, z, BASALT, 2); continue; }
+            if (hAt(x + 1, z) < h || hAt(x - 1, z) < h || hAt(x, z + 1) < h || hAt(x, z - 1) < h) continue;
+            const top = get(x, h, z); if (top === AIR || top === WATER || get(x, h + 1, z) === WATER || get(x, h + 1, z) > 0 && !BLOCKS[get(x, h + 1, z)].replaceable) continue;
+            set(x, h, z, WATER, 2); set(x, h + 1, z, AIR, 2);
+            const under = get(x, h - 1, z); if (under === AIR || hot) set(x, h - 1, z, hot ? MAGMA : CLAY, 2); else if (v < 0.3) set(x, h - 1, z, CLAY, 2);
+            if (!hot && v > 0.9) set(x, h + 1, z, LILY_PAD, 0);
+          }
+          break;
+        }
+      }
+    }
+    // geodas: esferas huecas forradas de cristal, escondidas en la roca
+    const G = 44, GM = 7;
+    for (let gx = Math.floor((x0 - GM) / G); gx <= Math.floor((x0 + 15 + GM) / G); gx++) for (let gz = Math.floor((z0 - GM) / G); gz <= Math.floor((z0 + 15 + GM) / G); gz++) {
+      if (hash2(gx, gz, seed + 1301) > 0.14) continue;
+      const px = gx * G + 7 + Math.floor(hash2(gx, gz, seed + 1302) * (G - 14)), pz = gz * G + 7 + Math.floor(hash2(gx, gz, seed + 1303) * (G - 14));
+      if (px < x0 - GM || px > x0 + 15 + GM || pz < z0 - GM || pz > z0 + 15 + GM) continue;
+      const R = 3 + hash2(gx, gz, seed + 1304) * 1.6, cy = 11 + Math.floor(hash2(gx, gz, seed + 1305) * 22), col = this.column(px, pz);
+      if (col.h < cy + R + 8 || col.lake) continue;
+      const rnd = mulberry32(Math.imul(px, 668265263) ^ Math.imul(pz, 374761393) ^ seed);
+      for (let dy = -6; dy <= 6; dy++) for (let dz = -6; dz <= 6; dz++) for (let dx = -6; dx <= 6; dx++) {
+        const v = rnd(), d = Math.hypot(dx, dy * 1.15, dz); if (d > R + 1) continue;
+        const x = px + dx, y = cy + dy, z = pz + dz;
+        if (d > R) set(x, y, z, v < 0.5 ? BASALT : ANDESITE, 2);
+        else if (d > R - 1) set(x, y, z, v < 0.035 ? DIAMOND_ORE : v < 0.09 ? GLOWSTONE : CRYSTAL_BLOCK, 2);
+        else set(x, y, z, Math.hypot(dx, (dy - 1) * 1.15, dz) > R - 1 && v < 0.55 ? CRYSTAL : AIR, 2);
+      }
+    }
+  },
+});
+
+// ---------- Estructuras abandonadas y secretos (solo generador 3) ----------
+Object.assign(LOOT, {
+  cabin: [[I.BREAD, 1, 3, 4], [I.COAL, 2, 6, 4], [I.STRING, 1, 4, 3], [I.APPLE, 1, 3, 3], [TORCH, 2, 8, 4], [I.IRON_INGOT, 1, 3, 2], [I.BOW, 1, 1, 1], [I.ARROW, 3, 9, 2], [toolId('iron', 'axe'), 1, 1, 1], [I.COMPASS, 1, 1, 1]],
+  wreck: [[I.GOLD_INGOT, 1, 5, 4], [I.IRON_INGOT, 2, 6, 4], [I.EMERALD, 1, 5, 3], [I.COMPASS, 1, 1, 2], [I.STRING, 2, 6, 3], [I.COAL, 2, 8, 3], [I.DIAMOND, 1, 2, 1], [potionId('water', 0), 1, 1, 2], [I.BOTTLE, 1, 3, 2]],
+  treasure: [[I.GOLD_INGOT, 3, 8, 5], [I.EMERALD, 3, 8, 4], [I.DIAMOND, 1, 4, 3], [I.GOLDEN_APPLE, 1, 2, 2], [I.IRON_INGOT, 2, 6, 3], [I.TOTEM, 1, 1, 1], [toolId('diamond', 'sword'), 1, 1, 1, true]],
+});
+const stonyMix = (rnd) => { const v = rnd(); return v < 0.35 ? MOSSY_BRICKS : v < 0.6 ? CRACKED_BRICKS : STONE_BRICKS; };
+
+function buildCabin(plan, cx, cz, b, rnd, gen) {
+  const H = gen.column(cx, cz).h;
+  const [plank, log, slab] = b === BIOME.TAIGA || b === BIOME.HIGHLANDS ? [SPRUCE_PLANKS, SPRUCE_LOG, SPRUCE_SLAB] : b === BIOME.BIRCH ? [BIRCH_PLANKS, BIRCH_LOG, BIRCH_SLAB] : b === BIOME.DARK_FOREST ? [DARK_PLANKS, DARK_LOG, DARK_SLAB] : [OAK_PLANKS, OAK_LOG, OAK_SLAB];
+  for (let x = -3; x <= 3; x++) for (let z = -2; z <= 2; z++) {
+    const g = gen.column(cx + x, cz + z).h, corner = Math.abs(x) === 3 && Math.abs(z) === 2, wall = Math.abs(x) === 3 || Math.abs(z) === 2;
+    for (let y = Math.min(g, H - 1); y < H; y++) plan.set(cx + x, y, cz + z, COBBLE);
+    plan.set(cx + x, H, cz + z, wall ? COBBLE : plank);
+    for (let y = 1; y <= 5; y++) plan.set(cx + x, H + y, cz + z, AIR);
+    if (wall) for (let y = 1; y <= 3; y++) { if (corner || rnd() > 0.16 + y * 0.05) plan.set(cx + x, H + y, cz + z, corner ? log : plank); }
+    if (rnd() > 0.32) plan.set(cx + x, H + 4, cz + z, slab);                 // tejado con agujeros
+  }
+  plan.set(cx, H + 1, cz - 2, AIR); plan.set(cx, H + 2, cz - 2, AIR);        // hueco de la puerta
+  plan.set(cx - 2, H + 3, cz + 1, COBWEB); plan.set(cx + 2, H + 3, cz - 1, COBWEB); plan.set(cx + 2, H + 2, cz + 1, COBWEB);
+  plan.set(cx - 2, H + 1, cz - 1, CRAFTING_TABLE); plan.set(cx - 2, H + 1, cz + 1, FURNACE); plan.set(cx + 1, H + 1, cz + 1, BARREL);
+  plan.chest(cx + 2, H + 1, cz + 1, 'cabin', 0);
+  // sótano escondido bajo una tabla distinta del suelo
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) for (let y = H - 4; y <= H - 1; y++) plan.set(cx + x, y, cz + z, Math.abs(x) === 1 || Math.abs(z) === 1 || y === H - 4 ? COBBLE : AIR);
+  plan.set(cx, H, cz, DARK_PLANKS === plank ? OAK_PLANKS : DARK_PLANKS); plan.set(cx, H - 1, cz, AIR);
+  plan.chest(cx, H - 3, cz, 'secret', 0);
+  plan.poi = { type: 'cabin', name: 'Cabaña abandonada', x: cx, z: cz, y: H };
+}
+function buildMenhir(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h;
+  for (let a = 0; a < 8; a++) {
+    const x = cx + Math.round(Math.cos(a * Math.PI / 4) * 5), z = cz + Math.round(Math.sin(a * Math.PI / 4) * 5), g = gen.column(x, z).h, n = rnd() < 0.15 ? 1 : 2 + Math.floor(rnd() * 3);
+    for (let y = 0; y <= n; y++) plan.set(x, g + y, z, rnd() < 0.5 ? MOSSY_COBBLE : rnd() < 0.5 ? COBBLE : STONE);
+  }
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) {
+    plan.set(cx + x, H, cz + z, x || z ? MOSSY_BRICKS : CHISELED_BRICKS);
+    for (let y = H - 4; y <= H - 1; y++) plan.set(cx + x, y, cz + z, (x || z) || y === H - 4 || y === H - 1 ? STONE_BRICKS : AIR);
+  }
+  plan.chest(cx, H - 3, cz, 'secret', 0);
+  plan.poi = { type: 'menhir', name: 'Círculo de piedras', x: cx, z: cz, y: H };
+}
+function buildWell(plan, cx, cz, b, rnd, gen) {
+  const H = gen.column(cx, cz).h, wall = b === BIOME.SAVANNA ? COBBLE : SANDSTONE, slab = b === BIOME.SAVANNA ? COBBLE_SLAB : SANDSTONE_SLAB;
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) {
+    const g = gen.column(cx + x, cz + z).h;
+    for (let y = Math.min(g, H); y <= H + 1; y++) plan.set(cx + x, y, cz + z, x || z ? wall : AIR);
+    for (let y = H - 9; y < H; y++) plan.set(cx + x, y, cz + z, x || z ? wall : AIR);     // pozo seco revestido
+    if (Math.abs(x) === 1 && Math.abs(z) === 1) { plan.set(cx + x, H + 2, cz + z, FENCE); plan.set(cx + x, H + 3, cz + z, FENCE); }
+    plan.set(cx + x, H + 4, cz + z, slab);
+  }
+  for (let y = H - 9; y <= H + 1; y++) plan.set(cx, y, cz, LADDER, 2);                       // escalera apoyada en la pared norte
+  // cámara al fondo
+  for (let x = -2; x <= 2; x++) for (let z = 1; z <= 5; z++) for (let y = H - 13; y <= H - 9; y++) {
+    const shell = Math.abs(x) === 2 || z === 1 || z === 5 || y === H - 13 || y === H - 9;
+    plan.set(cx + x, y, cz + z, shell ? (rnd() < 0.3 ? CRACKED_BRICKS : wall) : AIR);
+  }
+  for (let y = H - 12; y <= H - 10; y++) { plan.set(cx, y, cz, AIR); plan.set(cx, y, cz + 1, AIR); }
+  for (let y = H - 12; y <= H - 10; y++) plan.set(cx, y, cz, LADDER, 2);
+  plan.set(cx, H - 13, cz, wall); plan.set(cx, H - 9, cz, LADDER, 2);
+  plan.chest(cx + 1, H - 12, cz + 4, 'ruins', 0); plan.set(cx - 1, H - 12, cz + 4, COBWEB); plan.set(cx - 1, H - 10, cz + 2, COBWEB);
+  plan.mobs.push(['husk', cx + 0.5, H - 12, cz + 3.5]);
+  plan.poi = { type: 'well', name: 'Pozo olvidado', x: cx, z: cz, y: H };
+}
+function buildObelisk(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h;
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+    const g = gen.column(cx + x, cz + z).h;
+    for (let y = Math.min(g, H); y <= H; y++) plan.set(cx + x, y, cz + z, POL_BASALT);
+    for (let y = 1; y <= 9; y++) plan.set(cx + x, H + y, cz + z, AIR);
+    if (Math.abs(x) === 2 && Math.abs(z) === 2) { plan.set(cx + x, H + 1, cz + z, CRYSTAL_BLOCK); plan.set(cx + x, H + 2, cz + z, CRYSTAL); }
+  }
+  for (let y = 1; y <= 7; y++) plan.set(cx, H + y, cz, OBSIDIAN);
+  plan.set(cx, H + 8, cz, GLOWSTONE);
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) for (let y = H - 5; y <= H - 1; y++) plan.set(cx + x, y, cz + z, (x || z) || y === H - 5 || y === H - 1 ? POL_BASALT : AIR);
+  plan.chest(cx, H - 4, cz, 'secret', 0);
+  plan.poi = { type: 'obelisk', name: 'Monolito', x: cx, z: cz, y: H };
+}
+function buildWreck(plan, cx, cz, rnd, gen) {
+  const y0 = gen.column(cx, cz).h + 1, dirX = rnd() < 0.5, plank = rnd() < 0.5 ? SPRUCE_PLANKS : DARK_PLANKS, log = SPRUCE_LOG;
+  const put = (l, y, w, id) => plan.set(cx + (dirX ? l : w), y, cz + (dirX ? w : l), id);
+  const fill = (y) => (y <= SEA ? WATER : AIR);
+  for (let l = -6; l <= 6; l++) {
+    const half = Math.abs(l) === 6 ? 0 : Math.abs(l) === 5 ? 1 : 2;
+    for (let w = -half; w <= half; w++) {
+      const side = Math.abs(w) === half || Math.abs(l) === 6, broken = rnd() < 0.13;
+      put(l, y0, w, half === 2 && Math.abs(w) === 2 ? fill(y0) : plank);                      // quilla
+      for (let y = 1; y <= 3; y++) put(l, y0 + y, w, side ? (broken && y > 1 ? fill(y0 + y) : plank) : fill(y0 + y));
+      if (!side && rnd() > 0.4) put(l, y0 + 3, w, plank);                                     // cubierta rota
+    }
+  }
+  for (let y = 1; y <= 8; y++) put(0, y0 + y, 0, y <= 6 || rnd() < 0.6 ? log : fill(y0 + y));  // mástil
+  put(0, y0 + 6, -1, FENCE); put(0, y0 + 6, 1, FENCE);
+  const [ax, az] = dirX ? [cx - 3, cz] : [cx, cz - 3], [bx, bz] = dirX ? [cx + 4, cz] : [cx, cz + 4];
+  plan.chest(ax, y0 + 1, az, 'wreck', 0);
+  if (rnd() < 0.6) plan.chest(bx, y0 + 1, bz, 'wreck', 0);
+  plan.poi = { type: 'wreck', name: 'Naufragio', x: cx, z: cz, y: y0 };
+}
+function buildTreasure(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h;
+  for (const [x, z] of [[0, 0], [1, 1], [-1, -1], [1, -1], [-1, 1]]) plan.set(cx + x, gen.column(cx + x, cz + z).h, cz + z, MOSSY_COBBLE);   // la X marca el lugar
+  plan.chest(cx, H - 3, cz, 'treasure', 0);
+  plan.poi = { type: 'treasure', name: 'Tesoro enterrado', x: cx, z: cz, y: H };
+}
+function buildWatch(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h;
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+    const g = gen.column(cx + x, cz + z).h, wall = Math.abs(x) === 2 || Math.abs(z) === 2, corner = Math.abs(x) === 2 && Math.abs(z) === 2;
+    for (let y = Math.min(g, H); y <= H; y++) plan.set(cx + x, y, cz + z, stonyMix(rnd));
+    const top = wall ? 4 + Math.floor(rnd() * 5) : 0;
+    for (let y = 1; y <= 9; y++) plan.set(cx + x, H + y, cz + z, wall && !corner && y <= top ? stonyMix(rnd) : corner && y <= top + 1 ? CHISELED_BRICKS : AIR);
+  }
+  plan.set(cx, H + 1, cz - 2, AIR); plan.set(cx, H + 2, cz - 2, AIR);
+  for (let y = 1; y <= 4; y++) { plan.set(cx + 1, H + y, cz - 2, STONE_BRICKS); plan.set(cx + 1, H + y, cz - 1, LADDER, 2); }
+  plan.set(cx - 1, H + 1, cz - 1, CAMPFIRE); plan.set(cx - 1, H + 3, cz + 1, COBWEB);
+  plan.chest(cx - 1, H + 1, cz + 1, 'tower', 0);
+  plan.mobs.push(['skeleton', cx + 0.5, H + 1, cz + 0.5]);
+  plan.poi = { type: 'watch', name: 'Atalaya en ruinas', x: cx, z: cz, y: H };
+}
+STRUCTS.push(
+  { type: 'cabin', minGen: 3, region: 176, chance: 0.5, salt: 41, rad: 6, biomes: [B_.FOREST, B_.BIRCH, B_.TAIGA, B_.DARK_FOREST, B_.HIGHLANDS, B_.MEADOW, B_.SWAMP], build: (p, x, z, b, r, g) => buildCabin(p, x, z, b, r, g), flat: 3 },
+  { type: 'menhir', minGen: 3, region: 208, chance: 0.5, salt: 42, rad: 7, biomes: [B_.PLAINS, B_.MEADOW, B_.HIGHLANDS, B_.TUNDRA, B_.SAVANNA, B_.ENCHANTED], build: (p, x, z, b, r, g) => buildMenhir(p, x, z, r, g), flat: 3 },
+  { type: 'well', minGen: 3, region: 192, chance: 0.5, salt: 43, rad: 6, biomes: [B_.DESERT, B_.DUNES, B_.SAVANNA, B_.BADLANDS], build: (p, x, z, b, r, g) => buildWell(p, x, z, b, r, g), flat: 3 },
+  { type: 'obelisk', minGen: 3, region: 288, chance: 0.5, salt: 44, rad: 5, biomes: [B_.PLAINS, B_.DESERT, B_.DUNES, B_.TUNDRA, B_.SNOWY, B_.ISLAND, B_.BADLANDS, B_.HIGHLANDS, B_.JUNGLE, B_.MUSHROOM], build: (p, x, z, b, r, g) => buildObelisk(p, x, z, r, g), flat: 4 },
+  { type: 'wreck', minGen: 3, region: 184, chance: 0.55, salt: 45, rad: 9, sea: true, build: (p, x, z, b, r, g) => buildWreck(p, x, z, r, g) },
+  { type: 'treasure', minGen: 3, region: 120, chance: 0.6, salt: 46, rad: 3, biomes: [B_.ISLAND, B_.BEACH], build: (p, x, z, b, r, g) => buildTreasure(p, x, z, r, g), flat: 3 },
+  { type: 'watch', minGen: 3, region: 200, chance: 0.55, salt: 47, rad: 5, biomes: [B_.MOUNTAINS, B_.SNOWY, B_.HIGHLANDS], build: (p, x, z, b, r, g) => buildWatch(p, x, z, r, g), flat: 7 },
+);
+const POI_ICON_42 = { cabin: '🏚', menhir: '🪨', well: '🕳', obelisk: '🗿', wreck: '⚓', treasure: '💰', watch: '🏰' };
+const POI_NAMES_42 = { cabin: 'Cabaña abandonada', menhir: 'Círculo de piedras', well: 'Pozo olvidado', obelisk: 'Monolito', wreck: 'Naufragio', treasure: 'Tesoro enterrado', watch: 'Atalaya en ruinas' };
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -8249,7 +8734,7 @@ function initMenus() {
     const seedTxt = $('#wSeed').value.trim();
     let seed = seedTxt ? (/^-?\d+$/.test(seedTxt) ? parseInt(seedTxt, 10) : [...seedTxt].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261)) : Math.floor(Math.random() * 2147483647);
     seed = seed | 0;
-    const meta = { id: 'w' + Date.now().toString(36), name, seed, gen: 2, mode: $('#createScreen').dataset.mode || 'survival',
+    const meta = { id: 'w' + Date.now().toString(36), name, seed, gen: WORLD_GEN, mode: $('#createScreen').dataset.mode || 'survival',
       keepInventory: $('#wKeep').checked, dayLength: +$('#wDay').value, created: Date.now(), last: Date.now() };
     const list = listWorlds(); list.push(meta); saveWorldIndex(list);
     game.startWorld(meta.id, meta);
@@ -9909,7 +10394,7 @@ function findSpawn(seed) {
     for (let a = 0; a < 8; a++) {
       const x = Math.round(Math.cos(a * Math.PI / 4) * r), z = Math.round(Math.sin(a * Math.PI / 4) * r);
       const c = g.column(x, z);
-      if (c.h > SEA + 1 && c.h < 70 && c.b !== BIOME.OCEAN && c.b !== BIOME.RIVER && c.b !== BIOME.BEACH) return [x, z];
+      if (c.h > SEA + 1 && c.h < 70 && c.b !== BIOME.OCEAN && c.b !== BIOME.RIVER && c.b !== BIOME.BEACH && c.b !== BIOME.ISLAND && !c.lake) return [x, z];
     }
   }
   return [0, 0];
@@ -10022,7 +10507,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.2  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -10047,7 +10532,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -10686,7 +11171,7 @@ Object.assign(game, {
 
 /* ---------- Estructuras en ejecución: habitantes, descubrimientos y jefes ---------- */
 const POI_ACH = { village: 'find_village', dungeon: 'find_dungeon', temple: 'find_temple', tower: 'find_tower', ruins: 'find_ruins', mine: 'find_mine', camp: 'find_camp', abyss: 'find_abyss', dragon: 'find_dragon' };
-const POI_ICON = { jtemple: '🗿', shrine: '✨', forge: '🌋', village: '🏘', dungeon: '💀', temple: '🔺', tower: '🗼', ruins: '🏛', mine: '⛏', camp: '⛺', abyss: '🌀', dragon: '🐉', base: '🏠', marker: '📍' };
+const POI_ICON = { jtemple: '🗿', shrine: '✨', forge: '🌋', village: '🏘', dungeon: '💀', temple: '🔺', tower: '🗼', ruins: '🏛', mine: '⛏', camp: '⛺', abyss: '🌀', dragon: '🐉', base: '🏠', marker: '📍', ...POI_ICON_42 };
 Object.assign(game, {
   structState(id) { let s = this.structs.get(id); if (!s) { s = {}; this.structs.set(id, s); } return s; },
   structTick() {
@@ -12449,7 +12934,7 @@ const QUEST_POOL = {
   guard: [['hunt', 'hostile', 6, 12], ['hunt', 'zombie', 5, 10], ['hunt', 'spider', 4, 8], ['hunt', 'brute', 1, 1], ['hunt', 'shaman', 1, 2]],
 };
 const HUNT_NAMES = { hostile: 'monstruos', zombie: 'zombis', skeleton: 'esqueletos', spider: 'arañas', brute: 'brutos', shaman: 'chamanes' };
-const POI_NAMES = { village: 'Aldea', dragon: 'Ruinas del dragón', temple: 'Templo del desierto', tower: 'Torre antigua', ruins: 'Ruinas', camp: 'Campamento de saqueadores', mine: 'Mina abandonada', dungeon: 'Mazmorra', abyss: 'Santuario sumergido', jtemple: 'Templo de la selva', shrine: 'Santuario encantado', forge: 'Forja volcánica' };
+const POI_NAMES = { village: 'Aldea', dragon: 'Ruinas del dragón', temple: 'Templo del desierto', tower: 'Torre antigua', ruins: 'Ruinas', camp: 'Campamento de saqueadores', mine: 'Mina abandonada', dungeon: 'Mazmorra', abyss: 'Santuario sumergido', jtemple: 'Templo de la selva', shrine: 'Santuario encantado', forge: 'Forja volcánica', ...POI_NAMES_42 };
 const BONUS_LOOT = [[I.GOLDEN_APPLE, 1], [I.SHIELD, 1], [I.CROSSBOW, 1], [I.SADDLE, 1], [I.FIRE_ARROW, 8], [I.DIAMOND, 1], [potionId('regen', 0), 1], [potionId('strength', 0), 1], [I.EMERALD, 6]];
 function questState(p) { p.quests ||= { main: 0, active: [], done: [], count: 0, track: null }; return p.quests; }
 function makeSideQuest(v) {
@@ -12954,6 +13439,23 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.2', name: 'Un mundo más vivo', date: 'noviembre de 2026', items: [
+    'Nuevo generador de mundos. Se usa en los mundos que crees a partir de ahora; tus mundos anteriores siguen exactamente igual, con su terreno de siempre.',
+    'Relieve más variado: llanos de verdad, zonas de colinas onduladas, mesetas con bordes escarpados y tres tipos de montaña (crestas afiladas, macizos redondeados y agujas). Las cumbres ya no quedan cortadas en plano.',
+    'Ríos con ancho variable y valles abiertos a su alrededor, en vez de zanjas. Ahora también cruzan zonas de montaña.',
+    'Lagos por encima del nivel del mar, cada uno con su orilla, que se congelan en los biomas fríos. Charcas pequeñas y aguas termales en las regiones volcánicas.',
+    'Cascadas en los escalones altos del terreno, con su poza al pie.',
+    'Islas y archipiélagos en mar abierto.',
+    'Cuevas más grandes: cavernas enormes en las profundidades, túneles más anchos y barrancos abiertos al cielo. En el fondo hay lagos subterráneos o lava, según la zona.',
+    '7 biomas nuevos: Pradera florida, Bosque de abedules, Tierras altas, Mar de dunas, Isla tropical, Oasis y Tundra helada.',
+    'Las fronteras entre biomas serpentean y se entremezclan unos bloques, en vez de ser manchas redondas con una línea recta.',
+    'Detalles naturales según el bioma: rocas con musgo, troncos caídos con setas, manchas de flores, sandías silvestres, agujas de hielo, pináculos de terracota y rocas de arenisca.',
+    'Minerales por bioma: más carbón, hierro y cobre a la vista en las montañas, cobre en desiertos y sabanas, oro en selvas e islas, hierro en la taiga, arcilla en los pantanos y más diamantes junto a la lava. De vez en cuando aparece una gran veta.',
+    'Geodas: esferas huecas forradas de cristal escondidas en la roca, a veces con diamantes.',
+    '7 lugares nuevos para descubrir, cada uno con su botín y marcados en el mapa al encontrarlos: cabaña abandonada (con sótano secreto), círculo de piedras, pozo olvidado, monolito, naufragio, tesoro enterrado y atalaya en ruinas.',
+    'Multijugador: las salas nuevas usan el generador nuevo; las salas que ya existían conservan su mundo. Hay que actualizar server.js.',
+    'La enciclopedia solo cuenta los biomas que existen en tu mundo.',
+  ] },
   { v: '4.1', name: 'Inventario y guía de crafteos', date: 'noviembre de 2026', items: [
     'Guía de crafteos nueva: al tocar un objeto ya NO se fabrica solo. Ahora se abre su ficha con la receta dibujada en la cuadrícula, tal como va en la mesa, y solo se fabrica al pulsar «Fabricar».',
     'La ficha muestra cada material con cuántos tienes y cuántos hacen falta (en verde o en rojo), si necesita mesa de fabricación, y cuántos tienes ya del objeto. Botones «Fabricar» (una vez) y «Todo» (todas las que alcancen).',
@@ -13132,7 +13634,16 @@ const CHANGELOG = [
   { v: '1.1', name: 'Pantallas táctiles', items: ['Controles táctiles: joystick, zona para mirar y botones de saltar, minar y colocar.'] },
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
-const ROADMAP = [];   // la 4.0 completa la hoja de ruta
+const ROADMAP = [      // camino a la 5.0
+  { v: '4.3', name: 'Aldeas vivas', items: ['Aldeanos con rutinas, refugio y memoria.', 'Aldeas que crecen, economía, caravanas y mercaderes.'] },
+  { v: '4.4', name: 'Zonas nuevas', items: ['Mazmorras, templos y minas.', 'Islas flotantes y ciudades submarinas.'] },
+  { v: '4.5', name: 'Personaje', items: ['Árbol de habilidades.', 'Conjuntos de armadura, accesorios, mochilas, mascotas y monturas.'] },
+  { v: '4.6', name: 'Combate y jefes', items: ['Enemigos más listos y ataques especiales.', 'Jefes nuevos con sus arenas.'] },
+  { v: '4.7', name: 'Actividades', items: ['Pesca, cocina, cría y cultivos por bioma.', 'Misiones secundarias y expediciones.'] },
+  { v: '4.8', name: 'Construcción y mecanismos', items: ['Más bloques, muebles y mecanismos.'] },
+  { v: '4.9', name: 'Multijugador', items: ['Equipos, comercio, cofres compartidos y protección de terrenos.'] },
+  { v: '5.0', name: 'Expansión total', items: ['Interfaz, calidad gráfica y optimización final.'] },
+];
 function openNews() {
   const box = $('#newsList'); box.innerHTML = '';
   const sec = (e, future, open) => {
@@ -15522,7 +16033,7 @@ const codex = {
   /* ---------- Exploración ---------- */
   renderExplore(box) {
     const p = game.player, S = p.stats || {}, evs = p.evs || { n: {} };
-    const biomeNames = [...new Set(BIOMES.map((b) => b.name))], got = biomeNames.filter((n) => [...p.biomes].some((x) => BIOMES[x]?.name === n));
+    const biomeNames = [...new Set(BIOMES.filter((b, i) => biomeAvailable(i)).map((b) => b.name))], got = biomeNames.filter((n) => [...p.biomes].some((x) => BIOMES[x]?.name === n));
     const pois = [...p.pois.values()], vill = Object.keys(p.villages || {}).length, bosses = Object.keys(MOBS).filter((t) => MOBS[t].boss && p.ach.has('boss_' + t));
     const dimsV = [['Superficie', true], ['Inframundo', p.ach.has('dim_nether')], ['Vacío', p.ach.has('dim_void')]];
     const num = (x) => Math.round(x || 0).toLocaleString('es');

@@ -1,4 +1,4 @@
-# Servidor multijugador de MiniCraft 3.6 (salas)
+# Servidor multijugador de MiniCraft (salas)
 
 Un solo archivo (`server.js`), sin dependencias. Solo necesitas [Node.js](https://nodejs.org) 18 o superior.
 
@@ -85,3 +85,5 @@ Cada jugador conserva su inventario, posición, vida y logros en cada sala, y lo
 Cada sala se guarda cada 30 segundos, cuando se queda vacía y al cerrar: la sala INICIO en `data/world.json` y las demás en `data/rooms/CÓDIGO.json` (con copia `.bak`). Las salas vacías se descargan de la memoria a los 5 minutos y se vuelven a cargar cuando alguien entra con su código. Para empezar de cero, detén el servidor y borra la carpeta `data`.
 
 Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pasa a ser la sala INICIO tal cual. El juego 3.6 necesita este servidor (protocolo 4).
+
+**4.1 y 4.2:** actualiza `server.js` (no cambia el protocolo ni el formato de los datos). Desde la 4.1 reenvía la luz que lleva cada jugador en la mano; desde la 4.2 las salas **nuevas** se crean con el generador de mundos nuevo (`gen: 3`). Las salas que ya existían conservan su mundo tal cual.

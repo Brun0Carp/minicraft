@@ -87,7 +87,7 @@ const index = new Map();          // código → resumen de todas las salas guar
 class Room {
   constructor(code, file) {
     this.code = code; this.file = file;
-    this.W = { v: 2, gen: 2, seed: 0, mode: 'survival', time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {},
+    this.W = { v: 2, gen: 3, seed: 0, mode: 'survival', time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {},
       name: 'Sala', owner: null, trusted: [], banned: [], max: Math.min(8, cfg.max), pvp: true, cheats: true, build: 'all', priv: false, pass: '', created: Date.now() };
     this.edits = new Map();         // "cx,cz" → Map(índice local → id | meta << 8), igual que en el cliente
     this.drops = new Map();         // objetos en el suelo: id → { s: [id, cantidad, daño, encantamientos], p: [x, y, z], t: creado }
@@ -102,7 +102,7 @@ class Room {
         const d = JSON.parse(fs.readFileSync(f, 'utf8'));
         if (!Number.isFinite(d.seed)) throw new Error('sin semilla');
         const W = this.W;
-        Object.assign(W, { gen: d.gen === 2 ? 2 : 1, seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
+        Object.assign(W, { gen: d.gen === 2 || d.gen === 3 ? d.gen : 1, seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
           weather: WEATHERS.includes(d.weather) ? d.weather : 'clear', weatherT: +d.weatherT || 600, tiles: d.tiles || {}, players: d.players || {}, bosses: d.bosses || {} });
         if (d.v >= 2) Object.assign(W, { name: String(d.name || W.name).slice(0, 32), owner: d.owner || null, trusted: Array.isArray(d.trusted) ? d.trusted : [],
           banned: Array.isArray(d.banned) ? d.banned : [], max: isInt(d.max, 1, 64) ? d.max : W.max, pvp: d.pvp !== false, cheats: d.cheats !== false,
