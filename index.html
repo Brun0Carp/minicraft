@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 3.6</title>
+<title>MiniCraft 4.0</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -647,6 +647,74 @@
   .padStatus { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; font-size: 14px; }
   .padStatus i { font-style: normal; font-size: 26px; } .padStatus.on { border-color: #3d7a3d; }
   .padBtn { min-width: 76px; }
+
+  /* §39-40 Eventos y enciclopedia (4.0) */
+  #eventBar { position: fixed; left: 50%; top: calc(max(8px, env(safe-area-inset-top)) + 34px); transform: translate(-50%, -12px); z-index: 25; min-width: 230px; max-width: min(92vw, 460px);
+    padding: 6px 12px 8px; text-align: center; background: rgba(10,10,14,.62); border: 2px solid #0b0b0b; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 0 14px color-mix(in srgb, var(--ec, #ffd84a) 35%, transparent);
+    opacity: 0; pointer-events: none; transition: opacity .35s, transform .35s; }
+  #eventBar.on { opacity: 1; transform: translate(-50%, 0); }
+  body.in-menu #eventBar, body.overlay #eventBar { opacity: 0; }
+  #eventBar b { display: block; font-size: 15px; color: var(--ec, #ffd84a); text-shadow: 1px 1px 0 #000; }
+  #eventBar span { display: block; font-size: 12.5px; color: #e6e6ee; margin-top: 1px; }
+  #eventBar u { display: block; height: 4px; margin-top: 5px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
+  #eventBar u i { display: block; height: 100%; width: 100%; background: var(--ec, #ffd84a); transition: width .5s linear; }
+  body.boss-on #eventBar { top: calc(max(8px, env(safe-area-inset-top)) + 84px); }
+  #eventIntro { position: fixed; left: 50%; top: 24%; transform: translate(-50%, -50%) scale(.9); z-index: 15; pointer-events: none; text-align: center; opacity: 0; max-width: 90vw; }
+  #eventIntro b { display: block; font-size: clamp(22px, 5vw, 40px); color: var(--ec, #ffd84a); text-shadow: 3px 3px 0 #000, 0 0 22px var(--ec, #ffd84a); }
+  #eventIntro span { display: block; margin-top: 6px; font-size: clamp(13px, 2.8vw, 17px); color: #fff; text-shadow: 2px 2px 0 #000; }
+  #eventIntro.show { animation: evIn 4.2s ease forwards; }
+  @keyframes evIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); } 10% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); } 16% { transform: translate(-50%, -50%) scale(1); } 82% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60%) scale(1); } }
+  .codexCard { width: min(980px, 97vw); height: min(92vh, 760px); display: flex; flex-direction: column; }
+  #codexBody { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+  .cxHead { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .cxProg { flex: 1; min-width: 200px; font-size: 14px; color: #c8ccd6; } .cxProg b { color: #ffe14d; }
+  .cxProg u { display: block; height: 6px; margin-top: 4px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; } .cxProg s { display: block; height: 100%; background: linear-gradient(90deg, #7be06a, #ffe14d); }
+  .cxSearch { width: 180px; padding: 7px 9px; font: 14px var(--font); background: #1c1d22; color: #fff; border: 2px solid #0b0b0b; border-radius: 4px; }
+  .cxCats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; } .cxCats .btn { padding: 5px 9px; font-size: 13px; } .cxCats .btn.on { outline: 2px solid #ffe14d; }
+  .cxSplit { display: grid; grid-template-columns: 1.25fr 1fr; gap: 12px; min-height: 0; }
+  .cxGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 4px; align-content: start; max-height: 56vh; overflow-y: auto; padding: 4px; background: rgba(0,0,0,.3); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .cxCell { aspect-ratio: 1; background: rgba(139,139,139,.25) center/72% no-repeat; border: 2px solid #0b0b0b; border-radius: 3px; cursor: pointer; image-rendering: pixelated; transition: transform .12s, background-color .12s; }
+  .cxCell:hover { transform: scale(1.08); background-color: rgba(255,255,255,.18); } .cxCell.sel { outline: 2px solid #ffe14d; }
+  .cxCell.unk, .cxIcons i.unk, .cxTitle i.unk { filter: brightness(0) opacity(.45); }
+  .cxCell[data-r="2"] { box-shadow: inset 0 0 0 1px #5ab4ff; } .cxCell[data-r="3"] { box-shadow: inset 0 0 0 1px #c37bff; } .cxCell[data-r="4"] { box-shadow: inset 0 0 0 1px #ffb43c; } .cxCell[data-r="5"] { box-shadow: inset 0 0 0 1px #ff5f7e; }
+  .cxCard { padding: 10px 12px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; font-size: 14px; color: #dde; max-height: 62vh; overflow-y: auto; animation: cxIn .25s ease; }
+  @keyframes cxIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .cxCard p { margin: 6px 0; line-height: 1.4; } .cxCard h4, #codexBody > h4 { margin: 10px 0 4px; font-size: 14px; color: #ffe14d; }
+  .cxTitle { display: flex; align-items: center; gap: 10px; } .cxTitle i { width: 48px; height: 48px; flex: none; background: center/contain no-repeat; image-rendering: pixelated; }
+  .cxTitle b { display: block; font-size: 18px; color: #fff; } .cxTitle small, .cxTitle em { display: block; font-size: 12.5px; color: #aab0bb; font-style: normal; }
+  .cxStats { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; } .cxStats span { padding: 3px 7px; font-size: 12.5px; background: #2b2e36; border-radius: 3px; }
+  .cxRecipes { display: flex; flex-wrap: wrap; gap: 10px; } .cxRecipe { display: flex; align-items: center; gap: 6px; }
+  .cxRGrid { display: grid; grid-template-columns: repeat(3, 26px); gap: 2px; } .cxRGrid i, .cxIcons i { width: 26px; height: 26px; background: rgba(139,139,139,.25) center/80% no-repeat; border: 1px solid #0b0b0b; image-rendering: pixelated; display: inline-block; }
+  .cxIcons { display: flex; flex-wrap: wrap; gap: 4px; }
+  .cxMobList { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; padding-right: 4px; } .cxMobList h4 { margin: 8px 0 2px; font-size: 13px; color: #ffe14d; }
+  .cxMob { display: flex; align-items: center; gap: 8px; padding: 5px 8px; font: 14px var(--font); color: #e6e6ee; text-align: left; background: rgba(0,0,0,.3); border: 2px solid #0b0b0b; border-radius: 4px; cursor: pointer; }
+  .cxMob i { width: 22px; height: 22px; flex: none; background: center/contain no-repeat; image-rendering: pixelated; font-style: normal; color: #ffb43c; text-align: center; } .cxMob span { flex: 1; } .cxMob small { color: #9ecf8d; }
+  .cxMob.unk { color: #777; } .cxMob.unk i { filter: brightness(0) opacity(.4); } .cxMob.sel { outline: 2px solid #ffe14d; } .cxMob:hover { background: rgba(255,255,255,.08); }
+  .cxMobView { display: flex; justify-content: center; margin: -4px 0 4px; background: radial-gradient(circle at 50% 60%, rgba(255,255,255,.12), transparent 70%); border-radius: 6px; }
+  .cxMobView canvas { width: 220px; height: 200px; } .cxPhases { margin: 4px 0; padding-left: 20px; }
+  .cxTiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-bottom: 6px; }
+  .cxTile { padding: 8px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; text-align: center; } .cxTile i { font-style: normal; font-size: 22px; } .cxTile b { display: block; font-size: 18px; color: #ffe14d; } .cxTile span { font-size: 12.5px; color: #aab0bb; }
+  .cxChips { display: flex; flex-wrap: wrap; gap: 4px; } .cxChips span { padding: 3px 8px; font-size: 12.5px; background: #24262c; color: #777; border-radius: 3px; } .cxChips span.on { background: #2f5a35; color: #e8ffe4; }
+  .cxPois { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px; } .cxPois div { padding: 5px 8px; background: rgba(0,0,0,.3); border-radius: 4px; } .cxPois b { display: block; font-size: 13.5px; } .cxPois span { font-size: 12px; color: #aab0bb; }
+  .cxJ { display: flex; align-items: baseline; gap: 8px; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13.5px; } .cxJ i { font-style: normal; width: 22px; text-align: center; } .cxJ span { flex: 1; } .cxJ small { color: #8a8f99; }
+  .cxHint, .cxEmpty { color: #aab0bb; font-size: 13.5px; text-align: center; padding: 14px; }
+  @media (max-width: 700px) { .cxSplit { grid-template-columns: 1fr; } .cxGrid { max-height: 34vh; } .cxCard { max-height: none; } .codexCard { height: 94vh; } .cxSearch { width: 100%; } }
+  /* pantallas bajas (móvil apaisado): todo cabe y el cuerpo es lo que se desplaza */
+  @media (max-height: 520px) {
+    #codexScreen { padding: 4px; } .codexCard { height: 98vh; padding: 6px 10px; }
+    .codexCard .cardHead { margin: 0 0 2px; } .codexCard .cardHead h2 { font-size: 17px; margin: 0; }
+    .codexCard .stabs { margin-bottom: 4px; } .codexCard .stab { padding: 4px 6px; font-size: 13px; }
+    .cxHead { margin-bottom: 4px; } .cxProg { font-size: 12.5px; } .cxSearch { padding: 4px 8px; font-size: 13px; }
+    .cxCats { flex-wrap: nowrap; overflow-x: auto; margin-bottom: 4px; padding-bottom: 2px; } .cxCats .btn { flex: none; padding: 3px 8px; font-size: 12px; }
+    .cxSplit { grid-template-columns: 1.1fr 1fr; } .cxGrid, .cxCard, .cxMobList { max-height: none; } .cxGrid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); }
+    .cxMobView canvas { width: 150px; height: 136px; } .cxTiles { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); } .cxTile { padding: 4px; } .cxTile b { font-size: 15px; }
+    #codexClose { padding: 5px; font-size: 14px; margin-top: 4px; }
+  }
+  /* Transiciones de pantallas (4.0) */
+  .screen.show > .card, .screen.show > .menuWrap, .screen.show > .mapPanel { animation: scrIn .22s ease-out; }
+  @keyframes scrIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .screen.show > .card, .screen.show > .menuWrap, .screen.show > .mapPanel, #eventIntro.show { animation: none; } #eventIntro.show { opacity: 1; } }
+  .setHelp { display: block; font-size: 11.5px; color: #8a8f99; }
 </style>
 </head>
 <body>
@@ -654,6 +722,8 @@
 
 <button id="fsMenuBtn" class="fsOnly" title="Pantalla completa (F2)">⛶</button>
 <div id="padCursor"></div>
+<div id="eventBar"><b></b><span></span><u><i></i></u></div>
+<div id="eventIntro"><b></b><span></span></div>
 <div id="netReconnect"><b>Conexión perdida</b><span id="netRecMsg">Reconectando…</span><button id="netRecQuit" class="btn small">Salir al menú</button></div>
 <div id="hud">
   <div id="crosshair"></div>
@@ -698,6 +768,7 @@
     <div class="topBtns">
       <button class="tbtn" id="chatBtn" data-act="chat">💬</button>
       <button class="tbtn" data-act="quests">📜</button>
+      <button class="tbtn" id="codexTouch" title="Enciclopedia">📖</button>
       <button class="tbtn" data-act="map">🗺</button>
       <button class="tbtn" data-act="inv">🎒</button>
       <button class="tbtn fsOnly" id="fsTouch" title="Pantalla completa">⛶</button>
@@ -715,7 +786,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.6!</span>
+      <span class="ver">¡Versión 4.0!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -725,7 +796,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -844,7 +915,7 @@
   <div class="card settingsCard">
     <h2>Ajustes</h2>
     <div class="stabs" role="tablist">
-      <button class="stab on" data-tab="video" role="tab">Gráficos</button><button class="stab" data-tab="audio" role="tab">Sonido</button><button class="stab" data-tab="controls" role="tab">Controles</button><button class="stab" data-tab="pad" role="tab">Mando</button><button class="stab" data-tab="net" role="tab">Multijugador</button>
+      <button class="stab on" data-tab="video" role="tab">Gráficos</button><button class="stab" data-tab="audio" role="tab">Sonido</button><button class="stab" data-tab="controls" role="tab">Controles</button><button class="stab" data-tab="game" role="tab">Juego</button><button class="stab" data-tab="pad" role="tab">Mando</button><button class="stab" data-tab="net" role="tab">Multijugador</button>
     </div>
     <div class="tabPanels">
       <div class="tabPanel on" data-tab="video"><div id="settingsList"></div></div>
@@ -856,6 +927,7 @@
             <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div>
         </div>
       </div>
+      <div class="tabPanel" data-tab="game"><div id="settingsGame"></div></div>
       <div class="tabPanel" data-tab="pad"><div id="padPanel"></div></div>
       <div class="tabPanel" data-tab="net"><div class="setSection"><b>Multijugador</b><p id="netStatus">Estado: sin conexión (un jugador)</p><p>Para jugar con otras personas, sal al menú principal y entra en «Multijugador» con la dirección de un servidor. El servidor está en la carpeta <b>server</b> del repositorio y se inicia con <b>node server.js</b>.</p></div>
     </div>
@@ -887,6 +959,14 @@
     <button id="questClose" class="btn primary">Cerrar</button>
   </div>
 </div>
+<div id="codexScreen" class="screen">
+  <div class="card wideCard codexCard">
+    <div class="cardHead"><h2>📖 Enciclopedia</h2></div>
+    <div class="stabs"><button class="stab on" data-ctab="items">Objetos</button><button class="stab" data-ctab="mobs">Criaturas</button><button class="stab" data-ctab="explore">Exploración</button><button class="stab" data-ctab="journal">Diario</button></div>
+    <div id="codexBody"></div>
+    <button id="codexClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
 <div id="pauseScreen" class="screen">
   <div class="card">
     <h2>Juego en pausa</h2>
@@ -894,6 +974,7 @@
     <button id="pResume" class="btn primary">Volver al juego</button>
     <div class="row"><button id="pMap" class="btn">🗺 Mapa</button><button id="pAch" class="btn">🏆 Logros</button></div>
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
+    <button id="pCodex" class="btn">📖 Enciclopedia</button>
     <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
     <button id="pFull" class="btn fsOnly">⛶ Pantalla completa</button>
     <button id="pSettings" class="btn">Ajustes</button>
@@ -6599,7 +6680,7 @@ ITEMS[MAGMA].fuel = 12;                                     // un bloque de magm
 shapeless(I.MUSHROOM_SOUP, 1, [MUSHROOM_RED, MUSHROOM_BROWN], 'Comida');
 shaped(CRYSTAL_BLOCK, 1, ['##', '##'], { '#': I.CRYSTAL_SHARD }, 'Iluminación');
 shapeless(I.CRYSTAL_SHARD, 4, [CRYSTAL_BLOCK], 'Materiales');
-shaped(TERRACOTTA, 4, ['##', '##'], { '#': I.CLAY_BALL }, 'Construcción');
+shapeless(TERRACOTTA, 2, [CLAY, SAND], 'Construcción');   // 4.0: antes coincidía con la receta del bloque de arcilla y nunca salía
 Object.assign(SMELT, { [RED_SAND]: [GLASS, 0.1], [BASALT]: [STONE, 0.1] });
 Object.assign(BREW_INGREDIENTS, { [GLOW_FLOWER]: 'regen', [I.CRYSTAL_SHARD]: 'night' });
 shapeless(MOSS, 2, [I.GLOW_BERRIES, COBBLE], 'Decoración');
@@ -7165,6 +7246,66 @@ class VoidHerald extends Boss {
   }
 }
 const BOSS_CLASSES = { emberlord: EmberLord, voidherald: VoidHerald };
+/* ==========================================================================
+   §38 OBJETOS Y CRIATURAS DE LOS EVENTOS (4.0)
+   --------------------------------------------------------------------------
+   Recompensas de los eventos dinámicos (§39) y la criatura especial que
+   aparece en ellos. Se definen aquí, antes que los huevos (§32), para que
+   la criatura también tenga huevo en creativo y entre en el panel de
+   criaturas.
+   ========================================================================== */
+Object.assign(I, { STAR_SHARD: 540, STAR_INGOT: 541, STAR_PICK: 542, STAR_SWORD: 543, STORM_ESSENCE: 544, ARCANE_DUST: 545, ELIXIR_STORM: 546, ELIXIR_ARCANE: 547,
+  GOLD_ANTLER: 548, EVENT_HORN: 549, FESTIVAL_CAKE: 550 });
+defItem(I.STAR_SHARD, 'Fragmento estelar', 'Cae del cielo en las lluvias de meteoritos. Con oro se funde en lingotes estelares.', { rarity: 2 });
+defItem(I.STAR_INGOT, 'Lingote estelar', 'Metal llegado de las estrellas. Forja el pico y la espada estelares.', { rarity: 3 });
+defItem(I.STAR_PICK, 'Pico estelar', 'Ligero como la luz: el pico más rápido del juego.', { stack: 1, rarity: 4, tool: { type: 'pickaxe', tier: 'special', level: 4, speed: 14, dmg: 6, dur: 3200 } });
+defItem(I.STAR_SWORD, 'Espada estelar', 'Hoja forjada con metal de meteorito.', { stack: 1, rarity: 4, tool: { type: 'sword', tier: 'special', level: 0, speed: 1.7, dmg: 10, dur: 2600 } });
+defItem(I.STORM_ESSENCE, 'Esencia de tormenta', 'Queda donde cae un rayo durante una tormenta eléctrica.', { rarity: 2 });
+defItem(I.ARCANE_DUST, 'Polvo arcano', 'Se forma al recoger los orbes de maná de un fenómeno mágico.', { rarity: 2 });
+defItem(I.ELIXIR_STORM, 'Elixir de tormenta', 'Bébelo manteniendo Usar: Velocidad II y Fuerza durante 3 minutos.', { stack: 1, rarity: 3, potion: { eff: 'speed', lvl: 2, dur: 180, extra: [['strength', 1, 180]] } });
+defItem(I.ELIXIR_ARCANE, 'Elixir arcano', 'Bébelo manteniendo Usar: Regeneración II, Visión nocturna y Resistencia durante 2 minutos.', { stack: 1, rarity: 3, potion: { eff: 'regen', lvl: 2, dur: 120, extra: [['night', 1, 240], ['resist', 1, 120]] } });
+defItem(I.GOLD_ANTLER, 'Asta dorada', 'Trofeo del ciervo dorado. Con ella se fabrica el cuerno de llamada.', { rarity: 4 });
+defItem(I.EVENT_HORN, 'Cuerno de llamada', 'Úsalo para provocar un evento al azar ahora mismo. Se gasta.', { stack: 4, rarity: 4 });
+defItem(I.FESTIVAL_CAKE, 'Pastel del festival', 'Regalo de la aldea en fiesta. Muy nutritivo.', { stack: 16, rarity: 2, food: { hunger: 10, sat: 12 } });
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  Object.assign(ICON_OVERRIDE, {
+    [I.STAR_SHARD]: P((p) => { p.poly([[8, 1], [10, 6], [15, 7], [11, 10], [12, 15], [8, 12], [4, 15], [5, 10], [1, 7], [6, 6]], (x, y) => (x + y < 15 ? [255, 246, 190] : [230, 170, 70])); p.set(8, 7, [255, 255, 255]); }),
+    [I.STAR_INGOT]: P((p) => { p.poly([[2, 10], [5, 6], [14, 6], [11, 10]], [255, 236, 150]); p.poly([[2, 10], [11, 10], [11, 13], [2, 13]], [214, 168, 70]); p.poly([[11, 10], [14, 6], [14, 9], [11, 13]], [170, 120, 40]); p.set(7, 8, [255, 255, 255]); p.set(9, 7, [255, 255, 255]); }),
+    [I.STAR_PICK]: P((p) => { p.line([[3, 13], [11, 5]], 1.6, [90, 70, 60]); p.line([[5, 3], [9, 2], [13, 3], [14, 7], [13, 11]], 2.2, (x, y) => ((x + y) % 3 ? [255, 226, 120] : [255, 255, 230])); }),
+    [I.STAR_SWORD]: P((p) => { p.line([[1.5, 14.5], [4.5, 11.5]], 1.8, [80, 60, 50]); p.line([[5, 11], [14.5, 1.5]], 2.4, (x, y) => ((x + y) % 3 ? [255, 222, 110] : [255, 255, 230])); p.line([[2.5, 8.5], [7.5, 13.5]], 1.8, [160, 120, 50]); }),
+    [I.STORM_ESSENCE]: P((p) => { p.disk(8, 8, 5.5, (x, y) => (y < 7 ? [140, 200, 255] : [60, 90, 200])); p.line([[9, 3], [6, 8], [10, 8], [7, 13]], 1.2, [255, 255, 200]); }),
+    [I.ARCANE_DUST]: P((p) => { for (const [x, y, r] of [[5, 10, 2.5], [10, 9, 3], [8, 5, 2], [12, 13, 1.6]]) p.disk(x, y, r, (xx, yy) => ((xx + yy) % 2 ? [220, 150, 255] : [140, 90, 230])); p.set(9, 8, [255, 255, 255]); }),
+    [I.ELIXIR_STORM]: P((p) => { p.disk(8, 10, 4.6, (x, y) => (y < 9 ? [150, 210, 255] : [70, 110, 230])); p.poly([[7, 2], [9, 2], [9, 6], [7, 6]], [200, 210, 220]); p.line([[9, 7], [7, 10], [9.5, 10], [7.5, 13]], 1, [255, 255, 200]); }),
+    [I.ELIXIR_ARCANE]: P((p) => { p.disk(8, 10, 4.6, (x, y) => (y < 9 ? [230, 160, 255] : [150, 80, 220])); p.poly([[7, 2], [9, 2], [9, 6], [7, 6]], [200, 210, 220]); p.set(7, 9, [255, 255, 255]); p.set(9, 11, [255, 255, 255]); }),
+    [I.GOLD_ANTLER]: P((p) => { p.line([[8, 15], [8, 6], [4, 2]], 1.6, [250, 210, 80]); p.line([[8, 9], [12, 4], [13, 1]], 1.4, [230, 180, 50]); p.line([[8, 6], [5, 5]], 1, [255, 240, 150]); }),
+    [I.EVENT_HORN]: P((p) => { p.line([[2, 4], [6, 8], [10, 10], [14, 9]], 2.6, (x, y) => (x < 8 ? [240, 220, 170] : [200, 160, 90])); p.disk(14, 9, 2.2, [250, 210, 80]); p.line([[3, 4], [2, 3]], 1, [120, 90, 60]); }),
+    [I.FESTIVAL_CAKE]: P((p) => { p.poly([[2, 8], [14, 8], [14, 14], [2, 14]], (x, y) => (y < 10 ? [250, 240, 240] : [200, 140, 90])); for (const x of [4, 8, 12]) { p.set(x, 7, [230, 50, 60]); p.set(x, 6, [255, 210, 80]); } }),
+  });
+  shapeless(I.STAR_INGOT, 1, [I.STAR_SHARD, I.STAR_SHARD, I.STAR_SHARD, I.STAR_SHARD, I.GOLD_INGOT], 'Eventos');
+  shaped(I.STAR_PICK, 1, ['iii', ' s ', ' s '], { i: I.STAR_INGOT, s: I.STICK }, 'Eventos');
+  shaped(I.STAR_SWORD, 1, ['i', 'i', 's'], { i: I.STAR_INGOT, s: I.STICK }, 'Eventos');
+  shapeless(I.ELIXIR_STORM, 1, [I.STORM_ESSENCE, I.STORM_ESSENCE, I.STORM_ESSENCE, I.WATER_BOTTLE], 'Eventos');
+  shapeless(I.ELIXIR_ARCANE, 1, [I.ARCANE_DUST, I.ARCANE_DUST, I.ARCANE_DUST, I.WATER_BOTTLE], 'Eventos');
+  shapeless(I.EVENT_HORN, 1, [I.GOLD_ANTLER, I.STAR_SHARD, I.ARCANE_DUST], 'Eventos');
+}
+// Ciervo dorado: un ciervo con pelaje de oro que brilla. Huye y desaparece si nadie lo caza.
+MOBS.goldstag = {
+  ...MOBS.deer, name: 'Ciervo dorado', hp: 24, speed: 3.6, xp: 25, special: true,
+  drops: [[I.GOLD_ANTLER, 1, 1], [I.GOLD_INGOT, 2, 5], [I.VENISON, 1, 2]],
+  model: (m) => {
+    const md = MOBS.deer.model(m);
+    md.root.traverse((o) => {
+      const col = o.geometry && o.geometry.attributes.color; if (!col) return;
+      for (let i = 0; i < col.count; i++) {                    // pelaje de oro conservando las sombras
+        const l = col.getX(i) * 0.3 + col.getY(i) * 0.59 + col.getZ(i) * 0.11;
+        col.setXYZ(i, Math.min(1, 0.35 + l * 1.25), Math.min(1, 0.25 + l * 0.95), 0.05 + l * 0.35);
+      }
+      col.needsUpdate = true;
+    });
+    return md;
+  },
+};
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -7968,7 +8109,7 @@ function renderWorldList() {
   list.forEach((w, idx) => {
     const card = document.createElement('div'); card.className = 'wcard'; card.style.animationDelay = Math.min(idx, 8) * 40 + 'ms';
     const creative = w.mode === 'creative';
-    let kb = 0; try { kb = Math.round(((localStorage.getItem(SAVE_PREFIX + w.id) || '').length) / 1024); } catch {}
+    let kb = 0; try { kb = Math.round(saveStore.size(SAVE_PREFIX + w.id) / 1024); } catch {}
     card.innerHTML = `<div class="wthumb" title="Jugar"><canvas width="48" height="24"></canvas>
         <span class="wmode ${creative ? 'creative' : 'survival'}"><i class="bico" style="background-image:url(${menuIcon(creative ? 'creative' : 'survival')})"></i>${creative ? 'Creativo' : 'Supervivencia'}</span>
         <b class="wname">${escapeHtml(w.name)}</b></div>
@@ -7991,14 +8132,14 @@ function renderWorldList() {
       try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([e.text], { type: 'application/json' })); a.download = e.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); } catch {}
       try { await navigator.clipboard.writeText(e.text); hud.toast('Mundo exportado: se descargó el archivo y se copió el texto al portapapeles', 3500); } catch { hud.toast('Mundo exportado como archivo', 3000); }
     };
-    let hasBak = false; try { hasBak = !!localStorage.getItem(SAVE_PREFIX + w.id + '-bak'); } catch {}
+    let hasBak = false; try { hasBak = !!saveStore.get(SAVE_PREFIX + w.id + '-bak'); } catch {}
     acts.append(play, exp);
     if (hasBak) {
       const rb = document.createElement('button'); rb.className = 'btn small'; rb.textContent = 'Restaurar copia'; rb.title = 'Vuelve al guardado anterior';
       rb.onclick = () => {
         if (!rb.dataset.sure) { rb.dataset.sure = 1; rb.textContent = '¿Restaurar?'; setTimeout(() => { rb.textContent = 'Restaurar copia'; delete rb.dataset.sure; }, 2500); return; }
-        try { const bak = localStorage.getItem(SAVE_PREFIX + w.id + '-bak'); const d = JSON.parse(bak); if (validateSave(d).length) throw 0;
-          const cur = localStorage.getItem(SAVE_PREFIX + w.id); localStorage.setItem(SAVE_PREFIX + w.id, bak); if (cur) localStorage.setItem(SAVE_PREFIX + w.id + '-bak', cur); hud.toast('Copia de seguridad restaurada'); }
+        try { const bak = saveStore.get(SAVE_PREFIX + w.id + '-bak'); const d = JSON.parse(bak); if (validateSave(d).length) throw 0;
+          const cur = saveStore.get(SAVE_PREFIX + w.id); saveStore.set(SAVE_PREFIX + w.id, bak); if (cur) saveStore.set(SAVE_PREFIX + w.id + '-bak', cur); hud.toast('Copia de seguridad restaurada'); }
         catch { hud.toast('La copia de seguridad está dañada; no se cambió nada'); }
         renderWorldList();
       };
@@ -8011,7 +8152,7 @@ function renderWorldList() {
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function deleteWorld(id) {
   saveWorldIndex(listWorlds().filter((w) => w.id !== id));
-  try { localStorage.removeItem(SAVE_PREFIX + id); localStorage.removeItem(SAVE_PREFIX + id + '-bak'); } catch {}
+  try { for (const suf of ['', '-bak', '-v3']) saveStore.remove(SAVE_PREFIX + id + suf); } catch {}
 }
 
 function initMenus() {
@@ -8499,7 +8640,7 @@ class Player {
 /* ==========================================================================
    §18 GUARDADO
    --------------------------------------------------------------------------
-   Cada mundo se guarda en localStorage bajo "mc2-w-<id>":
+   Cada mundo se guarda (en IndexedDB desde la 4.0, §37) bajo "mc2-w-<id>":
      meta (nombre, semilla, modo, opciones), jugador (posición, salud, hambre,
      XP, inventario, herramientas con desgaste), reloj y clima, bloques
      modificados (comprimidos por chunk), cofres y hornos, entidades cercanas
@@ -8557,13 +8698,15 @@ function saveGame(silent) {
   if (!world || !game.meta || game.state === 'menu') return;
   if (game.meta.net) { net.savePlayer(); return; }      // en un servidor, el mundo lo guarda el servidor
   const dormant = {}; for (const [k, a] of world.dormant) dormant[k] = a;
-  const data = { v: 3, meta: game.meta, player: game.player.toJSON(), env: game.env.toJSON(), edits: packEdits(), tiles: packTiles(),
+  const data = { v: SAVE_VERSION, meta: game.meta, player: game.player.toJSON(), env: game.env.toJSON(), edits: packEdits(), tiles: packTiles(),
     entities: game.entities.toJSON(game.player), dormant, structs: [...game.structs], map: Object.fromEntries(world.mapData), saved: Date.now() };
   const key = SAVE_PREFIX + game.meta.id, json = JSON.stringify(data);
   try {
-    const old = localStorage.getItem(key);
-    try { if (old) localStorage.setItem(key + '-bak', old); } catch { localStorage.removeItem(key + '-bak'); }
-    localStorage.setItem(key, json);
+    const old = saveStore.get(key);
+    // la primera vez que una partida antigua se guarda con la 4.0 se conserva intacta
+    if (old && !saveStore.get(key + '-v3') && !/"v":4/.test(old.slice(0, 12))) try { saveStore.set(key + '-v3', old); } catch {}
+    try { if (old) saveStore.set(key + '-bak', old); } catch { saveStore.remove(key + '-bak'); }
+    saveStore.set(key, json);
     const list = listWorlds(), w = list.find((x) => x.id === game.meta.id);
     if (w) { w.last = Date.now(); saveWorldIndex(list); }
     if (!silent) hud.toast('Partida guardada');
@@ -8571,7 +8714,7 @@ function saveGame(silent) {
 }
 function loadSave(id) {
   for (const key of [SAVE_PREFIX + id, SAVE_PREFIX + id + '-bak']) {
-    try { const raw = localStorage.getItem(key); if (!raw) continue; const d = JSON.parse(raw); if (!validateSave(d).length) { d.recovered = key.endsWith('-bak'); return d; } } catch {}
+    try { const raw = saveStore.get(key); if (!raw) continue; const d = migrateSave(JSON.parse(raw)); if (!validateSave(d).length) { d.recovered = key.endsWith('-bak'); return d; } } catch {}
   }
   return null;
 }
@@ -9272,6 +9415,7 @@ const game = {
         if (Math.random() < dt * 4) sfx.play('drink');
         if (p.eatT >= 1.6) {
           if (this.applyEffect(potion.eff, potion.lvl, potion.dur)) { this.stats.add('potions'); }
+          for (const [e, l, d] of potion.extra || []) this.applyEffect(e, l, d);
           p.inv.slots[p.selected] = this.mode === 'survival' ? { id: I.BOTTLE, count: 1, dmg: 0 } : s;
           p.eatT = 0; this.useCd = 0.4; hud.update();
         }
@@ -9516,7 +9660,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -9527,7 +9671,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -9552,7 +9696,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -10407,7 +10551,7 @@ function doTrade(v, idx) {
 function validateSave(d) {
   const errs = [];
   if (!d || typeof d !== 'object') return ['No es un objeto JSON'];
-  if (d.v !== 2 && d.v !== 3) errs.push('Versión de partida desconocida');
+  if (![2, 3, 4].includes(d.v)) errs.push('Versión de partida desconocida');
   if (!d.meta || typeof d.meta.name !== 'string' || !Number.isFinite(d.meta.seed)) errs.push('Faltan los datos del mundo');
   if (d.meta && !['survival', 'creative'].includes(d.meta.mode)) errs.push('Modo de juego no válido');
   const p = d.player;
@@ -10417,7 +10561,7 @@ function validateSave(d) {
   return errs;
 }
 function exportWorld(id) {
-  const raw = localStorage.getItem(SAVE_PREFIX + id); if (!raw) { hud.toast('No hay datos guardados de este mundo'); return null; }
+  const raw = saveStore.get(SAVE_PREFIX + id); if (!raw) { hud.toast('No hay datos guardados de este mundo'); return null; }
   const d = JSON.parse(raw);
   const text = JSON.stringify({ format: 'minicraft-world', v: d.v, exported: Date.now(), data: d });
   return { text, name: (d.meta.name || 'mundo').replace(/[^\wáéíóúñ -]/gi, '_') + '.minicraft.json' };
@@ -10431,8 +10575,8 @@ function importWorld(text) {
   const id = 'w' + Date.now().toString(36);
   const meta = { ...d.meta, id, name: (d.meta.name || 'Mundo') + ' (importado)', last: Date.now() };
   const data = { ...d, meta };
-  try { localStorage.setItem(SAVE_PREFIX + id, JSON.stringify(data)); }
-  catch { try { localStorage.removeItem(SAVE_PREFIX + id); } catch {} return 'No hay espacio suficiente para importar este mundo.'; }
+  try { saveStore.set(SAVE_PREFIX + id, JSON.stringify(data)); }
+  catch { try { saveStore.remove(SAVE_PREFIX + id); } catch {} return 'No hay espacio suficiente para importar este mundo.'; }
   const list = listWorlds(); list.push(meta); saveWorldIndex(list);
   return null;
 }
@@ -11052,8 +11196,8 @@ ITEMS[I.ANTLER_SPEAR].tool.reach = 1.4;
 Object.assign(EFFECTS, { poison: { name: 'Veneno', color: [90, 170, 50], icon: '☠' }, slow: { name: 'Lentitud', color: [110, 130, 150], icon: '⌛' } });
 shaped(I.SHIELD, 1, ['#i#', '###', ' # '], { '#': PLANKS_ANY, i: I.IRON_INGOT }, 'Combate');
 shaped(I.CROSSBOW, 1, ['sis', 'tst', ' s '], { s: I.STICK, i: I.IRON_INGOT, t: I.STRING }, 'Combate');
-shaped(I.BATTLE_AXE_IRON, 1, ['mm', 'ms', ' s'], { m: I.IRON_INGOT, s: I.STICK }, 'Combate');
-shaped(I.BATTLE_AXE_DIAMOND, 1, ['mm', 'ms', ' s'], { m: I.DIAMOND, s: I.STICK }, 'Combate');
+shaped(I.BATTLE_AXE_IRON, 1, ['mmm', 'msm', ' s '], { m: I.IRON_INGOT, s: I.STICK }, 'Combate');
+shaped(I.BATTLE_AXE_DIAMOND, 1, ['mmm', 'msm', ' s '], { m: I.DIAMOND, s: I.STICK }, 'Combate');
 shaped(I.SPEAR_IRON, 1, ['  m', ' s ', 's  '], { m: I.IRON_INGOT, s: I.STICK }, 'Combate');
 shaped(I.SPEAR_DIAMOND, 1, ['  m', ' s ', 's  '], { m: I.DIAMOND, s: I.STICK }, 'Combate');
 shaped(I.SADDLE, 1, ['lll', 'l l', 'i i'], { l: I.LEATHER, i: I.IRON_INGOT }, 'Herramientas');
@@ -12458,6 +12602,33 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.0', name: 'Gran actualización', date: 'noviembre de 2026', items: [
+    'Eventos dinámicos: nueve sucesos que aparecen solos según la hora, el lugar y la suerte, cada uno con su duración, efectos, música y recompensa. Una barra arriba de la pantalla muestra el evento, su progreso y el tiempo que queda.',
+    'Lluvia de meteoritos (noche): caen estrellas que abren cráteres con fragmentos estelares.',
+    'Invasión nocturna (noche): tres oleadas de monstruos vienen a por ti. Si resistes ganas esmeraldas, oro y a veces un diamante.',
+    'Luna de sangre (noche): cielo rojo, monstruos más fuertes y el doble de botín.',
+    'Tormenta eléctrica: caen rayos a tu alrededor y donde caen queda esencia de tormenta.',
+    'Ciervo dorado (día): una criatura especial que huye. Si la atrapas suelta un asta dorada y oro.',
+    'Ruinas misteriosas: aparecen unas ruinas con un cofre para saquear y se desvanecen al terminar el evento, devolviendo el terreno como estaba (también si sales y vuelves a entrar).',
+    'Festival de la aldea (de día, cerca de una aldea): fuegos artificiales, precios un 30 % más baratos y un regalo de los aldeanos.',
+    'Asedio a la aldea (de noche, cerca de una aldea): dos oleadas de saqueadores. Si la defiendes ganas esmeraldas y mucha reputación.',
+    'Aurora mágica (noche): una aurora cruza el cielo y deja orbes de maná para atrapar, que dan polvo arcano.',
+    'Objetos nuevos de los eventos: fragmento y lingote estelar, pico y espada estelares (el pico más rápido del juego), esencia de tormenta, polvo arcano, elixir de tormenta (Velocidad II y Fuerza), elixir arcano (Regeneración II, Visión nocturna y Resistencia), asta dorada, pastel del festival y cuerno de llamada, que provoca un evento al momento.',
+    'Comando /evento <nombre>, /evento lista y /evento fin, y 7 logros nuevos de eventos.',
+    'Ajustes → Juego: frecuencia de los eventos (desactivados, pocos, normal o muchos). En multijugador los eventos los decide el anfitrión de la sala.',
+    'Enciclopedia (tecla K, botón 📖 en la pausa y en la barra táctil) con cuatro pestañas: Objetos, Criaturas, Exploración y Diario.',
+    'Objetos: catálogo de todos los objetos con buscador y categorías. Cada ficha muestra rareza, estadísticas, cómo se fabrica, cómo se funde y qué criatura lo suelta. Lo que aún no conseguiste aparece como silueta.',
+    'Criaturas: cada criatura que ves queda registrada, con su modelo 3D girando, vida, velocidad, dónde vive, qué suelta, cuántas derrotaste y las fases de los jefes.',
+    'Exploración: biomas, dimensiones, lugares, aldeas, jefes, eventos vividos, distancia recorrida y días sobrevividos. Diario: todo lo importante que te pasó, con día y hora.',
+    'Música por bioma: cada tipo de bioma tiene su propia música generativa, con versión nocturna, cuevas, bajo el agua y festival. Los jefes del Inframundo y del Vacío tienen música propia.',
+    'Sonidos nuevos: voces propias para peces, delfines, ciervos, zorros, ranas, patos, osos, pandas, pájaros, gaviotas, águilas, serpientes, perros y caballos, y sonidos para cada evento. La música y los efectos tienen volúmenes separados (Ajustes → Sonido).',
+    'Guardado en IndexedDB: mucho más espacio que antes. Las partidas de localStorage se mudan solas al arrancar, y solo se borran de ahí después de comprobar la copia.',
+    'Copias de seguridad: la primera vez que guardas una partida antigua se conserva la versión anterior intacta, cada guardado deja una copia del anterior y al cerrar la pestaña se deja una copia de emergencia. Las partidas de versiones anteriores se actualizan solas y las exportadas siguen pudiéndose importar.',
+    'Optimización: las criaturas lejanas piensan menos veces por segundo, las que están fuera de la vista no se dibujan y se libera su memoria al desaparecer.',
+    'Calidad automática: si el juego va a menos de 24 FPS baja la distancia y la calidad y te avisa. Modo ahorro para móviles modestos (menos partículas, sin nubes ni hojas detalladas).',
+    'Animaciones al abrir los menús y transiciones suaves entre pantallas.',
+    'Correcciones: la terracota ahora se fabrica con arcilla y arena (antes su receta coincidía con la del bloque de arcilla y nunca salía) y las hachas de combate tienen receta propia (antes salía un hacha común): tres lingotes o diamantes arriba, uno a cada lado del palo y otro palo abajo.',
+  ] },
   { v: '3.6', name: 'Salas multijugador', date: 'noviembre de 2026', items: [
     'Salas: el servidor ahora aloja muchos mundos a la vez. Al conectarte ves la recepción con las salas públicas y puedes crear la tuya o entrar con un código.',
     'Código de invitación de 6 caracteres para cada sala, botón para copiarlo y enlace de invitación (?sala=CÓDIGO) que abre el juego listo para entrar.',
@@ -12590,9 +12761,7 @@ const CHANGELOG = [
   { v: '1.1', name: 'Pantallas táctiles', items: ['Controles táctiles: joystick, zona para mirar y botones de saltar, minar y colocar.'] },
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
-const ROADMAP = [
-  { v: '4.0', name: 'Gran actualización', items: ['Eventos dinámicos: lluvia de meteoritos, invasiones nocturnas, tormentas eléctricas y fenómenos mágicos.', 'Catálogo de objetos, panel de criaturas y registro de exploración.', 'Música por bioma y por dimensión.', 'Guardado en IndexedDB, optimización y pulido general.'] },
-];
+const ROADMAP = [];   // la 4.0 completa la hoja de ruta
 function openNews() {
   const box = $('#newsList'); box.innerHTML = '';
   const sec = (e, future, open) => {
@@ -12601,7 +12770,7 @@ function openNews() {
     box.append(d);
   };
   CHANGELOG.forEach((e, i) => sec(e, false, i === 0));
-  const h = document.createElement('h3'); h.className = 'newsSub'; h.textContent = 'Hoja de ruta'; box.append(h);
+  if (ROADMAP.length) { const h = document.createElement('h3'); h.className = 'newsSub'; h.textContent = 'Hoja de ruta'; box.append(h); }
   ROADMAP.forEach((e) => sec(e, true, false));
   showScreen('newsScreen');
 }
@@ -14137,7 +14306,7 @@ const pad = {
     // el mismo botón que abrió una pantalla la cierra (inventario, mapa, misiones)
     for (let i = 0; i < b.length; i++) {
       const act = settings.pad.map[i];
-      if (edge(i) && ((act === 'inventory' && game.state === 'inventory') || (act === 'map' && game.state === 'map') || (act === 'quests' && game.state === 'quests'))) this.back();
+      if (edge(i) && ((act === 'inventory' && game.state === 'inventory') || (act === 'map' && game.state === 'map') || (act === 'quests' && game.state === 'quests') || (act === 'codex' && game.state === 'codex'))) this.back();
     }
     if (edge(9)) { if (game.state === 'paused') $('#pResume').click(); else this.back(); }
     // LB / RB cambian de pestaña en las pantallas con pestañas
@@ -14155,6 +14324,7 @@ const pad = {
     if (game.state === 'quests') { questUI.hide(); return; }
     if (game.state === 'dialog') { dialog.close(); return; }
     if (roomsUI.isOpen) { roomsUI.close(); return; }
+    if (typeof codex !== 'undefined' && codex.open) { codex.hide(); return; }
     if (game.state === 'paused' && $('#pauseScreen').classList.contains('show')) { $('#pResume').click(); return; }
     const scr = $('.screen.show'); if (!scr) return;
     const back = [...scr.querySelectorAll('button')].find((x) => x.offsetParent && (/Back$|Close$|^mpBack$|^lobbyLeave$|^settingsBack$/.test(x.id) || /^(Volver|Cerrar|Hecho)\b/.test(x.textContent.trim())));
@@ -14227,6 +14397,1189 @@ function initPadAndFullscreen() {
   pad.renderSettings();
 }
 initPadAndFullscreen();
+/* ==========================================================================
+   §39 EVENTOS DINÁMICOS (4.0)
+   --------------------------------------------------------------------------
+   Cada medio minuto se tira el dado: si no hay ningún evento en curso y pasó
+   el tiempo de espera, puede empezar uno de los que encajan con la hora, el
+   clima y el lugar (de noche, de día, cerca de una aldea…). Cada evento tiene
+   probabilidad, duración, efectos visuales y sonoros, un indicador en el HUD
+   y recompensas reales. Solo ocurren en la superficie.
+     ☄ Lluvia de meteoritos (noche) · ⚔ Invasión nocturna (noche, 3 oleadas)
+     🌑 Luna de sangre (noche) · ⚡ Tormenta eléctrica · 🦌 Ciervo dorado (día)
+     🏛 Ruinas misteriosas (se desvanecen) · 🎉 Festival de la aldea (día)
+     🏰 Asedio a la aldea (noche) · ✨ Aurora mágica (noche, orbes de maná)
+   Ajustes → Juego: frecuencia de los eventos (o desactivarlos).
+   Comando: /evento <nombre> | lista | fin.
+   En multijugador los eventos los lanza el anfitrión de la sala; los bloques
+   y las criaturas que crean se ven para todos.
+   ========================================================================== */
+settings.eventFreq ??= 'normal';                 // off | pocos | normal | muchos
+const EVENT_FREQ = { off: 0, pocos: 0.5, normal: 1, muchos: 2 };
+const EVENTS = {
+  meteor: { name: 'Lluvia de meteoritos', icon: '☄', when: 'night', chance: 0.3, dur: 120, color: '#ffb347', desc: 'Caen estrellas del cielo. Busca los cráteres: guardan fragmentos estelares.' },
+  invasion: { name: 'Invasión nocturna', icon: '⚔', when: 'night', chance: 0.25, dur: 300, color: '#ff5a4a', survival: true, desc: 'Oleadas de monstruos vienen a por ti. Resiste las tres oleadas.' },
+  bloodmoon: { name: 'Luna de sangre', icon: '🌑', when: 'night', chance: 0.12, dur: 240, color: '#d8304a', survival: true, desc: 'Salen más monstruos, más fuertes, y sueltan el doble de botín.' },
+  storm: { name: 'Tormenta eléctrica', icon: '⚡', when: 'any', chance: 0.18, dur: 150, color: '#8ab8ff', desc: 'Caen rayos a tu alrededor. Donde caen queda esencia de tormenta.' },
+  stag: { name: 'Ciervo dorado', icon: '🦌', when: 'day', chance: 0.22, dur: 180, color: '#ffd84a', desc: 'Un ciervo de pelaje dorado ronda cerca. ¡Atrápalo antes de que se vaya!' },
+  ruins: { name: 'Ruinas misteriosas', icon: '🏛', when: 'any', chance: 0.2, dur: 240, color: '#b9a3ff', build: true, desc: 'Unas ruinas aparecieron de la nada. Saquéalas antes de que se desvanezcan.' },
+  festival: { name: 'Festival de la aldea', icon: '🎉', when: 'day', near: 'village', chance: 0.45, dur: 240, color: '#ff8ad8', desc: '¡La aldea está de fiesta! Precios rebajados, regalos y fuegos artificiales.' },
+  siege: { name: 'Asedio a la aldea', icon: '🏰', when: 'night', near: 'village', chance: 0.35, dur: 300, color: '#ff7a3a', survival: true, desc: 'Los saqueadores atacan la aldea. ¡Defiéndela!' },
+  aurora: { name: 'Aurora mágica', icon: '✨', when: 'night', chance: 0.25, dur: 150, color: '#7bffcf', desc: 'Una aurora cruza el cielo y deja orbes de maná. Atrápalos.' },
+};
+const EVENT_IDS = Object.keys(EVENTS);
+
+// Busca la aldea más cercana (hasta 110 bloques)
+function nearestVillage(p) {
+  const S = STRUCTS.find((s) => s.type === 'village'); if (!S || !world.gen.structCandidate) return null;
+  const gx0 = Math.floor(p.pos.x / S.region), gz0 = Math.floor(p.pos.z / S.region); let best = null;
+  for (let gx = gx0 - 1; gx <= gx0 + 1; gx++) for (let gz = gz0 - 1; gz <= gz0 + 1; gz++) {
+    const c = world.gen.structCandidate(S, gx, gz); if (!c) continue;
+    const d = Math.hypot(c.x - p.pos.x, c.z - p.pos.z); if (d < 110 && (!best || d < best.d)) best = { d, id: c.id, x: c.x, z: c.z };
+  }
+  return best;
+}
+// Suelo firme cerca de un punto (columna cargada, sin agua)
+function evGround(x, z) {
+  x = Math.floor(x); z = Math.floor(z);
+  if (!world.isLoaded(x, z)) return null;
+  const y = world.heightAt(x, z); if (y < 2 || y >= WY - 3) return null;
+  const top = world.get(x, y - 1, z); if (!B_SOLID[top] || B_WATERY[world.get(x, y, z)]) return null;
+  return y;
+}
+function ringPoint(p, rmin, rmax, tries = 24) {
+  for (let i = 0; i < tries; i++) {
+    const a = Math.random() * Math.PI * 2, r = rmin + Math.random() * (rmax - rmin), x = p.pos.x + Math.cos(a) * r, z = p.pos.z + Math.sin(a) * r, y = evGround(x, z);
+    if (y != null) return [Math.floor(x) + 0.5, y, Math.floor(z) + 0.5];
+  }
+  return null;
+}
+function makeElite40(m) {
+  if (!m || m.elite || !m.spec.hostile) return m;
+  m.elite = true; m.spec = { ...m.spec, name: m.spec.name + ' de élite', hp: m.spec.hp * 3, melee: Math.ceil((m.spec.melee || 3) * 1.5), xp: m.spec.xp * 4, drops: [...m.spec.drops, [I.EMERALD, 1, 3], [I.GOLD_INGOT, 0, 2]] };
+  m.hp = m.spec.hp; m.mesh.scale.multiplyScalar(1.28); m.h *= 1.25;
+  const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), new THREE.MeshBasicMaterial({ color: 0xffd23c, fog: false })); gem.position.y = m.h / 1.28 + 0.5; m.mesh.add(gem);
+  return m;
+}
+const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+/* ---------- Efectos visuales compartidos ---------- */
+const eventFx = {
+  meteors: [], orbs: [], aurora: null, bolts: [],
+  meteorMat: new THREE.MeshBasicMaterial({ color: 0xffd28a, fog: false }),
+  orbMat: new THREE.MeshBasicMaterial({ color: 0x9cfff0, fog: false, transparent: true, opacity: 0.9 }),
+  meteor(from, to, t, onHit) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 4.5), this.meteorMat); m.frustumCulled = false;
+    scene.add(m); this.meteors.push({ m, from, to, t, T: t, onHit });
+    sfx.play('meteor', { vol: 0.6 });
+  },
+  orb(x, y, z) {
+    const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.28), this.orbMat); m.position.set(x, y, z); scene.add(m);
+    const o = { m, x, y, z, ph: Math.random() * 6 }; this.orbs.push(o); return o;
+  },
+  // Rayo con posición concreta (la tormenta del cielo lo hace al azar)
+  strike(x, z) {
+    const env = game.env, gy = world.heightAt(Math.floor(x), Math.floor(z));
+    env.flash = 1;
+    const g = new THREE.BufferGeometry(), pts = [];
+    for (let i = 0; i < 12; i++) { const t = i / 11; pts.push(x + (i && i < 11 ? (Math.random() - 0.5) * 3 : 0), lerp(118, gy, t), z + (i && i < 11 ? (Math.random() - 0.5) * 3 : 0)); }
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xeef4ff, fog: false })); l.frustumCulled = false; scene.add(l);
+    this.bolts.push({ l, t: 0.25 });
+    const p = game.player, d = Math.hypot(p.pos.x - x, p.pos.z - z);
+    setTimeout(() => sfx.play('thunder', { vol: clamp(1.3 - d / 90, 0.4, 1) }), Math.min(800, d * 8));
+    game.particles.emit(x, gy + 0.5, z, [0.9, 0.95, 1], 18, { speed: 6, up: 5, life: 0.6 });
+    return gy;
+  },
+  ensureAurora() {
+    if (this.aurora) return this.aurora;
+    const geo = new THREE.PlaneGeometry(420, 60, 60, 1);
+    const mat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false, blending: THREE.AdditiveBlending,
+      uniforms: { uT: { value: 0 }, uA: { value: 0 } },
+      vertexShader: 'uniform float uT; varying vec2 vUv; void main(){ vUv=uv; vec3 p=position; p.z+=sin(p.x*0.025+uT*0.6)*18.0+sin(p.x*0.06-uT)*6.0; gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0); }',
+      fragmentShader: 'uniform float uT; uniform float uA; varying vec2 vUv; void main(){ float band=smoothstep(0.0,0.35,vUv.y)*(1.0-smoothstep(0.55,1.0,vUv.y)); float w=0.55+0.45*sin(vUv.x*40.0+uT*1.7); vec3 c=mix(vec3(0.2,1.0,0.6),vec3(0.55,0.35,1.0),vUv.y+0.2*sin(vUv.x*9.0+uT)); gl_FragColor=vec4(c, band*w*uA*0.55); }',
+    });
+    const a = new THREE.Group();
+    for (let i = 0; i < 3; i++) { const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.PI / 2 + 1.0; m.position.set((i - 1) * 70, i * 12, -150 + i * 35); m.rotation.z = (i - 1) * 0.25; m.frustumCulled = false; a.add(m); }
+    a.renderOrder = -6; scene.add(a); this.aurora = { group: a, mat, a: 0, want: 0 };
+    return this.aurora;
+  },
+  update(dt) {
+    for (let i = this.meteors.length - 1; i >= 0; i--) {
+      const M = this.meteors[i]; M.t -= dt;
+      const k = 1 - Math.max(0, M.t) / M.T, x = lerp(M.from[0], M.to[0], k), y = lerp(M.from[1], M.to[1], k), z = lerp(M.from[2], M.to[2], k);
+      M.m.position.set(x, y, z); M.m.lookAt(M.to[0], M.to[1], M.to[2]);
+      if (Math.random() < 0.9) game.particles.emit(x, y, z, Math.random() < 0.5 ? [1, 0.75, 0.3] : [1, 0.95, 0.7], 2, { speed: 1, up: 0.5, gravity: 0, life: 0.8, size: 0.25 });
+      if (M.t <= 0) { scene.remove(M.m); M.m.geometry.dispose(); this.meteors.splice(i, 1); M.onHit && M.onHit(); }
+    }
+    for (let i = this.bolts.length - 1; i >= 0; i--) { const b = this.bolts[i]; if ((b.t -= dt) <= 0) { scene.remove(b.l); b.l.geometry.dispose(); b.l.material.dispose(); this.bolts.splice(i, 1); } }
+    const now = performance.now() / 1000;
+    for (const o of this.orbs) { o.m.position.set(o.x, o.y + Math.sin(now * 2 + o.ph) * 0.25, o.z); o.m.rotation.y += dt * 2; if (Math.random() < 0.08) game.particles.emit(o.x, o.y, o.z, [0.6, 1, 0.95], 1, { speed: 0.4, up: 0.6, gravity: -0.5, life: 1 }); }
+    const A = this.aurora;
+    if (A) {
+      A.a += (A.want - A.a) * Math.min(1, dt * 0.6); A.mat.uniforms.uA.value = A.a; A.mat.uniforms.uT.value = now;
+      A.group.visible = A.a > 0.01; A.group.position.set(camera.position.x, Math.max(camera.position.y + 55, 110), camera.position.z);
+    }
+  },
+  clearOrbs() { for (const o of this.orbs) { scene.remove(o.m); o.m.geometry.dispose(); } this.orbs.length = 0; },
+};
+
+/* ---------- Gestor de eventos ---------- */
+const events = {
+  cur: null, checkT: 40, cooldown: 120, lastKind: null, hud: null,
+  get freq() { return EVENT_FREQ[settings.eventFreq] ?? 1; },
+  stats() { const p = game.player; p.evs ||= { n: {}, total: 0, journal: [], restore: [] }; return p.evs; },
+  allowed() {
+    if (!world || !game.player || game.state === 'menu' || game.state === 'loading') return false;
+    if (dimOf(game.player.pos.x, game.player.pos.z) !== 0) return false;
+    if (net.active && !net.isHost()) return false;
+    return true;
+  },
+  candidates() {
+    const env = game.env, night = env.isNight(), p = game.player, vil = nearestVillage(p), out = [];
+    for (const id of EVENT_IDS) {
+      const E = EVENTS[id];
+      if (E.when === 'night' && !night) continue;
+      if (E.when === 'day' && night) continue;
+      if (E.survival && game.mode !== 'survival') continue;
+      if (E.near === 'village' && !vil) continue;
+      if (E.build && net.active && !net.canBuild()) continue;
+      if (id === 'storm' && env.weather === 'storm') continue;
+      if (id === this.lastKind) continue;
+      out.push(id);
+    }
+    return { list: out, vil };
+  },
+  update(dt) {
+    eventFx.update(dt);
+    if (!this.allowed()) {
+      if (this.cur && (!world || !game.player || game.state === 'menu' || game.state === 'loading')) { this.cur = null; eventFx.clearOrbs(); if (eventFx.aurora) eventFx.aurora.want = 0; }   // salió al menú: lo pendiente se arregla al volver
+      else if (this.cur) this.end(false, 'Te alejaste del evento');
+      this.renderHud(); return;
+    }
+    if (this.cur) { this.tick(dt); this.renderHud(); return; }
+    this.renderHud();
+    if (this.cooldown > 0) { this.cooldown -= dt; return; }
+    if ((this.checkT -= dt) > 0) return;
+    this.checkT = 30;
+    const f = this.freq; if (!f || game.state !== 'playing') return;
+    const { list, vil } = this.candidates();
+    for (const id of list.sort(() => Math.random() - 0.5)) if (Math.random() < EVENTS[id].chance * f * 0.5) { this.start(id, { vil }); return; }
+  },
+  start(id, opts = {}) {
+    const E = EVENTS[id]; if (!E) return false;
+    if (this.cur) this.end(false, null, true);
+    const vil = opts.vil || (E.near ? nearestVillage(game.player) : null);
+    if (E.near === 'village' && !vil) { hud.toast('Ese evento necesita una aldea cerca'); return false; }
+    const ev = { id, E, t: E.dur, dur: E.dur, d: {}, vil };
+    this.cur = ev;
+    const ok = this.H[id].start.call(this, ev);
+    if (ok === false) { this.cur = null; return false; }
+    sfx.play('eventStart', { pitch: E.when === 'night' ? 0.8 : 1.1 });
+    eventCard(`${E.icon} ${E.name}`, E.desc, E.color);
+    journalAdd(E.icon, `Comenzó: ${E.name}`);
+    return true;
+  },
+  tick(dt) {
+    const ev = this.cur; ev.t -= dt;
+    this.H[ev.id].tick.call(this, ev, dt);
+    if (this.cur === ev && ev.t <= 0) this.end(!!this.H[ev.id].timeoutWin, this.H[ev.id].timeoutMsg || 'El evento terminó');
+  },
+  // win: true = recompensa; msg: texto final
+  end(win, msg, silent) {
+    const ev = this.cur; if (!ev) return;
+    this.cur = null; this.lastKind = ev.id; this.cooldown = 240 / Math.max(0.5, this.freq || 1); this.checkT = 30;
+    try { this.H[ev.id].stop && this.H[ev.id].stop.call(this, ev, win); } catch (e) { console.error(e); }
+    const S = this.stats(); S.n[ev.id] = (S.n[ev.id] || 0) + 1; S.total++;
+    if (silent) return;
+    if (win) {
+      try { this.H[ev.id].reward && this.H[ev.id].reward.call(this, ev); } catch (e) { console.error(e); }
+      sfx.play('fanfare'); notify(`${ev.E.icon} ${ev.E.name}`, msg || '¡Completado!', 'ach');
+      journalAdd(ev.E.icon, `${ev.E.name}: ${msg || 'completado'}`);
+      game.unlock('event_win');
+    } else { if (msg) hud.toast(`${ev.E.icon} ${msg}`, 2600); journalAdd(ev.E.icon, `${ev.E.name}: ${msg || 'terminó'}`); }
+    game.unlock('event_first');
+    if (EVENT_IDS.every((k) => S.n[k])) game.unlock('event_all');
+  },
+  give(stack, near) {
+    const p = game.player, at = near || [p.pos.x, p.pos.y + 1, p.pos.z];
+    game.entities.dropItem(stack, at[0], at[1], at[2]);
+  },
+  // criaturas de un evento: persiguen al jugador aunque no lo vean
+  spawnHunters(ev, list, rmin, rmax, center) {
+    const out = [], p = game.player;
+    for (const type of list) {
+      const c = center ? { pos: { x: center.x, z: center.z } } : p, pt = ringPoint(c, rmin, rmax); if (!pt) continue;
+      const m = game.entities.spawnMob(type, pt[0], pt[1] + 0.05, pt[2]); if (!m) continue;
+      m.eventMob = ev.id; m.persistent = true; out.push(m);
+      game.particles.emit(pt[0], pt[1] + 1, pt[2], [0.35, 0.1, 0.4], 10, { speed: 2, up: 2 });
+    }
+    return out;
+  },
+  driveHunters(list) {
+    const p = game.player;
+    for (const m of list) if (!m.dead && !m.deathT && m.ai) {
+      const d = Math.hypot(m.pos.x - p.pos.x, m.pos.z - p.pos.z);
+      if (d < 19) { m.ai.los = true; m.ai.losT = 0.6; }
+      else if (d > 70) { m.dead = true; }                     // se quedó muy lejos: se retira
+    }
+    return list.filter((m) => !m.dead && !m.deathT);
+  },
+  /* ---------- Cada evento ---------- */
+  H: {
+    meteor: {
+      start(ev) { ev.d = { next: 1, hits: 0, shards: 0 }; },
+      tick(ev, dt) {
+        const d = ev.d; if ((d.next -= dt) > 0) return;
+        d.next = 0.9 + Math.random() * 2.2;
+        const p = game.player, near = Math.random() < 0.38 && ev.t > 6;
+        const a = Math.random() * Math.PI * 2, r = near ? 14 + Math.random() * 40 : 90 + Math.random() * 120;
+        let tx = p.pos.x + Math.cos(a) * r, tz = p.pos.z + Math.sin(a) * r, ty = near ? evGround(tx, tz) : null;
+        if (near && ty == null) return;
+        if (!near) ty = 60 + Math.random() * 30;                // se deshace en el cielo
+        const from = [tx + 60 + Math.random() * 40, 150, tz - 40 + Math.random() * 80];
+        eventFx.meteor(from, [tx, ty, tz], near ? 2.4 : 2, near ? () => this.H.meteor.impact.call(this, ev, Math.floor(tx), ty, Math.floor(tz)) : () => game.particles.emit(tx, ty, tz, [1, 0.8, 0.4], 14, { speed: 5, up: 2, gravity: 2, life: 0.9 }));
+      },
+      impact(ev, x, y, z) {
+        if (this.cur !== ev) return;
+        const p = game.player, R = 2 + Math.floor(Math.random() * 2), canDig = !net.active || net.canBuild();
+        sfx.play('explode', { pos: { x, y, z } }); game.env.flash = Math.max(game.env.flash, 0.35);
+        game.particles.emit(x + 0.5, y + 0.5, z + 0.5, [1, 0.6, 0.2], 40, { speed: 9, up: 8, life: 1.1, size: 0.18 });
+        if (canDig) {
+          for (let dx = -R; dx <= R; dx++) for (let dy = -R; dy <= R; dy++) for (let dz = -R; dz <= R; dz++) {
+            if (dx * dx + dy * dy * 1.6 + dz * dz > R * R + 0.5) continue;
+            const id = world.get(x + dx, y + dy - 1, z + dz); if (!id || BLOCKS[id].hardness < 0 || B_WATERY[id] || world.tiles.has(`${x + dx},${y + dy - 1},${z + dz}`)) continue;
+            world.set(x + dx, y + dy - 1, z + dz, 0, 0);
+          }
+          const by = y - R; for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { const id = world.get(x + dx, by - 1, z + dz); if (id && BLOCKS[id].hardness >= 0 && !B_WATERY[id]) world.set(x + dx, by - 1, z + dz, (dx + dz) % 2 ? OBSIDIAN : MAGMA, 0); }
+        }
+        const n = rint(1, 3); ev.d.hits++; ev.d.shards += n;
+        this.give({ id: I.STAR_SHARD, count: n }, [x + 0.5, y - R + 0.5, z + 0.5]);
+        const d = Math.hypot(p.pos.x - x - 0.5, p.pos.z - z - 0.5);
+        if (d < R + 1.5 && Math.abs(p.pos.y - y) < 4) p.damage(6, 'Le cayó un meteorito encima', new THREE.Vector3(x, y, z));
+        for (const e of game.entities.list) if (e.kind === 'mob' && !e.remote && Math.hypot(e.pos.x - x, e.pos.z - z) < R + 1) e.hurt(10, { x, z });
+        if (d < 30) hud.toast('☄ ¡Impacto cercano! Busca el cráter', 1800);
+      },
+      info(ev) { return `Impactos cercanos: ${ev.d.hits}`; },
+      timeoutWin: true, timeoutMsg: 'La lluvia de estrellas terminó',
+      reward(ev) { game.player.addXp(10 + ev.d.hits * 4); if (ev.d.hits) game.unlock('event_meteor'); },
+    },
+    invasion: {
+      start(ev) { ev.d = { wave: 0, mobs: [], next: 3, killed: 0 }; },
+      tick(ev, dt) {
+        const d = ev.d, p = game.player;
+        if (p.dead) return this.end(false, 'Caíste durante la invasión');
+        if (!game.env.isNight() && ev.t < ev.dur - 20) return this.end(false, 'Amaneció y los monstruos huyeron');
+        const before = d.mobs.length; d.mobs = this.driveHunters(d.mobs); d.killed += before - d.mobs.length;
+        if (d.mobs.length) return;
+        if (d.wave >= 3) return this.end(true, '¡Resististe las tres oleadas!');
+        if ((d.next -= dt) > 0) return;
+        d.wave++; d.next = 8;
+        const W = [['zombie', 'zombie', 'skeleton', 'spider'], ['zombie', 'skeleton', 'skeleton', 'spider', 'husk', 'zombie'], ['brute', 'shaman', 'zombie', 'skeleton', 'spider', 'zombie', 'skeleton']][d.wave - 1].filter((t) => MOBS[t]);
+        d.mobs = this.spawnHunters(ev, W, 12, 18);
+        if (d.wave === 3 && d.mobs[0]) makeElite40(d.mobs[0]);
+        sfx.play('horn'); hud.toast(`⚔ Oleada ${d.wave} de 3`, 2000);
+      },
+      info(ev) { return ev.d.wave ? `Oleada ${ev.d.wave}/3 · quedan ${ev.d.mobs.length}` : 'Se acercan…'; },
+      timeoutMsg: 'Los monstruos se retiraron',
+      reward() { const p = game.player; this.give({ id: I.EMERALD, count: rint(3, 6) }); this.give({ id: I.GOLD_INGOT, count: rint(2, 4) }); if (Math.random() < 0.5) this.give({ id: I.DIAMOND, count: 1 }); p.addXp(40); game.unlock('event_defend'); },
+    },
+    bloodmoon: {
+      start(ev) { ev.d = { next: 2, mobs: [] }; },
+      tick(ev, dt) {
+        const d = ev.d; if (game.player.dead) return this.end(false, 'La luna de sangre te venció');
+        d.mobs = this.driveHunters(d.mobs);
+        if ((d.next -= dt) > 0 || d.mobs.length >= 10) return;
+        d.next = 6 + Math.random() * 5;
+        const pick = ['zombie', 'skeleton', 'spider', 'zombie', 'husk'].filter((t) => MOBS[t]);
+        const got = this.spawnHunters(ev, [pick[rint(0, pick.length - 1)]], 14, 20);
+        for (const m of got) { m.bloodMoon = true; if (Math.random() < 0.3) makeElite40(m); }
+        d.mobs.push(...got);
+      },
+      info(ev) { return `Monstruos cerca: ${ev.d.mobs.length}`; },
+      timeoutWin: true, timeoutMsg: 'Sobreviviste a la luna de sangre',
+      reward() { this.give({ id: I.GOLD_INGOT, count: rint(3, 6) }); this.give({ id: I.EMERALD, count: rint(2, 4) }); game.player.addXp(30); },
+      stop(ev) { for (const m of ev.d.mobs) m.persistent = false; },
+    },
+    storm: {
+      start(ev) { const env = game.env; ev.d = { prevW: env.weather, next: 3, ess: 0 }; env.weather = 'storm'; env.weatherT = ev.dur + 5; },
+      tick(ev, dt) {
+        const d = ev.d; if ((d.next -= dt) > 0) return;
+        d.next = 2.5 + Math.random() * 4.5;
+        const p = game.player, a = Math.random() * Math.PI * 2, r = 5 + Math.random() * 30, x = p.pos.x + Math.cos(a) * r, z = p.pos.z + Math.sin(a) * r;
+        if (!world.isLoaded(Math.floor(x), Math.floor(z))) return;
+        const gy = eventFx.strike(x, z);
+        if (Math.hypot(p.pos.x - x, p.pos.z - z) < 2.5 && Math.abs(p.pos.y - gy) < 3) p.damage(5, 'Le alcanzó un rayo', new THREE.Vector3(x, gy, z));
+        for (const e of game.entities.list) if (e.kind === 'mob' && !e.remote && Math.hypot(e.pos.x - x, e.pos.z - z) < 3) e.hurt(8, { x, z });
+        const top = world.get(Math.floor(x), gy - 1, Math.floor(z));
+        if (top === SAND && (!net.active || net.canBuild())) world.set(Math.floor(x), gy - 1, Math.floor(z), GLASS, 0);     // fulgurita
+        if (Math.random() < 0.55) { this.give({ id: I.STORM_ESSENCE, count: 1 }, [x, gy + 0.5, z]); d.ess++; }
+      },
+      info(ev) { return `Esencias caídas: ${ev.d.ess}`; },
+      timeoutWin: true, timeoutMsg: 'La tormenta amainó',
+      reward() { game.player.addXp(12); },
+      stop(ev) { const env = game.env; if (env.weather === 'storm') { env.weather = 'rain'; env.weatherT = 30; } },
+    },
+    stag: {
+      start(ev) {
+        const pt = ringPoint(game.player, 22, 34); if (!pt) return false;
+        const m = game.entities.spawnMob('goldstag', pt[0], pt[1] + 0.05, pt[2]); if (!m) return false;
+        m.persistent = true; m.eventMob = 'stag'; ev.d = { m };
+      },
+      tick(ev) {
+        const m = ev.d.m;
+        if (m.deathT || m.dead) { if (m.deathT || m.hp <= 0) return this.end(true, '¡Atrapaste al ciervo dorado!'); return this.end(false, 'El ciervo dorado se esfumó'); }
+        if (Math.random() < 0.3) game.particles.emit(m.pos.x, m.pos.y + 1.2, m.pos.z, [1, 0.88, 0.35], 1, { speed: 0.6, up: 1, gravity: -0.4, life: 1 });
+      },
+      info(ev) {
+        const m = ev.d.m, p = game.player; if (!m || m.dead) return '';
+        const dx = m.pos.x - p.pos.x, dz = m.pos.z - p.pos.z, ang = Math.atan2(dx, dz) - (camera.rotation.y + Math.PI);
+        const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'], k = ((Math.round(-ang / (Math.PI / 4)) % 8) + 8) % 8;
+        return `${arrows[k]} a ${Math.round(Math.hypot(dx, dz))} m`;
+      },
+      timeoutMsg: 'El ciervo dorado se fue',
+      reward() { game.player.addXp(10); game.unlock('event_stag'); },
+      stop(ev, win) { const m = ev.d.m; if (m && !win && !m.dead) { game.particles.emit(m.pos.x, m.pos.y + 1, m.pos.z, [1, 0.9, 0.4], 26, { speed: 3, up: 3 }); m.dead = true; } },
+    },
+    ruins: {
+      start(ev) {
+        const p = game.player; let spot = null;
+        for (let i = 0; i < 30 && !spot; i++) {
+          const pt = ringPoint(p, 18, 32, 1); if (!pt) continue;
+          const [x, y, z] = pt.map(Math.floor); let ok = true;
+          for (let dx = -3; dx <= 3 && ok; dx++) for (let dz = -3; dz <= 3 && ok; dz++) { const g = evGround(x + dx, z + dz); if (g == null || Math.abs(g - y) > 2) ok = false; }
+          if (ok) spot = [x, y, z];
+        }
+        if (!spot) return false;
+        const [cx, cy, cz] = spot, orig = [], rnd = mulberry32((cx * 31 + cz) | 0);
+        const put = (x, y, z, id, meta = 0) => { orig.push([x, y, z, world.get(x, y, z), world.getMeta(x, y, z)]); world.set(x, y, z, id, meta); };
+        const BR = () => { const r = rnd(); return r < 0.4 ? MOSSY_BRICKS : r < 0.65 ? CRACKED_BRICKS : r < 0.85 ? STONE_BRICKS : MOSSY_COBBLE; };
+        for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) {
+          put(cx + dx, cy - 1, cz + dz, BR());
+          for (let y = cy; y < cy + 5; y++) if (world.get(cx + dx, y, cz + dz)) put(cx + dx, y, cz + dz, 0);
+          const edge = Math.abs(dx) === 3 || Math.abs(dz) === 3;
+          if (edge) { const h = Math.abs(dx) === 3 && Math.abs(dz) === 3 ? 4 : rnd() < 0.55 ? 1 + Math.floor(rnd() * 2) : 0; for (let y = 0; y < h; y++) put(cx + dx, cy + y, cz + dz, BR()); }
+        }
+        put(cx, cy, cz, CHISELED_BRICKS); put(cx, cy + 1, cz, CHEST, 0);
+        for (const [dx, dz] of [[-2, -2], [2, 2], [-2, 2], [2, -2]]) if (rnd() < 0.7) put(cx + dx, cy, cz + dz, TORCH, 0);
+        const key = `${cx},${cy + 1},${cz}`, tile = makeTile('chest'); tile.title = 'Cofre de las ruinas';
+        const loot = [[I.EMERALD, rint(2, 6)], [I.GOLD_INGOT, rint(1, 4)], [I.ARCANE_DUST, rint(1, 3)], [I.STAR_SHARD, rint(0, 2)], [I.DIAMOND, Math.random() < 0.35 ? 1 : 0], [I.GOLDEN_APPLE, Math.random() < 0.3 ? 1 : 0], [I.EXP_BOTTLE ?? I.EMERALD, 0]];
+        let si = 0; for (const [id, n] of loot) if (n > 0 && ITEMS[id]) tile.inv.slots[(si++ * 4) % 27] = { id, count: n, dmg: 0 };
+        world.tiles.set(key, tile);
+        const S = this.stats(); S.restore = orig.slice();            // por si se cierra el juego antes de que se desvanezcan
+        ev.d = { orig, key, c: [cx, cy, cz], mobs: this.spawnHunters(ev, ['skeleton', 'zombie'].filter((t) => MOBS[t]), 3, 6, { x: cx, z: cz }) };
+        journalAdd('🏛', `Ruinas misteriosas en ${localXZ(cx, cz).map(Math.round).join(', ')}`);
+        game.particles.emit(cx + 0.5, cy + 2, cz + 0.5, [0.75, 0.6, 1], 40, { speed: 6, up: 5, life: 1.2 });
+      },
+      tick(ev) { ev.d.mobs = ev.d.mobs.filter((m) => !m.dead && !m.deathT); if (Math.random() < 0.15) { const [x, y, z] = ev.d.c; game.particles.emit(x + 0.5 + (Math.random() - 0.5) * 7, y + Math.random() * 4, z + 0.5 + (Math.random() - 0.5) * 7, [0.7, 0.55, 1], 1, { gravity: -0.6, life: 1.4 }); } },
+      info(ev) { const [x, , z] = ev.d.c, p = game.player; return `A ${Math.round(Math.hypot(x - p.pos.x, z - p.pos.z))} m · se desvanecen pronto`; },
+      timeoutWin: true, timeoutMsg: 'Las ruinas se desvanecieron',
+      reward() { game.player.addXp(8); },
+      stop(ev) { restoreBlocks(ev.d.orig); world.tiles.delete(ev.d.key); this.stats().restore = []; const [x, y, z] = ev.d.c; game.particles.emit(x + 0.5, y + 2, z + 0.5, [0.75, 0.6, 1], 50, { speed: 7, up: 4, life: 1.4 }); sfx.play('chime', { pitch: 0.6 }); },
+    },
+    festival: {
+      start(ev) {
+        ev.d = { next: 1, gift: false };
+        hud.toast(`🎉 ¡Fiesta en ${villageName(ev.vil.id)}! Los aldeanos venden un 30 % más barato`, 3500);
+      },
+      tick(ev, dt) {
+        const d = ev.d, p = game.player, v = ev.vil;
+        if (!d.gift && Math.hypot(p.pos.x - v.x, p.pos.z - v.z) < 40) { d.gift = true; this.give({ id: I.FESTIVAL_CAKE, count: 2 }); this.give({ id: I.EMERALD, count: 2 }); addRep(v.id, 4, 'Te uniste a la fiesta'); hud.toast('🎁 Los aldeanos te regalaron un pastel del festival', 2500); }
+        if ((d.next -= dt) > 0) return;
+        d.next = 1.2 + Math.random() * 1.6;
+        const y = (world.isLoaded(Math.floor(v.x), Math.floor(v.z)) ? world.heightAt(Math.floor(v.x), Math.floor(v.z)) : p.pos.y) + 14 + Math.random() * 8;
+        const fx = v.x + (Math.random() - 0.5) * 30, fz = v.z + (Math.random() - 0.5) * 30, col = [[1, 0.3, 0.4], [0.3, 0.8, 1], [1, 0.9, 0.3], [0.6, 1, 0.4], [0.9, 0.5, 1]][rint(0, 4)];
+        game.particles.emit(fx, y, fz, col, 30, { speed: 9, up: 4, gravity: 3, life: 1.3, size: 0.16 });
+        sfx.play('firework', { pos: { x: fx, y, z: fz } });
+      },
+      info(ev) { return `${villageName(ev.vil.id)} · precios −30 %`; },
+      timeoutWin: true, timeoutMsg: 'La fiesta terminó',
+      reward(ev) { addRep(ev.vil.id, 3, 'Gracias por venir a la fiesta'); game.player.addXp(8); },
+    },
+    siege: {
+      start(ev) { ev.d = { wave: 0, mobs: [], next: 2 }; hud.toast(`🏰 ¡${villageName(ev.vil.id)} está bajo asedio!`, 3000); },
+      tick(ev, dt) {
+        const d = ev.d, p = game.player, v = ev.vil;
+        if (p.dead) return this.end(false, 'Caíste defendiendo la aldea');
+        if (!game.env.isNight() && ev.t < ev.dur - 20) return this.end(false, 'Al amanecer, los saqueadores se retiraron');
+        if (Math.hypot(p.pos.x - v.x, p.pos.z - v.z) > 100) return this.end(false, 'Abandonaste la aldea');
+        d.mobs = this.driveHunters(d.mobs);
+        if (d.mobs.length) return;
+        if (d.wave >= 2) return this.end(true, `¡Salvaste ${villageName(v.id)}!`);
+        if ((d.next -= dt) > 0) return;
+        d.wave++; d.next = 10;
+        const W = (d.wave === 1 ? ['raider', 'raider', 'raider', 'shaman'] : ['raider', 'raider', 'brute', 'shaman', 'raider']).filter((t) => MOBS[t]);
+        d.mobs = this.spawnHunters(ev, W.length ? W : ['zombie', 'zombie', 'skeleton'], 10, 18, { x: v.x, z: v.z });
+        sfx.play('horn', { pitch: 0.8 }); hud.toast(`🏰 Oleada ${d.wave} de 2`, 2000);
+      },
+      info(ev) { return `${villageName(ev.vil.id)} · oleada ${Math.max(1, ev.d.wave)}/2 · quedan ${ev.d.mobs.length}`; },
+      timeoutMsg: 'Los saqueadores se retiraron',
+      reward(ev) { addRep(ev.vil.id, 12, 'Defendiste la aldea'); this.give({ id: I.EMERALD, count: rint(5, 9) }); this.give({ id: I.FESTIVAL_CAKE, count: 1 }); game.player.addXp(45); game.unlock('event_defend'); },
+    },
+    aurora: {
+      start(ev) { eventFx.ensureAurora().want = 1; ev.d = { next: 1, got: 0 }; },
+      tick(ev, dt) {
+        const d = ev.d, p = game.player;
+        for (let i = eventFx.orbs.length - 1; i >= 0; i--) {
+          const o = eventFx.orbs[i];
+          if (Math.hypot(o.x - p.pos.x, o.z - p.pos.z) < 1.6 && Math.abs(o.y - (p.pos.y + 1)) < 2) {
+            scene.remove(o.m); eventFx.orbs.splice(i, 1); d.got++;
+            p.inv.add(I.ARCANE_DUST, 1) && this.give({ id: I.ARCANE_DUST, count: 1 }); p.addXp(3); p.discover(I.ARCANE_DUST); hud.update();
+            sfx.play('chime', { pitch: 1 + d.got * 0.04 }); game.particles.emit(o.x, o.y, o.z, [0.6, 1, 0.9], 14, { speed: 3, up: 3, gravity: 0 });
+          } else if (Math.hypot(o.x - p.pos.x, o.z - p.pos.z) > 60) { scene.remove(o.m); eventFx.orbs.splice(i, 1); }
+        }
+        if ((d.next -= dt) > 0 || eventFx.orbs.length >= 8) return;
+        d.next = 4 + Math.random() * 5;
+        const pt = ringPoint(p, 6, 18); if (pt) eventFx.orb(pt[0], pt[1] + 1.2 + Math.random() * 1.5, pt[2]);
+      },
+      info(ev) { return `Orbes atrapados: ${ev.d.got}`; },
+      timeoutWin: true, timeoutMsg: 'La aurora se apagó',
+      reward(ev) { game.player.addXp(5 + ev.d.got * 2); if (ev.d.got >= 5) game.unlock('event_aurora'); },
+      stop() { if (eventFx.aurora) eventFx.aurora.want = 0; eventFx.clearOrbs(); },
+    },
+  },
+  /* ---------- Indicador en el HUD ---------- */
+  renderHud() {
+    const el = this.hud || (this.hud = $('#eventBar')); if (!el) return;
+    document.body.classList.toggle('boss-on', !!game.boss);
+    const ev = this.cur;
+    if (!ev || game.state === 'menu') { if (el.classList.contains('on')) el.classList.remove('on'); return; }
+    el.classList.add('on'); el.style.setProperty('--ec', ev.E.color);
+    const info = this.H[ev.id].info ? this.H[ev.id].info.call(this, ev) : '';
+    const sec = Math.max(0, Math.ceil(ev.t)), txt = `${ev.E.icon} ${ev.E.name}`, sub = `${info}${info ? ' · ' : ''}${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+    if (el.dataset.t !== txt) { el.dataset.t = txt; el.querySelector('b').textContent = txt; }
+    if (el.dataset.s !== sub) { el.dataset.s = sub; el.querySelector('span').textContent = sub; }
+    el.querySelector('i').style.width = (100 * Math.max(0, ev.t) / ev.dur).toFixed(1) + '%';
+  },
+};
+// Vuelve a dejar los bloques como estaban (cargados o no)
+function restoreBlocks(list) {
+  for (let i = list.length - 1; i >= 0; i--) {
+    const [x, y, z, id, m] = list[i];
+    if (world.isLoaded(x, z)) world.set(x, y, z, id, m);
+    else {
+      const key = (x >> 4) + ',' + (z >> 4), idx = (x & 15) | ((z & 15) << 4) | (y << 8);
+      let ed = world.edits.get(key); if (!ed) { ed = new Map(); world.edits.set(key, ed); }
+      ed.set(idx, id | (m << 8));
+    }
+  }
+}
+function eventCard(title, sub, color) {
+  const c = $('#eventIntro'); if (!c) return;
+  c.querySelector('b').textContent = title; c.querySelector('span').textContent = sub; c.style.setProperty('--ec', color || '#ffd84a');
+  c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); clearTimeout(eventCard.t); eventCard.t = setTimeout(() => c.classList.remove('show'), 4200);
+}
+
+/* ---------- Enganches con el resto del juego ---------- */
+// Festival: precios rebajados en esa aldea
+{
+  const _pm = priceMult;
+  priceMult = function (planId) { const m = _pm(planId), ev = events.cur; return ev && ev.id === 'festival' && ev.vil && String(ev.vil.id) === String(planId) ? m * 0.7 : m; };
+}
+// Luna de sangre: botín doble de los monstruos
+{
+  const _death = EntityManager.prototype.onMobDeath;
+  EntityManager.prototype.onMobDeath = function (m) {
+    const r = _death.call(this, m);
+    if (m && m.bloodMoon && m.lastHit === 'player' && m.spec && m.spec.drops) for (const [id, a, c] of m.spec.drops) { const n = a + Math.floor(Math.random() * (c - a + 1)); if (n > 0) this.dropItem({ id, count: n }, m.pos.x, m.pos.y + 0.6, m.pos.z); }
+    return r;
+  };
+}
+// Cielo: luna roja y niebla rojiza durante la luna de sangre
+{
+  const _envUpdate = Environment.prototype.update;
+  Environment.prototype.update = function (dt, cam, player, underwater) {
+    _envUpdate.call(this, dt, cam, player, underwater);
+    const blood = events.cur && events.cur.id === 'bloodmoon' && dimOf(player.pos.x, player.pos.z) === 0;
+    this.bloodK = lerp(this.bloodK || 0, blood ? 1 : 0, Math.min(1, dt * 0.5));
+    const k = this.bloodK; this.moon.material.color.setRGB(1, 1 - k * 0.7, 1 - k * 0.75);
+    if (k > 0.01) {
+      const red = new THREE.Color(0.32, 0.03, 0.04);
+      this.top.lerp(red, k * 0.5); this.horizon.lerp(new THREE.Color(0.45, 0.06, 0.05), k * 0.55);
+      this.skyU.uTop.value.copy(this.top); this.skyU.uHorizon.value.copy(this.horizon);
+      sharedUniforms.fogColor.value.lerp(this.horizon, k * 0.6); if (this.scene.fog) this.scene.fog.color.copy(sharedUniforms.fogColor.value);
+    }
+  };
+}
+// Cuerno de llamada: provoca un evento al azar
+{
+  const _useItem = game.useItem;
+  game.useItem = function () {
+    const s = this.player.held();
+    if (s && s.id === I.EVENT_HORN) {
+      if (!events.allowed()) { hud.toast('Los eventos solo ocurren en la superficie'); return true; }
+      if (events.cur) { hud.toast('Ya hay un evento en curso'); return true; }
+      const { list, vil } = events.candidates(); const pick = list.length ? list : EVENT_IDS.filter((k) => !EVENTS[k].near && EVENTS[k].when === 'any');
+      for (const id of pick.sort(() => Math.random() - 0.5)) if (events.start(id, { vil })) { if (this.mode === 'survival') { s.count--; if (!s.count) this.player.inv.slots[this.player.selected] = null; } sfx.play('horn'); hud.update(); this.swing = 1; return true; }
+      hud.toast('No pasó nada… prueba en otro lugar'); return true;
+    }
+    return _useItem.call(this);
+  };
+}
+// Guardado: si se cerró el juego con ruinas a medio desvanecer, se restauran al entrar
+{
+  const _start = game.startWorld;
+  game.startWorld = async function (...a) {
+    if (events.cur) events.end(false, null, true);
+    eventFx.clearOrbs(); if (eventFx.aurora) eventFx.aurora.want = eventFx.aurora.a = 0;
+    events.cooldown = 180; events.checkT = 40;
+    const r = await _start.apply(this, a);
+    const S = game.player && game.player.evs;
+    if (S && S.restore && S.restore.length && world) { restoreBlocks(S.restore); for (const [x, y, z] of S.restore) world.tiles.delete(`${x},${y},${z}`); S.restore = []; }
+    return r;
+  };
+  const _toJSON = Player.prototype.toJSON, _load = Player.prototype.load;
+  Player.prototype.toJSON = function () { const o = _toJSON.call(this); if (this.evs) o.evs = this.evs; return o; };
+  Player.prototype.load = function (o) { const r = _load.call(this, o); if (o && o.evs && typeof o.evs === 'object') this.evs = { n: o.evs.n || {}, total: o.evs.total | 0, journal: Array.isArray(o.evs.journal) ? o.evs.journal.slice(-200) : [], restore: Array.isArray(o.evs.restore) ? o.evs.restore : [], ...o.evs }; return r; };
+}
+// Comando /evento
+COMMANDS.push({ n: 'evento', a: ['event', 'eventos'], use: '/evento <nombre> | lista | fin', d: 'Empieza o termina un evento dinámico.', run: ([a]) => {
+  const k = norm(a || 'lista');
+  if (k === 'lista' || k === 'list') { say('Eventos: ' + EVENT_IDS.map((id) => `${id} (${EVENTS[id].name})`).join(', ')); return; }
+  if (k === 'fin' || k === 'end' || k === 'stop') { if (!events.cur) say('No hay ningún evento en curso'); else events.end(false, 'Evento terminado con un comando'); return; }
+  const id = EVENT_IDS.find((x) => x === k || norm(EVENTS[x].name).startsWith(k));
+  if (!id) { say('No conozco ese evento. Escribe /evento lista'); return; }
+  if (!events.allowed()) { say('Los eventos solo ocurren en la superficie' + (net.active ? ' y los lanza el anfitrión de la sala' : '')); return; }
+  if (events.start(id)) say(`Evento iniciado: ${EVENTS[id].name}`);
+} });
+ACHIEVEMENTS.push(['event_first', 'Algo está pasando', 'Vive tu primer evento dinámico.'], ['event_win', 'Al pie del cañón', 'Completa un evento dinámico.'],
+  ['event_meteor', 'Polvo de estrellas', 'Encuentra un cráter durante una lluvia de meteoritos.'], ['event_defend', 'Defensor', 'Resiste una invasión nocturna o un asedio a una aldea.'],
+  ['event_stag', 'Cazador de leyendas', 'Atrapa al ciervo dorado.'], ['event_aurora', 'Recolector de maná', 'Atrapa 5 orbes durante una aurora mágica.'],
+  ['event_all', 'Lo he visto todo', 'Vive los nueve tipos de evento.']);
+/* ==========================================================================
+   §40 ENCICLOPEDIA: CATÁLOGO, CRIATURAS, EXPLORACIÓN Y DIARIO (4.0)
+   --------------------------------------------------------------------------
+   Pantalla con cuatro pestañas (Pausa → Enciclopedia, tecla K, 📖 táctil):
+     · Objetos: todos los objetos del juego. Los que aún no tuviste aparecen
+       como silueta. Ficha con rareza, estadísticas, recetas que lo fabrican,
+       de qué se funde y qué criaturas lo sueltan.
+     · Criaturas: cada criatura cuenta como vista al tenerla cerca y se
+       registran las que derrotas. Ficha con modelo 3D girando, vida, daño,
+       velocidad, hábitat, botín y, para los jefes, dónde viven y sus fases.
+     · Exploración: biomas, lugares descubiertos, aldeas, dimensiones,
+       jefes, eventos y estadísticas de viaje.
+     · Diario: lo que fue pasando en la partida (descubrimientos, logros,
+       eventos), con el día del juego.
+   Todo se guarda con el jugador (codex y evs en la partida).
+   ========================================================================== */
+const BOSS_LORE = {
+  guardian: { where: 'Santuario sumergido, en el fondo del océano.', phases: ['Rayo abisal', 'Embestida', 'Furia del abismo'] },
+  golem: { where: 'Lo alto de las torres antiguas.', phases: ['Golpe sísmico', 'Lluvia de rocas', 'Enfurecido'] },
+  dragon: { where: 'Ruinas del dragón, en llanuras, desiertos, taigas, bosques y nieve.', phases: ['Vuelo de fuego', 'Aliento en tierra', 'Ira del dragón'] },
+  emberlord: { where: 'Fortalezas abandonadas del Inframundo.', phases: ['Puños de ceniza', 'Erupción', 'Tormenta de brasas'] },
+  voidherald: { where: 'Fortalezas dimensionales del Vacío.', phases: ['Lluvia de esquirlas', 'Paso entre mundos', 'Colapso'] },
+};
+const CODEX_CATS = [
+  ['all', 'Todo', () => true], ['blocks', 'Bloques', (it) => it.block && !it.mech], ['tools', 'Herramientas y armas', (it) => it.tool || it.bow],
+  ['armor', 'Armaduras', (it) => it.armor], ['food', 'Comida y pociones', (it) => it.food || it.potion], ['mech', 'Mecanismos', (it) => it.mech],
+  ['mat', 'Materiales', (it) => !it.block && !it.tool && !it.food && !it.potion && !it.armor && !it.egg && !it.mech],
+];
+// Objetos que forman parte del catálogo (sin bloques técnicos ni huevos)
+const codexItems = () => ITEMS.filter((it) => it && it.name && !it.egg && !(it.block && BLOCKS[it.block]?.hidden && !it.place) && it.id !== AIR);
+
+function journalAdd(icon, text) {
+  const p = game.player; if (!p || !text) return;
+  p.evs ||= { n: {}, total: 0, journal: [], restore: [] };
+  const J = p.evs.journal, env = game.env;
+  if (J.length && J[J.length - 1].x === text) return;
+  J.push({ d: (env?.days | 0) + 1, h: env ? Math.floor(((env.time + 0.25) % 1) * 24) : 0, i: icon, x: String(text).slice(0, 140), t: Date.now() });
+  if (J.length > 300) J.splice(0, J.length - 300);
+}
+// Los avisos de descubrimientos y logros también van al diario
+{
+  const _notify = notify;
+  notify = function (title, text, kind = 'info') {
+    _notify(title, text, kind);
+    if (game.state !== 'menu' && kind !== 'info') journalAdd(String(title).split(' ')[0], `${String(title).replace(/^\S+\s/, '')}: ${text}`);
+  };
+}
+
+const codex = {
+  tab: 'items', cat: 'all', q: '', sel: null, mobSel: null, scanT: 0, open: false,
+  data() { const p = game.player; p.codex ||= { seen: {}, kills: {} }; return p.codex; },
+  // Criaturas vistas: las que estén a menos de 20 bloques
+  update(dt) {
+    if ((this.scanT -= dt) > 0 || !game.player || game.state === 'menu') return;
+    this.scanT = 1;
+    const p = game.player, C = this.data();
+    for (const e of game.entities.list) {
+      if (e.kind !== 'mob' || !e.type || !MOBS[e.type] || e.dead) continue;
+      const t = e.isPlayer ? null : e.type; if (!t) continue;
+      if ((e.pos.x - p.pos.x) ** 2 + (e.pos.z - p.pos.z) ** 2 > 400) continue;
+      if (!C.seen[t]) { C.seen[t] = 1; if (game.state === 'playing' && !e.isPlayer) hud.toast(`📖 Nueva criatura en la enciclopedia: ${MOBS[t].name}`, 2000); }
+    }
+    if (this.open && this.tab === 'mobs' && this.mobSel && this.preview) this.preview.spin();
+  },
+  show() {
+    if (game.state !== 'playing' && game.state !== 'paused') return;
+    this.wasPaused = game.state === 'paused';
+    game.releaseInputs(); game.state = 'codex'; this.open = true;
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('codexScreen'); this.render();
+  },
+  hide() {
+    this.open = false; if (this.preview) this.preview.stop();
+    if (this.wasPaused) { game.state = 'paused'; showScreen('pauseScreen'); return; }
+    showScreen(null); game.state = 'playing'; game.resume();
+  },
+  setTab(t) { this.tab = t; this.render(); },
+  render() {
+    $$('#codexScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.ctab === this.tab));
+    const box = $('#codexBody'); box.innerHTML = ''; box.scrollTop = 0;
+    if (this.preview && this.tab !== 'mobs') this.preview.stop();
+    if (this.tab === 'items') this.renderItems(box);
+    else if (this.tab === 'mobs') this.renderMobs(box);
+    else if (this.tab === 'explore') this.renderExplore(box);
+    else this.renderJournal(box);
+  },
+  known(id) { return game.mode === 'creative' || game.player.discovered.has(id); },
+  /* ---------- Objetos ---------- */
+  renderItems(box) {
+    const all = codexItems(), got = all.filter((it) => game.player.discovered.has(it.id)).length;
+    const head = document.createElement('div'); head.className = 'cxHead';
+    head.innerHTML = `<div class="cxProg"><b>${got} / ${all.length}</b> objetos descubiertos<u><s style="width:${(got / all.length * 100).toFixed(1)}%"></s></u></div>`;
+    const search = document.createElement('input'); search.type = 'search'; search.placeholder = 'Buscar…'; search.value = this.q; search.className = 'cxSearch';
+    search.oninput = () => { this.q = search.value; draw(); };
+    search.addEventListener('keydown', (e) => e.stopPropagation());
+    head.append(search); box.append(head);
+    const cats = document.createElement('div'); cats.className = 'cxCats';
+    for (const [k, name] of CODEX_CATS) { const b = document.createElement('button'); b.className = 'btn small' + (this.cat === k ? ' on' : ''); b.textContent = name; b.onclick = () => { this.cat = k; this.render(); }; cats.append(b); }
+    box.append(cats);
+    const wrap = document.createElement('div'); wrap.className = 'cxSplit'; box.append(wrap);
+    const grid = document.createElement('div'); grid.className = 'cxGrid'; const card = document.createElement('div'); card.className = 'cxCard';
+    wrap.append(grid, card);
+    const filt = CODEX_CATS.find((c) => c[0] === this.cat)[2];
+    const draw = () => {
+      grid.innerHTML = ''; const q = norm(this.q);
+      for (const it of all) {
+        if (!filt(it)) continue;
+        const k = this.known(it.id); if (q && !(k && norm(it.name).includes(q))) continue;
+        const c = document.createElement('button'); c.className = 'cxCell' + (k ? '' : ' unk') + (this.sel === it.id ? ' sel' : '');
+        c.title = k ? it.name : '???'; c.style.backgroundImage = `url(${ICON[it.id] || ''})`;
+        const r = k ? rarityOf(it.id) : 0; if (r) c.dataset.r = r;
+        c.onclick = () => { this.sel = it.id; $$('.cxCell.sel').forEach((x) => x.classList.remove('sel')); c.classList.add('sel'); this.itemCard(card, it); };
+        grid.append(c);
+      }
+      if (!grid.children.length) grid.innerHTML = '<p class="cxEmpty">Nada por aquí.</p>';
+    };
+    draw();
+    const cur = this.sel != null && ITEMS[this.sel];
+    if (cur) this.itemCard(card, cur); else card.innerHTML = '<p class="cxHint">Elige un objeto para ver su ficha. Los objetos que aún no conseguiste aparecen como silueta.</p>';
+  },
+  itemCard(card, it) {
+    const k = this.known(it.id);
+    if (!k) { card.innerHTML = `<div class="cxTitle"><i style="background-image:url(${ICON[it.id] || ''})" class="unk"></i><div><b>???</b><small>Todavía no lo descubriste</small></div></div>${this.sourcesHtml(it, true)}`; return; }
+    const r = rarityOf(it.id), tag = RARITY[r] ? `<em style="color:${RARITY[r][1]}">${RARITY[r][0]}</em>` : '';
+    const st = [];
+    if (it.tool) { const T = it.tool; if (T.dmg) st.push(`Daño ${T.dmg}`); if (T.speed && T.type !== 'sword') st.push(`Velocidad de minado ${T.speed}`); if (T.dur) st.push(`Durabilidad ${T.dur}`); if (T.level != null && T.type === 'pickaxe') st.push(`Nivel ${T.level}`); }
+    if (it.armor) st.push(`Defensa ${it.armor.def ?? it.armor.points ?? ''}`.trim());
+    if (it.food) st.push(`Alimenta ${it.food.hunger}`);
+    if (it.potion) st.push(`${EFFECTS[it.potion.eff]?.name || ''} durante ${Math.round(it.potion.dur / 60)} min`);
+    if (it.fuel) st.push(`Combustible ${it.fuel}`);
+    if (it.block) { const b = BLOCKS[it.block]; if (b?.light) st.push(`Luz ${b.light}`); if (b?.hardness != null && b.hardness >= 0) st.push(`Dureza ${b.hardness}`); }
+    card.innerHTML = `<div class="cxTitle"><i style="background-image:url(${ICON[it.id] || ''})"></i><div><b>${escapeHtml(it.name)}</b>${tag}</div></div>
+      <p>${escapeHtml(it.desc || '')}</p>${st.length ? `<div class="cxStats">${st.map((s) => `<span>${escapeHtml(s)}</span>`).join('')}</div>` : ''}${this.sourcesHtml(it, false)}`;
+  },
+  // Cómo se consigue: recetas, horno y criaturas
+  sourcesHtml(it, hidden) {
+    const out = [];
+    const recs = RECIPES.filter((r) => r.out === it.id).slice(0, 3);
+    const icon = (id) => { const x = Array.isArray(id) ? id[0] : id; return x ? `<i style="background-image:url(${ICON[x] || ''})" title="${escapeHtml(ITEMS[x]?.name || '')}"></i>` : '<i></i>'; };
+    for (const r of recs) {
+      const cells = [];
+      if (r.items) { for (let i = 0; i < 9; i++) cells.push(r.items[i] != null ? icon(r.items[i]) : '<i></i>'); }
+      else for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { const ch = r.pattern[y]?.[x]; cells.push(ch && ch !== ' ' ? icon(r.key[ch]) : '<i></i>'); }
+      out.push(`<div class="cxRecipe"><div class="cxRGrid">${cells.join('')}</div><span>→ ${r.n}</span></div>`);
+    }
+    const sm = Object.entries(SMELT).filter(([, v]) => v && v[0] === it.id).slice(0, 4).map(([k]) => icon(+k));
+    const drops = Object.entries(MOBS).filter(([t, s]) => s.drops && s.drops.some((d) => d[0] === it.id) && !t.startsWith('__')).map(([t, s]) => (this.data().seen[t] || game.mode === 'creative' ? s.name : '???'));
+    let h = '';
+    if (out.length) h += `<h4>Fabricación</h4><div class="cxRecipes">${hidden ? '<p class="cxHint">Descúbrelo para ver la receta.</p>' : out.join('')}</div>`;
+    if (sm.length) h += `<h4>Horno</h4><div class="cxIcons">${sm.join('')}</div>`;
+    if (drops.length) h += `<h4>Lo sueltan</h4><p>${escapeHtml([...new Set(drops)].join(', '))}</p>`;
+    if (!h && it.block && !hidden) h = '<h4>Origen</h4><p>Se encuentra en el mundo: rómpelo con la herramienta adecuada.</p>';
+    return h;
+  },
+  /* ---------- Criaturas ---------- */
+  mobList() { return Object.entries(MOBS).filter(([t, s]) => !t.startsWith('__') && s.name && s.model && t !== 'remote'); },
+  habitat(type) {
+    const out = new Set();
+    for (const b of BIOMES) if ((b.passive || []).includes(type) || (b.hostile || []).includes(type)) out.add(b.name);
+    if (typeof SEA_LIFE !== 'undefined') { if (SEA_LIFE.shallow.includes(type)) out.add('Aguas poco profundas'); if (SEA_LIFE.deep.includes(type)) out.add('Océano profundo'); }
+    if (typeof BIRDS !== 'undefined' && Object.values(BIRDS).some((l) => l.includes(type))) out.add('Cielos');
+    if (type === 'bat') out.add('Cuevas');
+    if (type === 'goldstag') out.add('Evento: ciervo dorado');
+    if (type === 'villager') out.add('Aldeas');
+    return [...out];
+  },
+  renderMobs(box) {
+    const C = this.data(), list = this.mobList(), seen = list.filter(([t]) => C.seen[t]).length;
+    box.innerHTML = `<div class="cxHead"><div class="cxProg"><b>${seen} / ${list.length}</b> criaturas vistas · ${Object.values(C.kills).reduce((a, b) => a + b, 0)} derrotadas<u><s style="width:${(seen / list.length * 100).toFixed(1)}%"></s></u></div></div>`;
+    const wrap = document.createElement('div'); wrap.className = 'cxSplit'; box.append(wrap);
+    const lst = document.createElement('div'); lst.className = 'cxMobList'; const card = document.createElement('div'); card.className = 'cxCard'; wrap.append(lst, card);
+    const groups = [['Animales', (s) => !s.hostile && !s.boss], ['Hostiles', (s) => s.hostile && !s.boss], ['Jefes', (s) => s.boss]];
+    for (const [g, f] of groups) {
+      const h = document.createElement('h4'); h.textContent = g; lst.append(h);
+      for (const [t, s] of list) {
+        if (!f(s)) continue;
+        const k = C.seen[t] || game.mode === 'creative', b = document.createElement('button'); b.className = 'cxMob' + (k ? '' : ' unk') + (this.mobSel === t ? ' sel' : '');
+        const egg = typeof EGGS !== 'undefined' && EGGS[t] && ICON[EGGS[t]];
+        b.innerHTML = `${egg ? `<i style="background-image:url(${egg})"></i>` : '<i class="boss">★</i>'}<span>${k ? escapeHtml(s.name) : '???'}</span>${C.kills[t] ? `<small>×${C.kills[t]}</small>` : ''}`;
+        b.onclick = () => { this.mobSel = t; $$('.cxMob.sel').forEach((x) => x.classList.remove('sel')); b.classList.add('sel'); this.mobCard(card, t); };
+        lst.append(b);
+      }
+    }
+    if (this.mobSel) this.mobCard(card, this.mobSel); else card.innerHTML = '<p class="cxHint">Las criaturas se registran al verlas de cerca. Elige una para ver su ficha.</p>';
+  },
+  mobCard(card, type) {
+    const s = MOBS[type], C = this.data(), k = C.seen[type] || game.mode === 'creative';
+    if (!k) { card.innerHTML = '<div class="cxTitle"><div><b>???</b><small>Todavía no la viste. Acércate a ella para registrarla.</small></div></div>'; this.preview && this.preview.stop(); return; }
+    const kind = s.boss ? 'Jefe' : s.special ? 'Criatura especial' : s.hostile ? 'Hostil' : 'Pasiva';
+    const st = [`${kind}`, `Vida ${s.hp}`];
+    if (s.melee) st.push(`Daño ${s.melee}`); if (s.ranged) st.push('Ataca a distancia');
+    st.push(`Velocidad ${s.speed}`); if (s.xp) st.push(`Experiencia ${s.xp}`);
+    const hab = this.habitat(type), lore = BOSS_LORE[type];
+    const drops = (s.drops || []).filter((d) => ITEMS[d[0]]).map((d) => `<i style="background-image:url(${ICON[d[0]] || ''})" title="${escapeHtml(this.known(d[0]) ? ITEMS[d[0]].name : '???')}" class="${this.known(d[0]) ? '' : 'unk'}"></i>`);
+    card.innerHTML = `<div class="cxMobView"><canvas width="220" height="200"></canvas></div><div class="cxTitle"><div><b>${escapeHtml(s.name)}</b><small>Vistas: ${C.seen[type] ? 'sí' : '—'} · Derrotadas: ${C.kills[type] || 0}</small></div></div>
+      <div class="cxStats">${st.map((x) => `<span>${escapeHtml(x)}</span>`).join('')}</div>
+      ${lore ? `<h4>Guarida</h4><p>${escapeHtml(lore.where)}</p><h4>Fases</h4><ol class="cxPhases">${lore.phases.map((p) => `<li>${escapeHtml(p)}</li>`).join('')}</ol>` : ''}
+      ${hab.length ? `<h4>Hábitat</h4><p>${escapeHtml(hab.join(', '))}</p>` : ''}
+      ${drops.length ? `<h4>Botín</h4><div class="cxIcons">${drops.join('')}</div>` : ''}`;
+    (this.preview ||= mobPreview()).show(card.querySelector('canvas'), type);
+  },
+  /* ---------- Exploración ---------- */
+  renderExplore(box) {
+    const p = game.player, S = p.stats || {}, evs = p.evs || { n: {} };
+    const biomeNames = [...new Set(BIOMES.map((b) => b.name))], got = biomeNames.filter((n) => [...p.biomes].some((x) => BIOMES[x]?.name === n));
+    const pois = [...p.pois.values()], vill = Object.keys(p.villages || {}).length, bosses = Object.keys(MOBS).filter((t) => MOBS[t].boss && p.ach.has('boss_' + t));
+    const dimsV = [['Superficie', true], ['Inframundo', p.ach.has('dim_nether')], ['Vacío', p.ach.has('dim_void')]];
+    const num = (x) => Math.round(x || 0).toLocaleString('es');
+    const cards = [
+      ['🧭', 'Biomas', `${got.length} / ${biomeNames.length}`], ['🏛', 'Lugares descubiertos', pois.length], ['🏘', 'Aldeas visitadas', vill],
+      ['🌀', 'Dimensiones', `${dimsV.filter((d) => d[1]).length} / 3`], ['👑', 'Jefes derrotados', `${bosses.length} / ${Object.values(MOBS).filter((m) => m.boss).length}`],
+      ['✨', 'Eventos vividos', evs.total || 0], ['👣', 'Distancia', `${num(S.distance)} ${Math.round(S.distance || 0) === 1 ? 'bloque' : 'bloques'}`], ['⏱', 'Días sobrevividos', (game.env?.days | 0) + 1],
+    ];
+    box.innerHTML = `<div class="cxTiles">${cards.map(([i, n, v]) => `<div class="cxTile"><i>${i}</i><b>${v}</b><span>${n}</span></div>`).join('')}</div>
+      <h4>Biomas</h4><div class="cxChips">${biomeNames.map((n) => `<span class="${got.includes(n) ? 'on' : ''}">${got.includes(n) ? escapeHtml(n) : '???'}</span>`).join('')}</div>
+      <h4>Dimensiones</h4><div class="cxChips">${dimsV.map(([n, v]) => `<span class="${v ? 'on' : ''}">${v ? n : '???'}</span>`).join('')}</div>
+      <h4>Eventos</h4><div class="cxChips">${EVENT_IDS.map((id) => `<span class="${evs.n[id] ? 'on' : ''}">${EVENTS[id].icon} ${evs.n[id] ? escapeHtml(EVENTS[id].name) + ' ×' + evs.n[id] : '???'}</span>`).join('')}</div>
+      <h4>Lugares descubiertos</h4>${pois.length ? `<div class="cxPois">${pois.slice(-60).reverse().map((q) => { const [lx, lz] = localXZ(q.x, q.z); return `<div><b>${escapeHtml(q.name || POI_NAMES[q.type] || q.type)}</b><span>${DIM_NAMES ? DIM_NAMES[dimOf(q.x, q.z)] || '' : ''} · X ${Math.round(lx)} · Z ${Math.round(lz)}</span></div>`; }).join('')}</div>` : '<p class="cxHint">Todavía no descubriste ningún lugar especial.</p>'}`;
+  },
+  /* ---------- Diario ---------- */
+  renderJournal(box) {
+    const J = (game.player.evs && game.player.evs.journal) || [];
+    if (!J.length) { box.innerHTML = '<p class="cxHint">El diario se llena solo con lo que vaya pasando: descubrimientos, logros, jefes y eventos.</p>'; return; }
+    let last = 0, html = '';
+    for (const e of J.slice().reverse()) {
+      if (e.d !== last) { html += `<h4>Día ${e.d}</h4>`; last = e.d; }
+      html += `<div class="cxJ"><i>${escapeHtml(e.i || '•')}</i><span>${escapeHtml(e.x)}</span><small>${String(e.h).padStart(2, '0')}:00</small></div>`;
+    }
+    box.innerHTML = html;
+  },
+};
+// Vista 3D de una criatura (un único renderizador pequeño, solo mientras se mira)
+function mobPreview() {
+  let renderer = null, sc = null, cam = null, root = null, raf = 0, canvas = null;
+  const P = {
+    show(cv, type) {
+      try {
+        if (!renderer || canvas !== cv) {
+          if (renderer) renderer.dispose();
+          canvas = cv; renderer = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: false, powerPreference: 'low-power' });
+          renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.setSize(220, 200, false);
+          sc = new THREE.Scene(); cam = new THREE.PerspectiveCamera(32, 220 / 200, 0.1, 200);
+        }
+        if (root) { sc.remove(root); root.traverse((o) => o.geometry && o.geometry.dispose()); }
+        const s = MOBS[type], mat = new THREE.MeshBasicMaterial({ vertexColors: true });
+        const md = s.model(mat); root = md.root; root.position.set(0, 0, 0); sc.add(root);
+        const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+        const R = Math.max(size.x, size.y, size.z) || 1;
+        cam.position.set(c.x + R * 1.6, c.y + R * 0.7, c.z + R * 1.9); cam.lookAt(c);
+        root.userData.c = c; this.start();
+      } catch (e) { console.warn('vista de criatura:', e); }
+    },
+    start() { cancelAnimationFrame(raf); const loop = () => { if (!renderer || !root) return; root.rotation.y += 0.012; renderer.render(sc, cam); raf = requestAnimationFrame(loop); }; loop(); },
+    spin() {},
+    stop() { cancelAnimationFrame(raf); },
+  };
+  return P;
+}
+// Muertes por criatura
+{
+  const _killed = game.onMobKilled;
+  game.onMobKilled = function (m) { _killed.call(this, m); if (m && m.lastHit === 'player' && m.type) { const C = codex.data(); C.kills[m.type] = (C.kills[m.type] || 0) + 1; C.seen[m.type] ||= 1; } };
+  const _toJSON = Player.prototype.toJSON, _load = Player.prototype.load;
+  Player.prototype.toJSON = function () { const o = _toJSON.call(this); if (this.codex) o.codex = this.codex; return o; };
+  Player.prototype.load = function (o) { const r = _load.call(this, o); if (o && o.codex && typeof o.codex === 'object') this.codex = { seen: o.codex.seen || {}, kills: o.codex.kills || {} }; return r; };
+}
+// Acción y botones para abrir la enciclopedia
+KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'quests') + 1, 0, ['codex', 'Enciclopedia', 'KeyK']);
+settings.keys.codex ??= 'KeyK'; DEFAULT_KEYS.codex = 'KeyK';
+{
+  const _ad = actionDown;
+  actionDown = function (a, ev) { if (a === 'codex') { if (codex.open) codex.hide(); else codex.show(); return; } return _ad(a, ev); };
+}
+function initCodexUI() {
+  $$('#codexScreen .stab').forEach((b) => (b.onclick = () => codex.setTab(b.dataset.ctab)));
+  $('#codexClose').onclick = () => codex.hide();
+  $('#pCodex').onclick = () => codex.show();
+  const tb = $('#codexTouch'); if (tb) tb.addEventListener('click', (e) => { e.stopPropagation(); codex.show(); });
+  document.addEventListener('keydown', (e) => {
+    if (!codex.open || e.target.tagName === 'INPUT') return;
+    if (e.code === 'Escape' || e.code === settings.keys.codex) { e.preventDefault(); e.stopImmediatePropagation(); codex.hide(); }
+  }, true);
+}
+initCodexUI();
+/* ==========================================================================
+   §41 MÚSICA POR BIOMA Y SONIDOS NUEVOS (4.0)
+   --------------------------------------------------------------------------
+   · Música generativa para cada tipo de bioma, con versión nocturna, cuevas,
+     bajo el agua y el festival de la aldea. Suena en frases de 40-80 s con
+     silencios entre medio (como el ambiente de siempre) y se calla cuando hay
+     un jefe (que tiene su propia música) o en otras dimensiones (§34).
+   · Voces propias para los animales que antes usaban sonidos prestados,
+     sonidos de los eventos y música de los jefes del Inframundo y el Vacío.
+   El volumen de la música y el de los efectos siguen separados (Ajustes →
+   Sonido).
+   ========================================================================== */
+{
+  const _play = sfx.play.bind(sfx);
+  const R = Math.random;
+  const SFX40 = {
+    // animales
+    bubble: (s, d, t, p) => { for (let i = 0; i < 3; i++) s.tone(d, 'sine', (500 + R() * 400) * p, (900 + R() * 500) * p, t + i * 0.07, 0.06, 0.05); },
+    dolphin: (s, d, t, p) => { for (let i = 0; i < 4; i++) s.tone(d, 'sine', 1800 * p, 2600 * p, t + i * 0.05, 0.035, 0.04); s.tone(d, 'triangle', 900 * p, 1500 * p, t + 0.25, 0.18, 0.05); },
+    squeak: (s, d, t, p) => { s.tone(d, 'square', 2200 * p, 2900 * p, t, 0.05, 0.03, { filter: 4000 }); s.tone(d, 'square', 2600 * p, 2000 * p, t + 0.07, 0.05, 0.025, { filter: 4000 }); },
+    deer: (s, d, t, p) => { s.tone(d, 'sawtooth', 600 * p, 900 * p, t, 0.12, 0.05, { filter: 1600 }); s.tone(d, 'sawtooth', 900 * p, 500 * p, t + 0.12, 0.22, 0.05, { filter: 1400 }); },
+    fox: (s, d, t, p) => { s.tone(d, 'sawtooth', 900 * p, 1400 * p, t, 0.09, 0.05, { filter: 2400 }); s.tone(d, 'sawtooth', 1300 * p, 700 * p, t + 0.1, 0.16, 0.05, { filter: 2000 }); },
+    frog: (s, d, t, p) => { for (let i = 0; i < 2; i++) { s.tone(d, 'square', 180 * p, 140 * p, t + i * 0.16, 0.1, 0.06, { filter: 700 }); s.burst(d, t + i * 0.16, 0.08, 0.04, 'bandpass', 500, 3); } },
+    duck: (s, d, t, p) => { for (let i = 0; i < 2; i++) s.tone(d, 'sawtooth', 520 * p, 380 * p, t + i * 0.15, 0.1, 0.06, { filter: 1300 }); },
+    bear: (s, d, t, p) => { s.tone(d, 'sawtooth', 110 * p, 70 * p, t, 0.7, 0.09, { filter: 500 }); s.burst(d, t, 0.6, 0.06, 'lowpass', 300); },
+    panda: (s, d, t, p) => { s.tone(d, 'triangle', 260 * p, 200 * p, t, 0.25, 0.06); s.tone(d, 'triangle', 300 * p, 220 * p, t + 0.28, 0.2, 0.05); },
+    chirp: (s, d, t, p) => { const n = 2 + Math.floor(R() * 3); for (let i = 0; i < n; i++) s.tone(d, 'sine', (2600 + R() * 900) * p, (3400 + R() * 700) * p, t + i * 0.09, 0.06, 0.035); },
+    gull: (s, d, t, p) => { for (let i = 0; i < 3; i++) s.tone(d, 'sawtooth', 1500 * p, 900 * p, t + i * 0.18, 0.15, 0.035, { filter: 2600 }); },
+    eagle: (s, d, t, p) => { s.tone(d, 'sawtooth', 2400 * p, 1500 * p, t, 0.55, 0.05, { filter: 3800, vibrato: 18 }); },
+    hiss: (s, d, t, p) => { s.burst(d, t, 0.35, 0.07, 'highpass', 3200 * p); s.tone(d, 'square', 140 * p, 120 * p, t, 0.2, 0.025, { filter: 600 }); },
+    bark: (s, d, t, p) => { for (let i = 0; i < 2; i++) { s.tone(d, 'sawtooth', 480 * p, 260 * p, t + i * 0.22, 0.1, 0.08, { filter: 1500 }); s.burst(d, t + i * 0.22, 0.06, 0.05, 'bandpass', 900, 2); } },
+    neigh: (s, d, t, p) => { s.tone(d, 'sawtooth', 700 * p, 1100 * p, t, 0.2, 0.05, { filter: 2400, vibrato: 25 }); s.tone(d, 'sawtooth', 1000 * p, 500 * p, t + 0.2, 0.45, 0.05, { filter: 2000, vibrato: 30 }); },
+    // eventos
+    meteor: (s, d, t, p) => { s.burst(d, t, 1.6, 0.12, 'bandpass', 900 * p, 0.8); s.tone(d, 'sawtooth', 600 * p, 90 * p, t, 1.6, 0.03, { filter: 1200 }); },
+    eventStart: (s, d, t, p) => { [0, 4, 7, 12].forEach((k, i) => s.tone(d, 'triangle', 392 * p * 2 ** (k / 12), 392 * p * 2 ** (k / 12), t + i * 0.12, 0.5, 0.06)); s.burst(d, t, 0.6, 0.03, 'highpass', 5000); },
+    fanfare: (s, d, t, p) => { [[0, 0], [4, 0.14], [7, 0.28], [12, 0.42], [7, 0.62], [12, 0.76]].forEach(([k, dt]) => s.tone(d, 'square', 523 * p * 2 ** (k / 12), 523 * p * 2 ** (k / 12), t + dt, dt > 0.6 ? 0.6 : 0.16, 0.04, { filter: 3000 })); },
+    horn: (s, d, t, p) => { s.tone(d, 'sawtooth', 147 * p, 150 * p, t, 1.4, 0.08, { filter: 700, vibrato: 3 }); s.tone(d, 'sawtooth', 220 * p, 222 * p, t + 0.05, 1.3, 0.05, { filter: 900 }); },
+    chime: (s, d, t, p) => { s.tone(d, 'sine', 1318 * p, 1318 * p, t, 0.9, 0.05); s.tone(d, 'sine', 1975 * p, 1975 * p, t + 0.08, 0.7, 0.035); },
+    firework: (s, d, t, p) => { s.tone(d, 'sine', 300 * p, 1400 * p, t, 0.5, 0.02); s.burst(d, t + 0.55, 0.5, 0.12, 'lowpass', 2500); for (let i = 0; i < 6; i++) s.burst(d, t + 0.7 + R() * 0.6, 0.04, 0.03, 'highpass', 4000); },
+  };
+  sfx.play = function (name, opts = {}) {
+    const fx = SFX40[name]; if (!fx) return _play(name, opts);
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const d = this.out(opts); if (!d) return;
+    fx(this, d, this.ctx.currentTime, opts.pitch ?? 1);
+  };
+  // cada animal con su voz
+  const V = { fish: 'bubble', clownfish: 'bubble', puffer: 'bubble', squid: 'bubble', turtle: 'bubble', dolphin: 'dolphin', rabbit: 'squeak', deer: 'deer', goldstag: 'deer',
+    fox: 'fox', frog: 'frog', duck: 'duck', bear: 'bear', bird: 'chirp', seagull: 'gull', eagle: 'eagle', spider: 'hiss', bat: 'squeak', horse: 'neigh', wolf: 'bark', panda: 'panda' };
+  for (const [k, s] of Object.entries(V)) if (MOBS[k]) MOBS[k].sound = s;
+}
+// Música de los jefes de las dimensiones (la de los demás ya existía)
+{
+  const _music = bossFx.music;
+  bossFx.music = function (dt, b) {
+    if (b && (b.type === 'emberlord' || b.type === 'voidherald')) {
+      if (!settings.music || !sfx.ctx || sfx.ctx.state !== 'running' || b.state === 'intro') return;
+      const bpm = [0, 118, 132, 150][b.phase] || 118, beat = 60 / bpm / 2;
+      if ((this.beatT -= dt) > 0) return;
+      this.beatT += beat; if (this.beatT < 0) this.beatT = beat;
+      const d = sfx.out({ vol: settings.music * 0.9 }); if (!d) return;
+      const t = sfx.ctx.currentTime + 0.02, s = this.step++ % 16, ember = b.type === 'emberlord';
+      const sc = ember ? [0, 1, 4, 5, 7, 8] : [0, 2, 3, 7, 8, 11], root = ember ? 43.65 : 51.9, n = (st) => root * Math.pow(2, st / 12);
+      if (s % 4 === 0) sfx.tone(d, ember ? 'sawtooth' : 'square', n(0), n(0) * 0.98, t, beat * 1.8, 0.07, { filter: ember ? 300 : 420 });
+      if (s % 4 === 0 || (b.phase === 3 && s % 2 === 0)) sfx.tone(d, 'sine', 100, 38, t, 0.2, 0.13);
+      if (s % 8 === 4) sfx.burst(d, t, 0.14, 0.09, 'bandpass', ember ? 1400 : 2600, 0.8);
+      const arp = sc[(s * (ember ? 1 : 3) + (s >> 2)) % sc.length] + 24 + (b.phase >= 2 && s % 8 > 3 ? 12 : 0);
+      sfx.tone(d, ember ? 'sawtooth' : 'triangle', n(arp), n(arp), t, beat * 0.8, ember ? 0.02 : 0.03, { filter: ember ? 1800 : 3200 });
+      if (!ember && s % 8 === 0) sfx.tone(d, 'sine', n(36 + sc[(s >> 3) % sc.length]), n(36 + sc[(s >> 3) % sc.length]), t, beat * 6, 0.02, { vibrato: 4 });
+      return;
+    }
+    return _music.call(this, dt, b);
+  };
+}
+
+/* ---------- Música por bioma ---------- */
+const MUSIC_THEMES = {
+  plains: { scale: [0, 2, 4, 7, 9], root: 261.6, step: 0.42, lead: 'triangle', chords: [0, 5, 3, 4], pad: 'sine', vol: 1 },
+  forest: { scale: [0, 2, 4, 5, 7, 9, 11], root: 246.9, step: 0.48, lead: 'sine', chords: [0, 3, 4, 0], pad: 'triangle', vol: 0.9 },
+  desert: { scale: [0, 1, 4, 5, 7, 8, 10], root: 220, step: 0.36, lead: 'sawtooth', filter: 1500, chords: [0, 1, 0, 6], pad: 'sine', vol: 0.75 },
+  snow: { scale: [0, 2, 4, 7, 9], root: 523.3, step: 0.62, lead: 'sine', bell: true, chords: [0, 5, 0, 3], pad: 'sine', vol: 0.8 },
+  jungle: { scale: [0, 3, 5, 7, 10], root: 293.7, step: 0.3, lead: 'sine', mallet: true, chords: [0, 3, 4, 3], pad: 'triangle', vol: 0.9 },
+  ocean: { scale: [0, 2, 4, 6, 7, 9, 11], root: 196, step: 0.7, lead: 'sine', chords: [0, 4, 2, 5], pad: 'sine', vol: 0.85, slowPad: true },
+  swamp: { scale: [0, 2, 3, 5, 7, 9, 10], root: 174.6, step: 0.55, lead: 'square', filter: 900, chords: [0, 3, 0, 4], pad: 'triangle', vol: 0.7 },
+  mountain: { scale: [0, 2, 5, 7, 9], root: 293.7, step: 0.52, lead: 'triangle', chords: [0, 4, 3, 0], pad: 'sine', vol: 0.85, fifths: true },
+  dark: { scale: [0, 2, 3, 5, 7, 8, 10], root: 207.7, step: 0.58, lead: 'triangle', chords: [0, 5, 3, 4], pad: 'sine', vol: 0.8 },
+  magic: { scale: [0, 2, 4, 6, 7, 9, 11], root: 329.6, step: 0.4, lead: 'sine', bell: true, chords: [0, 1, 4, 5], pad: 'triangle', vol: 0.85 },
+  cave: { scale: [0, 1, 3, 7, 8], root: 130.8, step: 0.8, lead: 'triangle', chords: [0, 0, 1, 0], pad: 'sine', vol: 0.75, sparse: true },
+  festival: { scale: [0, 2, 4, 5, 7, 9, 11], root: 392, step: 0.22, lead: 'square', filter: 2600, chords: [0, 3, 4, 3], pad: 'triangle', vol: 0.75, drums: true },
+};
+function themeForBiome(name) {
+  const n = norm(name || '');
+  if (/desierto|badlands|mesa|sabana/.test(n)) return 'desert';
+  if (/nev|nieve|hielo|tundra|glacia|congel/.test(n)) return 'snow';
+  if (/selva|jungla|bambu/.test(n)) return 'jungle';
+  if (/oceano|playa|costa|arrecife|mar /.test(n)) return 'ocean';
+  if (/pantano|manglar/.test(n)) return 'swamp';
+  if (/montan|pico|colina|volcan/.test(n)) return 'mountain';
+  if (/oscuro|sombr/.test(n)) return 'dark';
+  if (/encantad|cerezo|hongo|seta|magic/.test(n)) return 'magic';
+  if (/bosque|taiga|abedul/.test(n)) return 'forest';
+  return 'plains';
+}
+const biomeMusic = {
+  theme: null, mode: 'rest', t: 8, stepT: 0, step: 0, deg: 2, night: false,
+  pick() {
+    const p = game.player, x = Math.floor(p.pos.x), z = Math.floor(p.pos.z);
+    if (events.cur && events.cur.id === 'festival' && events.cur.vil && Math.hypot(p.pos.x - events.cur.vil.x, p.pos.z - events.cur.vil.z) < 90) return 'festival';
+    if (p.headInWater) return 'ocean';
+    const surf = world.heightAt(x, z); if (p.pos.y < surf - 10) return 'cave';
+    return themeForBiome(BIOMES[world.biomeAt(x, z)]?.name);
+  },
+  update(dt) {
+    if (!settings.music || !sfx.ctx || sfx.ctx.state !== 'running' || !world || !game.player || game.state === 'menu' || game.state === 'loading') return;
+    const p = game.player;
+    if (game.boss || dimOf(p.pos.x, p.pos.z) !== 0) { this.mode = 'rest'; this.t = Math.max(this.t, 6); return; }
+    const want = this.pick();
+    if (want === 'festival' && this.theme !== 'festival') { this.theme = 'festival'; this.mode = 'play'; this.t = 60; }
+    this.t -= dt;
+    if (this.mode === 'rest') { if (this.t <= 0) { this.mode = 'play'; this.t = 40 + Math.random() * 40; this.theme = want; this.step = 0; this.deg = 2; } return; }
+    if (this.t <= 0 && this.theme !== 'festival') { this.mode = 'rest'; this.t = 25 + Math.random() * 35; return; }
+    if (want !== this.theme && this.step % 16 === 0) { this.theme = want; }
+    const T = MUSIC_THEMES[this.theme] || MUSIC_THEMES.plains;
+    this.night = game.env.isNight();
+    const step = T.step * (this.night && this.theme !== 'festival' ? 1.25 : 1);
+    if ((this.stepT -= dt) > 0) return;
+    this.stepT += step; if (this.stepT < 0) this.stepT = step;
+    this.note(T, step);
+  },
+  note(T, step) {
+    const o = sfx.out({ vol: settings.music * 0.7 * T.vol }); if (!o) return;
+    const t = sfx.ctx.currentTime + 0.03, s = this.step++, R = Math.random, sc = T.scale;
+    const oct = this.night && this.theme !== 'festival' ? 0.5 : 1, n = (deg) => T.root * oct * Math.pow(2, (sc[((deg % sc.length) + sc.length) % sc.length] + 12 * Math.floor(deg / sc.length)) / 12);
+    const chord = T.chords[(s >> 3) % T.chords.length];
+    // fondo: acorde largo cada 8 pasos
+    if (s % 8 === 0) {
+      const len = step * (T.slowPad ? 9 : 8);
+      for (const k of T.fifths ? [0, 4] : [0, 2, 4]) sfx.tone(o, T.pad, n(chord + k - sc.length) * 0.5, n(chord + k - sc.length) * 0.5, t, len, 0.022, { filter: 900 });
+      sfx.tone(o, 'sine', n(chord - sc.length * 2) , n(chord - sc.length * 2), t, len, 0.03);
+    }
+    // melodía: paseo aleatorio por la escala, con silencios
+    const rest = T.sparse ? 0.55 : this.night ? 0.42 : 0.28;
+    if (R() > rest) {
+      this.deg = clamp(this.deg + [-2, -1, -1, 0, 1, 1, 2][Math.floor(R() * 7)], -1, sc.length + 3);
+      if (s % 8 === 0) this.deg = chord + (R() < 0.5 ? 0 : 2);
+      const f = n(this.deg), long = R() < 0.25 ? 2 : 1;
+      if (T.bell) { sfx.tone(o, 'sine', f * 2, f * 2, t, step * 3, 0.035); sfx.tone(o, 'sine', f * 4.01, f * 4.01, t, step * 1.5, 0.01); }
+      else if (T.mallet) sfx.tone(o, 'sine', f, f, t, step * 0.9, 0.05);
+      else sfx.tone(o, T.lead, f, f, t, step * long * 0.95, T.lead === 'sine' ? 0.04 : 0.028, T.filter ? { filter: T.filter } : undefined);
+    }
+    if (T.drums) { if (s % 4 === 0) sfx.tone(o, 'sine', 120, 45, t, 0.14, 0.09); if (s % 4 === 2) sfx.burst(o, t, 0.08, 0.05, 'highpass', 5000); if (s % 8 === 6) sfx.burst(o, t, 0.1, 0.06, 'bandpass', 1800, 1); }
+  },
+};
+/* ==========================================================================
+   §37 GUARDADO EN INDEXEDDB (4.0)
+   --------------------------------------------------------------------------
+   Las partidas crecen (dimensiones, mapas, estructuras, NPC) y localStorage
+   solo admite unos 5 MB en total. Desde la 4.0 cada mundo se guarda en
+   IndexedDB (cientos de MB):
+     · saveStore guarda una copia en memoria de cada partida, así el resto del
+       juego sigue leyendo y escribiendo de forma síncrona; IndexedDB se
+       actualiza en segundo plano.
+     · Migración: al arrancar, cada partida de localStorage se copia a
+       IndexedDB, se comprueba leyéndola de vuelta y solo entonces se libera
+       de localStorage. Nada se borra sin una copia verificada.
+     · Antes del primer guardado con la 4.0 se conserva la versión anterior
+       intacta (clave «-v3»), además de la copia «-bak» de cada guardado.
+     · Al cerrar o esconder la pestaña se deja además una copia de
+       emergencia en localStorage (si cabe); al volver se usa la más nueva.
+     · Si el navegador no permite IndexedDB (modo privado de algunos
+       navegadores) todo sigue funcionando con localStorage, como antes.
+   ========================================================================== */
+const SAVE_VERSION = 4;
+const saveStore = {
+  mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
+  open() {
+    return new Promise((res, rej) => {
+      if (!window.indexedDB) return rej(new Error('sin IndexedDB'));
+      let done = false; const t = setTimeout(() => { if (!done) { done = true; rej(new Error('IndexedDB no responde')); } }, 3000);
+      let req; try { req = indexedDB.open('minicraft', 1); } catch (e) { clearTimeout(t); return rej(e); }
+      req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('saves')) req.result.createObjectStore('saves'); };
+      req.onsuccess = () => { if (done) return; done = true; clearTimeout(t); res(req.result); };
+      req.onerror = () => { if (done) return; done = true; clearTimeout(t); rej(req.error); };
+      req.onblocked = () => {};
+    });
+  },
+  tx(mode, fn) {
+    return new Promise((res, rej) => {
+      const tr = this.db.transaction('saves', mode), st = tr.objectStore('saves');
+      const r = fn(st); tr.oncomplete = () => res(r && 'result' in r ? r.result : undefined); tr.onerror = () => rej(tr.error); tr.onabort = () => rej(tr.error);
+    });
+  },
+  async init() {
+    try {
+      this.db = await this.open();
+      const keys = await this.tx('readonly', (st) => st.getAllKeys()), vals = await this.tx('readonly', (st) => st.getAll());
+      keys.forEach((k, i) => this.cache.set(String(k), vals[i]));
+      this.mode = 'idb';
+      // 1) migrar las partidas de localStorage (con verificación)
+      const legacy = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(SAVE_PREFIX)) legacy.push(k); }
+      for (const k of legacy) {
+        const v = localStorage.getItem(k); if (v == null) continue;
+        const have = this.cache.get(k);
+        if (have == null || savedAt(v) > savedAt(have)) { await this.tx('readwrite', (st) => st.put(v, k)); this.cache.set(k, v); }
+        const back = await this.tx('readonly', (st) => st.get(k));
+        if (back === this.cache.get(k)) { localStorage.removeItem(k); this.migrated++; }
+      }
+      // 2) copias de emergencia que dejó la pestaña al cerrarse
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i); if (!k || !k.startsWith('mc2-emerg-')) continue;
+        try {
+          const e = JSON.parse(localStorage.getItem(k)), key = SAVE_PREFIX + k.slice(10);
+          if (e && typeof e.v === 'string' && savedAt(e.v) > savedAt(this.cache.get(key))) { await this.tx('readwrite', (st) => st.put(e.v, key)); this.cache.set(key, e.v); this.emergencies++; }
+        } catch {}
+        localStorage.removeItem(k);
+      }
+    } catch (e) {
+      console.warn('Guardado: se usa localStorage (', e && e.message, ')');
+      this.mode = 'local'; this.db = null;
+    }
+    this.ready = true;
+  },
+  get(k) { return this.mode === 'idb' ? (this.cache.has(k) ? this.cache.get(k) : null) : localStorage.getItem(k); },
+  set(k, v) {
+    if (this.mode !== 'idb') { localStorage.setItem(k, v); return; }
+    this.cache.set(k, v);
+    this.tx('readwrite', (st) => st.put(v, k)).catch((e) => { this.errors++; hud.toast('⚠ No se pudo guardar en el navegador: ' + (e && e.name === 'QuotaExceededError' ? 'no queda espacio' : 'error de almacenamiento'), 4000); });
+    // pestaña cerrándose: copia de emergencia por si IndexedDB no llega a terminar
+    if (document.visibilityState === 'hidden' && k.startsWith(SAVE_PREFIX) && !k.endsWith('-bak') && !k.endsWith('-v3') && v.length < 2.5e6) {
+      try { localStorage.setItem('mc2-emerg-' + k.slice(SAVE_PREFIX.length), JSON.stringify({ t: Date.now(), v })); } catch {}
+    }
+  },
+  remove(k) {
+    try { localStorage.removeItem(k); } catch {}
+    if (this.mode !== 'idb') return;
+    this.cache.delete(k); this.tx('readwrite', (st) => st.delete(k)).catch(() => {});
+  },
+  size(k) { const v = this.get(k); return v ? v.length : 0; },
+  async usage() { try { const e = await navigator.storage.estimate(); return e; } catch { return null; } },
+};
+function savedAt(json) { if (!json) return 0; const m = /"saved":(\d+)/.exec(json.slice(-80)) || /"saved":(\d+)/.exec(json); return m ? +m[1] : 0; }
+// Pedir almacenamiento persistente (el navegador no lo borra al liberar espacio)
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist().catch(() => {}); } catch {}
+
+// Partidas antiguas → formato 4: se completan los datos que no existían
+function migrateSave(d) {
+  if (!d || typeof d !== 'object') return d;
+  const v = d.v | 0;
+  if (v < 4) {
+    d.player = d.player || {};
+    d.events = d.events || null;
+    d.migratedFrom = v;
+  }
+  d.v = Math.max(v, SAVE_VERSION);
+  return d;
+}
+
+// El resto del juego usa saveStore en lugar de localStorage para las partidas
+{
+  const _boot = boot;
+  boot = async function () { await saveStore.init(); _boot(); if (saveStore.migrated) setTimeout(() => hud.toast(`Se movieron ${saveStore.migrated} guardados a IndexedDB (más espacio y más seguro)`, 4000), 1500); };
+}
+/* ==========================================================================
+   §42 OPTIMIZACIÓN Y AJUSTES DE JUEGO (4.0)
+   --------------------------------------------------------------------------
+   · Criaturas lejanas: más allá de 40 bloques su inteligencia se actualiza
+     4 veces por segundo en lugar de en cada fotograma, y más allá de la
+     distancia de renderizado no se dibujan.
+   · Memoria: al desaparecer una criatura se liberan sus geometrías.
+   · Calidad automática: si en los primeros segundos el juego va a menos de
+     24 FPS, baja la distancia y la calidad (hasta dos pasos) y lo avisa.
+   · Ajustes → Juego: frecuencia de eventos, calidad automática y modo
+     ahorro (menos partículas, sin nubes ni hojas detalladas).
+   ========================================================================== */
+settings.autoQuality ??= true;
+settings.saver ??= false;
+{
+  const _update = Mob.prototype.update;
+  Mob.prototype.update = function (dt, g) {
+    const p = g.player;
+    if (p && !this.spec.boss && !this.remote && !this.eventMob && !this.deathT) {
+      const d2 = (this.pos.x - p.pos.x) ** 2 + (this.pos.z - p.pos.z) ** 2, far = settings.renderDistance * 16 + 8;
+      this.mesh.visible = d2 < far * far;
+      if (d2 > 1600) {
+        this._acc = (this._acc || 0) + dt;
+        if (this._acc < 0.25) return;
+        dt = Math.min(this._acc, 0.3); this._acc = 0;
+      } else this._acc = 0;
+    }
+    return _update.call(this, dt, g);
+  };
+  const _remove = EntityManager.prototype.remove;
+  EntityManager.prototype.remove = function (e) {
+    _remove.call(this, e);
+    if (e && e.kind === 'mob' && e.mesh) e.mesh.traverse((o) => { if (o.geometry && !o.geometry.userData.shared) o.geometry.dispose(); });
+  };
+}
+// Calidad automática
+const perfAuto = {
+  t: 0, frames: 0, steps: 0, armed: false,
+  arm() { this.t = 0; this.frames = 0; this.armed = settings.autoQuality && this.steps < 2; this.wait = 6; },
+  update(dt) {
+    if (!this.armed || game.state !== 'playing') return;
+    if ((this.wait -= dt) > 0) return;             // los primeros segundos se generan chunks
+    this.t += dt; this.frames++;
+    if (this.t < 8) return;
+    const fps = this.frames / this.t; this.t = 0; this.frames = 0;
+    if (fps >= 24) { this.armed = false; return; }
+    this.steps++;
+    if (settings.renderDistance > 3) settings.renderDistance = Math.max(3, settings.renderDistance - (fps < 15 ? 2 : 1));
+    if (this.steps >= 2 || fps < 15) { settings.particles = true; settings.clouds = false; settings.fancyLeaves = false; settings.quality = 'baja'; }
+    saveSettings(); for (const k of ['quality', 'fancyLeaves', 'renderDistance']) try { applySettings(k); } catch {}
+    hud.toast(`Calidad ajustada para ir más fluido (${Math.round(fps)} FPS). Puedes cambiarlo en Ajustes → Juego.`, 4500);
+    if (this.steps >= 2) this.armed = false; else this.wait = 4;
+  },
+};
+{
+  const _start = game.startWorld;
+  game.startWorld = async function (...a) { const r = await _start.apply(this, a); perfAuto.arm(); return r; };
+}
+function applySaver() {
+  if (!settings.saver) return;
+  Object.assign(settings, { clouds: false, fancyLeaves: false, menuPanorama: false });
+  if (settings.renderDistance > 4) settings.renderDistance = 4;
+  saveSettings(); for (const k of ['fancyLeaves', 'renderDistance', 'menuPanorama']) try { applySettings(k); } catch {}
+}
+// Ajustes → Juego
+function renderGameSettings() {
+  const box = $('#settingsGame'); if (!box) return;
+  box.innerHTML = '';
+  const row = (label, el, help) => { const r = document.createElement('label'); r.className = 'setRow'; r.innerHTML = `<span>${label}${help ? `<small class="setHelp">${help}</small>` : ''}</span>`; r.append(el); box.append(r); };
+  const sel = document.createElement('select');
+  for (const [v, t] of [['off', 'Desactivados'], ['pocos', 'Pocos'], ['normal', 'Normal'], ['muchos', 'Muchos']]) { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); }
+  sel.value = settings.eventFreq; sel.onchange = () => { settings.eventFreq = sel.value; saveSettings(); if (sel.value === 'off' && events.cur) events.end(false, 'Eventos desactivados'); };
+  row('Eventos dinámicos', sel, 'Meteoritos, invasiones, tormentas, festivales…');
+  const chk = (key, after) => { const i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!settings[key]; i.onchange = () => { settings[key] = i.checked; saveSettings(); after && after(); }; return i; };
+  row('Calidad automática', chk('autoQuality', () => perfAuto.arm()), 'Baja la calidad sola si el juego va lento');
+  row('Modo ahorro', chk('saver', applySaver), 'Para móviles modestos: sin nubes ni hojas detalladas y menos distancia');
+  const st = document.createElement('div'); st.className = 'setSection';
+  const used = [...saveStore.cache.keys()].filter((k) => k.startsWith(SAVE_PREFIX)).reduce((n, k) => n + saveStore.size(k), 0);
+  st.innerHTML = `<b>Guardado</b><p>Las partidas se guardan en ${saveStore.mode === 'idb' ? 'IndexedDB (con copias de seguridad automáticas)' : 'localStorage (el navegador no permite IndexedDB)'} · ${(used / 1048576).toFixed(1)} MB en partidas.</p><p id="storageQuota"></p>`;
+  box.append(st);
+  saveStore.usage().then((e) => { const q = $('#storageQuota'); if (q && e && e.quota) q.textContent = `Espacio del navegador: ${(e.usage / 1048576).toFixed(1)} MB usados de ${(e.quota / 1048576).toFixed(0)} MB disponibles.`; });
+}
+{
+  const tab = $('#settingsScreen .stab[data-tab="game"]'); if (tab) tab.addEventListener('click', renderGameSettings);
+  const _open = openSettings; openSettings = function (...a) { const r = _open.apply(this, a); renderGameSettings(); return r; };
+}
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
