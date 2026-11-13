@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1d1d1d">
-<title>MiniCraft 3.4</title>
+<title>MiniCraft 3.5</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -226,6 +226,12 @@
   #bossBar s { display: block; height: 100%; background: linear-gradient(#ff5ac8, #b0207a); transition: width .2s; text-decoration: none; }
   #bossIntro { position: fixed; inset: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; opacity: 0; }
   #bossIntro.show { animation: bossIn 3.4s ease-out forwards; }
+  /* §35 portales */
+  #portalFx { position: fixed; inset: 0; z-index: 8; pointer-events: none; opacity: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: clamp(18px, 4.5vw, 30px); text-shadow: 2px 2px 0 #000;
+    background: radial-gradient(circle at 50% 50%, rgba(190,90,250,.55), rgba(60,10,120,.92)); transition: opacity .15s linear; }
+  #portalFx.void { background: radial-gradient(circle at 50% 50%, rgba(90,240,220,.5), rgba(6,40,70,.94)); }
+  #portalFx.travel { z-index: 60; background: radial-gradient(circle at 50% 50%, #7a2ad0, #14052e); }
+  #portalFx.travel.void { background: radial-gradient(circle at 50% 50%, #1a8f98, #03121f); }
   #bossIntro b { font-size: clamp(28px, 7vw, 54px); color: #fff; text-shadow: 0 4px 0 #5a1040, 0 0 30px rgba(255,80,200,.8); letter-spacing: 2px; text-align: center; }
   #bossIntro span { font-size: clamp(14px, 3.5vw, 20px); color: #ffd6f0; text-shadow: 2px 2px 0 #000; margin-top: 6px; }
   @keyframes bossIn { 0% { opacity: 0; transform: scale(1.4); } 12% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
@@ -651,7 +657,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.4!</span>
+      <span class="ver">¡Versión 3.5!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -661,7 +667,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 3.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -2178,6 +2184,93 @@ rebuildBlockTables();
     });
   };
 }
+/* ==========================================================================
+   §2d BLOQUES DE LAS DIMENSIONES (3.5)
+   --------------------------------------------------------------------------
+   Con estos 13 bloques se completan los 256 identificadores de bloque.
+   El generador, las criaturas, los jefes y los portales están en §34 y §35.
+   Metadatos del portal: bit0 = portal del Vacío, bit1 = orientado en el eje Z.
+   ========================================================================== */
+for (const n of ['lava', 'portal_nether', 'portal_void', 'netherrack', 'nylium_top', 'nylium_side', 'crimson_stem', 'crimson_stem_top', 'crimson_wart',
+  'infernite_ore', 'nether_bricks', 'void_stone', 'void_turf_top', 'void_turf_side', 'voidite_ore', 'void_crystal', 'void_bricks']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+
+const LAVA = 243, PORTAL = 244, NETHERRACK = 245, CRIMSON_NYLIUM = 246, CRIMSON_STEM = 247, CRIMSON_WART = 248, INFERNITE_ORE = 249, NETHER_BRICKS = 250,
+  VOID_STONE = 251, VOID_TURF = 252, VOIDITE_ORE = 253, VOID_CRYSTAL = 254, VOID_BRICKS = 255;
+Object.assign(I, { FLINT_STEEL: 521, INFERNITE: 522, EMBER: 523, EMBER_CORE: 524, VOID_EYE: 525, VOIDITE: 526, VOID_SHARD: 527, VOID_HEART: 528,
+  INFERNITE_SWORD: 529, INFERNITE_PICK: 530, VOID_BLADE: 531 });
+
+{
+  const LAVA_TOP = [[0, 0, 0, 1, 14 / 16, 1]];
+  defBlock(LAVA, 'Lava', 'Roca fundida del Inframundo. Quema a quien la toca.', T.lava,
+    { shape: 'lava', boxes: (m, nb, mode) => (mode === 'collide' ? [] : nb && nb(4) === LAVA ? FULL_BOX : LAVA_TOP), opaque: false, solid: false, selectable: false, replaceable: true,
+      cullSelf: true, hardness: -1, drop: null, light: 15, damage: 4, sound: 'stone' });
+  defBlock(PORTAL, 'Portal', '', T.portal_nether,
+    { shape: 'portal', boxes: (m) => [m & 2 ? [6 / 16, 0, 0, 10 / 16, 1, 1] : [0, 0, 6 / 16, 1, 1, 10 / 16]], opaque: false, solid: false, hardness: 0, drop: null, light: 11, sound: 'glass', hidden: true,
+      cullSelf: true, tileFn: (f, m) => (m & 1 ? T.portal_void : T.portal_nether) });
+  defBlock(NETHERRACK, 'Roca infernal', 'La piedra rojiza y blanda de la que está hecho el Inframundo.', T.netherrack, { hardness: 0.6, tool: 'pickaxe', level: 0 });
+  defBlock(CRIMSON_NYLIUM, 'Nilio carmesí', 'Suelo vivo de los bosques carmesíes.', { top: T.nylium_top, side: T.nylium_side, bottom: T.netherrack },
+    { hardness: 0.6, tool: 'pickaxe', level: 0, drop: NETHERRACK, spawnGround: true });
+  defBlock(CRIMSON_STEM, 'Tallo carmesí', 'Tronco de los hongos gigantes del Inframundo. Da tablones rosados.', { side: T.crimson_stem, top: T.crimson_stem_top }, { hardness: 2, tool: 'axe', sound: 'wood' });
+  defBlock(CRIMSON_WART, 'Verruga carmesí', 'Sombrero carnoso de los hongos carmesíes.', T.crimson_wart, { hardness: 0.5, tool: 'axe', sound: 'grass' });
+  defBlock(INFERNITE_ORE, 'Mena de infernita', 'Mineral exclusivo del Inframundo. Requiere pico de diamante.', T.infernite_ore,
+    { hardness: 4, tool: 'pickaxe', level: 3, drop: I.INFERNITE, xp: 6, light: 4 });
+  defBlock(NETHER_BRICKS, 'Ladrillos infernales', 'Ladrillos oscuros de las fortalezas abandonadas.', T.nether_bricks, { hardness: 2, tool: 'pickaxe', level: 0 });
+  defBlock(VOID_STONE, 'Piedra del vacío', 'Roca pálida de las islas flotantes.', T.void_stone, { hardness: 2, tool: 'pickaxe', level: 1 });
+  defBlock(VOID_TURF, 'Musgo del vacío', 'Cubre la cima de las islas del Vacío.', { top: T.void_turf_top, side: T.void_turf_side, bottom: T.void_stone },
+    { hardness: 1.2, tool: 'pickaxe', level: 0, spawnGround: true });
+  defBlock(VOIDITE_ORE, 'Mena de vacuita', 'Recurso exclusivo del Vacío. Requiere pico de diamante.', T.voidite_ore,
+    { hardness: 4.5, tool: 'pickaxe', level: 3, drop: I.VOIDITE, xp: 8, light: 5 });
+  defBlock(VOID_CRYSTAL, 'Cristal del vacío', 'Cristal mágico que crece en las islas flotantes. Suelta esquirlas.', T.void_crystal,
+    { shape: 'cross', opaque: false, solid: false, hardness: 0.4, tool: 'pickaxe', sound: 'glass', light: 12, support: true, drop: () => [[I.VOID_SHARD, 1 + Math.floor(Math.random() * 2)]] });
+  defBlock(VOID_BRICKS, 'Ladrillos del vacío', 'Ladrillos de las ruinas suspendidas y las fortalezas dimensionales.', T.void_bricks, { hardness: 3, tool: 'pickaxe', level: 1 });
+}
+rebuildBlockTables();
+
+{
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { px, get, paint, copy, rnd, clear, bricks, logSide, logTop } = h;
+    const N = (v) => (rnd() - 0.5) * v;
+    paint(T.lava, (x, y) => {
+      const v = Math.sin(x * 0.8 + Math.sin(y * 0.6) * 2.4) * 0.5 + Math.sin(y * 0.9 + x * 0.35) * 0.5, n = N(14);
+      return v > 0.45 ? [255, 236 + n * 0.3, 120 + n] : v > -0.1 ? [250, 150 + v * 90 + n, 34 + n * 0.4] : [214 + n, 84 + n, 20];
+    });
+    const swirl = (t, c, c2) => paint(t, (x, y) => {
+      const dx = x - 7.5, dy = y - 7.5, a = Math.atan2(dy, dx), r = Math.hypot(dx, dy), v = Math.sin(a * 3 + r * 0.9) * 0.5 + 0.5, s = hash2(x, y, t) > 0.93 ? 70 : 0;
+      return [lerp(c[0], c2[0], v) + s, lerp(c[1], c2[1], v) + s, lerp(c[2], c2[2], v) + s, 255];
+    });
+    swirl(T.portal_nether, [70, 20, 140], [190, 90, 250]); swirl(T.portal_void, [10, 60, 90], [90, 240, 220]);
+    paint(T.netherrack, (x, y) => { const v = (hash2(x >> 1, y >> 1, 201) - 0.5) * 30, n = N(22), d = rnd() < 0.08 ? -30 : 0; return [118 + v + n + d, 44 + v * 0.5 + n * 0.5 + d * 0.5, 44 + v * 0.5 + n * 0.5 + d * 0.5]; });
+    paint(T.nylium_top, (x, y) => { const n = N(26), s = hash2(x, y, 203) > 0.86 ? 40 : 0; return [176 + n + s, 30 + n * 0.4 + s * 0.4, 42 + n * 0.4]; });
+    copy(T.nylium_side, T.netherrack); paint(T.nylium_side, (x, y) => (y < 3 + (hash2(x, 0, 204) > 0.5 ? 1 : 0) ? [176 + N(24), 30, 42] : null));
+    logSide(T.crimson_stem, [112, 44, 84], 18); paint(T.crimson_stem, (x, y) => (hash2(x >> 1, y >> 2, 205) > 0.82 ? [214 + N(20), 60, 50] : null));
+    logTop(T.crimson_stem_top, [104, 40, 78], [150, 70, 104]);
+    paint(T.crimson_wart, (x, y) => { const v = (hash2(x >> 1, y >> 1, 207) - 0.5) * 40, n = N(16); return [150 + v + n, 16 + n * 0.3, 20 + n * 0.3]; });
+    copy(T.infernite_ore, T.netherrack);
+    for (const [cx, cy] of [[3, 3], [10, 4], [6, 9], [12, 11], [3, 12]]) for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1], [-1, 1], [2, 0]]) {
+      const x = cx + dx, y = cy + dy; if (x < 0 || x > 15 || y > 15) continue;
+      px(T.infernite_ore, x, y, dx + dy === 0 ? 255 : 250, dx + dy === 0 ? 230 : 150 + (dx * 30), dx + dy === 0 ? 140 : 40, 255);
+    }
+    bricks(T.nether_bricks, 4, 8, [26, 12, 16], [64, 26, 32], 14);
+    paint(T.void_stone, (x, y) => { const v = (hash2(x >> 2, y >> 1, 211) - 0.5) * 20, n = N(12), c = Math.abs(Math.sin(x * 0.7 + y * 0.4 + Math.sin(y * 0.5) * 2)) < 0.1 ? -24 : 0; return [214 + v + n + c, 208 + v + n + c, 168 + v + n + c * 1.2]; });
+    paint(T.void_turf_top, (x, y) => { const n = N(26), s = hash2(x, y, 213) > 0.88 ? 46 : 0; return [116 + n + s, 70 + n * 0.6 + s, 176 + n + s]; });
+    copy(T.void_turf_side, T.void_stone); paint(T.void_turf_side, (x, y) => (y < 3 + (hash2(x, 0, 214) > 0.5 ? 1 : 0) ? [116 + N(24), 70, 176] : null));
+    copy(T.voidite_ore, T.void_stone);
+    for (const [cx, cy] of [[4, 3], [11, 5], [6, 10], [12, 12], [2, 8]]) for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const x = cx + dx, y = cy + dy; if (x < 0 || x > 15 || y < 0 || y > 15) continue;
+      px(T.voidite_ore, x, y, dx || dy ? 60 : 200, dx || dy ? 30 : 255, dx || dy ? 110 : 245, 255);
+    }
+    clear(T.void_crystal);
+    for (const [x0, top, w] of [[2, 9, 2], [6, 1, 3], [11, 5, 2], [4, 12, 1], [13, 11, 1]]) for (let y = 15; y >= top; y--) for (let d = 0; d <= w; d++) {
+      if (y === top && (d === 0 || d === w) && w > 1) continue;
+      const k = d === 0 ? 1 : d === w ? 0.6 : 0.82, g = y < top + 2 ? 40 : 0;
+      px(T.void_crystal, x0 + d, y, (90 + g) * k, (236 + g * 0.4) * k, (226 + g * 0.5) * k, 255);
+    }
+    bricks(T.void_bricks, 8, 8, [70, 50, 110], [152, 126, 196], 12);
+    paint(T.void_bricks, (x, y) => (hash2(x, y, 217) > 0.96 ? [120, 250, 236] : null));
+  };
+}
 
 /* ==========================================================================
    §5 BIOMAS Y GENERACIÓN PROCEDURAL
@@ -3286,7 +3379,8 @@ Object.assign(WorldGen.prototype, {
       const m = S.rad + 8, span = S.region - 2 * m;
       const x = gx * S.region + m + Math.floor(hash2(gx, gz, this.seed + S.salt) * span), z = gz * S.region + m + Math.floor(hash2(gz, gx, this.seed + S.salt * 3) * span);
       const c = this.column(x, z);
-      let ok = S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80;
+      let ok = S.any || (S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80);
+      if (dimOf(x, z) !== (S.dim || 0)) ok = false;                       // cada estructura pertenece a una dimensión (§34)
       if (ok && S.flat) for (const [dx, dz] of [[-S.flat, 0], [S.flat, 0], [0, -S.flat], [0, S.flat]]) if (Math.abs(this.column(x + dx * 2, z + dz * 2).h - c.h) > S.flat) ok = false;
       // las estructuras de superficie no se pisan con una aldea o con las ruinas del dragón
       if (ok && S.type !== 'village' && !S.land) for (const big of STRUCTS.slice(0, 2)) {
@@ -3776,7 +3870,7 @@ function emitCustom(x, y, z, p, id, def) {
     const ub = def.shape === 'torch' ? px16([7, 0, 7, 9, 10, 9]) : bx;
     for (let f = 0; f < 6; f++) {
       const onEdge = (f === 0 && bx[0] <= 0) || (f === 1 && bx[3] >= 1) || (f === 2 && bx[1] <= 0) || (f === 3 && bx[4] >= 1) || (f === 4 && bx[2] <= 0) || (f === 5 && bx[5] >= 1);
-      if (onEdge && B_OPAQUE[pIds[p + NOFF[f]]]) continue;
+      if (onEdge && (B_OPAQUE[pIds[p + NOFF[f]]] || (def.cullSelf && pIds[p + NOFF[f]] === id))) continue;
       let tile = f === 3 ? tex.top : f === 2 ? tex.bottom : tex.side;
       if (def.shape === 'door') tile = isDoorTop ? T.door_top : T.door_bottom;
       if (f === frontFace) tile = tex.front;
@@ -4063,7 +4157,7 @@ function bodyContacts(body) {
         const id = world.get(x, y, z);
         if (B_WATERY[id]) out.water = true;
         else if (id === LADDER) out.ladder = true;
-        else if (id === COBWEB) out.web = true;
+        else if (id === COBWEB || id === LAVA) out.web = true;
       }
   // el cactus daña al rozarlo: se mira con la caja ligeramente ampliada
   for (let x = Math.floor(a[0] - 0.05); x <= Math.floor(a[3] + 0.05); x++)
@@ -5139,7 +5233,7 @@ class Mob extends Entity {
     this.vel.x += (fx * speed - this.vel.x) * k; this.vel.z += (fz * speed - this.vel.z) * k;
     if (this.hitH && this.onGround && Math.abs(speed) > 0) this.vel.y = JUMP_SPEED;
     const c = this.physics(dt, { swimUp: this.inWater && (!s.swims || p.pos.y > this.pos.y), floaty: s.floaty });
-    if (c.cactus) this.hurt(c.cactus, null);
+    if (c.cactus && !(s.fireproof && c.cactus >= 4)) this.hurt(c.cactus, null);
     if (c.web) { this.vel.x *= 0.2; this.vel.z *= 0.2; }
     if (this.burnT > 0) {
       this.burnT -= dt; this.burnDmgT += dt;
@@ -6425,6 +6519,536 @@ const ambient = {
     }
   },
 };
+/* ==========================================================================
+   §34 DIMENSIONES (3.5): generación, estructuras, criaturas y jefes
+   --------------------------------------------------------------------------
+   Las dimensiones viven en el mismo espacio de coordenadas que el mundo, muy
+   lejos del origen: el Inframundo empieza en x = 30 000 y el Vacío en
+   z = 30 000. Un portal lleva al mismo punto desplazado 50 000 bloques, así
+   que la ida y la vuelta coinciden 1:1. Con esto las ediciones se guardan
+   con el mundo, los chunks se cargan igual y el multijugador las sincroniza
+   sin ningún cambio en el servidor. dimOf(x, z) dice en qué dimensión cae
+   una columna; localXZ() da las coordenadas que ve el jugador.
+   Portales, viaje, ambiente y música: §35.
+   ========================================================================== */
+const DIM_OFF = 50000, DIM_EDGE = 30000;
+const dimOf = (x, z) => (x >= DIM_EDGE ? 1 : z >= DIM_EDGE ? 2 : 0);
+const DIM_NAMES = ['Mundo', 'Inframundo', 'Vacío'];
+const dimOrigin = (d) => (d === 1 ? [DIM_OFF, 0] : d === 2 ? [0, DIM_OFF] : [0, 0]);
+const localXZ = (x, z) => { const o = dimOrigin(dimOf(x, z)); return [x - o[0], z - o[1]]; };
+const LAVA_Y = SEA;
+
+// ---------- Biomas ----------
+{
+  const base = { grass: [0.6, 0.3, 0.3], foliage: [0.6, 0.3, 0.3], precip: 'none', trees: [], treeDensity: 0, plants: [], passive: [] };
+  const add = (key, o) => { BIOME[key] = BIOMES.length; BIOMES.push({ ...base, ...o }); };
+  add('NETHER', { name: 'Yermo infernal', hostile: ['scorched', 'imp', 'magmacube'], fog: [0.35, 0.08, 0.05], dim: 1 });
+  add('CRIMSON', { name: 'Bosque carmesí', hostile: ['scorched', 'magmacube', 'imp'], fog: [0.4, 0.05, 0.08], dim: 1 });
+  add('LAVA_SEA', { name: 'Mar de lava', hostile: ['imp'], fog: [0.45, 0.14, 0.04], dim: 1 });
+  add('VOID', { name: 'Islas del vacío', grass: [0.6, 0.5, 0.9], foliage: [0.5, 0.8, 0.9], hostile: ['wraith', 'voidling', 'watcher'], fog: [0.1, 0.05, 0.2], dim: 2 });
+  add('VOID_CRYSTAL', { name: 'Campos de cristal', grass: [0.6, 0.5, 0.9], foliage: [0.5, 0.8, 0.9], hostile: ['watcher', 'wraith'], fog: [0.08, 0.12, 0.22], dim: 2 });
+}
+
+// ---------- Generación ----------
+Object.assign(WorldGen.prototype, {
+  netherColumn(x, z) {
+    const a = this.nCont.noise2D(x / 160, z / 160), b = this.nDet.noise2D(x / 45, z / 45), r = 1 - Math.abs(this.nRidge.noise2D(x / 90, z / 90));
+    const h = Math.round(42 + a * 9 + b * 4 + Math.pow(r, 6) * 22), hum = this.nHum.noise2D(x / 220, z / 220);
+    return { h, b: h <= LAVA_Y ? BIOME.LAVA_SEA : hum > 0.2 ? BIOME.CRIMSON : BIOME.NETHER, temp: 1, spire: r };
+  },
+  voidColumn(x, z) {
+    const m = this.nCont.noise2D(x / 110, z / 110) * 0.65 + this.nDet.noise2D(x / 34, z / 34) * 0.35, t = m - 0.18;
+    const b = this.nHum.noise2D(x / 150, z / 150) > 0.3 ? BIOME.VOID_CRYSTAL : BIOME.VOID;
+    if (t <= 0) return { h: 0, b, temp: 0, isl: 0 };
+    const base = 52 + Math.round(this.nMnt.noise2D(x / 260, z / 260) * 10);
+    const top = base + Math.round(Math.min(1, t * 6) * 2 + this.nPatch.noise2D(x / 14, z / 14) * 1.2);
+    const thick = Math.max(1, Math.round(t * 46 + this.nRidge.noise2D(x / 12, z / 12) * 2.5 * Math.min(1, t * 8)));
+    return { h: top, b, temp: 0, isl: thick };
+  },
+  genNether(ch) {
+    const x0 = ch.cx * CHUNK, z0 = ch.cz * CHUNK, seed = this.seed, B = ch.blocks;
+    const cave = this.caveField(x0, z0), NY = cave.NY, CF = cave.f;
+    const caveAt = (lx, y, lz) => {
+      const fx = lx / 4, fy = y / 4, fz = lz / 4, ix = Math.min(3, fx | 0), iy = Math.min(NY - 2, fy | 0), iz = Math.min(3, fz | 0), tx = fx - ix, ty = fy - iy, tz = fz - iz;
+      const v = (a, b, c) => CF[((ix + a) * 5 + iz + c) * NY + iy + b];
+      return lerp(lerp(lerp(v(0, 0, 0), v(1, 0, 0), tx), lerp(v(0, 1, 0), v(1, 1, 0), tx), ty), lerp(lerp(v(0, 0, 1), v(1, 0, 1), tx), lerp(v(0, 1, 1), v(1, 1, 1), tx), ty), tz);
+    };
+    for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+      const x = x0 + lx, z = z0 + lz, c = this.netherColumn(x, z), h = c.h, patch = this.nPatch.noise2D(x / 9, z / 9);
+      ch.biome[lx | (lz << 4)] = c.b;
+      let top = NETHERRACK;
+      if (c.b === BIOME.CRIMSON) top = CRIMSON_NYLIUM;
+      else if (c.b === BIOME.LAVA_SEA) top = patch > 0.2 ? MAGMA : BASALT;
+      else if (h > 60) top = hash2(x, z, seed + 77) < 0.12 ? GLOWSTONE : BASALT;
+      else top = patch > 0.55 ? ASH : patch < -0.62 ? MAGMA : h > 54 ? BASALT : NETHERRACK;
+      const noCaveTop = h <= LAVA_Y + 2 ? h - 5 : h + 1, colTop = Math.max(h, LAVA_Y);
+      for (let y = 0; y <= colTop; y++) {
+        let id;
+        if (y > h) id = LAVA;
+        else if (y === 0 || (y <= 2 && hash3(x, y, z, seed) < 0.6 - y * 0.25)) id = BEDROCK;
+        else if (y === h) id = top;
+        else if (h > 54 && y > h - 5) id = BASALT;
+        else id = this.nPatch.noise2D(x / 22 + y * 0.31, z / 22 - y * 0.17) > 0.62 ? BASALT : NETHERRACK;
+        if (id !== BEDROCK && id !== LAVA && y >= 3 && y < noCaveTop && caveAt(lx, y, lz) > (y > h - 6 ? 0.06 : 0.01)) id = y <= 8 ? LAVA : AIR;
+        if (id) B[lx | (lz << 4) | (y << 8)] = id;
+      }
+    }
+    // Minerales: infernita (exclusiva), oro y piedra luminosa incrustada
+    const rnd = mulberry32(seed ^ Math.imul(ch.cx, 73939) ^ Math.imul(ch.cz, 19937) ^ 0x35);
+    const vein = (id, n, y0, y1, size) => {
+      for (let k = 0; k < n; k++) {
+        let x = 1 + Math.floor(rnd() * 14), y = y0 + Math.floor(rnd() * (y1 - y0)), z = 1 + Math.floor(rnd() * 14);
+        for (let s = 0; s < size; s++) {
+          const i = x | (z << 4) | (y << 8); if (B[i] === NETHERRACK || B[i] === BASALT) B[i] = id;
+          const d = Math.floor(rnd() * 6); x = clamp(x + (d === 0) - (d === 1), 0, 15); y = clamp(y + (d === 2) - (d === 3), 3, 60); z = clamp(z + (d === 4) - (d === 5), 0, 15);
+        }
+      }
+    };
+    vein(INFERNITE_ORE, 5, 4, 34, 3); vein(GOLD_ORE, 4, 6, 44, 4); vein(GLOWSTONE, 2, 14, 46, 4); vein(MAGMA, 2, 6, 40, 6);
+    // Bosque carmesí: hongos gigantes y hongos pequeños
+    const put = (wx, y, wz, id) => { const lx = wx - x0, lz = wz - z0; if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 1 || y >= WY) return; const i = lx | (lz << 4) | (y << 8); if (!B[i]) B[i] = id; };
+    for (let wz = z0 - 3; wz <= z0 + 18; wz++) for (let wx = x0 - 3; wx <= x0 + 18; wx++) {
+      const r = hash2(wx, wz, seed + 901);
+      if (r >= 0.03) continue;
+      const c = this.netherColumn(wx, wz); if (c.b !== BIOME.CRIMSON) continue;
+      const H = 4 + Math.floor(hash2(wz, wx, seed + 902) * 5), gy = c.h;
+      for (let y = 1; y <= H; y++) put(wx, gy + y, wz, CRIMSON_STEM);
+      for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+        const corner = Math.abs(dx) === 2 && Math.abs(dz) === 2;
+        if (!corner) put(wx + dx, gy + H + 1, wz + dz, (dx || dz) && hash2(wx + dx, wz + dz, seed + 903) < 0.08 ? GLOWSTONE : CRIMSON_WART);
+        if (Math.abs(dx) <= 1 && Math.abs(dz) <= 1) put(wx + dx, gy + H + 2, wz + dz, CRIMSON_WART);
+        if ((Math.abs(dx) === 2 || Math.abs(dz) === 2) && !corner && hash2(wx + dx * 3, wz + dz * 5, seed + 904) < 0.5) put(wx + dx, gy + H, wz + dz, CRIMSON_WART);
+      }
+    }
+    for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+      if (ch.biome[lx | (lz << 4)] !== BIOME.CRIMSON) continue;
+      const x = x0 + lx, z = z0 + lz, r = hash2(x, z, seed + 905); if (r > 0.07) continue;
+      let y = WY - 2; while (y > 1 && !B[lx | (lz << 4) | (y << 8)]) y--;
+      if (B[lx | (lz << 4) | (y << 8)] === CRIMSON_NYLIUM) B[lx | (lz << 4) | ((y + 1) << 8)] = r < 0.045 ? MUSHROOM_RED : MUSHROOM_BROWN;
+    }
+  },
+  genVoid(ch) {
+    const x0 = ch.cx * CHUNK, z0 = ch.cz * CHUNK, seed = this.seed, B = ch.blocks;
+    let any = false;
+    for (let lz = 0; lz < 16; lz++) for (let lx = 0; lx < 16; lx++) {
+      const x = x0 + lx, z = z0 + lz, c = this.voidColumn(x, z);
+      ch.biome[lx | (lz << 4)] = c.b;
+      if (!c.isl) continue;
+      any = true;
+      for (let y = Math.max(1, c.h - c.isl + 1); y <= c.h; y++) {
+        B[lx | (lz << 4) | (y << 8)] = y === c.h ? VOID_TURF : hash3(x, y, z, seed + 31) < 0.012 ? VOIDITE_ORE : hash3(x, y, z, seed + 32) < 0.01 ? CRYSTAL_BLOCK : VOID_STONE;
+      }
+      const r = hash2(x, z, seed + 911), top = (c.h + 1) << 8, crystal = c.b === BIOME.VOID_CRYSTAL;
+      if (c.isl < 3) continue;
+      if (crystal) {
+        if (r < 0.035) { const n = 2 + Math.floor(hash2(z, x, seed + 912) * 5); for (let k = 0; k < n; k++) B[lx | (lz << 4) | ((c.h + 1 + k) << 8)] = CRYSTAL_BLOCK; }
+        else if (r < 0.14) B[lx | (lz << 4) | top] = VOID_CRYSTAL;
+      } else if (r < 0.02) B[lx | (lz << 4) | top] = VOID_CRYSTAL;
+      else if (r < 0.045) B[lx | (lz << 4) | top] = GLOW_FLOWER;
+      else if (r < 0.09) B[lx | (lz << 4) | top] = FERN;
+    }
+    // Árboles encantados sobre las islas
+    const put = (wx, y, wz, id) => { const lx = wx - x0, lz = wz - z0; if (lx < 0 || lx > 15 || lz < 0 || lz > 15 || y < 1 || y >= WY) return; const i = lx | (lz << 4) | (y << 8); if (!B[i] || id === ENCH_LOG) B[i] = id; };
+    for (let wz = z0 - 3; wz <= z0 + 18; wz++) for (let wx = x0 - 3; wx <= x0 + 18; wx++) {
+      if (hash2(wx, wz, seed + 913) >= 0.012) continue;
+      const c = this.voidColumn(wx, wz); if (c.isl < 5 || c.b !== BIOME.VOID) continue;
+      const H = 3 + Math.floor(hash2(wz, wx, seed + 914) * 3), gy = c.h;
+      for (let dy = -2; dy <= 1; dy++) { const rad = dy >= 1 ? 1 : 2; for (let dx = -rad; dx <= rad; dx++) for (let dz = -rad; dz <= rad; dz++) if (Math.abs(dx) + Math.abs(dz) < rad * 2 || hash2(wx + dx, wz + dz, seed + 915 + dy) < 0.4) put(wx + dx, gy + H + 1 + dy, wz + dz, ENCH_LEAVES); }
+      for (let y = 1; y <= H; y++) put(wx, gy + y, wz, ENCH_LOG);
+    }
+    return any;
+  },
+});
+{
+  const _column = WorldGen.prototype.column, _gen = WorldGen.prototype.generateChunk;
+  WorldGen.prototype.column = function (x, z) { const d = dimOf(x, z); return d === 1 ? this.netherColumn(x, z) : d === 2 ? this.voidColumn(x, z) : _column.call(this, x, z); };
+  WorldGen.prototype.generateChunk = function (ch) {
+    const d = dimOf(ch.cx * 16 + 8, ch.cz * 16 + 8);
+    if (!d) return _gen.call(this, ch);
+    if (d === 1) this.genNether(ch); else this.genVoid(ch);
+    this.placeStructures(ch);
+  };
+  // La lava ilumina, pero un lago entero de luces sería carísimo de mallar: solo emite una de cada cuatro celdas de la superficie
+  const _scan = Chunk.prototype.scanLights;
+  Chunk.prototype.scanLights = function () {
+    _scan.call(this);
+    const B = this.blocks, x0 = this.cx * 16, z0 = this.cz * 16;
+    this.lights = this.lights.filter(([x, y, z]) => {
+      const i = (x - x0) | ((z - z0) << 4) | (y << 8);
+      if (B[i] !== LAVA) return true;
+      return !((x | z) & 1) && B[i + 256] !== LAVA;
+    });
+  };
+}
+
+// ---------- Objetos ----------
+defItem(I.FLINT_STEEL, 'Encendedor', 'Pedernal y acero. Úsalo sobre un marco de obsidiana para abrir un portal al Inframundo.', { stack: 1, rarity: 1 });
+defItem(I.INFERNITE, 'Infernita', 'Mineral ardiente del Inframundo. Forja la espada y el pico de infernita.', { rarity: 2 });
+defItem(I.EMBER, 'Ascua', 'Brasa viva que sueltan las criaturas del Inframundo. Arde muchísimo tiempo en un horno.', { fuel: 16, rarity: 1 });
+defItem(I.EMBER_CORE, 'Corazón de brasas', 'El núcleo del Señor de las brasas. Con él se forja el Ojo del vacío.', { stack: 1, rarity: 4 });
+defItem(I.VOID_EYE, 'Ojo del vacío', 'Úsalo sobre un marco de bloques de cristal para abrir un portal al Vacío. No se gasta.', { stack: 1, rarity: 4 });
+defItem(I.VOIDITE, 'Vacuita', 'Recurso exclusivo del Vacío. Sirve para fabricar perlas de retorno.', { rarity: 3 });
+defItem(I.VOID_SHARD, 'Esquirla del vacío', 'Fragmento de un cristal mágico del Vacío.', { rarity: 2 });
+defItem(I.VOID_HEART, 'Corazón del vacío', 'Trofeo del Heraldo del vacío. Late despacio, como si siguiera vivo.', { stack: 1, rarity: 5 });
+defItem(I.INFERNITE_SWORD, 'Espada de infernita', 'Hoja al rojo vivo: prende fuego a los enemigos.', { stack: 1, rarity: 3, tool: { type: 'sword', tier: 'special', level: 0, speed: 1.5, dmg: 9, dur: 1800, fire: true } });
+defItem(I.INFERNITE_PICK, 'Pico de infernita', 'El pico más rápido y resistente.', { stack: 1, rarity: 3, tool: { type: 'pickaxe', tier: 'special', level: 4, speed: 11, dmg: 6, dur: 2400 } });
+defItem(I.VOID_BLADE, 'Hoja del vacío', 'Arma del Heraldo del vacío. Usar: paso del vacío, te teletransporta hasta 10 bloques hacia donde miras.',
+  { stack: 1, rarity: 5, tool: { type: 'sword', tier: 'special', level: 0, speed: 1.5, dmg: 12, dur: 2200 }, ability: { id: 'blink', name: 'Paso del vacío', cd: 4 } });
+Object.assign(I, { RECALL_PEARL: 532 });
+defItem(I.RECALL_PEARL, 'Perla de retorno', 'Úsala para volver al instante a tu punto de reaparición, estés en la dimensión que estés. Se gasta.', { stack: 16, rarity: 3 });
+ITEMS[LAVA].creativeOnly = true;
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const gem = (a, b) => P((p) => p.poly([[8, 2], [13, 7], [8, 14], [3, 7]], (x, y) => (x + y < 14 ? a : b)));
+  Object.assign(ICON_OVERRIDE, {
+    [I.FLINT_STEEL]: P((p) => { p.poly([[2, 9], [6, 5], [9, 8], [5, 13]], (x, y) => (x < 5 ? [70, 70, 76] : [40, 40, 46])); p.line([[9, 3], [13, 3], [13, 10], [10, 10]], 1.6, [200, 200, 208]); p.set(8, 5, [255, 220, 90]); p.set(9, 6, [255, 150, 40]); }),
+    [I.INFERNITE]: gem([255, 190, 80], [220, 70, 30]),
+    [I.EMBER]: P((p) => { p.disk(8, 9, 4.5, (x, y) => (y < 8 ? [255, 190, 60] : [220, 80, 20])); p.disk(8, 9, 2, [255, 244, 170]); p.set(8, 3, [255, 150, 40]); p.set(10, 2, [255, 100, 30]); }),
+    [I.EMBER_CORE]: P((p) => { p.disk(8, 8, 6.5, (x, y) => ((x + y) % 4 === 0 ? [255, 160, 40] : [70, 30, 30])); p.disk(8, 8, 3, [255, 220, 110]); p.disk(8, 8, 1.4, [255, 255, 230]); }),
+    [I.VOID_EYE]: P((p) => { p.disk(8, 8, 6.5, (x, y) => (y < 7 ? [60, 220, 200] : [20, 110, 120])); p.disk(8, 8, 3.2, [20, 14, 40]); p.disk(8, 8, 1.4, [190, 110, 255]); p.set(6, 5, [230, 255, 250]); }),
+    [I.VOIDITE]: gem([210, 255, 246], [60, 40, 130]),
+    [I.VOID_SHARD]: P((p) => p.poly([[9, 1], [12, 7], [8, 15], [5, 8]], (x, y) => (x < 8 ? [110, 244, 230] : [50, 150, 170]))),
+    [I.VOID_HEART]: P((p) => { p.disk(5.5, 6, 3.5, [120, 60, 200]); p.disk(10.5, 6, 3.5, [90, 40, 170]); p.poly([[2, 7], [14, 7], [8, 14.5]], (x, y) => (x < 8 ? [120, 60, 200] : [90, 40, 170])); p.disk(8, 8, 1.6, [120, 250, 236]); }),
+    [I.INFERNITE_SWORD]: P((p) => { p.line([[1.5, 14.5], [4.5, 11.5]], 1.8, [60, 40, 40]); p.line([[5, 11], [14.5, 1.5]], 2.4, (x, y) => ((x + y) % 3 ? [240, 110, 40] : [255, 210, 110])); p.line([[2.5, 8.5], [7.5, 13.5]], 1.8, [70, 30, 30]); }),
+    [I.INFERNITE_PICK]: P((p) => { p.line([[3, 13], [11, 5]], 1.6, [90, 60, 50]); p.line([[5, 3], [9, 2], [13, 3], [14, 7], [13, 11]], 2.2, (x, y) => ((x + y) % 3 ? [240, 110, 40] : [255, 210, 110])); }),
+    [I.VOID_BLADE]: P((p) => { p.line([[1.5, 14.5], [4.5, 11.5]], 1.8, [40, 30, 70]); p.line([[5, 11], [14.5, 1.5]], 2.4, (x, y) => ((x + y) % 3 ? [70, 40, 150] : [110, 250, 236])); p.line([[2.5, 8.5], [7.5, 13.5]], 1.8, [110, 250, 236]); }),
+    [I.RECALL_PEARL]: P((p) => { p.disk(8, 8, 5.5, (x, y) => (x + y < 14 ? [150, 255, 240] : [50, 120, 170])); p.disk(6.5, 6.5, 1.2, [240, 255, 255]); }),
+  });
+}
+shapeless(I.FLINT_STEEL, 1, [I.IRON_INGOT, I.FLINT], 'Dimensiones');
+shaped(NETHER_BRICKS, 4, ['##', '##'], { '#': NETHERRACK }, 'Dimensiones');
+shaped(VOID_BRICKS, 4, ['##', '##'], { '#': VOID_STONE }, 'Dimensiones');
+shapeless(CHERRY_PLANKS, 4, [CRIMSON_STEM], 'Dimensiones');
+shaped(I.INFERNITE_SWORD, 1, ['i', 'i', 's'], { i: I.INFERNITE, s: I.STICK }, 'Dimensiones');
+shaped(I.INFERNITE_PICK, 1, ['iii', ' s ', ' s '], { i: I.INFERNITE, s: I.STICK }, 'Dimensiones');
+shaped(I.VOID_EYE, 1, [' e ', 'ece', ' e '], { e: I.EMBER, c: I.EMBER_CORE }, 'Dimensiones');
+shaped(I.RECALL_PEARL, 2, [' s ', 'svs', ' s '], { s: I.VOID_SHARD, v: I.VOIDITE }, 'Dimensiones');
+shaped(GLOWSTONE, 1, ['ee', 'ee'], { e: I.EMBER }, 'Dimensiones');
+
+// ---------- Botín y estructuras ----------
+Object.assign(LOOT, {
+  nether: [[I.GOLD_INGOT, 2, 6, 5], [I.EMBER, 2, 5, 5], [I.INFERNITE, 1, 2, 3], [I.DIAMOND, 1, 3, 2], [OBSIDIAN, 2, 4, 3], [I.GOLDEN_APPLE, 1, 1, 1], [potionId('resist', 0), 1, 1, 2], [I.FLINT_STEEL, 1, 1, 1]],
+  voidruin: [[I.VOID_SHARD, 2, 5, 5], [I.CRYSTAL_SHARD, 2, 6, 4], [I.EMERALD, 2, 6, 3], [I.VOIDITE, 1, 2, 2], [I.GOLDEN_CARROT, 1, 3, 2], [potionId('night', 1), 1, 1, 1]],
+  voidfort: [[I.VOIDITE, 2, 4, 5], [I.DIAMOND, 2, 5, 4], [I.RECALL_PEARL, 1, 2, 3], [I.VOID_SHARD, 3, 7, 4], [I.GOLDEN_APPLE, 1, 2, 2], [I.TOTEM, 1, 1, 1], [armorId('diamond', 'chest'), 1, 1, 1, true]],
+});
+function buildNetherFort(plan, cx, cz, rnd, gen) {
+  const c0 = gen.column(cx, cz), H = clamp(c0.h + 1, LAVA_Y + 6, 60), R = 13, NB = NETHER_BRICKS;
+  for (let x = -R - 1; x <= R + 1; x++) for (let z = -R - 1; z <= R + 1; z++) {
+    const d = Math.hypot(x, z); if (d > R + 0.5) continue;
+    const hh = gen.column(cx + x, cz + z).h, rim = d > R - 1;
+    if (hh < H - 1 && (rim || (x % 6 === 0 && z % 6 === 0))) plan.fill(cx + x, Math.max(1, hh), cz + z, cx + x, H - 1, cz + z, NB);   // muralla y pilares hasta el suelo
+    plan.fill(cx + x, H + 1, cz + z, cx + x, H + 13, cz + z, AIR);
+    plan.set(cx + x, H, cz + z, d < 3 ? MAGMA : rnd() < 0.08 ? BASALT : NB);
+    if (rim) { plan.set(cx + x, H + 1, cz + z, NB); if ((x + z) & 1) plan.set(cx + x, H + 2, cz + z, NB); }
+  }
+  for (const [dx, dz] of [[R - 1, 0], [-R + 1, 0], [0, R - 1], [0, -R + 1]]) {                                   // torres con faro
+    plan.fill(cx + dx - 1, H + 1, cz + dz - 1, cx + dx + 1, H + 8, cz + dz + 1, NB);
+    plan.set(cx + dx, H + 9, cz + dz, GLOWSTONE); plan.set(cx + dx, H + 10, cz + dz, GLOWSTONE);
+  }
+  for (const [dx, dz] of [[7, 7], [-7, 7], [7, -7], [-7, -7]]) { plan.set(cx + dx, H, cz + dz, LAVA); plan.set(cx + dx, H + 1, cz + dz, IRON_BARS); }   // braseros
+  // puente hacia el este y torreón con el botín
+  const bx = cx + R, kx = cx + R + 16;
+  plan.fill(bx, H, cz - 2, kx - 5, H, cz + 2, NB); plan.fill(bx - 1, H + 1, cz - 1, kx - 5, H + 4, cz + 1, AIR);
+  for (let x = bx; x <= kx - 5; x++) { plan.set(x, H + 1, cz - 2, x % 3 ? IRON_BARS : NB); plan.set(x, H + 1, cz + 2, x % 3 ? IRON_BARS : NB); if (x % 6 === 0) { const hh = gen.column(x, cz).h; if (hh < H - 1) plan.fill(x, Math.max(1, hh), cz, x, H - 1, cz, NB); } }
+  plan.fill(kx - 4, H, cz - 4, kx + 4, H, cz + 4, NB);
+  for (let y = 1; y <= 5; y++) for (let x = -4; x <= 4; x++) for (let z = -4; z <= 4; z++) {
+    const wall = Math.abs(x) === 4 || Math.abs(z) === 4;
+    plan.set(kx + x, H + y, cz + z, wall ? (y === 2 && (x + z) % 2 === 0 ? IRON_BARS : NB) : y === 5 ? NB : AIR);
+  }
+  plan.fill(kx - 4, H + 1, cz - 1, kx - 4, H + 3, cz + 1, AIR);
+  for (let x = -4; x <= 4; x += 2) for (let z = -4; z <= 4; z += 8) plan.set(kx + x, H + 6, cz + z, NB);
+  plan.set(kx, H + 5, cz, GLOWSTONE);
+  plan.chest(kx + 3, H + 1, cz - 2, 'nether', 3); plan.chest(kx + 3, H + 1, cz + 2, 'nether', 3); plan.chest(kx, H + 1, cz + 3, 'nether', 0);
+  plan.spawner(kx + 2, H + 1, cz, 'scorched');
+  plan.mobs.push(['scorched', kx - 1.5, H + 1, cz + 1.5], ['scorched', kx - 1.5, H + 1, cz - 1.5]);
+  plan.boss = { type: 'emberlord', x: cx + 0.5, y: H + 1, z: cz + 0.5, r: 11, name: 'Señor de las brasas' };
+  plan.poi = { type: 'nfort', name: 'Fortaleza abandonada', x: cx, z: cz, y: H };
+}
+function voidDisc(plan, cx, y, cz, R, rnd, crack) {
+  for (let x = -R; x <= R; x++) for (let z = -R; z <= R; z++) {
+    const d = Math.hypot(x, z); if (d > R + 0.3) continue;
+    if (!(crack && d > 2 && rnd() < crack)) plan.set(cx + x, y, cz + z, d < R - 1 && rnd() < 0.1 ? VOID_STONE : VOID_BRICKS);
+    for (let k = 1; k <= 4; k++) if (d < R - k * 2 + rnd() * 1.5) plan.set(cx + x, y - k, cz + z, VOID_STONE);
+  }
+}
+function buildVoidRuins(plan, cx, cz, rnd) {
+  const y = 50 + Math.floor(rnd() * 14), R = 4 + Math.floor(rnd() * 3);
+  voidDisc(plan, cx, y, cz, R, rnd, 0.12);
+  for (let k = 0; k < 4; k++) {
+    const a = k / 4 * Math.PI * 2 + 0.6, px = Math.round(cx + Math.cos(a) * (R - 1)), pz = Math.round(cz + Math.sin(a) * (R - 1)), ph = 1 + Math.floor(rnd() * 5);
+    plan.set(px, y, pz, VOID_BRICKS);
+    for (let i = 1; i <= ph; i++) plan.set(px, y + i, pz, VOID_BRICKS);
+    if (ph >= 4) plan.set(px, y + ph + 1, pz, SEA_LANTERN);
+  }
+  plan.set(cx, y, cz, VOID_BRICKS); plan.chest(cx, y + 1, cz, 'voidruin', 0);
+  plan.set(cx + 1, y, cz + 1, VOID_BRICKS); plan.set(cx + 1, y + 1, cz + 1, VOID_CRYSTAL);
+  plan.set(cx - 1, y, cz - 1, VOID_BRICKS); plan.mobs.push(['voidling', cx - 0.5, y + 1, cz - 0.5]);
+  plan.poi = { type: 'vruins', name: 'Ruinas suspendidas', x: cx, z: cz, y };
+}
+function buildVoidFort(plan, cx, cz, rnd) {
+  const y = 64, R = 15;
+  voidDisc(plan, cx, y, cz, R, rnd, 0);
+  for (let x = -R; x <= R; x++) for (let z = -R; z <= R; z++) {
+    const d = Math.hypot(x, z); if (d > R + 0.3) continue;
+    plan.fill(cx + x, y + 1, cz + z, cx + x, y + 14, cz + z, AIR);
+    const gate = Math.abs(x) <= 1 || Math.abs(z) <= 1;
+    if (d > R - 1 && !gate) plan.fill(cx + x, y + 1, cz + z, cx + x, y + 3, cz + z, VOID_BRICKS);                  // muralla: nadie se cae por el borde
+    if (d < 3.3) plan.set(cx + x, y, cz + z, d < 1.5 ? ABYSS_LAMP : MARBLE);
+  }
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {                                                   // cuatro muelles de entrada
+    for (let k = R; k <= R + 7; k++) for (let w = -1; w <= 1; w++) plan.set(cx + dx * k + dz * w, y, cz + dz * k + dx * w, VOID_BRICKS);
+  }
+  for (let k = 0; k < 8; k++) {
+    const a = k / 8 * Math.PI * 2 + Math.PI / 8, px = Math.round(cx + Math.cos(a) * 10), pz = Math.round(cz + Math.sin(a) * 10);
+    plan.fill(px, y + 1, pz, px, y + 5, pz, CRYSTAL_BLOCK); plan.set(px, y + 6, pz, SEA_LANTERN);
+  }
+  plan.chest(cx + 12, y + 1, cz + 4, 'voidfort', 3); plan.chest(cx - 12, y + 1, cz - 4, 'voidfort', 1); plan.chest(cx + 4, y + 1, cz - 12, 'voidfort', 2);
+  plan.boss = { type: 'voidherald', x: cx + 0.5, y: y + 1, z: cz + 0.5, r: 12, name: 'Heraldo del vacío' };
+  plan.poi = { type: 'vfort', name: 'Fortaleza dimensional', x: cx, z: cz, y };
+}
+STRUCTS.push(
+  { type: 'nfort', dim: 1, region: 300, chance: 0.85, salt: 31, rad: 34, biomes: [BIOME.NETHER, BIOME.CRIMSON], build: (p, x, z, b, r, g) => buildNetherFort(p, x, z, r, g) },
+  { type: 'vruins', dim: 2, any: true, region: 130, chance: 0.7, salt: 32, rad: 9, biomes: [], build: (p, x, z, b, r) => buildVoidRuins(p, x, z, r) },
+  { type: 'vfort', dim: 2, any: true, region: 340, chance: 0.9, salt: 33, rad: 24, biomes: [], build: (p, x, z, b, r) => buildVoidFort(p, x, z, r) },
+);
+
+// ---------- Criaturas ----------
+{
+  const hum = (m, o) => MOB_MODELS.humanoid(m, o);
+  const cubeModel = (mat) => {
+    const root = new THREE.Group(), D = rgb(60, 22, 18), L = rgb(255, 150, 40), E = rgb(255, 240, 150);
+    const body = part(root, mat, 0, 7, 0, [[14, 14, 14, 0, 0, 0, D], [14.4, 1.4, 14.4, 0, 3.6, 0, L], [14.4, 1.4, 14.4, 0, -0.4, 0, L], [14.4, 1.4, 14.4, 0, -4.4, 0, L]]);
+    const head = part(root, mat, 0, 9, 7, [[3, 2.4, 0.5, -3, 0, 0.2, E], [3, 2.4, 0.5, 3, 0, 0.2, E]]);
+    return { root, body, head, legs: [], arms: [] };
+  };
+  const wraithModel = (mat) => {
+    const root = new THREE.Group(), C = rgb(96, 70, 170), D = rgb(54, 36, 110), E = rgb(120, 255, 240);
+    const body = part(root, mat, 0, 12, 0, [[8, 10, 4, 0, 0, 0, C], [6, 5, 3, 0, -7, 0, D], [3.4, 4, 2, 0, -11, 0, D]]);
+    const head = part(root, mat, 0, 17, 0, [[7, 7, 7, 0, 3.5, 0, D], [1.8, 1.4, 0.3, -1.7, 4, 3.6, E], [1.8, 1.4, 0.3, 1.7, 4, 3.6, E]]);
+    const arm = (sx) => part(root, mat, sx * 5, 16, 0, [[2, 9, 2, 0, -4, 0, C], [2.4, 2.4, 2.4, 0, -9, 0, E]]);
+    return { root, body, head, legs: [], arms: [arm(-1), arm(1)] };      // sin piernas: flota (no usa la animación humanoide)
+  };
+  const watcherModel = (mat) => {
+    const root = new THREE.Group(), S = rgb(46, 40, 86), SD = rgb(30, 26, 60), W = rgb(236, 240, 250), IR = rgb(60, 230, 210), K = rgb(10, 8, 20);
+    const body = part(root, mat, 0, 8, 0, [[12, 12, 12, 0, 0, 0, (f) => (f === 2 ? S : SD)], [8, 8, 0.6, 0, 0, 6.2, W], [4.4, 4.4, 0.5, 0, 0, 6.6, IR], [1.8, 1.8, 0.5, 0, 0, 7, K],
+      [2, 2, 2, -8, 7, 0, IR], [2, 2, 2, 8, 7, 0, IR], [2, 2, 2, -8, -7, 0, IR], [2, 2, 2, 8, -7, 0, IR]]);
+    const head = part(root, mat, 0, 8, 0, [[0.2, 0.2, 0.2, 0, 0, 0, S]]);
+    return { root, body, head, legs: [], arms: [] };
+  };
+  const B = rgb(44, 40, 40), BD = rgb(28, 24, 24), EM = rgb(255, 140, 40);
+  const VS = rgb(36, 24, 70), VD = rgb(22, 14, 46), VE = rgb(110, 250, 236);
+  Object.assign(MOBS, {
+    scorched: { name: 'Calcinado', hp: 26, w: 0.6, h: 1.99, speed: 2.7, xp: 8, sound: 'skeleton', hostile: true, melee: 5, fireproof: true, drops: [[I.BONE, 0, 2], [I.COAL, 0, 2], [I.EMBER, 0, 1]],
+      model: (m) => { const o = skeletonLook(B, BD, rgb(90, 30, 20)); o.bow = false; o.headExtra.push([1.4, 1.4, 0.35, -2, 4.2, 4.15, EM], [1.4, 1.4, 0.35, 2, 4.2, 4.15, EM]); o.bodyExtra.push([3, 3, 2.8, 0, 2, 0.1, EM]); return hum(m, o); } },
+    imp: { name: 'Diablillo ígneo', hp: 14, w: 0.7, h: 0.8, speed: 4.2, xp: 8, sound: 'raider', hostile: true, ai: 'flyer', ranged: 'fire', fireproof: true, drops: [[I.EMBER, 0, 2]],
+      model: (m) => MOB_MODELS.bird(m, { s: 1.7, body: rgb(170, 40, 30), wing: rgb(90, 20, 20), tip: rgb(255, 150, 40), belly: rgb(230, 110, 40), beak: rgb(250, 220, 120), tailC: rgb(90, 20, 20), head: rgb(190, 50, 34) }) },
+    magmacube: { name: 'Cubo de magma', hp: 18, w: 0.9, h: 0.9, speed: 1.9, xp: 6, sound: 'pop', hostile: true, melee: 4, leaps: true, fireproof: true, drops: [[MAGMA, 0, 1], [I.EMBER, 0, 1]], model: cubeModel },
+    wraith: { name: 'Espectro del vacío', hp: 16, w: 0.6, h: 1.5, speed: 4.4, xp: 8, sound: 'guardian', hostile: true, ai: 'flyer', melee: 4, drops: [[I.VOID_SHARD, 0, 2]], model: wraithModel },
+    watcher: { name: 'Vigía del vacío', hp: 22, w: 0.9, h: 0.95, speed: 2.8, xp: 10, sound: 'guardian', hostile: true, ai: 'flyer', ranged: 'void', drops: [[I.VOID_SHARD, 1, 2], [I.VOIDITE, 0, 1]], model: watcherModel },
+    voidling: { name: 'Errante del vacío', hp: 30, w: 0.6, h: 2.3, speed: 3, xp: 10, sound: 'zombie', hostile: true, melee: 6, blinks: true, drops: [[I.VOID_SHARD, 0, 2], [I.CRYSTAL_SHARD, 0, 1]],
+      model: (m) => { const mdl = hum(m, { limb: 2.4, thin: true, skin: VS, arm: VD, shirt: VS, pants: VD, eye: VE, headExtra: [[8.3, 1.2, 8.3, 0, 7.6, 0, VD]], bodyExtra: [[2, 2, 2.4, 0, 2, 0, VE]] }); mdl.root.scale.set(1, 1.2, 1); return mdl; } },
+  });
+}
+// Proyectil de las dimensiones: bola de fuego o descarga del vacío
+class DimBolt extends Projectile {
+  constructor(kind, x, y, z, vel, opts) {
+    super('fireball', x, y, z, vel, opts);
+    this.bolt = kind; this.msg = opts.msg; this.type = 'dimbolt';
+    if (kind === 'void') this.mesh.geometry = cbox(0.5, 0.5, 0.5, 0, 0, 0, (f) => (f % 2 ? rgb(90, 240, 220) : rgb(150, 90, 250)));
+    else if (opts.small) this.mesh.scale.setScalar(0.6);
+    this.col = kind === 'void' ? [0.45, 0.95, 0.9] : [1, 0.5, 0.1];
+  }
+  update(dt, g) { if (Math.random() < 0.6) g.particles.emit(this.pos.x, this.pos.y, this.pos.z, this.col, 1, { gravity: -1, up: 0.5, speed: 0.5, life: 0.4, size: 0.12 }); super.update(dt, g); }
+  explode(g) {
+    if (this.dead) return; this.dead = true;
+    const p = g.player, d = Math.hypot(p.pos.x - this.pos.x, p.pos.y + 0.9 - this.pos.y, p.pos.z - this.pos.z);
+    if (d < this.radius) p.damage(Math.ceil(this.dmg * (1 - d / this.radius * 0.5)), this.msg, this.pos);
+    g.particles.emit(this.pos.x, this.pos.y, this.pos.z, this.col, 16, { speed: 6, up: 4, life: 0.7, size: 0.14 });
+    sfx.play(this.bolt === 'void' ? 'laser' : 'explode', { pos: this.pos, pitch: 1.4 });
+  }
+}
+function shootBolt(src, kind, tx, ty, tz, speed, opts) {
+  const sx = src.pos.x, sy = src.pos.y + src.h * 0.6, sz = src.pos.z, d = Math.hypot(tx - sx, ty - sy, tz - sz) || 1;
+  const b = new DimBolt(kind, sx + (tx - sx) / d * (src.hw + 0.5), sy, sz + (tz - sz) / d * (src.hw + 0.5), new THREE.Vector3((tx - sx) / d * speed, (ty - sy) / d * speed, (tz - sz) / d * speed), opts);
+  game.entities.add(b); return b;
+}
+// Criaturas voladoras hostiles: persiguen por el aire; unas muerden y otras disparan a distancia
+Mob.prototype.flyerAI = function (dt, game, p, dist, dx, dz) {
+  const s = this.spec, ai = this.ai, hunt = game.mode === 'survival' && !p.dead && dist < 26;
+  let tx, ty, tz, speed = s.speed * 0.45;
+  if (hunt) {
+    const hd = Math.hypot(dx, dz) || 1, keep = s.ranged ? 8 : 0.4;
+    tx = p.pos.x - dx / hd * keep; tz = p.pos.z - dz / hd * keep; ty = p.pos.y + (s.ranged ? 3 : 0.5); speed = s.speed;
+    this.yaw += clamp(((Math.atan2(dx, dz) - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI, -6 * dt, 6 * dt);
+    if (s.ranged) {
+      if (ai.shootCd <= 0 && dist < 20 && hasLineOfSight(this.pos.x, this.pos.y + s.h * 0.6, this.pos.z, p.pos.x, p.pos.y + EYE_H, p.pos.z)) {
+        ai.shootCd = 2.6 + Math.random() * 1.2;
+        shootBolt(this, s.ranged, p.pos.x, p.pos.y + 0.9, p.pos.z, 12, { dmg: s.ranged === 'void' ? 5 : 4, radius: 2, small: true, msg: `Te alcanzó un ${s.name.toLowerCase()}` });
+        sfx.play(s.ranged === 'void' ? 'laserCharge' : 'fireball', { pos: this.pos, pitch: 1.5 });
+      }
+    } else if (dist < 1.6 && ai.attackCd <= 0) { ai.attackCd = 1.1; p.damage(s.melee, `Te atrapó un ${s.name.toLowerCase()}`, this.pos); }
+  } else {
+    if ((ai.t -= dt) <= 0 || ai.wx == null) {
+      ai.t = 2 + Math.random() * 4; const a = Math.random() * 6.283, r = 3 + Math.random() * 7;
+      ai.wx = this.pos.x + Math.cos(a) * r; ai.wz = this.pos.z + Math.sin(a) * r;
+      const gh = world.heightAt(Math.floor(ai.wx), Math.floor(ai.wz)); ai.wy = gh > 1 ? gh + 2 + Math.random() * 4 : this.pos.y + (Math.random() - 0.5) * 2;
+    }
+    tx = ai.wx; ty = ai.wy; tz = ai.wz;
+    this.yaw += clamp(((Math.atan2(tx - this.pos.x, tz - this.pos.z) - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI, -3 * dt, 3 * dt);
+  }
+  const ex = tx - this.pos.x, ey = ty - this.pos.y, ez = tz - this.pos.z, d = Math.hypot(ex, ey, ez) || 1, k = Math.min(1, dt * 2.5), sp = d < 0.4 ? 0 : speed;
+  this.vel.x += (ex / d * sp - this.vel.x) * k; this.vel.y += (ey / d * sp - this.vel.y) * k; this.vel.z += (ez / d * sp - this.vel.z) * k;
+  moveBody(this, this.vel.x * dt, this.vel.y * dt, this.vel.z * dt, false);
+  this.onGround = false; this.walk += dt * 4;
+  if (this.pos.y < -20) this.dead = true;
+  this.soundT -= dt; if (this.soundT <= 0) { this.soundT = 8 + Math.random() * 14; if (dist < 20) sfx.play(s.sound, { pos: this.pos, pitch: 1.4 }); }
+  this.syncMesh(dt, hunt ? Math.atan2(dx, dz) : null);
+  this.mesh.position.y += Math.sin(performance.now() / 400 + this.id) * 0.12;
+};
+
+// ---------- Jefes ----------
+function emberLordModel(mat) {
+  const root = new THREE.Group(), S1 = rgb(58, 44, 46), S2 = rgb(38, 28, 30), M = rgb(255, 130, 30), EYE = rgb(255, 240, 140), HN = rgb(226, 214, 190);
+  const st = (f) => (f === 2 ? S1 : S2);
+  const legs = [part(root, mat, -5, 16, 0, [[7, 16, 7, 0, -8, 0, st], [7.4, 2, 7.4, 0, -6, 0, M]]), part(root, mat, 5, 16, 0, [[7, 16, 7, 0, -8, 0, st], [7.4, 2, 7.4, 0, -11, 0, M]])];
+  const body = part(root, mat, 0, 25, 0, [[20, 18, 11, 0, 0, 0, st], [3, 14, 11.4, -3, 0, 0, M], [9, 2.4, 11.4, 2, 3, 0, M], [6, 2, 11.4, 5, -4, 0, M], [8, 8, 1, 0, 1, 5.8, rgb(255, 200, 80)]]);
+  const head = part(root, mat, 0, 34, 0, [[10, 10, 10, 0, 5, 0, st], [2.6, 1.8, 0.4, -2.4, 5.6, 5.1, EYE], [2.6, 1.8, 0.4, 2.4, 5.6, 5.1, EYE], [6, 1.4, 0.4, 0, 2, 5.1, M],
+    [2.4, 6, 2.4, -6, 10, 0, HN], [2.4, 6, 2.4, 6, 10, 0, HN], [2, 3, 2, -6.4, 14, 0, HN], [2, 3, 2, 6.4, 14, 0, HN]]);
+  const arm = (sx) => part(root, mat, sx * 13.5, 32, 0, [[7, 24, 7, 0, -11, 0, st], [7.4, 2.4, 7.4, 0, -8, 0, M], [8, 7, 8, 0, -22, 0, sx < 0 ? M : S1]]);
+  root.scale.setScalar(1.2);
+  return { root, body, head, legs, arms: [arm(-1), arm(1)], humanoid: true, boss: true };
+}
+function voidHeraldModel(mat) {
+  const root = new THREE.Group(), R1 = rgb(60, 40, 120), R2 = rgb(34, 22, 74), G = rgb(110, 250, 236), MK = rgb(232, 228, 246), K = rgb(10, 6, 24);
+  const body = part(root, mat, 0, 24, 0, [[12, 16, 7, 0, 0, 0, (f) => (f === 2 ? R1 : R2)], [15, 4, 9, 0, 7, 0, R2], [10, 8, 6, 0, -11, 0, R2], [7, 7, 5, 0, -18, 0, R1], [4, 6, 3, 0, -24, 0, R2], [5, 5, 1, 0, 1, 3.8, G]]);
+  const head = part(root, mat, 0, 34, 0, [[9, 10, 9, 0, 5, 0, R2], [7, 8, 0.6, 0, 5, 4.7, MK], [1.8, 1.2, 0.4, -1.8, 6.4, 5.1, K], [1.8, 1.2, 0.4, 1.8, 6.4, 5.1, K], [11, 3, 11, 0, 11, 0, R1], [3, 5, 3, 0, 14.5, 0, G]]);
+  const arm = (sx) => part(root, mat, sx * 12, 30, 0, [[4, 4, 4, 0, 0, 0, R1], [5, 6, 5, sx * 3, -7, 3, MK], [1.4, 3, 1.4, sx * 3, -11, 4.5, G]]);
+  const orbs = [];
+  for (let i = 0; i < 6; i++) orbs.push(part(root, mat, 0, 22, 0, [[3, 5, 3, 22, 0, 0, i % 2 ? G : rgb(170, 110, 250)]]));
+  orbs.forEach((o, i) => (o.rotation.y = i / 6 * Math.PI * 2));
+  root.scale.setScalar(1.15);
+  return { root, body, head, legs: [], arms: [arm(-1), arm(1)], orbs, boss: true };
+}
+Object.assign(MOBS, {
+  emberlord: { name: 'Señor de las brasas', hp: 360, w: 1.6, h: 3.4, speed: 2.2, xp: 300, sound: 'golem', hostile: true, boss: true, fireproof: true,
+    sub: 'Amo de la fortaleza abandonada', drops: [[I.EMBER_CORE, 1, 1], [I.INFERNITE, 4, 7], [I.EMBER, 6, 10], [I.GOLD_INGOT, 6, 12], [I.DIAMOND, 3, 6]], model: emberLordModel },
+  voidherald: { name: 'Heraldo del vacío', hp: 440, w: 1.6, h: 3, speed: 6, xp: 400, sound: 'guardian', hostile: true, boss: true,
+    sub: 'La voz de lo que hay entre los mundos', drops: [[I.VOID_HEART, 1, 1], [I.VOID_BLADE, 1, 1], [I.VOIDITE, 5, 9], [I.DIAMOND, 5, 9], [I.RECALL_PEARL, 2, 4]], model: voidHeraldModel },
+});
+class EmberLord extends Boss {
+  phaseName() { const f = this.hp / this.spec.hp; return f > 0.66 ? 'Fase 1 · Puños de ceniza' : f > 0.33 ? 'Fase 2 · Erupción' : 'Fase 3 · Tormenta de brasas'; }
+  summon(type, n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, m = game.entities.spawnMob(type, this.arena.x + Math.cos(a) * 7, this.arena.y + (MOBS[type].ai ? 3 : 0.2), this.arena.z + Math.sin(a) * 7); m.persistent = true; } }
+  aiDragon(dt, g, p) {
+    const d = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z), m = this.model, ph = this.phase, cd = this.cd;
+    let move = 0;
+    if (this.state === 'idle' || this.state === 'chase') {
+      this.state = 'chase'; this.face(p, 4, dt);
+      if (d > 2.8) move = [0, 2.2, 2.8, 3.6][ph];
+      if (ph >= 2 && !this.summoned.a) { this.summoned.a = 1; this.summon('imp', 2); }
+      if (ph === 3 && !this.summoned.b) { this.summoned.b = 1; this.summon('scorched', 2); }
+      if (d < 3.6 && (cd.melee ?? 0) <= 0) { this.state = 'swing'; this.st = 0.5; }
+      else if (d > 5 && (cd.volley ?? 2) <= 0) { this.state = 'volley'; this.st = 0.8; this.telegraph = 1; sfx.play('laserCharge', { pos: this.pos, pitch: 0.6 }); }
+      else if (ph >= 2 && (cd.erupt ?? 3) <= 0) {
+        this.state = 'erupt'; this.st = 1.4; this.pillars = [[p.pos.x, p.pos.z]];
+        for (let i = 0; i < (ph === 3 ? 5 : 3); i++) { const a = Math.random() * 6.283, r = 2.5 + Math.random() * 5; this.pillars.push([p.pos.x + Math.cos(a) * r, p.pos.z + Math.sin(a) * r]); }
+        sfx.play('roar', { pos: this.pos, pitch: 0.7 });
+      }
+    } else if (this.state === 'swing') {
+      this.st -= dt; this.face(p, 6, dt); m.arms[0].rotation.x = -2.7 * (1 - this.st / 0.5);
+      if (this.st <= 0) {
+        if (d < 4.2 && Math.abs(p.pos.y - this.pos.y) < 3) { p.damage(8, 'Te aplastó el Señor de las brasas', this.pos); p.vel.y = 6; }
+        sfx.play('slam', { pos: this.pos }); g.shake = Math.max(g.shake, 0.25); this.state = 'chase'; cd.melee = 1.4;
+      }
+    } else if (this.state === 'volley') {
+      this.st -= dt; this.face(p, 6, dt); m.arms[0].rotation.x = m.arms[1].rotation.x = -1.6;
+      if (this.st <= 0) {
+        const n = ph + 2;
+        for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 1.6, px = Math.cos(this.yaw) * o, pz = -Math.sin(this.yaw) * o; shootBolt(this, 'fire', p.pos.x + p.vel.x * 0.4 + px, p.pos.y + 0.9, p.pos.z + p.vel.z * 0.4 + pz, 13, { dmg: 6, radius: 2.6, msg: 'Te calcinó el Señor de las brasas' }); }
+        sfx.play('fireball', { pos: this.pos }); this.telegraph = 0; this.state = 'chase'; cd.volley = [0, 5, 4, 2.8][ph];
+      }
+    } else if (this.state === 'erupt') {
+      this.st -= dt; m.arms[0].rotation.x = m.arms[1].rotation.x = -3;
+      for (const [x, z] of this.pillars) if (Math.random() < dt * 30) { const a = Math.random() * 6.283; g.particles.emit(x + Math.cos(a) * 1.8, p.pos.y + 0.1, z + Math.sin(a) * 1.8, [1, 0.45, 0.1], 1, { gravity: 0, up: 0.6, speed: 0, life: 0.5, size: 0.16 }); }
+      if (this.st <= 0) {
+        for (const [x, z] of this.pillars) {
+          if (Math.hypot(p.pos.x - x, p.pos.z - z) < 2.1) { p.damage(9, 'Te alcanzó una erupción del Señor de las brasas', null); p.vel.y = 10; }
+          for (let k = 0; k < 14; k++) g.particles.emit(x + (Math.random() - 0.5) * 2, p.pos.y + Math.random() * 3, z + (Math.random() - 0.5) * 2, [1, 0.5 + Math.random() * 0.3, 0.1], 1, { speed: 2, up: 9, life: 0.8, size: 0.2 });
+        }
+        sfx.play('explode', { pos: this.pos }); g.shake = Math.max(g.shake, 0.4); this.state = 'chase'; cd.erupt = ph === 3 ? 4.5 : 7;
+      }
+    }
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), k = Math.min(1, 8 * dt);
+    this.vel.x += (fx * move - this.vel.x) * k; this.vel.z += (fz * move - this.vel.z) * k;
+    if (this.hitH && this.onGround && move) this.vel.y = JUMP_SPEED;
+    this.physics(dt);
+    if (this.state === 'chase') { m.arms[0].rotation.x *= 0.9; m.arms[1].rotation.x *= 0.9; }
+    this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 2.5;
+  }
+  syncBoss(dt, p) {
+    super.syncBoss(dt, p);
+    const m = this.model, sw = Math.sin(this.walk) * 0.5 * Math.min(1, Math.hypot(this.vel.x, this.vel.z));
+    m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw;
+    if (this.phase === 3) { this.mat.color.r += 0.35; this.mat.color.g += 0.1; }
+    if (Math.random() < dt * (4 + this.phase * 4)) game.particles.emit(this.pos.x + (Math.random() - 0.5) * 1.6, this.pos.y + Math.random() * this.h, this.pos.z + (Math.random() - 0.5) * 1.6, [1, 0.5, 0.1], 1, { gravity: -2, up: 1.5, life: 0.6, size: 0.1 });
+  }
+}
+class VoidHerald extends Boss {
+  constructor(type, arena) { super(type, arena); this.pos.y += 4; this.orbit = Math.random() * 6.283; this.burst = 0; }
+  phaseName() { const f = this.hp / this.spec.hp; return f > 0.66 ? 'Fase 1 · Lluvia de esquirlas' : f > 0.33 ? 'Fase 2 · Paso entre mundos' : 'Fase 3 · Colapso'; }
+  blink(g, x, y, z) {
+    for (let k = 0; k < 20; k++) g.particles.emit(this.pos.x + (Math.random() - 0.5) * 2, this.pos.y + Math.random() * this.h, this.pos.z + (Math.random() - 0.5) * 2, [0.6, 0.4, 1], 1, { gravity: 0, up: 0, speed: 3, life: 0.5, size: 0.14 });
+    this.pos.set(x, y, z); this.vel.set(0, 0, 0); sfx.play('laser', { pos: this.pos, pitch: 0.7 });
+    for (let k = 0; k < 20; k++) g.particles.emit(x + (Math.random() - 0.5) * 2, y + Math.random() * this.h, z + (Math.random() - 0.5) * 2, [0.45, 0.95, 0.9], 1, { gravity: 0, up: 0, speed: 3, life: 0.5, size: 0.14 });
+  }
+  summon(n) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, m = game.entities.spawnMob('wraith', this.arena.x + Math.cos(a) * 8, this.arena.y + 3, this.arena.z + Math.sin(a) * 8); m.persistent = true; } }
+  aiDragon(dt, g, p) {
+    const A = this.arena, ph = this.phase, cd = this.cd, dx = p.pos.x - this.pos.x, dz = p.pos.z - this.pos.z, d = Math.hypot(dx, dz);
+    this.face(p, 5, dt); this.state = 'fight';
+    const aim = () => [p.pos.x + p.vel.x * 0.35, p.pos.y + 0.9, p.pos.z + p.vel.z * 0.35];
+    const bolt = (tx, ty, tz, sp = 13) => shootBolt(this, 'void', tx, ty, tz, sp, { dmg: 5, radius: 2.2, msg: 'Te desintegró el Heraldo del vacío' });
+    // ráfagas de esquirlas (todas las fases, cada vez más largas)
+    if (this.burst > 0) { if ((cd.shot ?? 0) <= 0) { cd.shot = 0.22; this.burst--; bolt(...aim()); sfx.play('laserCharge', { pos: this.pos, pitch: 1.8 }); } }
+    else if ((cd.burst ?? 2) <= 0) { cd.burst = [0, 2.8, 3.4, 2.6][ph]; this.burst = [0, 3, 3, 5][ph]; }
+    let tx, ty, tz, speed = this.spec.speed;
+    if (ph === 1) {
+      this.orbit += dt * 0.5; tx = A.x + Math.cos(this.orbit) * 7; tz = A.z + Math.sin(this.orbit) * 7; ty = A.y + 4 + Math.sin(this.orbit * 2) * 1.2;
+    } else if (ph === 2) {
+      if (!this.summoned.a) { this.summoned.a = 1; this.summon(2); }
+      if ((cd.blink ?? 1) <= 0) {
+        cd.blink = 5; const a = Math.random() * 6.283, r = 4 + Math.random() * 6;
+        this.blink(g, A.x + Math.cos(a) * r, A.y + 3 + Math.random() * 2, A.z + Math.sin(a) * r);
+        for (let i = 0; i < 8; i++) { const b = i / 8 * 6.283; bolt(this.pos.x + Math.cos(b) * 10, p.pos.y + 0.9, this.pos.z + Math.sin(b) * 10, 9); }   // anillo
+      }
+      tx = this.pos.x; tz = this.pos.z; ty = A.y + 3.5 + Math.sin(performance.now() / 600) * 0.8; speed = 2;
+    } else {
+      if (!this.summoned.b) { this.summoned.b = 1; this.summon(3); hud.toast('El Vacío tira de ti…', 2500); }
+      tx = A.x; tz = A.z; ty = A.y + 2.6; speed = 4;
+      // pozo de gravedad: arrastra al jugador hacia el Heraldo
+      if (d > 2.5 && d < 16 && !p.flying) { const k = 7.5 * dt / d; p.vel.x -= dx * k; p.vel.z -= dz * k; }
+      if (this.state2 === 'nova') {
+        this.st -= dt; this.telegraph = 1;
+        if (Math.random() < dt * 60) { const a = Math.random() * 6.283; g.particles.emit(this.pos.x + Math.cos(a) * 5.5, A.y + 0.2, this.pos.z + Math.sin(a) * 5.5, [0.7, 0.4, 1], 1, { gravity: 0, up: 0.6, speed: 0, life: 0.5, size: 0.16 }); }
+        if (this.st <= 0) {
+          this.state2 = null; this.telegraph = 0; cd.nova = 6.5;
+          if (Math.hypot(p.pos.x - this.pos.x, p.pos.y - this.pos.y + 2, p.pos.z - this.pos.z) < 6) { p.damage(10, 'Te consumió el colapso del Heraldo del vacío', null); const l = d || 1; p.vel.x = -dx / l * -9; p.vel.z = -dz / l * -9; p.vel.y = 6; }
+          for (let k = 0; k < 50; k++) { const a = k / 50 * 6.283; g.particles.emit(this.pos.x + Math.cos(a) * 2, A.y + 0.4, this.pos.z + Math.sin(a) * 2, [0.45, 0.95, 0.9], 1, { speed: 8, up: 1, life: 0.6, size: 0.18 }); }
+          sfx.play('explode', { pos: this.pos, pitch: 0.6 }); g.shake = Math.max(g.shake, 0.5);
+        }
+      } else if ((cd.nova ?? 3) <= 0) { this.state2 = 'nova'; this.st = 1.5; sfx.play('roar', { pos: this.pos, pitch: 1.5 }); }
+    }
+    this.flyTo(tx, ty, tz, speed, dt, false);
+  }
+  syncBoss(dt, p) {
+    super.syncBoss(dt, p);
+    const m = this.model, t = performance.now() / 1000, sp = 0.8 + this.phase * 0.7;
+    m.orbs.forEach((o, i) => { o.rotation.y = t * sp + i / 6 * Math.PI * 2; o.position.y = (22 + Math.sin(t * 2 + i) * 4) * P16; });
+    m.arms.forEach((a, i) => { a.rotation.x = -0.5 + Math.sin(t * 1.6 + i * 2) * 0.25 - (this.burst > 0 ? 0.7 : 0); });
+    m.body.rotation.z = Math.sin(t * 1.2) * 0.05;
+    this.mesh.position.y += Math.sin(t * 1.7) * 0.15;
+    if (this.phase === 3) { this.mat.color.b += 0.3; this.mat.color.r += 0.15; }
+  }
+}
+const BOSS_CLASSES = { emberlord: EmberLord, voidherald: VoidHerald };
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -8446,7 +9070,7 @@ const game = {
       }
       p.walkDist += dist; p.distAcc = (p.distAcc || 0) + dist;
     }
-    if (c.cactus && this.mode === 'survival') { p.cactusT -= dt; if (p.cactusT <= 0) { p.cactusT = 0.5; p.damage(c.cactus, 'Te hiciste daño con un cactus o una hoguera', null, 'contact'); } }
+    if (c.cactus && this.mode === 'survival') { p.cactusT -= dt; if (p.cactusT <= 0) { p.cactusT = 0.5; p.damage(c.cactus, c.cactus >= 4 ? 'Intentaste nadar en lava' : 'Te hiciste daño con un cactus o una hoguera', null, 'contact'); } }
     if (p.pos.y < -25) { if (this.mode === 'survival') p.damage(4, 'Caíste al vacío', null, 'void'); else { p.pos.y = WY; p.vel.y = 0; } }
     p.survivalTick(dt);
     // Cámara
@@ -8776,7 +9400,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -8787,7 +9411,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.4  ${fps} FPS\nXYZ: ${p.pos.x.toFixed(1)} / ${p.pos.y.toFixed(1)} / ${p.pos.z.toFixed(1)}\nBioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -8812,7 +9436,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -11654,10 +12278,10 @@ const COMMANDS = [
     p.discover(id); hud.update(); say(`Recibiste ${n} × ${itemName(id)}`);
   } },
   { n: 'tp', a: ['teletransportar', 'ir'], use: '/tp <x> <y> <z>', d: 'Te teletransporta a unas coordenadas (~ = posición actual).', run: (args) => {
-    const p = game.player, cur = [p.pos.x, p.pos.y, p.pos.z];
-    const v = args.slice(0, 3).map((a, i) => (a?.startsWith('~') ? cur[i] + (parseFloat(a.slice(1)) || 0) : parseFloat(a)));
+    const p = game.player, cur = [p.pos.x, p.pos.y, p.pos.z], org = dimOrigin(dimOf(p.pos.x, p.pos.z)), off = [org[0], 0, org[1]];      // las coordenadas son las de la dimensión actual
+    const v = args.slice(0, 3).map((a, i) => (a?.startsWith('~') ? cur[i] + (parseFloat(a.slice(1)) || 0) : parseFloat(a) + off[i]));
     if (v.length < 3 || !v.every(Number.isFinite)) return say('Uso: /tp <x> <y> <z>');
-    p.pos.set(v[0], clamp(v[1], 1, WY + 20), v[2]); p.vel.set(0, 0, 0); p.fallStart = null; say(`Teletransportado a ${v.map((n) => Math.round(n)).join(' ')}`);
+    p.pos.set(v[0], clamp(v[1], 1, WY + 20), v[2]); p.vel.set(0, 0, 0); p.fallStart = null; say(`Teletransportado a ${v.map((n, i) => Math.round(n - off[i])).join(' ')}`);
   } },
   { n: 'curar', a: ['heal', 'sanar'], use: '/curar', d: 'Recupera toda la vida y el hambre.', run: () => { const p = game.player; p.health = 20; p.hunger = 20; p.sat = 10; p.air = MAX_AIR; hud.update(true); say('Vida y hambre al máximo'); } },
   { n: 'matar', a: ['kill', 'limpiar'], use: '/matar', d: 'Elimina los monstruos en 64 bloques a la redonda.', run: () => {
@@ -11665,7 +12289,7 @@ const COMMANDS = [
     say(`Monstruos eliminados: ${n}`);
   } },
   { n: 'semilla', a: ['seed'], use: '/semilla', d: 'Muestra la semilla del mundo.', run: () => say(`Semilla: ${world.seed}`) },
-  { n: 'pos', a: ['coordenadas', 'donde'], use: '/pos', d: 'Muestra tus coordenadas.', run: () => { const p = game.player.pos; say(`Estás en ${Math.floor(p.x)} ${Math.floor(p.y)} ${Math.floor(p.z)}`); } },
+  { n: 'pos', a: ['coordenadas', 'donde'], use: '/pos', d: 'Muestra tus coordenadas.', run: () => { const p = game.player.pos, [lx, lz] = localXZ(p.x, p.z); say(`Estás en ${Math.floor(lx)} ${Math.floor(p.y)} ${Math.floor(lz)} (${DIM_NAMES[dimOf(p.x, p.z)]})`); } },
 ];
 function findCommand(word) {
   const w = norm(word); if (!w) return null;
@@ -11711,6 +12335,29 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '3.5', name: 'Dimensiones', date: 'noviembre de 2026', items: [
+    'Dos dimensiones nuevas con generación, cielo, niebla, luz, sonidos y música propios: el Inframundo y el Vacío.',
+    'Portal al Inframundo: construye un marco cerrado de obsidiana (hueco de 2×3 o mayor) y enciéndelo con el Encendedor (lingote de hierro + pedernal).',
+    'Portal al Vacío: marco de bloques de cristal activado con el Ojo del vacío, que se forja con ascuas y el Corazón de brasas del jefe del Inframundo.',
+    'Los portales llevan al mismo punto de la otra dimensión y, si allí no hay portal, construyen uno. Tu posición, inventario y progreso viajan contigo; romper el marco apaga el portal.',
+    'Inframundo: terreno volcánico de roca infernal, basalto y ceniza con agujas de piedra, mares y lagos de lava, y cuevas con lava en el fondo.',
+    'Lava: bloque nuevo que ilumina, frena y quema a quien cae dentro.',
+    'Bosques carmesíes: nilio carmesí, hongos gigantes de tallo y verruga carmesí con luces, y hongos pequeños.',
+    'Minerales del Inframundo: mena de infernita (exclusiva, pico de diamante), oro, piedra luminosa y magma.',
+    'Fortalezas abandonadas: plaza amurallada de ladrillos infernales con torres-faro, puente y torreón con cofres y un generador de calcinados.',
+    'Criaturas del Inframundo: calcinado (cuerpo a cuerpo), diablillo ígneo (vuela y lanza bolas de fuego) y cubo de magma (salta). Son inmunes a la lava.',
+    'Jefe del Inframundo: Señor de las brasas, con 3 fases: puños de ceniza, erupciones marcadas en el suelo y tormenta de bolas de fuego, además de refuerzos.',
+    'Vacío: islas flotantes de piedra y musgo del vacío sobre la nada, con árboles encantados; caer al vacío es mortal.',
+    'Campos de cristal: agujas de bloques de cristal y cristales del vacío que sueltan esquirlas. Mena de vacuita, exclusiva del Vacío.',
+    'Ruinas suspendidas: plataformas flotantes con cofre. Fortalezas dimensionales: gran plataforma amurallada con obeliscos de cristal, cuatro muelles y tres cofres.',
+    'Criaturas del Vacío: espectro (vuela y muerde), vigía (ojo flotante que dispara) y errante (alto, se teletransporta junto a ti).',
+    'Jefe del Vacío: Heraldo del vacío, con 3 fases: lluvia de esquirlas, teletransportes con anillos de proyectiles y un colapso que te arrastra hacia él.',
+    'Objetos nuevos: espada de infernita (prende fuego), pico de infernita (el más rápido), Hoja del vacío (habilidad: teletransporte de 10 bloques), perla de retorno (vuelve a tu punto de reaparición desde cualquier dimensión), ascuas (gran combustible), Corazón del vacío.',
+    'Bloques nuevos para construir: ladrillos infernales, ladrillos del vacío, roca infernal, piedra del vacío, tallo y verruga carmesí.',
+    'Comando /dimension <mundo|inframundo|vacio>; /pos y la pantalla de depuración muestran la dimensión y sus coordenadas. Huevos de las 6 criaturas nuevas en creativo.',
+    'Todo se guarda en el mismo mundo y funciona en multijugador: los bloques y portales de cada dimensión se sincronizan entre jugadores.',
+    'Logros: «Descenso», «Entre los mundos», «Brasas apagadas» y «Silencio en el Vacío».',
+  ] },
   { v: '3.4', name: 'Construcción y mecanismos', date: 'noviembre de 2026', items: [
     'Escalones nuevos: selva, acacia, cerezo, piedra lisa, mármol y terracota. Losas nuevas: selva, acacia, cerezo, mármol y terracota.',
     'Techos: tejas rojas y tejas de pizarra, en bloque, escalón (para tejados a dos aguas) y losa.',
@@ -11802,7 +12449,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [
-  { v: '3.5', name: 'Dimensiones', items: ['Inframundo: terreno volcánico, lagos de lava, bosques carmesíes, fortalezas, minerales exclusivos y un jefe final.', 'Vacío: islas flotantes, ruinas suspendidas, cristales mágicos, criaturas voladoras y un jefe con varias fases.', 'Portales que conservan tu posición, inventario y progreso.'] },
   { v: '3.6', name: 'Multijugador', items: ['Salas con código de invitación y límite de jugadores elegido por el anfitrión.', 'Permisos de construcción, reconexión y gestión del anfitrión.'] },
   { v: '4.0', name: 'Gran actualización', items: ['Eventos dinámicos: lluvia de meteoritos, invasiones nocturnas, tormentas eléctricas y fenómenos mágicos.', 'Catálogo de objetos, panel de criaturas y registro de exploración.', 'Música por bioma y por dimensión.', 'Guardado en IndexedDB, optimización y pulido general.'] },
 ];
@@ -12471,6 +13117,304 @@ const build34 = {
   },
 };
 ACHIEVEMENTS.push(['engineer', 'Ingeniería', 'Abre una puerta o mueve un pistón con un circuito.'], ['elevator', 'Sube y baja', 'Usa un elevador.']);
+/* ==========================================================================
+   §35 PORTALES Y VIAJE ENTRE DIMENSIONES (3.5)
+   --------------------------------------------------------------------------
+   · Portal al Inframundo: marco cerrado de obsidiana (hueco de 2×3 o mayor)
+     encendido con el Encendedor.
+   · Portal al Vacío: marco de bloques de cristal activado con el Ojo del vacío.
+   · Al cruzar se llega al mismo punto de la otra dimensión; si allí no hay
+     portal, se construye uno. La posición, el inventario y el progreso viajan
+     con el jugador (es el mismo mundo guardado).
+   · Ambiente: cielo, niebla, luz, sonidos y música propios de cada dimensión.
+   ========================================================================== */
+Object.assign(POI_ICON, { nfort: '🏰', vruins: '🏛', vfort: '🌌' });
+Object.assign(BOSS_PHASES, { emberlord: [0.66, 0.33], voidherald: [0.66, 0.33] });
+ACHIEVEMENTS.push(['dim_nether', 'Descenso', 'Cruza un portal al Inframundo.'], ['dim_void', 'Entre los mundos', 'Cruza un portal al Vacío.'],
+  ['boss_emberlord', 'Brasas apagadas', 'Derrota al Señor de las brasas.'], ['boss_voidherald', 'Silencio en el Vacío', 'Derrota al Heraldo del vacío.']);
+
+// Jefes con clase propia
+game.summonBoss = function (type, arena) {
+  const boss = new (BOSS_CLASSES[type] || Boss)(type, arena); this.entities.add(boss); this.boss = boss;
+  if (net.active) net.send({ type: 'bstart', plan: arena.planId, k: type });
+  const intro = $('#bossIntro'); intro.querySelector('b').textContent = boss.spec.name; intro.querySelector('span').textContent = boss.spec.sub;
+  intro.classList.remove('show'); void intro.offsetWidth; intro.classList.add('show');
+  setTimeout(() => intro.classList.remove('show'), 3500);
+  sfx.play('bossIntro');
+};
+
+// ---------- Portales ----------
+const PORTAL_FRAME = [OBSIDIAN, CRYSTAL_BLOCK];
+function lightPortal(t, kind) {
+  const frame = PORTAL_FRAME[kind], sx = t.x + t.normal[0], sy = t.y + t.normal[1], sz = t.z + t.normal[2];
+  for (const axis of [0, 1]) {
+    const cells = [], seen = new Set(), stack = [[sx, sy, sz]]; let ok = true;
+    while (stack.length) {
+      const [x, y, z] = stack.pop(), k = `${x},${y},${z}`; if (seen.has(k)) continue; seen.add(k);
+      const id = world.get(x, y, z);
+      if (id === frame) continue;
+      if (id !== AIR || y < 1 || y >= WY - 1) { ok = false; break; }
+      cells.push([x, y, z]); if (cells.length > 42) { ok = false; break; }
+      stack.push([x, y + 1, z], [x, y - 1, z], axis ? [x, y, z + 1] : [x + 1, y, z], axis ? [x, y, z - 1] : [x - 1, y, z]);
+    }
+    if (ok && cells.length >= 6) { for (const [x, y, z] of cells) world.set(x, y, z, PORTAL, kind | (axis << 1)); return true; }
+  }
+  return false;
+}
+function closePortalsAround(x, y, z) {
+  const stack = DIR6.map(([dx, dy, dz]) => [x + dx, y + dy, z + dz]); let n = 0;
+  while (stack.length && n < 80) {
+    const [a, b, c] = stack.pop(); if (world.get(a, b, c) !== PORTAL) continue;
+    world.set(a, b, c, AIR, 0); n++;
+    for (const [dx, dy, dz] of DIR6) stack.push([a + dx, b + dy, c + dz]);
+  }
+  if (n) sfx.play('break', { mat: 'glass', pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+}
+function findPortal(tx, tz, kind) {
+  let best = null;
+  for (let x = tx - 12; x <= tx + 12; x++) for (let z = tz - 12; z <= tz + 12; z++) for (let y = 1; y < WY - 1; y++) {
+    if (world.get(x, y, z) !== PORTAL || (world.getMeta(x, y, z) & 1) !== kind || world.get(x, y - 1, z) === PORTAL) continue;
+    const d = (x - tx) ** 2 + (z - tz) ** 2; if (!best || d < best[3]) best = [x, y, z, d];
+  }
+  return best;
+}
+function buildPortal(tx, tz, kind, dim) {
+  const topSolid = (x, z) => { let y = WY - 8; while (y > 1 && !B_SOLID[world.get(x, y, z)]) y--; return y; };
+  const good = (x, z) => {
+    const y = topSolid(x, z); if (y < 4 || y > WY - 12) return null;
+    const id = world.get(x, y, z), up = world.get(x, y + 1, z);
+    if (BLOCKS[id].leaves || id === CRIMSON_WART || up === WATER || up === LAVA) return null;
+    return y;
+  };
+  let bx = tx, bz = tz, by = null;
+  search: for (let r = 0; r <= 10; r++) for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+    if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+    const y = good(tx + dx, tz + dz); if (y != null) { bx = tx + dx; bz = tz + dz; by = y; break search; }
+  }
+  const floor = [STONE_BRICKS, NETHER_BRICKS, VOID_BRICKS][dim], frame = PORTAL_FRAME[kind];
+  if (by == null) { let y = WY - 8; while (y > 1 && !world.get(tx, y, tz)) y--; by = dim === 2 && y <= 1 ? 60 : Math.max(y + 2, SEA + 2); }
+  for (let dx = -2; dx <= 3; dx++) for (let dz = -2; dz <= 2; dz++) {
+    if (!B_SOLID[world.get(bx + dx, by, bz + dz)]) world.set(bx + dx, by, bz + dz, floor, 0);
+    for (let dy = 1; dy <= 5; dy++) { const id = world.get(bx + dx, by + dy, bz + dz); if (id && id !== PORTAL) world.set(bx + dx, by + dy, bz + dz, AIR, 0); }
+  }
+  for (let dx = -1; dx <= 2; dx++) for (let dy = 0; dy <= 4; dy++) {
+    const edge = dx === -1 || dx === 2 || dy === 0 || dy === 4;
+    world.set(bx + dx, by + dy, bz, edge ? frame : PORTAL, edge ? 0 : kind);
+  }
+  return [bx, by + 1, bz];
+}
+
+const dims = {
+  portalT: 0, arrived: false, busy: false, cur: 0, ambT: 5, musT: 0, step: 0, blinkT: 0,
+  fx: null,
+  dim() { const p = game.player; return p ? dimOf(p.pos.x, p.pos.z) : 0; },
+  // Carga el terreno alrededor de (x, z) con la pantalla del portal y luego ejecuta place()
+  async warp(x, z, kind, place) {
+    if (this.busy) return; this.busy = true;
+    const p = game.player, w0 = world, fx = this.fx;
+    game.releaseInputs(); game.state = 'loading';
+    fx.className = 'travel' + (kind ? ' void' : ''); fx.style.opacity = 1; fx.textContent = 'Cruzando el portal…';
+    p.pos.set(x + 0.5, WY + 6, z + 0.5); p.vel.set(0, 0, 0); p.fallStart = null;
+    await new Promise((resolve) => {
+      const step = () => {
+        if (world !== w0) return resolve();
+        const saved = settings.renderDistance; settings.renderDistance = Math.min(saved, 3);
+        const ready = game.chunks.update(p.pos.x, p.pos.z, 24);
+        settings.renderDistance = saved; game.chunks.order = null;
+        if (ready >= 1) resolve(); else requestAnimationFrame(step);
+      };
+      step();
+    });
+    this.busy = false;
+    if (world !== w0 || game.state !== 'loading') { fx.className = ''; fx.style.opacity = 0; fx.textContent = ''; return; }
+    place();
+    p.vel.set(0, 0, 0); p.fallStart = null; p.invuln = Math.max(p.invuln, 1.5);
+    this.arrived = true; this.portalT = 0;
+    game.state = 'playing'; fx.className = ''; fx.textContent = ''; fx.style.opacity = 0;
+    hud.update(true);
+  },
+  // Viaja a una dimensión por un portal del tipo dado (0 Inframundo, 1 Vacío)
+  travel(target, kind) {
+    const p = game.player, [lx, lz] = localXZ(p.pos.x, p.pos.z), o = dimOrigin(target);
+    const tx = Math.floor(clamp(lx, -20000, 20000)) + o[0], tz = Math.floor(clamp(lz, -20000, 20000)) + o[1];
+    sfx.play('bossIntro');
+    return this.warp(tx, tz, kind, () => {
+      const f = findPortal(tx, tz, kind), s = f || buildPortal(tx, tz, kind, target);
+      const zAxis = f && (world.getMeta(f[0], f[1], f[2]) & 2);
+      p.pos.set(s[0] + (zAxis ? 0.5 : f ? 0.5 : 1), s[1] + 0.02, s[2] + 0.5);
+      if (target === 1) game.unlock('dim_nether'); else if (target === 2) game.unlock('dim_void');
+      notify(target ? '🌀 Has entrado en' : '🌍 Has vuelto al', target ? `${target === 1 ? 'el' : 'el'} ${DIM_NAMES[target]}` : 'Mundo', 'poi');
+      saveGame(true);
+    });
+  },
+  recall() {
+    const p = game.player, sp = p.spawn; if (!sp) return false;
+    return this.warp(Math.floor(sp[0]), Math.floor(sp[2]), 1, () => { p.pos.set(sp[0], sp[1] + 0.2, sp[2]); sfx.play('levelup'); hud.toast('Has vuelto a tu punto de reaparición'); }), true;
+  },
+  update(dt) {
+    if (!world || !game.player || !this.fx) return;
+    if (game.state !== 'playing') { if (!this.busy && this.portalT) { this.portalT = 0; this.fx.style.opacity = 0; } return; }
+    const p = game.player, x = Math.floor(p.pos.x), z = Math.floor(p.pos.z), y = Math.floor(p.pos.y + 0.1);
+    const d = dimOf(p.pos.x, p.pos.z);
+    if (d !== this.cur) { this.cur = d; document.body.dataset.dim = d; }
+    // Borde de cada dimensión: a 20 000 bloques del centro empieza la siguiente, así que no se puede cruzar caminando
+    const lim = DIM_EDGE - 1000, [bx0, bz0] = [p.pos.x, p.pos.z];
+    if (d === 0) { p.pos.x = Math.min(p.pos.x, lim); p.pos.z = Math.min(p.pos.z, lim); }
+    else if (d === 1) p.pos.x = Math.max(p.pos.x, DIM_EDGE + 1000);
+    else { p.pos.x = Math.min(p.pos.x, lim); p.pos.z = Math.max(p.pos.z, DIM_EDGE + 1000); }
+    if (p.pos.x !== bx0 || p.pos.z !== bz0) { p.vel.x = p.vel.z = 0; if ((this.edgeT = (this.edgeT || 0) - dt) <= 0) { this.edgeT = 3; hud.toast(`Has llegado al borde del ${DIM_NAMES[d]}`, 2000); } }
+    // --- Portal bajo los pies o a la altura de la cabeza ---
+    let kind = -1;
+    for (const yy of [y, y + 1]) if (world.get(x, yy, z) === PORTAL) { kind = world.getMeta(x, yy, z) & 1; break; }
+    if (kind < 0) { this.arrived = false; this.portalT = Math.max(0, this.portalT - dt * 2); }
+    else if (!this.arrived && !p.dead) {
+      this.portalT += dt;
+      if (Math.random() < dt * 20) game.particles.emit(p.pos.x + (Math.random() - 0.5), p.pos.y + Math.random() * 1.8, p.pos.z + (Math.random() - 0.5), kind ? [0.4, 0.95, 0.9] : [0.7, 0.35, 1], 1, { gravity: -1, up: 1, speed: 1, life: 0.6, size: 0.1 });
+      if (this.portalT >= (game.mode === 'creative' ? 0.4 : 2)) {
+        this.portalT = 0; this.fx.style.opacity = 0;
+        const target = kind ? (d === 2 ? 0 : 2) : (d === 1 ? 0 : 1);
+        this.travel(target, kind); return;
+      }
+    }
+    if (!this.busy) { this.fx.className = kind === 1 ? 'void' : ''; this.fx.style.opacity = Math.min(0.85, this.portalT / 2); }
+    // --- Errantes del vacío: se teletransportan cerca del jugador ---
+    if ((this.blinkT -= dt) <= 0) {
+      this.blinkT = 0.3;
+      if (game.mode === 'survival' && !p.dead) for (const e of game.entities.list) {
+        if (e.kind !== 'mob' || !e.spec.blinks || e.remote || e.deathT || e.dead) continue;
+        const dist = e.pos.distanceTo(p.pos);
+        if (dist < 5 || dist > 20 || (e.blinkCd = (e.blinkCd ?? 2 + Math.random() * 3) - 0.3) > 0) continue;
+        e.blinkCd = 4 + Math.random() * 4;
+        const a = Math.random() * 6.283, bx = Math.floor(p.pos.x + Math.cos(a) * 2.5), bz = Math.floor(p.pos.z + Math.sin(a) * 2.5), by = Math.floor(p.pos.y);
+        for (let yy = by + 1; yy >= by - 2; yy--) if (B_SOLID[world.get(bx, yy - 1, bz)] && !B_SOLID[world.get(bx, yy, bz)] && !B_SOLID[world.get(bx, yy + 1, bz)] && !B_SOLID[world.get(bx, yy + 2, bz)]) {
+          game.particles.emit(e.pos.x, e.pos.y + 1, e.pos.z, [0.6, 0.4, 1], 14, { gravity: 0, speed: 3, life: 0.5, size: 0.12 });
+          e.pos.set(bx + 0.5, yy + 0.05, bz + 0.5); e.vel.set(0, 0, 0);
+          game.particles.emit(e.pos.x, e.pos.y + 1, e.pos.z, [0.45, 0.95, 0.9], 14, { gravity: 0, speed: 3, life: 0.5, size: 0.12 });
+          sfx.play('laser', { pos: e.pos, pitch: 1.6 }); break;
+        }
+      }
+    }
+    if (d) this.sound(dt, d);
+  },
+  // Sonido ambiente y música de cada dimensión
+  sound(dt, d) {
+    if (!sfx.ctx || sfx.ctx.state !== 'running') return;
+    const now = sfx.ctx.currentTime, R = Math.random;
+    if ((this.ambT -= dt) <= 0) {
+      this.ambT = 4 + R() * 7;
+      const o = sfx.out({ vol: 0.5 });
+      if (o) {
+        if (d === 1) { sfx.burst(o, now, 2.6, 0.08, 'lowpass', 110, 0.8); if (R() < 0.6) for (let i = 0; i < 3; i++) sfx.burst(o, now + 0.4 + i * 0.22 + R() * 0.1, 0.12, 0.035, 'bandpass', 700 + R() * 600, 2); }   // rumor de lava y burbujas
+        else { sfx.tone(o, 'sine', 140 + R() * 40, 120, now, 3.2, 0.03, { vibrato: 2 }); if (R() < 0.6) sfx.tone(o, 'sine', 1800 + R() * 900, 1500, now + 0.8, 0.9, 0.012); }                                       // zumbido y destello lejano
+      }
+    }
+    if (!settings.music || game.boss) return;
+    if ((this.musT -= dt) > 0) return;
+    const o = sfx.out({ vol: settings.music * 0.8 }); if (!o) return;
+    const s = this.step++;
+    if (d === 1) {
+      this.musT = 2.4;
+      const sc = [0, 3, 5, 7, 10, 12], root = 55, n = (k) => root * Math.pow(2, k / 12), prog = [0, 0, 5, 3][(s >> 2) & 3];
+      sfx.tone(o, 'sawtooth', n(prog), n(prog) * 0.99, now, 2.6, 0.05, { filter: 240 });
+      if (s % 2 === 0) sfx.tone(o, 'triangle', n(prog + 12 + sc[(s * 5) % sc.length]), n(prog + 12 + sc[(s * 5) % sc.length]), now + 0.3, 1.8, 0.03, { filter: 900 });
+      if (s % 4 === 3) sfx.tone(o, 'sine', 70, 38, now + 1.2, 0.5, 0.09);
+    } else {
+      this.musT = 1.6;
+      const sc = [0, 2, 7, 9, 14, 16, 19], root = 196, n = (k) => root * Math.pow(2, k / 12), a = sc[(s * 3 + (s >> 3)) % sc.length];
+      sfx.tone(o, 'sine', n(a), n(a), now, 2.8, 0.03, { vibrato: 1.5 });
+      if (s % 4 === 0) sfx.tone(o, 'sine', n(-12), n(-12), now, 6, 0.04);
+      if (s % 3 === 1) sfx.tone(o, 'triangle', n(a + 12), n(a + 12), now + 0.8, 1.4, 0.012);
+    }
+  },
+};
+{
+  const fx = document.createElement('div'); fx.id = 'portalFx'; document.body.append(fx); dims.fx = fx;
+}
+
+// ---------- Cielo, luz y niebla de cada dimensión ----------
+{
+  const _envUpdate = Environment.prototype.update;
+  Environment.prototype.update = function (dt, cam, player, underwater) {
+    _envUpdate.call(this, dt, cam, player, underwater);
+    const d = dimOf(player.pos.x, player.pos.z);
+    this.sun.visible = this.moon.visible = !d;
+    if (!d) return;
+    const N = d === 1;
+    this.daylight = N ? 0.34 : 0.4;
+    sharedUniforms.uDay.value = this.daylight;
+    if (N) { sharedUniforms.uSkyCol.value.setRGB(1, 0.56, 0.42); this.top.setRGB(0.09, 0.012, 0.008); this.horizon.setRGB(0.4, 0.085, 0.035); }
+    else { sharedUniforms.uSkyCol.value.setRGB(0.74, 0.66, 1); this.top.setRGB(0.008, 0.006, 0.03); this.horizon.setRGB(0.15, 0.07, 0.3); }
+    this.skyU.uTop.value.copy(this.top); this.skyU.uHorizon.value.copy(this.horizon); this.skyU.uGlowAmt.value = 0;
+    this.clouds.visible = false; this.rain.visible = false; this.snow.visible = false; this.bolt.visible = false; this.flash = 0;
+    this.stars.material.opacity = N ? 0 : 1;
+    sfx.setRain(0);
+    const R = settings.renderDistance * 16, far = N ? Math.min(R - 4, 72) : R - 4, near = N ? far * 0.2 : far * 0.5, fc = sharedUniforms.fogColor.value;
+    fc.copy(this.horizon);
+    sharedUniforms.fogNear.value = near; sharedUniforms.fogFar.value = far;
+    if (this.scene.fog) { this.scene.fog.color.copy(fc); this.scene.fog.near = near; this.scene.fog.far = far; }
+  };
+}
+
+// ---------- Uso de objetos: encender portales, perla de retorno y paso del vacío ----------
+{
+  const _useItem = game.useItem;
+  game.useItem = function () {
+    const p = this.player, s = p.held(), t = this.target;
+    if (s && t && (s.id === I.FLINT_STEEL || s.id === I.VOID_EYE)) {
+      const kind = s.id === I.VOID_EYE ? 1 : 0;
+      if (t.id === PORTAL_FRAME[kind]) {
+        if (lightPortal(t, kind)) { sfx.play(kind ? 'laser' : 'fire', { pos: { x: t.x, y: t.y, z: t.z } }); this.swing = 1; hud.toast(kind ? 'El portal al Vacío se ha abierto' : 'El portal al Inframundo se ha encendido', 2600); }
+        else hud.toast(`El marco de ${kind ? 'bloques de cristal' : 'obsidiana'} debe estar cerrado y tener un hueco de 2×3 como mínimo`, 3200);
+        return true;
+      }
+      if (t.id === PORTAL_FRAME[1 - kind]) { hud.toast(kind ? 'El Ojo del vacío abre marcos de bloques de cristal' : 'El encendedor abre marcos de obsidiana', 2800); return true; }
+    }
+    if (s && s.id === I.RECALL_PEARL && !dims.busy) {
+      if (this.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; }
+      dims.recall(); return true;
+    }
+    return _useItem.call(this);
+  };
+  const _useAbility = useAbility;
+  useAbility = function (stack) {
+    const ab = ITEMS[stack.id].ability; if (ab.id !== 'blink') return _useAbility(stack);
+    const p = game.player, now = performance.now() / 1000, left = (abilityCd.get(stack.id) || 0) - now;
+    if (left > 0) { hud.toast(`${ab.name}: lista en ${Math.ceil(left)} s`, 900); return true; }
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    const free = (x, y, z) => !B_SOLID[world.get(Math.floor(x), Math.floor(y), Math.floor(z))] && !B_SOLID[world.get(Math.floor(x), Math.floor(y + 1), Math.floor(z))];
+    let best = null;
+    for (let r = 0.5; r <= 10; r += 0.5) { const x = p.pos.x + dir.x * r, y = p.pos.y + dir.y * r, z = p.pos.z + dir.z * r; if (!free(x, y + 0.05, z)) break; best = [x, y, z]; }
+    if (!best) return true;
+    abilityCd.set(stack.id, now + ab.cd);
+    game.particles.emit(p.pos.x, p.pos.y + 1, p.pos.z, [0.6, 0.4, 1], 16, { gravity: 0, speed: 3, life: 0.5, size: 0.12 });
+    p.pos.set(best[0], best[1], best[2]); p.vel.set(0, 0, 0); p.fallStart = null;
+    game.particles.emit(p.pos.x, p.pos.y + 1, p.pos.z, [0.45, 0.95, 0.9], 16, { gravity: 0, speed: 3, life: 0.5, size: 0.12 });
+    sfx.play('laser', { pitch: 1.5 }); game.swing = 1;
+    return true;
+  };
+  // Romper el marco (o el propio portal) lo apaga
+  const _breakBlock = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z);
+    _breakBlock.call(this, x, y, z, byPlayer);
+    if ((id === PORTAL || id === OBSIDIAN || id === CRYSTAL_BLOCK) && world.get(x, y, z) !== id) closePortalsAround(x, y, z);
+  };
+  const _trySleep = game.trySleep;
+  game.trySleep = function (x, y, z) {
+    if (dimOf(x, z)) { hud.toast(`En el ${DIM_NAMES[dimOf(x, z)]} no se puede dormir`, 2600); return; }
+    return _trySleep.call(this, x, y, z);
+  };
+}
+
+// ---------- Comando /dimension ----------
+COMMANDS.push({ n: 'dimension', a: ['dim', 'dimensión'], use: '/dimension <mundo|inframundo|vacio>', d: 'Viaja a otra dimensión (crea un portal de llegada si no lo hay).', run: (args) => {
+  const k = (args[0] || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const target = ['mundo', 'inframundo', 'vacio'].findIndex((n) => k && n.startsWith(k));
+  const alt = { overworld: 0, nether: 1, void: 2, end: 2, '0': 0, '1': 1, '2': 2 }[k], t = target >= 0 ? target : alt;
+  if (t == null) return chatUI.add(`Estás en: ${DIM_NAMES[dims.dim()]}. Uso: /dimension <mundo|inframundo|vacio>`);
+  if (t === dims.dim()) return chatUI.add(`Ya estás en ${DIM_NAMES[t]}`);
+  dims.travel(t, t === 2 || (t === 0 && dims.dim() === 2) ? 1 : 0);
+} });
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
