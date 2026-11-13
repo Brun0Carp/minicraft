@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.0</title>
+<title>MiniCraft 4.1</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -183,34 +183,98 @@
   .tabs { display: flex; gap: 3px; margin-bottom: 4px; flex-wrap: wrap; }
   .tabs button { font-size: 13px; padding: 4px 7px; background: #9a9a9a; border: 2px solid #000; color: #222; cursor: pointer; }
   .tabs button.on { background: #e8e8e8; }
+  .tabs.searching button.on { background: #9a9a9a; }
   .grid9.creative { max-height: calc(var(--s) * 4.2); overflow-y: auto; }
   .invTools { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
   #splitBtn { height: var(--s); padding: 0 8px; font-size: 14px; background: #8b8b8b; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #bbb, inset -2px -2px 0 #555; cursor: pointer; }
   #itemInfo { flex: 1; min-height: var(--s); font-size: 12px; line-height: 1.3; color: #333; overflow: hidden; }
   #itemInfo h4 { font-size: 14px; color: #1d1d1d; }
   #itemInfo .need { color: #4a5a8a; } #itemInfo em { color: #8a3a2a; font-style: normal; } #itemInfo .hint { color: #666; }
-  #recipeBook { display: none; flex-direction: column; width: calc(var(--s) * 4.6); background: #a9a9a9; border: 2px solid #555; padding: 6px; }
+  /* ---------- 4.1: guía de crafteos ---------- */
+  #recipeBook { display: none; flex-direction: column; gap: 4px; width: calc(var(--s) * 7.2); min-height: 0; background: #b4b4b4; border: 2px solid #555; box-shadow: inset 2px 2px 0 #d8d8d8, inset -2px -2px 0 #7d7d7d; padding: 6px; }
   #recipeBook.show { display: flex; }
-  #recipeBook h3 { font-size: 15px; color: #2f2f2f; } #bookCount { font-size: 11px; color: #444; margin-bottom: 4px; }
-  #bookList { display: grid; grid-template-columns: repeat(auto-fill, calc(var(--s) * .95)); gap: 3px; overflow-y: auto; max-height: calc(var(--s) * 7.5); align-content: start; }
-  .recipe { position: relative; width: calc(var(--s) * .95); height: calc(var(--s) * .95); background: #8b5a5a; border: 2px solid #3a2a2a; cursor: pointer; opacity: .55; }
-  .recipe.ok { background: #7d9a5a; border-color: #2a3a1a; opacity: 1; }
+  .bkHead { display: flex; align-items: baseline; gap: 6px; }
+  #recipeBook h3 { flex: 1; font-size: 15px; color: #2f2f2f; } #bookCount { font-size: 11px; color: #444; }
+  .bkFind { display: flex; gap: 4px; }
+  #bookSearch, #creativeSearch { flex: 1; min-width: 0; font: 13px var(--font); padding: 3px 6px; color: #111; background: #ececec; border: 2px solid #000; box-shadow: inset 2px 2px 0 #9a9a9a; outline: none; }
+  #bookSearch:focus, #creativeSearch:focus { background: #fff; }
+  #bookOnly, #bookCats button, .bdBtns button, .bdBack, .ibtn, .chestBar button, .infoRec { font: 13px var(--font); padding: 3px 7px; background: #8b8b8b; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #bbb, inset -2px -2px 0 #555; cursor: pointer; white-space: nowrap; }
+  #bookOnly.on, #bookCats button.on, .ibtn.on { background: #6b8e3d; }
+  #bookCats { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 3px; scrollbar-width: thin; flex: none; }
+  #bookCats button { flex: none; font-size: 12px; padding: 2px 6px; }
+  #bookList { display: grid; grid-template-columns: repeat(auto-fill, calc(var(--s) * .95)); gap: 3px; overflow-y: auto; min-height: calc(var(--s) * 2.1); align-content: start; flex: 1 1 0; }
+  #bookList .bkEmpty { grid-column: 1 / -1; font-size: 12px; color: #444; padding: 4px 2px; }
+  .recipe { position: relative; width: calc(var(--s) * .95); height: calc(var(--s) * .95); padding: 0; background: #8b6a6a; border: 2px solid #3a2a2a; cursor: pointer; }
+  .recipe i { position: absolute; inset: 10%; background-size: contain; background-repeat: no-repeat; background-position: center; image-rendering: pixelated; opacity: .5; filter: grayscale(.6); }
+  .recipe.ok { background: #7d9a5a; border-color: #2a3a1a; } .recipe.ok i { opacity: 1; filter: none; }
   .recipe.table::after { content: '3×3'; position: absolute; left: 1px; top: 0; font-size: 9px; color: #fff; text-shadow: 1px 1px 0 #000; }
-  .recipe i { position: absolute; inset: 10%; background-size: contain; background-repeat: no-repeat; image-rendering: pixelated; }
   .recipe b { position: absolute; right: 1px; bottom: 0; font-size: 11px; color: #fff; text-shadow: 1px 1px 0 #000; }
+  .recipe.fav::before { content: '★'; position: absolute; right: 0; top: -3px; font-size: 11px; color: #ffe14d; text-shadow: 1px 1px 0 #000; z-index: 1; }
+  .bdFav { font: 16px var(--font); line-height: 1; padding: 1px 5px; background: #8b8b8b; color: #fff; border: 2px solid #000; cursor: pointer; } .bdFav.on { color: #ffe14d; background: #6a5a1c; }
+  .recipe.sel { outline: 3px solid #fff; outline-offset: -1px; box-shadow: 0 0 0 2px #000; z-index: 1; }
+  @media (hover: hover) { .recipe:hover { filter: brightness(1.18); } #invScreen .slot:hover { background: #a4a4a4; } }
+  #bookDetail { flex: none; max-height: calc(var(--s) * 8.6); overflow-y: auto; background: #c6c6c6; border: 2px solid #555; box-shadow: inset 2px 2px 0 #e6e6e6; padding: 6px; font-size: 12.5px; line-height: 1.3; color: #2a2a2a; --c: calc(var(--s) * .8); }
+  #bookDetail .bdHint { color: #555; }
+  .bdTop { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; } .bdTop h4 { flex: 1; font-size: 14.5px; color: #1d1d1d; } .bdTop em { font-style: normal; font-size: 11.5px; color: #555; white-space: nowrap; }
+  .bdBack { padding: 1px 7px; } .bdBack.nohist { display: none; }
+  .bdBody { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; }
+  .bdGrid { display: grid; gap: 1px; }
+  .bdCell, .bdOut { position: relative; width: var(--c); height: var(--c); background: #8b8b8b; box-shadow: inset 2px 2px 0 #373737, inset -2px -2px 0 #fff; }
+  .bdCell i, .bdOut i, .bdNeed i, .bdUses i { position: absolute; inset: 10%; background-size: contain; background-repeat: no-repeat; background-position: center; image-rendering: pixelated; }
+  .bdCell.miss { background: #a07070; }
+  .bdOut { width: calc(var(--c) * 1.35); height: calc(var(--c) * 1.35); } .bdOut b { position: absolute; right: 3px; bottom: 0; font-size: 14px; color: #fff; text-shadow: 2px 2px 0 #3f3f3f; }
+  .bdArrow { font-size: calc(var(--c) * .7); color: #555; }
+  .bdNeeds { display: flex; flex-direction: column; gap: 2px; margin-bottom: 5px; }
+  .bdNeed { display: flex; align-items: center; gap: 6px; padding: 1px 4px 1px 2px; font: 12.5px var(--font); text-align: left; color: #222; background: rgba(0,0,0,.07); border: 1px solid transparent; cursor: pointer; }
+  .bdNeed:hover { border-color: #555; }
+  .bdNeed i { position: relative; inset: auto; flex: none; width: 20px; height: 20px; } .bdNeed span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bdNeed b { color: #2f6a1c; } .bdNeed.no b { color: #a02a1c; } .bdNeed u { text-decoration: none; color: #4a5a8a; font-size: 11px; }
+  .bdNote { margin-bottom: 5px; color: #4a5a8a; } .bdNote.bad { color: #a02a1c; font-weight: 600; }
+  .bdBtns { display: flex; gap: 5px; } .bdBtns button { flex: 1; padding: 6px 6px; font-size: 14px; background: #5f8f3a; }
+  .bdBtns button:disabled { background: #7a7a7a; color: #bdbdbd; cursor: default; box-shadow: none; }
+  .bdUses { margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 3px; color: #444; font-size: 11.5px; }
+  .bdUses button { position: relative; width: 26px; height: 26px; padding: 0; background: #9a9a9a; border: 1px solid #444; cursor: pointer; }
   @media (max-width: 620px) {
     .invPanel { flex-direction: column; }
-    #recipeBook { width: 100%; order: -1; } #bookList { max-height: calc(var(--s) * 2.1); grid-template-columns: repeat(auto-fill, calc(var(--s) * .95)); }
+    #recipeBook { width: 100%; order: -1; } #bookList { flex: none; min-height: 0; max-height: calc(var(--s) * 2.05); }
+    #recipeBook.hasSel #bookList, #recipeBook.hasSel #bookCats, #recipeBook.hasSel .bkFind { display: none; }
+    #recipeBook:not(.hasSel) #bookDetail { display: none; }
+    .bdBack.nohist { display: inline-block; }
+    #bookDetail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 10px; align-items: start; max-height: none; overflow: visible; }
+    .bdRight { min-width: 0; } .bdTop { min-width: 0; }
+    .bdTop, .bdBtns, .bdUses, .bdNote { grid-column: 1 / -1; } .bdBody { margin: 0 0 6px; }
   }
   @media (max-height: 520px) and (orientation: landscape) {
     :root { --s: clamp(22px, calc((100vh - 44px) / 10.4), 40px); }
     .invPanel { flex-direction: row; padding: 6px; gap: 6px; }
     .invMainCol { gap: 3px; }
-    #recipeBook { width: calc(var(--s) * 4.2); order: 0; }
-    #bookList { max-height: calc(100vh - 90px); }
+    #recipeBook { width: min(calc(var(--s) * 8.2), 42vw); order: 0; padding: 4px; gap: 3px; max-height: calc(100vh - 26px); }
+    #bookList { min-height: 0; }
+    #recipeBook.hasSel #bookList, #recipeBook.hasSel #bookCats, #recipeBook.hasSel .bkFind { display: none; }
+    #recipeBook:not(.hasSel) #bookDetail { display: none; }
+    .bdBack.nohist { display: inline-block; }
+    #bookDetail { flex: 1; max-height: none; padding: 4px; font-size: 12px; --c: calc(var(--s) * .72); } .bdBody { margin-bottom: 3px; } .bdNeeds { margin-bottom: 3px; gap: 1px; } .bdNeed i { width: 16px; height: 16px; }
+    .bdBtns button { padding: 4px; font-size: 13px; } .bdUses { margin-top: 3px; }
     .grid9.creative { max-height: calc(var(--s) * 3.1); }
     .crafting, .furnace { padding: 2px 0; }
+    .ibtn .lbl { display: none; }
   }
+  /* ---------- 4.1: inventario ---------- */
+  .ibtn, #splitBtn { height: var(--s); font: 14px var(--font); flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 0 8px; border-radius: 0; min-width: var(--s); justify-content: center; } .ibtn .lbl { font-size: 12.5px; }
+  .slot[data-rar]::after { content: ''; position: absolute; inset: 2px; border: 2px solid var(--rc); opacity: .8; pointer-events: none; }
+  .slot.dropHint { outline: 2px dashed #fff; outline-offset: -3px; }
+  #itemInfo { position: relative; padding: 4px 7px; color: #d6d6de; background: rgba(22,14,32,.9); border: 2px solid #2d1260; box-shadow: 0 0 0 1px #000; }
+  #itemInfo h4 { color: #ececec; } #itemInfo .need { color: #9fb2e8; } #itemInfo em { color: #ff9a8a; } #itemInfo .hint { color: #9a9aa6; }
+  .infoRec { float: right; margin: 0 0 2px 6px; font-size: 12px; padding: 2px 6px; background: #5a6f9a; }
+  @media (min-height: 521px) {
+    .invTools { flex-wrap: wrap; }
+    #itemInfo { flex: 1 1 100%; min-height: calc(var(--s) * 1.5); }
+  }
+  @media (max-width: 420px) { .ibtn .lbl { display: none; } }
+  .chestBar { display: flex; gap: 4px; justify-content: flex-end; margin-bottom: 4px; } .chestBar button { font-size: 12.5px; }
+  .tabs #creativeSearch { flex: 1 1 90px; max-width: 170px; margin-left: auto; }
+  #invTip { position: fixed; z-index: 41; display: none; max-width: 250px; padding: 6px 9px; pointer-events: none; font-size: 12.5px; line-height: 1.3; color: #ddd; background: rgba(18,10,28,.95); border: 2px solid #2d1260; box-shadow: 0 0 0 1px #000, 0 6px 14px rgba(0,0,0,.45); }
+  #invTip h4 { font-size: 14px; margin-bottom: 2px; } #invTip .need { color: #9fb2e8; } #invTip .infoRec { display: none; } #invTip .tipHint { color: #8f8f9a; font-size: 11.5px; margin-top: 2px; }
   #cursorItem { position: fixed; z-index: 40; width: calc(var(--s) * .9); height: calc(var(--s) * .9); transform: translate(-50%, -50%); pointer-events: none; display: none; }
   #cursorItem i { position: absolute; inset: 0; background-size: contain; background-repeat: no-repeat; image-rendering: pixelated; }
   #cursorItem b { position: absolute; right: -2px; bottom: -4px; font-size: 15px; text-shadow: 2px 2px 0 #3f3f3f; }
@@ -786,7 +850,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.0!</span>
+      <span class="ver">¡Versión 4.1!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -796,7 +860,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1007,21 +1071,30 @@
 </div>
 <div id="invScreen" class="screen">
   <div class="invPanel">
-    <div id="recipeBook"><h3>Libro de recetas</h3><div id="bookCount"></div><div id="bookList"></div></div>
+    <div id="recipeBook">
+      <div class="bkHead"><h3>Guía de crafteos</h3><span id="bookCount"></span></div>
+      <div class="bkFind"><input id="bookSearch" type="search" placeholder="Buscar objeto…" autocomplete="off" spellcheck="false"><button id="bookOnly" title="Mostrar solo lo que puedes fabricar ahora">✔ Puedo</button></div>
+      <div id="bookCats"></div>
+      <div id="bookList"></div>
+      <div id="bookDetail"></div>
+    </div>
     <div class="invMainCol">
-      <div class="invHeader"><span id="invTitle">Inventario</span><button id="bookToggle">📖 Recetas</button><button id="invClose">✕</button></div>
+      <div class="invHeader"><span id="invTitle">Inventario</span><button id="bookToggle" title="Guía de crafteos">📖 Guía</button><button id="invClose">✕</button></div>
       <div id="invLeft"></div>
       <div id="invMain" class="grid9"></div>
       <div id="invHot" class="grid9"></div>
       <div class="invTools">
         <div class="slot trash" data-c="trash" data-i="0" title="Papelera">🗑</div>
-        <button id="splitBtn" title="Coger la mitad / dejar de uno en uno">½</button>
+        <button id="splitBtn" class="ibtn" title="Coger la mitad / dejar de uno en uno (clic derecho)">½<span class="lbl"> Mitad</span></button>
+        <button id="quickBtn" class="ibtn" title="Mover rápido: al tocar un objeto pasa directo al otro lado (Mayús + clic)">⇄<span class="lbl"> Rápido</span></button>
+        <button id="sortBtn" class="ibtn" title="Ordenar la mochila y juntar montones">↕<span class="lbl"> Ordenar</span></button>
         <div id="itemInfo"></div>
       </div>
     </div>
   </div>
 </div>
 <div id="cursorItem"><i></i><b></b></div>
+<div id="invTip"></div>
 
 <script type="importmap">
 { "imports": {
@@ -3770,30 +3843,35 @@ function blockBoxes(id, meta, nb, mode) {
 // ---------- Shaders ----------
 const TERRAIN_VS = `
 attribute vec2 light;
-varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog;
+varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog; varying vec3 vW;
 uniform float uTime;
 void main() {
   vUv = uv; vColor = color; vLight = light;
+  vW = (modelMatrix * vec4(position, 1.0)).xyz;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   vFog = length(mv.xyz);
   gl_Position = projectionMatrix * mv;
 }`;
 const LIGHT_FN = `
 uniform float uDay; uniform vec3 uSkyCol; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform float uNV; uniform vec2 uBr;
-vec3 lightOf(vec2 l) {
-  vec3 L = max(uSkyCol * (l.x * uDay), vec3(1.0, 0.82, 0.58) * l.y);
+uniform vec4 uDyn[4];   // luces dinámicas (4.1): xyz = posición en el mundo, w = nivel de luz 0-15 (0 = apagada)
+vec3 lightOf(vec2 l, vec3 wp) {
+  float dl = 0.0;
+  for (int i = 0; i < 4; i++) { if (uDyn[i].w > 0.0) dl = max(dl, (uDyn[i].w - distance(wp, uDyn[i].xyz)) / 15.0); }
+  dl = dl > 0.0 ? dl * (0.75 + 0.25 * dl) : 0.0;   // caída un poco más suave en el borde
+  vec3 L = max(uSkyCol * (l.x * uDay), vec3(1.0, 0.82, 0.58) * max(l.y, dl));
   L = L / (3.0 - 2.0 * L);
   L = max(L, vec3(uNV));
   return pow(max(L, vec3(uBr.x)), vec3(uBr.y));    // brillo: suelo de luz y curva (Ajustes → Gráficos)
 }`;
 const TERRAIN_FS = `
 uniform sampler2D map;
-varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog;
+varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog; varying vec3 vW;
 ${LIGHT_FN}
 void main() {
   vec4 t = texture2D(map, vUv);
   if (t.a < 0.5) discard;
-  vec3 c = t.rgb * vColor * lightOf(vLight);
+  vec3 c = t.rgb * vColor * lightOf(vLight, vW);
   gl_FragColor = vec4(mix(c, fogColor, smoothstep(fogNear, fogFar, vFog)), 1.0);
 }`;
 const WATER_VS = `
@@ -3819,7 +3897,7 @@ void main() {
   vec2 b = fract(vUv * 0.73 - vec2(uTime * 0.027, uTime * 0.043));
   float t = texture2D(map, uTile.xy + a * uTile.z).r * 0.5 + texture2D(map, uTile.xy + b * uTile.z).r * 0.5;
   vec3 base = vec3(0.16, 0.36, 0.78) * vColor;
-  vec3 c = (base * (0.75 + t * 0.45)) * lightOf(vLight);
+  vec3 c = (base * (0.75 + t * 0.45)) * lightOf(vLight, vW);
   gl_FragColor = vec4(mix(c, fogColor, smoothstep(fogNear, fogFar, vFog)), mix(0.72, 1.0, smoothstep(fogNear, fogFar, vFog)));
 }`;
 
@@ -3832,6 +3910,7 @@ atlasTex.flipY = true;
 const sharedUniforms = {
   map: { value: atlasTex }, uTime: { value: 0 }, uDay: { value: 1 }, uSkyCol: { value: new THREE.Color(1, 1, 1) },
   fogColor: { value: new THREE.Color(0.6, 0.78, 1) }, fogNear: { value: 40 }, fogFar: { value: 80 }, uNV: { value: 0 }, uBr: { value: new THREE.Vector2(0.03, 1) },
+  uDyn: { value: [new THREE.Vector4(), new THREE.Vector4(), new THREE.Vector4(), new THREE.Vector4()] },
 };
 const terrainMat = new THREE.ShaderMaterial({ uniforms: sharedUniforms, vertexShader: TERRAIN_VS, fragmentShader: TERRAIN_FS, vertexColors: true });
 const waterTile = tileUV(T.water);
@@ -5169,10 +5248,16 @@ function skeletonLook(B, BD, DK) {
     legExtra: [[2.6, 1.6, 2.6, 0, -6, 0, B], [2.4, 1, 3, 0, -11.5, 0.4, BD]] };
 }
 
+// Luz dinámica (0-1) en un punto: igual que uDyn en el shader
+function dynLightAt(x, y, z) {
+  let dl = 0;
+  for (const v of sharedUniforms.uDyn.value) if (v.w > 0) dl = Math.max(dl, (v.w - Math.hypot(x - v.x, y - v.y, z - v.z)) / 15);
+  return dl > 0 ? dl * (0.75 + 0.25 * dl) : 0;
+}
 // Color de luz (0-1) en una posición: mismo cálculo que el shader del terreno
 function lightLevel(x, y, z) {
   const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
-  const sky = world.skyAt(xi, yi, zi) / 15 * sharedUniforms.uDay.value, blk = world.blockLightAt(xi, yi, zi) / 15;
+  const sky = world.skyAt(xi, yi, zi) / 15 * sharedUniforms.uDay.value, blk = Math.max(world.blockLightAt(xi, yi, zi) / 15, dynLightAt(x, y, z));
   const sc = sharedUniforms.uSkyCol.value;
   const nv = sharedUniforms.uNV.value, br = sharedUniforms.uBr.value, f = (v) => Math.pow(Math.max(0.05, br.x, nv, v / (3 - 2 * v)), br.y);
   return [f(Math.max(sc.r * sky, blk)), f(Math.max(sc.g * sky, blk * 0.82)), f(Math.max(sc.b * sky, blk * 0.58))];
@@ -7722,6 +7807,8 @@ function paintSlot(el, s) {
   const key = s ? s.id + ':' + s.count + ':' + (s.dmg || 0) + (s.ench ? 'e' : '') : '';
   if (el._k === key) return; el._k = key;
   el.classList.toggle('ench', !!(s && s.ench));
+  const rar = s ? rarityOf(s.id, s) : 0;
+  if (rar > 0) { el.dataset.rar = rar; el.style.setProperty('--rc', RARITY[rar][1]); } else delete el.dataset.rar;
   ic.style.backgroundImage = s ? `url(${ICON[s.id]})` : '';
   ct.textContent = s && s.count > 1 ? s.count : '';
   const dur = s ? durOf(s.id) : 0;
@@ -7836,14 +7923,24 @@ function buildInventoryUI() {
       const b = document.createElement('button'); b.textContent = t; b.className = t === ui.creativeTab ? 'on' : '';
       b.onclick = () => { ui.creativeTab = t; buildInventoryUI(); }; tabs.append(b);
     }
+    const find = document.createElement('input'); find.id = 'creativeSearch'; find.type = 'search'; find.placeholder = 'Buscar…'; find.autocomplete = 'off'; find.value = ui.creativeQ || '';
+    tabs.append(find);
     const grid = document.createElement('div'); grid.className = 'grid9 creative';
-    const list = ITEMS.filter((it) => it && (ui.creativeTab === 'Bloques' ? it.block && !it.mech : ui.creativeTab === 'Mecanismos' ? it.mech : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : ui.creativeTab === 'Huevos' ? it.egg : (!it.block && !it.tool && !it.food && !it.egg && !it.mech)));
-    list.forEach((it) => { const el = slotEl('creative', it.id); paintSlot(el, { id: it.id, count: 1 }); grid.append(el); });
+    const fill = () => {
+      const q = normText(ui.creativeQ || '');
+      // con texto en el buscador se busca en todas las pestañas
+      const list = ITEMS.filter((it) => it && (q ? normText(it.name).includes(q) : (ui.creativeTab === 'Bloques' ? it.block && !it.mech : ui.creativeTab === 'Mecanismos' ? it.mech : ui.creativeTab === 'Herramientas' ? it.tool : ui.creativeTab === 'Comida' ? it.food : ui.creativeTab === 'Huevos' ? it.egg : (!it.block && !it.tool && !it.food && !it.egg && !it.mech))));
+      grid.innerHTML = '';
+      list.forEach((it) => { const el = slotEl('creative', it.id); paintSlot(el, { id: it.id, count: 1 }); grid.append(el); });
+      tabs.classList.toggle('searching', !!q);
+    };
+    find.oninput = () => { ui.creativeQ = find.value; fill(); };
+    fill();
     left.append(tabs, grid);
   } else if (ui.mode === 'chest') {
     const g = document.createElement('div'); g.className = 'grid9';
     for (let i = 0; i < 27; i++) g.append(slotEl('chest', i));
-    left.append(g);
+    left.append(chestBar(), g);
   } else if (ui.mode === 'furnace') {
     const f = document.createElement('div'); f.className = 'furnace';
     f.innerHTML = '<div class="fcol"></div><div class="farrow"><div class="flame"><s></s></div><div class="prog"><s></s></div></div><div class="fout"></div>';
@@ -7864,6 +7961,8 @@ function buildInventoryUI() {
   for (let i = 9; i < 36; i++) main.append(slotEl('inv', i));
   for (let i = 0; i < 9; i++) hot.append(slotEl('inv', i));
   $('#recipeBook').classList.toggle('show', ui.bookOpen && (ui.mode === 'inv' || ui.mode === 'table') && !creative);
+  $('#bookToggle').classList.toggle('on', !!ui.bookOpen);
+  $('#sortBtn').style.display = ui.mode === 'trade' ? 'none' : '';
   renderInventory();
 }
 
@@ -7892,47 +7991,17 @@ function renderInventory() {
   hud.update();
 }
 
-function renderBook() {
-  const book = $('#recipeBook');
-  if (!book.classList.contains('show')) return;
-  const p = game.player, atTable = ui.mode === 'table';
-  // una receta se desbloquea cuando se han descubierto todos sus ingredientes
-  const unlocked = RECIPES.filter((r) => recipeNeeds(r).every((n) => n.opts.some((id) => p.discovered.has(id))));
-  const key = unlocked.length + ':' + p.inv.slots.map((s) => (s ? s.id + 'x' + s.count : '')).join() + atTable;
-  if (book._k === key) return; book._k = key;
-  const list = $('#bookList'); list.innerHTML = '';
-  const rows = unlocked.map((r) => ({ r, ok: p.inv.canAfford(recipeNeeds(r)) && (!r.needsTable || atTable) }));
-  rows.sort((a, b) => b.ok - a.ok);
-  for (const { r, ok } of rows) {
-    const b = document.createElement('button');
-    b.className = 'recipe' + (ok ? ' ok' : '') + (r.needsTable && !atTable ? ' table' : '');
-    b.innerHTML = `<i style="background-image:url(${ICON[r.out]})"></i>${r.n > 1 ? `<b>${r.n}</b>` : ''}`;
-    b.title = itemName(r.out);
-    b.onpointerdown = (e) => {
-      e.preventDefault();
-      showRecipeInfo(r, atTable);
-      if (!ok) { sfx.play('click'); return; }
-      const needs = recipeNeeds(r);
-      p.inv.consume(needs);
-      const left = p.inv.add(r.out, r.n);
-      if (left) game.entities.dropItem({ id: r.out, count: left }, p.pos.x, p.pos.y + 1.4, p.pos.z, p.lookVel(3));
-      p.discover(r.out); sfx.play('craft'); game.onCraft(r.out, r.n);
-      renderInventory();
-    };
-    list.append(b);
-  }
-  $('#bookCount').textContent = `${unlocked.length}/${RECIPES.length} desbloqueadas`;
-}
-function showRecipeInfo(r, atTable) {
-  const needs = recipeNeeds(r).map((n) => `${n.n}× ${n.opts.length > 1 ? (n.opts === PLANKS_ANY ? 'Tablones (cualquiera)' : itemName(n.opts[0]) + '…') : itemName(n.opts[0])}`).join(', ');
-  $('#itemInfo').innerHTML = `<h4>${itemName(r.out)}${r.n > 1 ? ' ×' + r.n : ''}</h4><p>${ITEMS[r.out].desc}</p><p class="need">Necesita: ${needs}${r.needsTable && !atTable ? ' · <em>requiere mesa de fabricación</em>' : ''}</p>`;
-}
+// renderBook / guía de crafteos: ver §16c (p8c_inv41.js)
 function showInfo(id) {
   ui.infoId = id;
   const box = $('#itemInfo');
   if (id == null || !ITEMS[id]) { if (!box.innerHTML) box.innerHTML = '<p class="hint">Toca un objeto para ver su descripción.</p>'; return; }
-  const it = ITEMS[id], extra = [];
   const st = ui.infoStack && ui.infoStack.id === id ? ui.infoStack : null;
+  const html = infoRecipeBtn(id) + itemInfoHTML(id, st);
+  if (box._h !== html) { box._h = html; box.innerHTML = html; }
+}
+function itemInfoHTML(id, st) {
+  const it = ITEMS[id], extra = [];
   if (it.tool) extra.push(`Daño ${it.tool.dmg}`, `Velocidad ×${it.tool.speed}`, `Nivel ${it.tool.level}`);
   if (it.armor) extra.push(`Armadura +${it.armor.pts}`);
   if (it.bow) extra.push('Daño 2-7 según la tensión');
@@ -7944,7 +8013,7 @@ function showInfo(id) {
   if (it.fuel) extra.push(`Combustible: ${it.fuel} objetos`);
   if (SMELT[id]) extra.push(`Se funde en: ${itemName(SMELT[id][0])}`);
   if (it.block) { const b = BLOCKS[it.block]; if (b.tool && b.level >= 0) extra.push(`Requiere ${TOOL_NAMES[b.tool].toLowerCase()} nivel ${b.level}+`); if (b.light) extra.push(`Luz ${b.light}`); }
-  box.innerHTML = `<h4 style="color:${RARITY[rarityOf(id, st)][1]}">${it.name} ${rarityTag(id, st)}</h4><p>${it.desc || ''}</p>${extra.length ? `<p class="need">${extra.join(' · ')}</p>` : ''}`;
+  return `<h4 style="color:${RARITY[rarityOf(id, st)][1]}">${it.name} ${rarityTag(id, st)}</h4><p>${it.desc || ''}</p>${extra.length ? `<p class="need">${extra.join(' · ')}</p>` : ''}`;
 }
 function renderCursor() {
   const el = $('#cursorItem');
@@ -8061,7 +8130,11 @@ function initInventoryInput() {
     e.preventDefault();
     const c = el.dataset.c, i = +el.dataset.i, half = e.button === 2 || ui.split;
     const had = !!ui.cursor;
-    slotAction(c, i, half, e.shiftKey);
+    const now = performance.now(), dbl = had && !half && ui.lastSlot === el && now - ui.lastT < 450 && GATHER_FROM.has(c) && !stackAt(c, i);
+    ui.lastSlot = el; ui.lastT = dbl ? 0 : now;
+    hideInvTip();
+    if (!(dbl && gatherToCursor())) slotAction(c, i, half, e.shiftKey || (ui.quick && !had));
+    ui.paint = had && half && ui.cursor && GATHER_FROM.has(c) ? new Set([el]) : null;
     ui.drag = !had && ui.cursor && c !== 'creative' && c !== 'out' ? { x: e.clientX, y: e.clientY, from: el, moved: false } : null;
     moveCursor(e); renderInventory();
   });
@@ -8069,8 +8142,10 @@ function initInventoryInput() {
     if (!ui.mode) return;
     moveCursor(e);
     if (ui.drag && Math.hypot(e.clientX - ui.drag.x, e.clientY - ui.drag.y) > 10) ui.drag.moved = true;
+    invPointerMove(e);
   });
   window.addEventListener('pointerup', (e) => {
+    ui.paint = null;
     if (!ui.mode || !ui.drag) return;
     const d = ui.drag; ui.drag = null;
     if (!d.moved || !ui.cursor) return;
@@ -8080,7 +8155,8 @@ function initInventoryInput() {
   });
   $('#splitBtn').addEventListener('click', () => { ui.split = !ui.split; $('#splitBtn').classList.toggle('on', ui.split); });
   $('#invClose').addEventListener('click', closeInventory);
-  $('#bookToggle').addEventListener('click', () => { ui.bookOpen = !ui.bookOpen; $('#recipeBook').classList.toggle('show', ui.bookOpen); $('#recipeBook')._k = null; renderBook(); });
+  $('#bookToggle').addEventListener('click', () => { ui.bookOpen = !ui.bookOpen; $('#recipeBook').classList.toggle('show', ui.bookOpen); $('#recipeBook')._k = null; $('#bookToggle').classList.toggle('on', ui.bookOpen); renderBook(); });
+  initInventory41();
 }
 function moveCursor(e) { const el = $('#cursorItem'); el.style.left = e.clientX + 'px'; el.style.top = e.clientY + 'px'; }
 
@@ -8532,6 +8608,281 @@ function initUI3() {
   $('#pasteGo').onclick = () => { const err = importWorld($('#pasteText').value); $('#pasteMsg').textContent = err || '¡Mundo importado!'; if (!err) { $('#pasteText').value = ''; renderWorldList(); } };
   // Multijugador
   initMultiplayerUI();
+}
+/* ==========================================================================
+   §16c INVENTARIO 4.1 — guía de crafteos con vista previa, selección y orden
+   ========================================================================== */
+const normText = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const book = { sel: null, cat: 'Todo', q: '', only: false, hist: [], tick: 0 };
+// recetas favoritas (se guardan con los ajustes, por objeto fabricado)
+const isFav = (r) => Array.isArray(settings.favRecipes) && settings.favRecipes.includes(r.out);
+function toggleFav(r) {
+  const f = Array.isArray(settings.favRecipes) ? settings.favRecipes : (settings.favRecipes = []);
+  const i = f.indexOf(r.out); if (i >= 0) f.splice(i, 1); else f.push(r.out);
+  saveSettings();
+}
+const recipeNeedsTable = (r) => (r.pattern ? (r.w > 2 || r.h > 2) : r.items.length > 4);
+const recipeUnlocked = (r) => recipeNeeds(r).every((n) => n.opts.some((id) => game.player.discovered.has(id)));
+const bookAvailable = () => (ui.mode === 'inv' || ui.mode === 'table') && game.mode !== 'creative';
+const recipeFor = (id) => RECIPES.find((r) => r.out === id && recipeUnlocked(r)) || null;
+const SMELT_FROM = {};
+for (const src in SMELT) (SMELT_FROM[SMELT[src][0]] = SMELT_FROM[SMELT[src][0]] || []).push(+src);
+
+// cuántas veces se puede fabricar una receta con lo que hay en el inventario
+function recipeMax(r, atTable) {
+  if (recipeNeedsTable(r) && !atTable) return 0;
+  const inv = new Inventory(36), needs = recipeNeeds(r);
+  inv.slots = game.player.inv.slots.map((s) => (s ? { ...s } : null));
+  let n = 0;
+  while (n < 999 && inv.canAfford(needs)) { inv.consume(needs); n++; }
+  return n;
+}
+// Fabrica desde la guía. Solo se llama desde los botones «Fabricar».
+function craftRecipe(r, times) {
+  const p = game.player, needs = recipeNeeds(r);
+  if (!bookAvailable() || (recipeNeedsTable(r) && ui.mode !== 'table')) return 0;
+  let made = 0;
+  while (made < times && p.inv.canAfford(needs)) {
+    p.inv.consume(needs);
+    const left = p.inv.add(r.out, r.n);
+    p.discover(r.out); game.onCraft(r.out, r.n); made++;
+    if (left) {
+      game.entities.dropItem({ id: r.out, count: left }, p.pos.x, p.pos.y + 1.4, p.pos.z, p.lookVel(3));
+      hud.toast('Inventario lleno: lo que no cabía cayó al suelo'); break;
+    }
+  }
+  sfx.play(made ? 'craft' : 'click');
+  renderInventory();
+  return made;
+}
+function bookSelect(r, keepHist) {
+  if (!keepHist) book.hist.length = 0;
+  book.sel = r; $('#recipeBook')._k = null; renderBook();
+  const d = $('#bookDetail'); if (d) d.scrollTop = 0;
+}
+
+function renderBook() {
+  const el = $('#recipeBook');
+  if (!el.classList.contains('show')) return;
+  const p = game.player, atTable = ui.mode === 'table';
+  const unlocked = RECIPES.filter(recipeUnlocked);
+  if (book.sel && !unlocked.includes(book.sel)) { book.sel = null; book.hist.length = 0; }
+  const key = [(settings.favRecipes || []).join(), unlocked.length, p.inv.slots.map((s) => (s ? s.id + 'x' + s.count : '')).join(), atTable, book.cat, book.q, book.only, RECIPES.indexOf(book.sel), book.hist.length].join('|');
+  if (el._k === key) return; el._k = key;
+  el.classList.toggle('hasSel', !!book.sel);
+  // categorías
+  const cats = ['Todo', '★ Favoritas', ...new Set(unlocked.map((r) => r.cat || 'Otros'))];
+  if (!cats.includes(book.cat)) book.cat = 'Todo';
+  const cbox = $('#bookCats');
+  if (cbox._k !== cats.join()) { cbox._k = cats.join(); cbox.innerHTML = cats.map((c) => `<button data-cat="${c}">${c}</button>`).join(''); }
+  for (const b of cbox.children) b.classList.toggle('on', b.dataset.cat === book.cat);
+  $('#bookOnly').classList.toggle('on', book.only);
+  // lista
+  const q = normText(book.q.trim());
+  let rows = unlocked.map((r) => ({ r, ok: p.inv.canAfford(recipeNeeds(r)) && (!recipeNeedsTable(r) || atTable) }));
+  rows = rows.filter(({ r, ok }) => (q ? normText(itemName(r.out)).includes(q) : (book.cat === 'Todo' || (book.cat === '★ Favoritas' ? isFav(r) : (r.cat || 'Otros') === book.cat))) && (!book.only || ok));
+  rows.sort((a, b) => isFav(b.r) - isFav(a.r) || b.ok - a.ok);
+  const list = $('#bookList'), top = list.scrollTop;
+  list.innerHTML = rows.length ? rows.map(({ r, ok }) =>
+    `<button class="recipe${ok ? ' ok' : ''}${recipeNeedsTable(r) && !atTable ? ' table' : ''}${r === book.sel ? ' sel' : ''}${isFav(r) ? ' fav' : ''}" data-r="${RECIPES.indexOf(r)}" title="${itemName(r.out)}"><i style="background-image:url(${ICON[r.out]})"></i>${r.n > 1 ? `<b>${r.n}</b>` : ''}</button>`).join('')
+    : `<p class="bkEmpty">${book.only ? 'Ahora mismo no puedes fabricar nada de esta lista.' : q ? 'Ninguna receta desbloqueada coincide.' : book.cat === '★ Favoritas' ? 'Aún no tienes favoritas: abre una receta y pulsa ☆.' : 'Sin recetas en esta categoría.'}</p>`;
+  list.scrollTop = top;
+  $('#bookCount').textContent = `${unlocked.length}/${RECIPES.length}`;
+  $('#bookCount').title = 'Recetas desbloqueadas: una receta aparece cuando ya conseguiste alguna vez todos sus materiales';
+  renderBookDetail(unlocked, atTable);
+}
+
+// qué opción de un ingrediente mostrar: la que tienes, o la primera
+function needIcon(opts, p) { return opts.find((id) => p.inv.count(id) > 0) ?? opts[0]; }
+function needLabel(opts) { return opts.length > 1 ? (opts === PLANKS_ANY ? 'Tablones (cualquiera)' : opts.map((id) => itemName(id)).join(' o ')) : itemName(opts[0]); }
+
+function renderBookDetail(unlocked, atTable) {
+  const box = $('#bookDetail'), r = book.sel, p = game.player;
+  if (!r) { box.innerHTML = '<p class="bdHint">Elige un objeto de la lista para ver cómo se fabrica. No se fabrica nada hasta que pulses <b>Fabricar</b>.</p>'; return; }
+  const needs = recipeNeeds(r), needsTbl = recipeNeedsTable(r), max = recipeMax(r, atTable);
+  const have = (opts) => opts.reduce((n, id) => n + p.inv.count(id), 0);
+  const missing = new Set(needs.filter((n) => have(n.opts) < n.n).map((n) => n.opts));
+  // cuadrícula tal como va en la mesa
+  const w = needsTbl ? 3 : 2, cells = new Array(w * w).fill(null);
+  if (r.pattern) r.pattern.forEach((row, y) => [...row].forEach((ch, x) => { if (ch !== ' ') cells[y * w + x] = r.key[ch]; }));
+  else r.items.forEach((k, i) => { cells[i] = k; });
+  const cellHtml = cells.map((k) => {
+    if (k == null) return '<div class="bdCell"></div>';
+    const opts = Array.isArray(k) ? k : [k], id = needIcon(opts, p);
+    const miss = needs.some((n) => missing.has(n.opts) && JSON.stringify(n.opts) === JSON.stringify(opts));
+    return `<div class="bdCell${miss ? ' miss' : ''}" title="${needLabel(opts)}"><i ${opts.length > 1 ? `data-opts="${opts.join()}" ` : ''}style="background-image:url(${ICON[id]})"></i></div>`;
+  }).join('');
+  const needHtml = needs.map((n) => {
+    const h = have(n.opts), id = needIcon(n.opts, p), rec = n.opts.map(recipeFor).find(Boolean);
+    return `<button class="bdNeed${h >= n.n ? '' : ' no'}" data-id="${id}" title="${rec ? 'Ver cómo se fabrica' : 'Ver descripción'}"><i ${n.opts.length > 1 ? `data-opts="${n.opts.join()}" ` : ''}style="background-image:url(${ICON[id]})"></i><span>${needLabel(n.opts)}</span>${rec ? '<u>receta ›</u>' : ''}<b>${Math.min(h, 999)}/${n.n}</b></button>`;
+  }).join('');
+  // notas: mesa, sin forma, de dónde salen los materiales que faltan
+  const notes = [];
+  if (needsTbl && !atTable) notes.push('<p class="bdNote bad">Necesita una mesa de fabricación (3×3).</p>');
+  else if (!max) notes.push('<p class="bdNote bad">Te faltan materiales (en rojo).</p>');
+  if (!r.pattern && r.items.length > 1) notes.push('<p class="bdNote">Receta sin forma: los materiales pueden ir en cualquier casilla.</p>');
+  for (const n of needs) {
+    if (have(n.opts) >= n.n) continue;
+    const id = n.opts[0], src = SMELT_FROM[id];
+    if (src && !recipeFor(id)) notes.push(`<p class="bdNote">🔥 ${itemName(id)}: se consigue fundiendo ${src.slice(0, 2).map((s) => itemName(s)).join(' o ')} en un horno.</p>`);
+  }
+  const uses = unlocked.filter((u) => u !== r && recipeNeeds(u).some((n) => n.opts.includes(r.out))).slice(0, 14);
+  const owned = p.inv.count(r.out);
+  box.innerHTML = `<div class="bdTop"><button class="bdBack${book.hist.length ? '' : ' nohist'}" data-act="back" title="Volver">←</button><h4 style="color:${RARITY[rarityOf(r.out)][0] === 'Común' ? '#1d1d1d' : RARITY[rarityOf(r.out)][1]};${rarityOf(r.out) ? 'text-shadow:1px 1px 0 #333' : ''}">${itemName(r.out)}${r.n > 1 ? ' ×' + r.n : ''}</h4><em>Tienes ${owned}</em><button class="bdFav${isFav(r) ? ' on' : ''}" data-act="fav" title="${isFav(r) ? 'Quitar de favoritas' : 'Marcar como favorita: aparece primera en la lista'}">${isFav(r) ? '★' : '☆'}</button></div>
+    <div class="bdBody"><div class="bdGrid" style="grid-template-columns:repeat(${w}, var(--c))">${cellHtml}</div><span class="bdArrow">➜</span><div class="bdOut" title="${itemName(r.out)}"><i style="background-image:url(${ICON[r.out]})"></i>${r.n > 1 ? `<b>${r.n}</b>` : ''}</div></div>
+    <div class="bdRight"><div class="bdNeeds">${needHtml}</div></div>
+    ${notes.join('')}
+    <div class="bdBtns"><button data-act="one" ${max ? '' : 'disabled'}>Fabricar${r.n > 1 ? ' ×' + r.n : ''}</button><button data-act="max" ${max > 1 ? '' : 'disabled'}>Todo${max > 1 ? ` (${max} ${max === 1 ? 'vez' : 'veces'})` : ''}</button></div>
+    ${uses.length ? `<div class="bdUses"><span>Se usa en:</span>${uses.map((u) => `<button data-r="${RECIPES.indexOf(u)}" title="${itemName(u.out)}"><i style="background-image:url(${ICON[u.out]})"></i></button>`).join('')}</div>` : ''}`;
+}
+
+// botón «Receta» en la descripción del objeto seleccionado
+function infoRecipeBtn(id) {
+  if (!bookAvailable()) return '';
+  const r = recipeFor(id);
+  return r ? `<button class="infoRec" data-r="${RECIPES.indexOf(r)}" title="Ver cómo se fabrica">📖 Receta</button>` : '';
+}
+
+/* ---------- Selección: doble clic, pintar, mover rápido, teclas ---------- */
+const GATHER_FROM = new Set(['inv', 'chest', 'craft']);
+// doble clic con un objeto en la mano: junta todos los iguales en el cursor
+function gatherToCursor() {
+  const cur = ui.cursor; if (!cur || cur.ench) return false;
+  const max = maxStack(cur.id); if (max <= 1 || cur.count >= max) return false;
+  const lists = [['inv', game.player.inv]]; if (ui.mode === 'chest' && ui.tile) lists.push(['chest', ui.tile.inv]); lists.push(['craft', ui.craft]);
+  let got = false;
+  for (const [, inv] of lists) for (let k = 0; k < inv.slots.length && cur.count < max; k++) {
+    const s = inv.slots[k];
+    if (s && s.id === cur.id && !s.ench) { const m = Math.min(max - cur.count, s.count); cur.count += m; s.count -= m; if (!s.count) inv.slots[k] = null; got = true; }
+  }
+  if (got) sfx.play('click');
+  return got;
+}
+function slotStackOf(el) {
+  const c = el.dataset.c, i = +el.dataset.i;
+  if (c === 'creative') return { id: i, count: 1 };
+  if (c === 'out') return craftResult();
+  if (c === 'trash') return null;
+  return stackAt(c, i);
+}
+function hideInvTip() { const t = $('#invTip'); if (t) t.style.display = 'none'; }
+function invPointerMove(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('#invScreen .slot') || null;
+  ui.hoverEl = el;
+  // con el botón derecho (o «Mitad») apretado y arrastrando: deja uno en cada casilla
+  if (ui.paint && ui.cursor && el && !ui.paint.has(el) && GATHER_FROM.has(el.dataset.c)) {
+    ui.paint.add(el);
+    const s = stackAt(el.dataset.c, +el.dataset.i);
+    if (!s || sameKind(s, ui.cursor)) { slotAction(el.dataset.c, +el.dataset.i, true, false); renderInventory(); }
+  }
+  // descripción flotante (solo con ratón o mando, y sin nada en la mano)
+  const tip = $('#invTip');
+  const s = el && e.pointerType === 'mouse' && !ui.cursor ? slotStackOf(el) : null;
+  if (!s && !(el && el.dataset.c === 'trash' && e.pointerType === 'mouse')) { tip.style.display = 'none'; ui.tipKey = null; return; }
+  const key = s ? s.id + ':' + s.count + ':' + (s.dmg || 0) + (s.ench ? 'e' : '') + el.dataset.c : 'trash';
+  if (ui.tipKey !== key) {
+    ui.tipKey = key;
+    tip.innerHTML = s ? itemInfoHTML(s.id, s) + (el.dataset.c === 'creative' ? '<p class="tipHint">Clic: montón · Clic derecho: uno</p>' : el.dataset.c === 'out' ? '<p class="tipHint">Clic: recoger · Mayús + clic: fabricar todo</p>' : '')
+      : '<h4>Papelera</h4><p>Suelta aquí un objeto para destruirlo.</p>';
+  }
+  tip.style.display = 'block';
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(4, Math.min(innerWidth - w - 4, e.clientX + 16)) + 'px';
+  tip.style.top = Math.max(4, Math.min(innerHeight - h - 4, e.clientY + 18)) + 'px';
+}
+
+/* ---------- Ordenar y mover todo ---------- */
+function sortSlots(inv, a, b) {
+  const st = [];
+  for (let i = a; i < b; i++) {
+    const s = inv.slots[i]; if (!s) continue;
+    const max = s.ench ? 1 : maxStack(s.id);
+    let rest = s.count;
+    if (max > 1) for (const t of st) if (t.id === s.id && !t.ench && (t.dmg || 0) === (s.dmg || 0) && t.count < max) { const k = Math.min(max - t.count, rest); t.count += k; rest -= k; if (!rest) break; }
+    if (rest) st.push({ ...s, count: rest });
+  }
+  const group = (id) => { const it = ITEMS[id]; return it.block ? (it.mech ? 1 : 0) : it.tool ? 2 : it.armor ? 3 : it.food ? 4 : 5; };
+  st.sort((x, y) => group(x.id) - group(y.id) || x.id - y.id || y.count - x.count);
+  for (let i = a; i < b; i++) inv.slots[i] = st[i - a] || null;
+  inv.changed();
+}
+function moveAll(from, a, b, to) {
+  let moved = 0;
+  for (let i = a; i < b; i++) {
+    const s = from.slots[i]; if (!s) continue;
+    const left = to.add(s.id, s.count, s.dmg, s.ench);
+    if (left !== s.count) moved++;
+    if (left) s.count = left; else from.slots[i] = null;
+  }
+  from.changed();
+  return moved;
+}
+function chestBar() {
+  const bar = document.createElement('div'); bar.className = 'chestBar';
+  const mk = (txt, title, fn) => { const b = document.createElement('button'); b.textContent = txt; b.title = title; b.onclick = () => { fn(); sfx.play('click'); renderInventory(); }; bar.append(b); };
+  mk('⬆ Sacar todo', 'Pasa todo el contenido a tu inventario', () => { moveAll(ui.tile.inv, 0, ui.tile.inv.slots.length, game.player.inv); game.player.discoverAll(); });
+  mk('⬇ Guardar mochila', 'Guarda toda la mochila (no la barra rápida)', () => moveAll(game.player.inv, 9, 36, ui.tile.inv));
+  mk('↕ Ordenar', 'Ordena el contenido y junta montones', () => sortSlots(ui.tile.inv, 0, ui.tile.inv.slots.length));
+  return bar;
+}
+
+function initInventory41() {
+  const openRecipe = (idx, keep) => { const r = RECIPES[idx]; if (!r) return; if (keep && book.sel) book.hist.push(book.sel); bookSelect(r, keep); sfx.play('click'); };
+  $('#bookList').addEventListener('click', (e) => { const b = e.target.closest('.recipe'); if (b) openRecipe(+b.dataset.r, false); });
+  $('#bookCats').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; book.cat = b.dataset.cat; book.q = ''; $('#bookSearch').value = ''; renderBook(); });
+  $('#bookSearch').addEventListener('input', (e) => { book.q = e.target.value; renderBook(); });
+  $('#bookOnly').addEventListener('click', () => { book.only = !book.only; renderBook(); });
+  $('#bookDetail').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    const act = b.dataset.act, r = book.sel;
+    if (act === 'back') { book.sel = book.hist.pop() || null; $('#recipeBook')._k = null; renderBook(); sfx.play('click'); }
+    else if (act === 'fav' && r) { toggleFav(r); sfx.play('click'); renderBook(); }
+    else if (act === 'one' && r) craftRecipe(r, 1);
+    else if (act === 'max' && r) craftRecipe(r, 999);
+    else if (b.dataset.r) openRecipe(+b.dataset.r, true);
+    else if (b.dataset.id) {
+      const id = +b.dataset.id, rec = recipeFor(id);
+      if (rec) openRecipe(RECIPES.indexOf(rec), true);
+      else { ui.infoStack = null; showInfo(id); sfx.play('click'); }
+    }
+  });
+  $('#itemInfo').addEventListener('click', (e) => {
+    const b = e.target.closest('.infoRec'); if (!b) return;
+    ui.bookOpen = true; $('#recipeBook').classList.add('show'); $('#bookToggle').classList.add('on');
+    openRecipe(+b.dataset.r, false);
+  });
+  $('#quickBtn').addEventListener('click', () => { ui.quick = !ui.quick; $('#quickBtn').classList.toggle('on', ui.quick); });
+  $('#sortBtn').addEventListener('click', () => { sortSlots(game.player.inv, 9, 36); sfx.play('click'); renderInventory(); });
+  $('#invScreen').addEventListener('pointerleave', hideInvTip);
+  // los ingredientes con varias opciones (cualquier tablón…) van rotando en la vista previa
+  setInterval(() => {
+    if (!ui.mode || !$('#recipeBook').classList.contains('show')) return;
+    book.tick++;
+    for (const i of $$('#bookDetail [data-opts]')) { const o = i.dataset.opts.split(','); i.style.backgroundImage = `url(${ICON[o[book.tick % o.length]]})`; }
+  }, 1100);
+  // teclas sobre la casilla bajo el puntero: 1-9 la cambia con ese espacio de la barra, «soltar» la tira
+  document.addEventListener('keydown', (e) => {
+    if (game.state !== 'inventory' || rebind.active || e.repeat) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    const el = ui.hoverEl; if (!el || !el.isConnected) return;
+    const c = el.dataset.c, i = +el.dataset.i, p = game.player;
+    let n = -1; for (let k = 1; k <= 9; k++) if (e.code === settings.keys['hotbar' + k]) n = k - 1;
+    if (n >= 0) {
+      if (c === 'creative') p.inv.slots[n] = { id: i, count: maxStack(i), dmg: 0 };
+      else if (GATHER_FROM.has(c) && !(c === 'inv' && i === n)) { const a = stackAt(c, i), b = p.inv.slots[n]; if (!a && !b) return; setStackAt(c, i, b); p.inv.slots[n] = a; }
+      else return;
+      e.preventDefault(); hideInvTip(); sfx.play('click'); renderInventory();
+    } else if (e.code === settings.keys.drop && GATHER_FROM.has(c) && !ui.cursor) {
+      const s = stackAt(c, i); if (!s) return;
+      const k = e.ctrlKey ? s.count : 1;
+      p.dropStack({ ...s, count: k }); s.count -= k; if (!s.count) setStackAt(c, i, null);
+      e.preventDefault(); hideInvTip(); renderInventory();
+    }
+  });
+}
+{ // al cerrar el inventario no quedan restos de la interfaz
+  const _close = closeInventory;
+  closeInventory = function () { hideInvTip(); ui.hoverEl = null; ui.paint = null; if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return _close(); };
 }
 
 /* ==========================================================================
@@ -9660,7 +10011,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -9671,7 +10022,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -9696,7 +10047,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -9758,6 +10109,7 @@ class RemotePlayer extends Mob {
     if (!Array.isArray(m.p)) return;
     this.t = { x: m.p[0], y: m.p[1], z: m.p[2], yaw: (m.yaw || 0) + Math.PI };
     if (!this.seen) { this.seen = true; this.pos.set(this.t.x, this.t.y, this.t.z); this.yaw = this.t.yaw; }
+    this.lt = m.lt != null ? m.lt : itemLight(m.held);     // servidores anteriores a la 4.1 no reenvían «lt»
     this.pitch = m.pitch || 0; this.hp = m.hp ?? 20; this.crouch = m.cr ? 1 : 0; if (m.sw) this.swingT = 0.25;
   }
   update(dt) {
@@ -10080,7 +10432,7 @@ class NetClient {
     if ((this.tP += dt) >= 0.1) {
       this.tP = 0;
       this.send({ type: 'player', p: [+p.pos.x.toFixed(2), +p.pos.y.toFixed(2), +p.pos.z.toFixed(2)], yaw: +camera.rotation.y.toFixed(3), pitch: +camera.rotation.x.toFixed(3),
-        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0 });
+        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0, lt: heldLight(p) });
     }
     if ((this.tE += dt) >= 0.2) {
       this.tE = 0;
@@ -12602,6 +12954,25 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.1', name: 'Inventario y guía de crafteos', date: 'noviembre de 2026', items: [
+    'Guía de crafteos nueva: al tocar un objeto ya NO se fabrica solo. Ahora se abre su ficha con la receta dibujada en la cuadrícula, tal como va en la mesa, y solo se fabrica al pulsar «Fabricar».',
+    'La ficha muestra cada material con cuántos tienes y cuántos hacen falta (en verde o en rojo), si necesita mesa de fabricación, y cuántos tienes ya del objeto. Botones «Fabricar» (una vez) y «Todo» (todas las que alcancen).',
+    'Toca un material de la ficha para ver a su vez cómo se fabrica, y vuelve con la flecha. Si un material sale del horno, la ficha lo indica. «Se usa en» enseña qué otras cosas se fabrican con ese objeto.',
+    'Buscador de recetas, pestañas por categoría y botón «✔ Puedo» para ver solo lo que puedes fabricar ahora mismo.',
+    'Recetas favoritas: márcalas con ☆ en su ficha y aparecen primeras en la lista y en la pestaña «★ Favoritas».',
+    'Al seleccionar un objeto del inventario aparece el botón «📖 Receta» que abre su ficha en la guía.',
+    'Descripción flotante al pasar el ratón (o el cursor del mando) sobre cualquier objeto, con rareza y estadísticas.',
+    'Los objetos poco comunes, raros, épicos… se distinguen por un borde del color de su rareza.',
+    'Doble clic (o doble toque) con un objeto en la mano: junta todos los iguales en un solo montón.',
+    'Arrastrar con el clic derecho (o con «½ Mitad» activado) reparte un objeto en cada casilla por la que pasas.',
+    'Botón «⇄ Rápido»: al tocar un objeto pasa directo al otro lado (mochila ↔ barra, cofre, horno, armadura). Es el Mayús + clic, ahora también en pantallas táctiles.',
+    'Botón «↕ Ordenar»: ordena la mochila y junta los montones sueltos. Los cofres tienen además «Sacar todo», «Guardar mochila» y «Ordenar».',
+    'Con el ratón sobre una casilla, las teclas 1-9 la intercambian con ese espacio de la barra rápida y la tecla de soltar tira el objeto (con Ctrl, el montón entero).',
+    'Inventario creativo con buscador que busca en todas las pestañas a la vez.',
+    'Luz dinámica: las antorchas, faroles, piedra luminosa, lámparas y cualquier objeto que emita luz alumbran a tu alrededor mientras los llevas en la mano principal o en la secundaria. La luz ilumina el terreno, el agua, las criaturas y lo que llevas en la mano; las antorchas parpadean y se apagan con la cabeza bajo el agua.',
+    'En multijugador también ves la luz que llevan los demás jugadores (el servidor incluido se actualizó para enviarla). Se puede desactivar en Ajustes → Juego → Luz dinámica.',
+    'La descripción del objeto seleccionado tiene más espacio y la interfaz se adapta mejor al móvil en vertical y en horizontal.',
+  ] },
   { v: '4.0', name: 'Gran actualización', date: 'noviembre de 2026', items: [
     'Eventos dinámicos: nueve sucesos que aparecen solos según la hora, el lugar y la suerte, cada uno con su duración, efectos, música y recompensa. Una barra arriba de la pantalla muestra el evento, su progreso y el tiempo que queda.',
     'Lluvia de meteoritos (noche): caen estrellas que abren cráteres con fragmentos estelares.',
@@ -15569,6 +15940,7 @@ function renderGameSettings() {
   row('Eventos dinámicos', sel, 'Meteoritos, invasiones, tormentas, festivales…');
   const chk = (key, after) => { const i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!settings[key]; i.onchange = () => { settings[key] = i.checked; saveSettings(); after && after(); }; return i; };
   row('Calidad automática', chk('autoQuality', () => perfAuto.arm()), 'Baja la calidad sola si el juego va lento');
+  row('Luz dinámica', chk('dynLight'), 'Las antorchas y otros objetos luminosos alumbran mientras los llevas en la mano');
   row('Modo ahorro', chk('saver', applySaver), 'Para móviles modestos: sin nubes ni hojas detalladas y menos distancia');
   const st = document.createElement('div'); st.className = 'setSection';
   const used = [...saveStore.cache.keys()].filter((k) => k.startsWith(SAVE_PREFIX)).reduce((n, k) => n + saveStore.size(k), 0);
@@ -15580,6 +15952,50 @@ function renderGameSettings() {
   const tab = $('#settingsScreen .stab[data-tab="game"]'); if (tab) tab.addEventListener('click', renderGameSettings);
   const _open = openSettings; openSettings = function (...a) { const r = _open.apply(this, a); renderGameSettings(); return r; };
 }
+/* ==========================================================================
+   §31 LUZ DINÁMICA (4.1) — los objetos luminosos alumbran en la mano
+   Cualquier objeto cuyo bloque emite luz (antorchas, faroles, piedra luminosa,
+   lámparas, cristales…) ilumina alrededor mientras está en la mano principal
+   o en la secundaria. También se ve la luz de los demás jugadores.
+   Es luz visual: no cambia dónde aparecen los monstruos ni hace crecer cultivos.
+   ========================================================================== */
+settings.dynLight ??= true;
+function itemLight(id) {
+  const it = ITEMS[id]; if (!it) return 0;
+  return Math.max(it.light || 0, it.block ? (BLOCKS[it.block]?.light || 0) : 0);
+}
+// las antorchas (fuego) se apagan con la cabeza bajo el agua; el resto no
+const isFlame = (id) => /antorcha/i.test(ITEMS[id]?.name || '');
+function heldLight(p) {
+  let l = 0;
+  for (const s of [p.held(), p.offhand.slots[0]]) {
+    if (!s) continue;
+    const v = itemLight(s.id);
+    if (v > l && !(p.headInWater && isFlame(s.id))) l = v;
+  }
+  return l;
+}
+const dynLight = {
+  cur: 0, t: 0, flame: false,
+  update(dt) {
+    const U = sharedUniforms.uDyn.value, p = game.player;
+    const on = settings.dynLight && p && (game.state === 'playing' || game.state === 'inventory' || game.state === 'paused');
+    // jugador local: sube y baja suave al cambiar de objeto y parpadea un poco si es fuego
+    const target = on && !p.dead ? heldLight(p) : 0;
+    if (target) this.flame = [p.held(), p.offhand.slots[0]].some((s) => s && isFlame(s.id) && itemLight(s.id) === target);
+    this.cur += (target - this.cur) * Math.min(1, dt * 10); if (this.cur < 0.05) this.cur = 0;
+    this.t += dt;
+    const flick = this.flame ? Math.sin(this.t * 11) * 0.18 + Math.sin(this.t * 23.7) * 0.1 : 0;
+    U[0].set(camera.position.x, camera.position.y - 0.25, camera.position.z, this.cur > 0 ? Math.max(0, this.cur + flick) : 0);
+    // otros jugadores con luz en la mano: los 3 más cercanos
+    let k = 1;
+    if (on && net.remote && net.remote.size) {
+      const near = [...net.remote.values()].filter((r) => r.lt > 0 && !r.dead && r.seen).map((r) => [r, r.pos.distanceToSquared(p.pos)]).filter((x) => x[1] < 48 * 48).sort((a, b) => a[1] - b[1]);
+      for (const [r] of near) { if (k > 3) break; U[k++].set(r.pos.x, r.pos.y + 1.4, r.pos.z, r.lt); }
+    }
+    for (; k < 4; k++) U[k].w = 0;
+  },
+};
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
