@@ -4,7 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#1d1d1d">
-<title>MiniCraft 3.5</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>MiniCraft 3.6</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -593,11 +596,65 @@
   .bar { border-radius: 3px; overflow: hidden; }
   #loadBar { background: linear-gradient(180deg, #a6f07c, #4c9a32); box-shadow: inset 0 2px 0 rgba(255,255,255,.35); }
   @media (max-width: 480px) { .card { padding: 16px 14px 14px; } .card h2 { font-size: 24px; } .btn { font-size: 17px; } #worldList { grid-template-columns: 1fr; } }
+
+  /* §35 Salas multijugador (3.6) */
+  .netOnly { display: none !important; }
+  body.net-on .netOnly { display: block !important; }
+  .mpCard { width: min(560px, 94vw); max-height: 94vh; overflow-y: auto; }
+  #mpInvite { padding: 8px 10px; margin: 6px 0; background: rgba(90,180,90,.18); border: 2px solid #3d7a3d; border-radius: 5px; font-size: 14px; }
+  .codeRow { display: flex; gap: 6px; } .codeRow input { flex: 1; font-size: 22px; letter-spacing: 4px; text-transform: uppercase; text-align: center; }
+  #joinPass, #crPass { margin-top: 6px; }
+  .lobbyListHead { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 4px; font-size: 14px; color: #c8ccd6; }
+  #roomList { max-height: 34vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  .roomItem { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .roomItem div { flex: 1; min-width: 0; } .roomItem b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .roomItem small { color: #aab0bb; font-size: 12.5px; } .roomItem.full { opacity: .6; }
+  .roomEmpty { padding: 14px; text-align: center; color: #aab0bb; font-size: 14px; }
+  .crGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; } .crGrid input, .crGrid select { width: 100%; }
+  .mpCard select, .roomCard select { width: 100%; padding: 7px; font: 15px var(--font); background: #1c1d22; color: #fff; border: 2px solid #0b0b0b; border-radius: 4px; }
+  .mpCard input[type=range], .roomCard input[type=range] { width: 100%; accent-color: var(--accent); }
+  label.check { display: flex; align-items: center; gap: 8px; margin: 7px 0; font-size: 14px; color: #dde; cursor: pointer; }
+  label.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  #lobbyStatus { min-height: 20px; margin: 8px 0 2px; font-size: 14px; color: #ffe14d; text-align: center; }
+  .roomCard { width: min(820px, 96vw); max-height: 94vh; overflow-y: auto; }
+  .roomCode { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; background: rgba(0,0,0,.4); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .roomCode span { color: #aab0bb; font-size: 13px; } .roomCode b { font-size: 28px; letter-spacing: 5px; color: #ffe14d; margin-right: auto; user-select: all; }
+  #roomInfo { font-size: 13.5px; color: #c8ccd6; margin: 8px 0; }
+  .roomCols { display: grid; grid-template-columns: 1.1fr 1fr; gap: 14px; } .roomCols h3 { margin: 4px 0 6px; font-size: 16px; }
+  #roomPlayers { display: flex; flex-direction: column; gap: 5px; }
+  .rp { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 7px 9px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; }
+  .rp b { margin-right: auto; } .rp .tag { font-size: 11.5px; padding: 2px 6px; border-radius: 3px; background: #3b3f4a; }
+  .rp .tag.host { background: #8a6d14; } .rp .tag.trusted { background: #2f6b3c; } .rp .tag.visitor { background: #5a3434; } .rp .tag.me { background: #2e4f7a; }
+  .rp button { padding: 4px 7px; font-size: 12px; }
+  #roomSettings.readonly input, #roomSettings.readonly select { pointer-events: none; opacity: .7; } #roomSettings.readonly #rsSave, #roomSettings.readonly .row { display: none; }
+  #netReconnect { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 60; display: none; flex-direction: column; align-items: center; gap: 6px; padding: 14px 20px;
+    background: rgba(12,12,16,.88); border: 2px solid #b8862b; border-radius: 6px; text-align: center; pointer-events: auto; }
+  body.net-lost #netReconnect { display: flex; }
+  #netReconnect b { color: #ffcf5a; font-size: 18px; } #netReconnect span { font-size: 14px; color: #dde; }
+  @media (max-width: 640px) { .roomCols, .crGrid { grid-template-columns: 1fr; } .roomCode b { font-size: 22px; } }
+
+  /* §36 Pantalla completa y mandos */
+  #fsMenuBtn { position: fixed; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); z-index: 70; display: none; width: 44px; height: 44px;
+    font-size: 24px; line-height: 1; color: #fff; background: rgba(0,0,0,.45); border: 2px solid #0b0b0b; border-radius: 6px; cursor: pointer; }
+  #fsMenuBtn:hover { background: rgba(255,255,255,.15); }
+  body.in-menu #fsMenuBtn { display: block; }
+  body.no-fs .fsOnly:not(#fsMenuBtn):not(#pFull) { display: none !important; }
+  #padCursor { position: fixed; left: 0; top: 0; z-index: 9999; width: 22px; height: 22px; margin: -3px 0 0 -3px; pointer-events: none; display: none;
+    background: no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M3 2 L3 18 L7.5 14 L10.5 20.5 L13.5 19 L10.5 12.8 L16.5 12.8 Z' fill='%23fff' stroke='%23000' stroke-width='1.6' stroke-linejoin='round'/%3E%3C/svg%3E"); filter: drop-shadow(0 0 3px rgba(255,225,77,.9)); }
+  body.pad-cursor #padCursor { display: block; }
+  body.pad-on #touchUI { display: none !important; }
+  .padFocus { outline: 3px solid #ffe14d !important; outline-offset: 2px; }
+  .padStatus { display: flex; align-items: center; gap: 10px; padding: 10px; margin-bottom: 8px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; font-size: 14px; }
+  .padStatus i { font-style: normal; font-size: 26px; } .padStatus.on { border-color: #3d7a3d; }
+  .padBtn { min-width: 76px; }
 </style>
 </head>
 <body>
 <div id="menuBg"><div class="fallback"></div></div>
 
+<button id="fsMenuBtn" class="fsOnly" title="Pantalla completa (F2)">⛶</button>
+<div id="padCursor"></div>
+<div id="netReconnect"><b>Conexión perdida</b><span id="netRecMsg">Reconectando…</span><button id="netRecQuit" class="btn small">Salir al menú</button></div>
 <div id="hud">
   <div id="crosshair"></div>
   <div id="abilityCd"><i></i></div>
@@ -643,6 +700,7 @@
       <button class="tbtn" data-act="quests">📜</button>
       <button class="tbtn" data-act="map">🗺</button>
       <button class="tbtn" data-act="inv">🎒</button>
+      <button class="tbtn fsOnly" id="fsTouch" title="Pantalla completa">⛶</button>
       <button class="tbtn" data-act="pause">II</button>
     </div>
   </div>
@@ -657,7 +715,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 3.5!</span>
+      <span class="ver">¡Versión 3.6!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -667,7 +725,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 3.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 3.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -693,18 +751,72 @@
   </div>
 </div>
 <div id="mpScreen" class="screen">
-  <div class="card">
-    <h2>Multijugador</h2><p class="cardSub">Entra a un servidor de MiniCraft para jugar con otras personas.</p>
-    <label class="field" for="mpName">Tu nombre</label>
-    <input id="mpName" type="text" maxlength="16" autocomplete="off">
-    <label class="field" for="mpUrl">Dirección del servidor</label>
-    <input id="mpUrl" type="text" placeholder="localhost:8080 o wss://mi-servidor.com" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <label class="field" for="mpPass">Contraseña (solo si el servidor la pide)</label>
-    <input id="mpPass" type="text" maxlength="60" autocomplete="off">
-    <p id="mpStatus"></p>
-    <button id="mpGo" class="btn primary">Conectar</button>
-    <button id="mpBack" class="btn">Volver</button>
-    <p class="mpHelp">El servidor está en la carpeta <b>server</b> del repositorio: se inicia con <b>node server.js</b> y sus instrucciones están en el LEEME de esa carpeta.</p>
+  <div class="card mpCard">
+    <div id="mpConnect">
+      <h2>Multijugador</h2><p class="cardSub">Conéctate a un servidor de MiniCraft para crear una sala o unirte a la de tus amigos.</p>
+      <p id="mpInvite" hidden></p>
+      <label class="field" for="mpName">Tu nombre</label>
+      <input id="mpName" type="text" maxlength="16" autocomplete="off">
+      <label class="field" for="mpUrl">Dirección del servidor</label>
+      <input id="mpUrl" type="text" placeholder="localhost:8080 o wss://mi-servidor.com" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <label class="field" for="mpPass">Contraseña del servidor (solo si la pide)</label>
+      <input id="mpPass" type="text" maxlength="60" autocomplete="off">
+      <p id="mpStatus"></p>
+      <button id="mpGo" class="btn primary">Conectar</button>
+      <button id="mpResume" class="btn" hidden></button>
+      <button id="mpBack" class="btn">Volver</button>
+      <p class="mpHelp">El servidor está en la carpeta <b>server</b> del repositorio: se inicia con <b>node server.js</b> y sus instrucciones están en el LEEME de esa carpeta.</p>
+    </div>
+    <div id="mpLobby" hidden>
+      <div class="cardHead"><h2>🏠 <span id="lobbyServer">Servidor</span></h2></div>
+      <div class="stabs"><button class="stab on" data-ltab="join">Unirse a una sala</button><button class="stab" data-ltab="create">Crear sala</button></div>
+      <div class="lobbyTab" data-ltab="join">
+        <label class="field" for="joinCode">Código de invitación</label>
+        <div class="codeRow"><input id="joinCode" type="text" maxlength="8" placeholder="ABC123" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="joinGo" class="btn primary small">Unirse</button></div>
+        <input id="joinPass" type="text" maxlength="40" placeholder="Contraseña de la sala (solo si tiene)" autocomplete="off">
+        <div class="lobbyListHead"><span>Salas públicas</span><button id="roomsRefresh" class="btn small" title="Actualizar">↻</button></div>
+        <div id="roomList"></div>
+      </div>
+      <div class="lobbyTab" data-ltab="create" hidden>
+        <label class="field" for="crName">Nombre de la sala</label>
+        <input id="crName" type="text" maxlength="32" autocomplete="off">
+        <div class="crGrid">
+          <label class="field">Semilla<input id="crSeed" type="text" maxlength="32" placeholder="Aleatoria"></label>
+          <label class="field">Modo<select id="crMode"><option value="survival">Supervivencia</option><option value="creative">Creativo</option></select></label>
+          <label class="field">Jugadores máximos: <b id="crMaxV">8</b><input id="crMax" type="range" min="1" max="16" value="8"></label>
+          <label class="field">Quién puede construir<select id="crBuild"><option value="all">Todos</option><option value="trusted">Anfitrión y jugadores de confianza</option><option value="host">Solo el anfitrión</option></select></label>
+        </div>
+        <label class="check"><input id="crPvp" type="checkbox" checked> Combate entre jugadores (PvP)</label>
+        <label class="check"><input id="crCheats" type="checkbox" checked> Trucos de sala (/tiempo y /clima para anfitrión y confianza)</label>
+        <label class="check"><input id="crPriv" type="checkbox"> Privada: no aparece en la lista, solo se entra con el código</label>
+        <input id="crPass" type="text" maxlength="40" placeholder="Contraseña de la sala (opcional)" autocomplete="off">
+        <button id="crGo" class="btn primary">Crear sala</button>
+      </div>
+      <p id="lobbyStatus"></p>
+      <button id="lobbyLeave" class="btn">Desconectar</button>
+    </div>
+  </div>
+</div>
+<div id="roomScreen" class="screen">
+  <div class="card wideCard roomCard">
+    <div class="cardHead"><h2>👥 <span id="roomName">Sala</span></h2></div>
+    <div class="roomCode"><span>Código de invitación</span><b id="roomCode">------</b><button id="roomCopy" class="btn small">Copiar código</button><button id="roomLink" class="btn small">Copiar enlace</button></div>
+    <p id="roomInfo"></p>
+    <div class="roomCols">
+      <div><h3>Jugadores <span id="roomCount"></span></h3><div id="roomPlayers"></div></div>
+      <div id="roomSettings"><h3>Configuración</h3>
+        <label class="field">Nombre<input id="rsName" type="text" maxlength="32"></label>
+        <label class="field">Jugadores máximos: <b id="rsMaxV">8</b><input id="rsMax" type="range" min="1" max="16" value="8"></label>
+        <label class="field">Quién puede construir<select id="rsBuild"><option value="all">Todos</option><option value="trusted">Anfitrión y jugadores de confianza</option><option value="host">Solo el anfitrión</option></select></label>
+        <label class="check"><input id="rsPvp" type="checkbox"> Combate entre jugadores (PvP)</label>
+        <label class="check"><input id="rsCheats" type="checkbox"> Trucos de sala (/tiempo y /clima)</label>
+        <label class="check"><input id="rsPriv" type="checkbox"> Privada (solo con código)</label>
+        <label class="field">Contraseña<input id="rsPass" type="text" maxlength="40" placeholder="Sin contraseña"></label>
+        <button id="rsSave" class="btn primary small">Guardar cambios</button>
+        <div class="row"><button id="roomUnban" class="btn small">Levantar vetos</button><button id="roomDelete" class="btn small danger">Borrar sala</button></div>
+      </div>
+    </div>
+    <button id="roomClose" class="btn primary">Cerrar</button>
   </div>
 </div>
 <div id="createScreen" class="screen" data-mode="survival">
@@ -732,7 +844,7 @@
   <div class="card settingsCard">
     <h2>Ajustes</h2>
     <div class="stabs" role="tablist">
-      <button class="stab on" data-tab="video" role="tab">Gráficos</button><button class="stab" data-tab="audio" role="tab">Sonido</button><button class="stab" data-tab="controls" role="tab">Controles</button><button class="stab" data-tab="net" role="tab">Multijugador</button>
+      <button class="stab on" data-tab="video" role="tab">Gráficos</button><button class="stab" data-tab="audio" role="tab">Sonido</button><button class="stab" data-tab="controls" role="tab">Controles</button><button class="stab" data-tab="pad" role="tab">Mando</button><button class="stab" data-tab="net" role="tab">Multijugador</button>
     </div>
     <div class="tabPanels">
       <div class="tabPanel on" data-tab="video"><div id="settingsList"></div></div>
@@ -744,6 +856,7 @@
             <button id="btnTouchLayout" class="btn small">Personalizar controles táctiles</button></div>
         </div>
       </div>
+      <div class="tabPanel" data-tab="pad"><div id="padPanel"></div></div>
       <div class="tabPanel" data-tab="net"><div class="setSection"><b>Multijugador</b><p id="netStatus">Estado: sin conexión (un jugador)</p><p>Para jugar con otras personas, sal al menú principal y entra en «Multijugador» con la dirección de un servidor. El servidor está en la carpeta <b>server</b> del repositorio y se inicia con <b>node server.js</b>.</p></div>
     </div>
     </div>
@@ -781,6 +894,8 @@
     <button id="pResume" class="btn primary">Volver al juego</button>
     <div class="row"><button id="pMap" class="btn">🗺 Mapa</button><button id="pAch" class="btn">🏆 Logros</button></div>
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
+    <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
+    <button id="pFull" class="btn fsOnly">⛶ Pantalla completa</button>
     <button id="pSettings" class="btn">Ajustes</button>
     <button id="pQuit" class="btn">Guardar y salir al menú</button>
   </div>
@@ -2793,6 +2908,7 @@ class World {
     const lx = x & 15, lz = z & 15, i = lx | (lz << 4) | (y << 8);
     const old = c.blocks[i];
     if (old === id && c.meta[i] === meta) return false;
+    const om = c.meta[i];
     c.blocks[i] = id; c.meta[i] = meta;
     const s = y >> 4;
     if (old && !id) c.counts[s]--; else if (!old && id) c.counts[s]++;
@@ -2808,7 +2924,7 @@ class World {
     if (B_LIGHT[id]) c.lights.push([x, y, z, B_LIGHT[id]]);
     if (SPECIAL[old]) trackSpecial(c, i, SPECIAL[old], false);
     if (SPECIAL[id]) trackSpecial(c, i, SPECIAL[id], true);
-    if (typeof bus !== 'undefined') bus.emit('block', { x, y, z, id, meta });
+    if (typeof bus !== 'undefined') bus.emit('block', { x, y, z, id, meta, old, om });
     if (this.onChange) this.onChange(x, y, z, old, id, oldHm !== c.hm[ci] ? [oldHm, c.hm[ci]] : null);
     return true;
   }
@@ -8633,7 +8749,7 @@ const game = {
     startPanorama();
   },
   releaseInputs() {
-    input.keys.clear(); input.primary = input.secondary = input.flyUp = input.flyDown = false; input.joy.x = input.joy.y = 0;
+    input.keys.clear(); input.padActs.clear(); input.primary = input.secondary = input.flyUp = input.flyDown = false; input.joy.x = input.joy.y = 0;
     this.mining = null; crack.visible = false; this.player && (this.player.eatT = 0);
     $$('.tbtn').forEach((b) => b.classList.remove('pressed'));
     const k = $('#joyKnob'); if (k) k.style.transform = 'translate(-50%, -50%)';
@@ -9411,7 +9527,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 3.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 3.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -9436,7 +9552,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -9842,7 +9958,7 @@ class NetClient {
   }
 }
 const net = new NetClient();
-bus.on('block', (d) => { if (net.active && !net.applying) net.send({ type: 'block', ...d }); });
+bus.on('block', (d) => { if (net.active && !net.applying) net.onLocalBlock(d); });
 bus.on('sleep', () => { if (net.active) net.send({ type: 'sleep' }); });
 bus.on('died', (d) => { if (net.active) net.send({ type: 'died', msg: game.lastPvp ? `lo derrotó ${game.lastPvp}` : '' }); game.lastPvp = null; });
 
@@ -10341,7 +10457,7 @@ const KEY_ACTIONS = [
   ['attack', 'Minar / atacar', 'Mouse0'], ['use', 'Usar / colocar / comer', 'Mouse2'],
   ['lookUp', 'Mirar arriba', 'ArrowUp'], ['lookDown', 'Mirar abajo', 'ArrowDown'], ['lookLeft', 'Mirar a la izquierda', 'ArrowLeft'], ['lookRight', 'Mirar a la derecha', 'ArrowRight'],
   ['inventory', 'Inventario', 'KeyE'], ['drop', 'Soltar objeto', 'KeyQ'], ['map', 'Mapa', 'KeyM'], ['achievements', 'Logros', 'KeyL'],
-  ['chat', 'Chat (multijugador)', 'KeyT'], ['swapHand', 'Cambiar de mano', 'KeyX'], ['quests', 'Registro de misiones', 'KeyJ'], ['fly', 'Volar (creativo)', 'KeyF'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
+  ['chat', 'Chat (multijugador)', 'KeyT'], ['swapHand', 'Cambiar de mano', 'KeyX'], ['quests', 'Registro de misiones', 'KeyJ'], ['fly', 'Volar (creativo)', 'KeyF'], ['fullscreen', 'Pantalla completa', 'F2'], ['debug', 'Información (FPS)', 'F3'], ['pause', 'Pausa', 'KeyP'],
   ['hotbarNext', 'Siguiente espacio', 'WheelDown'], ['hotbarPrev', 'Espacio anterior', 'WheelUp'],
   ...Array.from({ length: 9 }, (_, i) => [`hotbar${i + 1}`, `Espacio ${i + 1} de la barra`, `Digit${i + 1}`]),
 ];
@@ -10364,7 +10480,8 @@ function keyName(code) {
   if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
   return code;
 }
-const down = (action) => input.keys.has(settings.keys[action]);
+input.padActs = new Set();             // acciones mantenidas desde un mando (§36)
+const down = (action) => input.keys.has(settings.keys[action]) || input.padActs.has(action);
 const actionsFor = (code) => KEY_ACTIONS.filter(([id]) => settings.keys[id] === code).map(([id]) => id);
 
 // ¿Hay que usar el modo sin captura del ratón?
@@ -10380,7 +10497,11 @@ function rotateCam(dx, dy) {
 function pressCode(code, ev) {
   if (input.keys.has(code) && !code.startsWith('Wheel')) return;
   input.keys.add(code);
-  for (const a of actionsFor(code)) {
+  for (const a of actionsFor(code)) actionDown(a, ev);
+}
+// Una acción se activa (desde el teclado, el ratón, los botones táctiles o un mando)
+function actionDown(a, ev) {
+  {
     const p = game.player;
     switch (a) {
       case 'attack': input.primary = true; break;
@@ -10399,6 +10520,7 @@ function pressCode(code, ev) {
       case 'quests': questUI.show(); break;
       case 'dodge': combat.dodge(); break;
       case 'fly': if (game.mode === 'creative') { p.flying = !p.flying; p.vel.y = 0; } break;
+      case 'fullscreen': toggleFullscreen(); break;
       case 'debug': settings.showFps = !settings.showFps; saveSettings(); break;
       case 'drop': {
         const s = p.held();
@@ -10413,8 +10535,9 @@ function pressCode(code, ev) {
 }
 function releaseCode(code) {
   input.keys.delete(code);
-  for (const a of actionsFor(code)) { if (a === 'attack') input.primary = false; if (a === 'use') input.secondary = false; }
+  for (const a of actionsFor(code)) actionUp(a);
 }
+function actionUp(a) { if (a === 'attack') input.primary = false; if (a === 'use') input.secondary = false; }
 
 // Teclas de mirar (útiles sin ratón capturado) — llamado desde updatePlayer
 function keyLook(dt) {
@@ -12335,6 +12458,25 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '3.6', name: 'Salas multijugador', date: 'noviembre de 2026', items: [
+    'Salas: el servidor ahora aloja muchos mundos a la vez. Al conectarte ves la recepción con las salas públicas y puedes crear la tuya o entrar con un código.',
+    'Código de invitación de 6 caracteres para cada sala, botón para copiarlo y enlace de invitación (?sala=CÓDIGO) que abre el juego listo para entrar.',
+    'Al crear la sala eliges nombre, semilla, modo, límite de jugadores, PvP, trucos, quién puede construir, si es privada (solo con código) y una contraseña opcional.',
+    'Anfitrión: el dueño de la sala la configura en Pausa → Sala y jugadores (límite de jugadores, PvP, trucos, permisos, privacidad, nombre y contraseña) aunque ya haya gente jugando.',
+    'Gestión de jugadores: el anfitrión da o quita confianza, expulsa, veta, levanta los vetos, cede la sala a otro jugador o la borra.',
+    'Si el dueño no está, otro jugador pasa a ser anfitrión temporal (primero los de confianza) y el dueño recupera el control al volver.',
+    'Permisos de construcción: todos, solo el anfitrión y los de confianza, o solo el anfitrión. Los visitantes pueden explorar, luchar, comerciar y chatear, pero no cambiar bloques ni cofres; el servidor rechaza y deshace cualquier cambio sin permiso.',
+    'Reconexión automática: si se corta la conexión, el juego sigue y vuelve a entrar solo a la misma sala (hasta 12 intentos). Lo que construyas mientras tanto se envía al volver.',
+    'Después de recargar la página aparece «Volver a la sala» para entrar directo a la última sala.',
+    'Cada sala guarda su propio mundo, la hora, el clima, los jefes derrotados y el inventario de cada jugador. Las salas vacías se guardan y se descargan de la memoria.',
+    'Comandos de sala en el chat: /codigo, /list, /semilla, /tiempo y /clima (anfitrión y confianza) y /expulsar.',
+    'Servidor: protocolo 4, la sala pública INICIO conserva el mundo de siempre (data/world.json) y hay nuevas opciones --max, --rooms y --lobby y comandos de consola rooms y close.',
+    'Pantalla completa: botón ⛶ en el menú principal, en la pausa y en la barra táctil, y la acción «Pantalla completa» (F2, reasignable). En iPhone se explica cómo añadir el juego a la pantalla de inicio.',
+    'Mandos por Bluetooth y USB (Xbox, PlayStation, Switch Pro, 8BitDo y genéricos): stick izquierdo para moverse (analógico), stick derecho para la cámara y gatillos para minar y usar.',
+    'Con el mando también se manejan todos los menús: aparece un cursor (stick o cruceta), A hace clic, X clic derecho, B vuelve, LB/RB cambian de pestaña, el stick derecho desplaza las listas y la cruceta ← → ajusta deslizadores y listas.',
+    'Ajustes → Mando: estado del mando, sensibilidad, zona muerta, velocidad del cursor, invertir eje Y, vibración y asignación de cada botón. Usa la misma lista de acciones que el teclado, así que las acciones de futuras versiones se podrán asignar sin cambios.',
+    'Vibración al recibir daño y al golpear. Al usar el mando en el móvil se ocultan los controles táctiles, y vuelven al tocar la pantalla.',
+  ] },
   { v: '3.5', name: 'Dimensiones', date: 'noviembre de 2026', items: [
     'Dos dimensiones nuevas con generación, cielo, niebla, luz, sonidos y música propios: el Inframundo y el Vacío.',
     'Portal al Inframundo: construye un marco cerrado de obsidiana (hueco de 2×3 o mayor) y enciéndelo con el Encendedor (lingote de hierro + pedernal).',
@@ -12449,7 +12591,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [
-  { v: '3.6', name: 'Multijugador', items: ['Salas con código de invitación y límite de jugadores elegido por el anfitrión.', 'Permisos de construcción, reconexión y gestión del anfitrión.'] },
   { v: '4.0', name: 'Gran actualización', items: ['Eventos dinámicos: lluvia de meteoritos, invasiones nocturnas, tormentas eléctricas y fenómenos mágicos.', 'Catálogo de objetos, panel de criaturas y registro de exploración.', 'Música por bioma y por dimensión.', 'Guardado en IndexedDB, optimización y pulido general.'] },
 ];
 function openNews() {
@@ -13415,6 +13556,677 @@ COMMANDS.push({ n: 'dimension', a: ['dim', 'dimensión'], use: '/dimension <mund
   if (t === dims.dim()) return chatUI.add(`Ya estás en ${DIM_NAMES[t]}`);
   dims.travel(t, t === 2 || (t === 0 && dims.dim() === 2) ? 1 : 0);
 } });
+/* ==========================================================================
+   §35 SALAS MULTIJUGADOR (3.6)
+   --------------------------------------------------------------------------
+   El servidor (server/server.js) aloja salas: cada una es un mundo propio con
+   un código de invitación, un anfitrión, un límite de jugadores y permisos.
+     · Recepción: al conectar, el servidor manda la lista de salas públicas.
+       Desde ahí se entra con un código o se crea una sala nueva.
+     · Anfitrión: el dueño de la sala (o, si no está, el jugador de confianza
+       más antiguo, o el más antiguo). Cambia el límite de jugadores, el PvP,
+       los trucos, quién construye y la privacidad; da confianza, expulsa,
+       veta, cede la sala o la borra.
+     · Permisos: quien no puede construir no rompe ni pone bloques ni abre
+       cofres. El servidor es la autoridad: si igual llega un cambio, lo
+       rechaza y el cliente lo deshace.
+     · Reconexión: si se corta la conexión, el juego sigue y vuelve a entrar
+       solo a la misma sala; lo construido mientras tanto se envía al volver.
+       Tras recargar la página, «Volver a la sala» entra directo, y los
+       enlaces de invitación (?sala=CÓDIGO&srv=DIRECCIÓN) también.
+   ========================================================================== */
+const BUILD_NAMES = { all: 'todos construyen', trusted: 'construyen el anfitrión y los de confianza', host: 'solo construye el anfitrión' };
+const ROLE_NAMES = { host: 'Anfitrión', trusted: 'Confianza', member: 'Jugador', visitor: 'Visitante' };
+const FREE_INTERACT = new Set(['table', 'enchant', 'bed', 'sit']);      // usos que no cambian el mundo
+const NET_PROTOCOL = 4;
+const RECONNECT_TRIES = 12;
+
+Object.assign(NetClient.prototype, {
+  // Conexión de bajo nivel. intent: { code, pass, resume } o { create: {...} } o nada (mostrar recepción)
+  connect(url, intent) {
+    let ws;
+    try { ws = new WebSocket(url); } catch (e) { this.status = 'Dirección no válida'; if (this.reconnecting) this.scheduleRetry(); return; }
+    this.ws = ws; this.intent = intent || null; this.kickReason = null; this.serverClosed = false;
+    if (!this.reconnecting) this.status = 'Conectando…';
+    const timer = setTimeout(() => { if (ws.readyState === 0) { if (!this.reconnecting) this.status = 'El servidor no responde'; ws.close(); } }, 9000);
+    ws.onopen = () => { clearTimeout(timer); if (!this.reconnecting) this.status = 'Entrando…'; this.send({ type: 'hello', v: NET_PROTOCOL, name: this.myName, token: settings.netToken, pass: this.srvPass || undefined }); };
+    ws.onmessage = (e) => { if (this.ws !== ws) return; let m; try { m = JSON.parse(e.data); } catch { return; } try { this.receive(m); } catch (err) { console.error('red:', err); } };
+    ws.onerror = () => { if (this.ws === ws && !this.active && !this.reconnecting) this.status = 'No se pudo conectar con el servidor'; };
+    ws.onclose = () => {
+      clearTimeout(timer); if (this.ws !== ws) return;
+      this.ws = null;
+      if (this.reconnecting) { if (this.kickReason) return this.giveUp(this.kickReason); return this.scheduleRetry(); }
+      if (this.active && (!this.kickReason || this.serverClosed)) return this.startReconnect();
+      const reason = this.kickReason || (this.active ? 'Se perdió la conexión con el servidor' : /Conectando|Entrando/.test(this.status) ? 'No se pudo conectar con el servidor' : this.status);
+      if (this.active) { this.cleanup(); game.quitToMenu(); showScreen('mpScreen'); }
+      this.status = reason;          // (salir al menú deja el estado en «Desconectado»)
+      roomsUI.showConnect();
+    };
+  },
+  join(url, name, pass, intent) {
+    this.leave();
+    url = NetClient.normalize(url);
+    if (!url) { this.status = 'Escribe la dirección del servidor'; return; }
+    if (location.protocol === 'https:' && /^ws:\/\/(?!localhost|127\.0\.0\.1)/i.test(url)) {
+      this.status = 'Esta página es segura (https) y el navegador solo deja conectar con wss:// o con ws://localhost. Abre el juego desde la dirección del propio servidor (por ejemplo http://' + url.slice(5) + ').'; return;
+    }
+    this.url = url; this.myName = name; this.srvPass = pass || '';
+    this.connect(url, intent);
+  },
+  leave() {
+    clearTimeout(this.recTimer); this.reconnecting = false; document.body.classList.remove('net-lost');
+    const ws = this.ws; this.ws = null;
+    if (ws) { try { ws.close(); } catch {} }
+    this.cleanup(); this.status = 'Desconectado'; this.room = null; this.you = null; this.roster = null; this.outbox = [];
+  },
+  send(msg) {
+    if (this.connected && (!this.reconnecting || msg.type === 'hello' || msg.type === 'join')) { this.ws.send(JSON.stringify(msg)); return; }
+    // sin conexión: lo que cambia el mundo espera a la reconexión
+    if ((this.reconnecting || this.active) && (msg.type === 'block' || msg.type === 'tile' || msg.type === 'save')) {
+      if (msg.type === 'save') this.outbox = this.outbox.filter((o) => o.type !== 'save');
+      if (this.outbox.length < 4000) this.outbox.push(msg);
+    }
+  },
+  canBuild() { return !this.active || !this.you || this.you.build !== false; },
+  isHost() { return !!(this.active && this.you && this.you.host); },
+  /* --- Bloques propios: se recuerda el valor anterior por si el servidor los rechaza --- */
+  onLocalBlock(d) {
+    const k = d.x + ',' + d.y + ',' + d.z;
+    if (!this.prevs) this.prevs = new Map();
+    if (!this.prevs.has(k)) this.prevs.set(k, [d.old | 0, d.om | 0, performance.now()]);
+    if (this.prevs.size > 600) { const lim = performance.now() - 15000; for (const [kk, v] of this.prevs) if (v[2] < lim) this.prevs.delete(kk); }
+    this.send({ type: 'block', x: d.x, y: d.y, z: d.z, id: d.id, meta: d.meta });
+  },
+  onDeny(m) {
+    const k = m.x + ',' + m.y + ',' + m.z, p = this.prevs && this.prevs.get(k);
+    if (p) { this.prevs.delete(k); this.applying = true; try { world.set(m.x, m.y, m.z, p[0], p[1]); } finally { this.applying = false; } }
+    denyToast();
+  },
+  /* --- Recepción --- */
+  onLobby(m) {
+    this.lobby = m; this.serverName = m.server || 'Servidor';
+    const it = this.intent;
+    if (it && !it.sent && !m.error) {
+      it.sent = true;
+      if (it.create) { this.send({ type: 'create', ...it.create }); this.status = 'Creando la sala…'; }
+      else { this.send({ type: 'join', code: it.code, pass: it.pass || undefined, resume: !!it.resume }); this.status = 'Entrando a la sala…'; }
+      if (!this.reconnecting) roomsUI.showLobby(m, true);
+      return;
+    }
+    if (m.error && this.reconnecting) return this.giveUp(m.error);
+    this.intent = null; this.status = 'Conectado';
+    roomsUI.showLobby(m);
+  },
+  onRoom(m) { this.room = m.room; if (game.meta && game.meta.net) game.meta.name = m.room.name; roomsUI.render(); },
+  onRoster(m) {
+    const wasHost = this.isHost(), couldBuild = this.canBuild();
+    this.roster = m; this.you = m.you || this.you;
+    if (this.active) {
+      if (!wasHost && this.isHost()) chatUI.add('Ahora eres el anfitrión de la sala: puedes configurarla en Pausa → Sala y jugadores.', 'sys');
+      if (couldBuild !== this.canBuild()) chatUI.add(this.canBuild() ? 'Ya puedes construir en esta sala.' : 'En esta sala ahora no puedes construir.', 'sys');
+    }
+    roomsUI.render();
+  },
+  /* --- Reconexión --- */
+  startReconnect() {
+    this.reconnecting = true; this.recTry = 0; this.outbox = this.outbox || [];      // (lo enviado mientras se cerraba ya está en la cola)
+    document.body.classList.add('net-lost');
+    chatUI.add('Se perdió la conexión con el servidor. Reconectando…', 'sys');
+    for (const r of this.remote.values()) { r.dead = true; r.disposeTag(); }
+    this.scheduleRetry();
+  },
+  scheduleRetry() {
+    clearTimeout(this.recTimer);
+    if (++this.recTry > RECONNECT_TRIES) return this.giveUp('No se pudo volver a conectar con el servidor');
+    const wait = Math.min(15000, 1000 * 2 ** (this.recTry - 1));
+    $('#netRecMsg').textContent = `Reconectando… intento ${this.recTry} de ${RECONNECT_TRIES}. Puedes seguir jugando: lo que construyas se enviará al volver.`;
+    this.recTimer = setTimeout(() => { if (this.reconnecting) this.connect(this.url, { code: this.room?.code, resume: true, pass: this.roomPass }); }, wait);
+  },
+  giveUp(reason) {
+    clearTimeout(this.recTimer); this.reconnecting = false; document.body.classList.remove('net-lost');
+    this.status = reason + '. Tu progreso quedó guardado en el servidor hasta el corte.';
+    const ws = this.ws; this.ws = null; if (ws) { try { ws.close(); } catch {} }
+    const msg = this.status;
+    if (this.active) { this.cleanup(); game.quitToMenu(); showScreen('mpScreen'); }
+    this.status = msg;
+    roomsUI.showConnect();
+  },
+  // Volver a la misma sala sin recargar el mundo: se aplican las diferencias
+  onResume(m) {
+    this.id = m.id; this.reconnecting = false; this.status = 'Conectado'; this.room = m.room; this.pvp = !!m.pvp;
+    document.body.classList.remove('net-lost');
+    for (const r of this.remote.values()) { r.dead = true; r.disposeTag(); }
+    for (const q of this.puppets.values()) q.dead = true;
+    this.remote.clear(); this.puppets.clear();
+    for (const p of m.players || []) { const r = this.addRemote(p.id, p.name); if (p.s) r.setState(p.s); }
+    // bloques que cambiaron en el servidor mientras no estábamos
+    this.applying = true;
+    try {
+      for (const key in m.edits || {}) {
+        const [cx, cz] = key.split(',').map(Number); let ed = world.edits.get(key);
+        for (const e of String(m.edits[key]).split(',')) {
+          const [a, b] = e.split(':'), i = parseInt(a, 36), v = parseInt(b, 36);
+          if (!Number.isFinite(i) || !Number.isFinite(v) || (ed && ed.get(i) === v)) continue;
+          const x = cx * 16 + (i & 15), z = cz * 16 + ((i >> 4) & 15), y = i >> 8;
+          if (world.isLoaded(x, z)) world.set(x, y, z, v & 255, v >> 8);
+          else { if (!ed) { ed = new Map(); world.edits.set(key, ed); } ed.set(i, v); }
+        }
+      }
+      for (const k in m.tiles || {}) this.applyTile(k, m.tiles[k]);
+      if (game.env) { game.env.time = m.time; game.env.days = m.days | 0; if (WEATHER_NAMES[m.weather]) game.env.weather = m.weather; game.env.weatherT = 1e9; }
+    } finally { this.applying = false; }
+    for (const d of this.drops.values()) if (d.ent) d.ent.dead = true;
+    this.drops.clear();
+    for (const d of m.drops || []) if (Array.isArray(d) && Array.isArray(d[1]) && Array.isArray(d[2])) this.drops.set(d[0], { s: d[1], p: d[2], v: [0, 0, 0], age: d[3] || 0, ent: null });
+    for (const k of m.bosses || []) this.bossDone.add(String(k));
+    // lo que se hizo sin conexión: se vuelve a aplicar (por si el servidor lo pisó) y se envía
+    const out = this.outbox || []; this.outbox = [];
+    for (const msg of out) {
+      if (msg.type === 'block') { this.applying = true; try { world.set(msg.x, msg.y, msg.z, msg.id, msg.meta); } finally { this.applying = false; } }
+      this.send(msg);
+    }
+    for (const [k, t] of world.tiles) this.tileSig.set(k, this.sig(t));
+    this.savePlayer(); this.spawnDrops();
+    chatUI.add(`Reconectado a la sala «${m.room.name}»${out.length ? ` · se enviaron ${out.length} cambios hechos sin conexión` : ''}`, 'sys');
+    hud.toast('Conexión recuperada');
+  },
+});
+// Mensajes nuevos antes que los de siempre
+{
+  const _receive = NetClient.prototype.receive;
+  NetClient.prototype.receive = function (m) {
+    switch (m.type) {
+      case 'lobby': return this.onLobby(m);
+      case 'room': return this.onRoom(m);
+      case 'roster': return this.onRoster(m);
+      case 'deny': if (this.active && world) this.onDeny(m); return;
+      case 'kicked':
+        if (/se ha cerrado/.test(String(m.reason))) { this.serverClosed = true; this.kickReason = String(m.reason); return; }
+        break;
+      case 'welcome':
+        this.room = m.room; this.intent = null;
+        settings.netLast = { url: this.url, code: m.room.code, name: m.room.name }; saveSettings();
+        if (m.resume && this.reconnecting) return this.onResume(m);
+        if (this.active) this.cleanup();
+        m.server = m.room.name;
+        roomsUI.hideLobby();
+        break;
+    }
+    return _receive.call(this, m);
+  };
+  const _onWelcome = NetClient.prototype.onWelcome;
+  NetClient.prototype.onWelcome = async function (m) {
+    await _onWelcome.call(this, m);
+    if (!this.active || !this.room) return;
+    const r = this.room;
+    chatUI.add(`Sala «${r.name}» · código de invitación: ${r.code} · ${BUILD_NAMES[r.build]}. Pausa → Sala y jugadores para invitar o configurar.`, 'sys');
+  };
+}
+
+function denyToast() {
+  const now = performance.now();
+  if (now - (denyToast.t || 0) < 1500) return;
+  denyToast.t = now; hud.toast('No tienes permiso para construir en esta sala');
+}
+// El cliente evita los cambios que el servidor rechazaría
+{
+  const _break = game.breakBlock, _place = game.placeHeld, _interact = game.interact;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    if (byPlayer && !net.canBuild()) { denyToast(); return; }
+    return _break.call(this, x, y, z, byPlayer);
+  };
+  game.placeHeld = function () {
+    if (!net.canBuild() && this.target && this.player.held() && (ITEMS[this.player.held().id]?.block || ITEMS[this.player.held().id]?.place)) { denyToast(); return false; }
+    return _place.call(this);
+  };
+  game.interact = function () {
+    const t = this.target;
+    if (t && !net.canBuild() && !down('sneak')) { const def = BLOCKS[t.id]; if (def && def.interact && !FREE_INTERACT.has(def.interact)) { denyToast(); return true; } }
+    return _interact.call(this);
+  };
+  // los mecanismos que no podemos tocar los procesa otro jugador
+  const _owns = ownsMech;
+  ownsMech = function (x, y, z) { return net.canBuild() && _owns(x, y, z); };
+}
+
+/* ---------- Interfaz: recepción, crear sala y panel de la sala ---------- */
+const roomsUI = {
+  ltab: 'join',
+  showConnect() { $('#mpConnect').hidden = false; $('#mpLobby').hidden = true; this.refreshResume(); },
+  showLobby(m, pending) {
+    $('#mpConnect').hidden = true; $('#mpLobby').hidden = false;
+    $('#lobbyServer').textContent = m.server || 'Servidor';
+    $('#lobbyStatus').textContent = m.error ? '⚠ ' + m.error : pending ? net.status : '';
+    const cap = Math.max(1, m.cap | 0 || 16); $('#crMax').max = cap; if (+$('#crMax').value > cap) $('#crMax').value = cap; $('#crMaxV').textContent = $('#crMax').value;
+    $('#crGo').disabled = m.canCreate === false; $('#crGo').title = m.canCreate === false ? 'El servidor ya tiene el máximo de salas' : '';
+    if (!$('#crName').value) $('#crName').value = `Sala de ${settings.netName || 'Jugador'}`;
+    const box = $('#roomList'); box.innerHTML = '';
+    for (const r of m.rooms || []) {
+      const d = document.createElement('div'), full = r.players >= r.max; d.className = 'roomItem' + (full ? ' full' : '');
+      d.innerHTML = `<div><b>${r.def ? '🌍 ' : ''}${escapeHtml(r.name)}${r.locked ? ' 🔒' : ''}</b><small>${r.code} · ${r.players}/${r.max} jugadores · ${r.mode === 'creative' ? 'Creativo' : 'Supervivencia'}${r.pvp ? ' · PvP' : ''} · ${BUILD_NAMES[r.build] || ''}</small></div>`;
+      const b = document.createElement('button'); b.className = 'btn small primary'; b.textContent = full ? 'Llena' : 'Unirse'; b.disabled = full;
+      b.onclick = () => { if (r.locked && !$('#joinPass').value) { $('#joinCode').value = r.code; $('#lobbyStatus').textContent = 'Esa sala tiene contraseña: escríbela y pulsa Unirse.'; $('#joinPass').focus(); return; } this.joinCode(r.code); };
+      d.append(b); box.append(d);
+    }
+    if (!box.children.length) box.innerHTML = '<div class="roomEmpty">No hay salas públicas. ¡Crea una o entra con un código!</div>';
+    this.setTab(this.ltab);
+  },
+  hideLobby() { $('#mpLobby').hidden = true; $('#mpConnect').hidden = false; },
+  setTab(t) {
+    this.ltab = t;
+    $$('#mpLobby .stab').forEach((b) => b.classList.toggle('on', b.dataset.ltab === t));
+    $$('#mpLobby .lobbyTab').forEach((d) => { d.hidden = d.dataset.ltab !== t; });
+  },
+  joinCode(code) {
+    code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length < 4) { $('#lobbyStatus').textContent = 'Escribe el código de la sala (6 letras o números)'; return; }
+    net.roomPass = $('#joinPass').value; net.intent = null;
+    $('#lobbyStatus').textContent = 'Entrando a la sala…';
+    net.send({ type: 'join', code, pass: net.roomPass || undefined });
+  },
+  refreshResume() {
+    const L = settings.netLast, b = $('#mpResume');
+    b.hidden = !L || !L.code;
+    if (L && L.code) b.textContent = `↩ Volver a la sala ${L.name ? '«' + L.name + '» ' : ''}(${L.code})`;
+  },
+  // Panel de la sala (Pausa → Sala y jugadores)
+  open() {
+    if (!net.active) return;
+    this.isOpen = true; showScreen('roomScreen'); this.render(true);
+  },
+  close() { this.isOpen = false; showScreen('pauseScreen'); },
+  inviteLink() {
+    const r = net.room; if (!r) return '';
+    const base = location.protocol === 'file:' ? 'https://brun0carp.github.io/minicraft/' : location.origin + location.pathname;
+    return `${base}?sala=${r.code}&srv=${encodeURIComponent(net.url || '')}`;
+  },
+  render(fill) {
+    if (!this.isOpen || !net.room) return;
+    const r = net.room, host = net.isHost(), R = net.roster || { list: [] };
+    $('#roomName').textContent = r.name; $('#roomCode').textContent = r.code;
+    $('#roomInfo').textContent = `${r.mode === 'creative' ? 'Creativo' : 'Supervivencia'} · PvP ${r.pvp ? 'activado' : 'desactivado'} · ${BUILD_NAMES[r.build]} · ${r.priv ? 'privada' : 'pública'}${r.locked ? ' · con contraseña' : ''}${r.def ? ' · sala principal del servidor' : ''} · ping ${net.ping} ms`;
+    $('#roomCount').textContent = `(${R.list.length}/${r.max})`;
+    const box = $('#roomPlayers'); box.innerHTML = '';
+    for (const p of R.list) {
+      const d = document.createElement('div'); d.className = 'rp';
+      const me = p.id === net.id;
+      d.innerHTML = `<b>${escapeHtml(p.name)}</b><span class="tag ${p.role}">${ROLE_NAMES[p.role]}${p.role === 'host' && !p.own && R.owner ? ' temporal' : ''}</span>${me ? '<span class="tag me">Tú</span>' : ''}`;
+      if (host && !me) {
+        const btn = (txt, act, cls) => { const b = document.createElement('button'); b.className = 'btn small' + (cls ? ' ' + cls : ''); b.textContent = txt; b.onclick = () => this.admin(act, p); d.append(b); };
+        if (p.role !== 'host') btn(p.role === 'trusted' ? 'Quitar confianza' : 'Dar confianza', p.role === 'trusted' ? 'untrust' : 'trust');
+        if (!r.def) btn('Ceder sala', 'host');
+        btn('Expulsar', 'kick'); btn('Vetar', 'ban', 'danger');
+      }
+      box.append(d);
+    }
+    const S = $('#roomSettings'); S.classList.toggle('readonly', !host);
+    if (fill || !host) {
+      const cap = Math.max(r.max, (net.lobby && net.lobby.cap) || 16);
+      $('#rsName').value = r.name; $('#rsMax').max = cap; $('#rsMax').value = r.max; $('#rsMaxV').textContent = r.max;
+      $('#rsBuild').value = r.build; $('#rsPvp').checked = r.pvp; $('#rsCheats').checked = r.cheats; $('#rsPriv').checked = r.priv; $('#rsPass').value = '';
+      $('#rsPass').placeholder = r.locked ? 'Tiene contraseña (escribe otra para cambiarla)' : 'Sin contraseña';
+      $('#rsName').disabled = $('#rsPriv').disabled = $('#rsPass').disabled = !!r.def;
+      $('#roomDelete').hidden = !!r.def || !(R.list.find((p) => p.id === net.id) || {}).own;
+    }
+  },
+  admin(act, p) {
+    if ((act === 'ban' || act === 'host') && !confirm(act === 'ban' ? `¿Vetar a ${p.name}? No podrá volver a entrar a esta sala.` : `¿Ceder la sala a ${p.name}? Pasará a ser su dueño.`)) return;
+    net.send({ type: 'admin', act, id: p.id });
+  },
+  saveSettings() {
+    const msg = { type: 'admin', act: 'set', max: +$('#rsMax').value, build: $('#rsBuild').value, pvp: $('#rsPvp').checked, cheats: $('#rsCheats').checked };
+    if (!net.room.def) { msg.name = $('#rsName').value; msg.priv = $('#rsPriv').checked; if ($('#rsPass').value) msg.pass = $('#rsPass').value; }
+    net.send(msg); hud.toast('Configuración enviada');
+  },
+};
+
+function initRoomsUI() {
+  $$('#mpLobby .stab').forEach((b) => (b.onclick = () => roomsUI.setTab(b.dataset.ltab)));
+  $('#joinGo').onclick = () => roomsUI.joinCode($('#joinCode').value);
+  $('#joinCode').addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') roomsUI.joinCode($('#joinCode').value); });
+  $('#roomsRefresh').onclick = () => net.send({ type: 'rooms' });
+  $('#crMax').oninput = () => { $('#crMaxV').textContent = $('#crMax').value; };
+  $('#rsMax').oninput = () => { $('#rsMaxV').textContent = $('#rsMax').value; };
+  $('#crGo').onclick = () => {
+    const create = { name: $('#crName').value, seed: $('#crSeed').value, mode: $('#crMode').value, max: +$('#crMax').value, build: $('#crBuild').value,
+      pvp: $('#crPvp').checked, cheats: $('#crCheats').checked, priv: $('#crPriv').checked, pass: $('#crPass').value };
+    net.roomPass = create.pass; $('#lobbyStatus').textContent = 'Creando la sala…';
+    net.send({ type: 'create', ...create });
+  };
+  $('#lobbyLeave').onclick = () => { net.leave(); roomsUI.showConnect(); };
+  $('#mpResume').onclick = () => {
+    const L = settings.netLast; if (!L) return;
+    const name = $('#mpName').value.trim().slice(0, 16) || 'Jugador';
+    settings.netName = name; saveSettings(); sfx.init();
+    net.join(L.url, name, $('#mpPass').value, { code: L.code });
+  };
+  // «Conectar»: si hay una invitación pendiente, entra directo a esa sala
+  $('#mpGo').onclick = () => {
+    const name = $('#mpName').value.trim().slice(0, 16) || 'Jugador';
+    settings.netName = name; saveSettings(); sfx.init();
+    const inv = roomsUI.invite; roomsUI.invite = null; $('#mpInvite').hidden = true;
+    net.join($('#mpUrl').value, name, $('#mpPass').value, inv ? { code: inv } : null);
+  };
+  const _multi = $('#btnMulti').onclick;
+  $('#btnMulti').onclick = () => { _multi(); roomsUI.showConnect(); };
+  $('#pRoom').onclick = () => roomsUI.open();
+  $('#roomClose').onclick = () => roomsUI.close();
+  $('#rsSave').onclick = () => roomsUI.saveSettings();
+  $('#roomUnban').onclick = () => net.send({ type: 'admin', act: 'unban' });
+  $('#roomDelete').onclick = () => { if (confirm('¿Borrar la sala para siempre? Se perderá su mundo y se expulsará a todos.')) net.send({ type: 'admin', act: 'delete' }); };
+  const copy = async (text, ok) => { try { await navigator.clipboard.writeText(text); hud.toast(ok); } catch { prompt('Copia este texto:', text); } };
+  $('#roomCopy').onclick = () => copy(net.room?.code || '', 'Código copiado');
+  $('#roomLink').onclick = () => copy(roomsUI.inviteLink(), 'Enlace de invitación copiado');
+  $('#netRecQuit').onclick = () => { net.giveUp('Saliste mientras se reconectaba'); };
+  setInterval(() => {
+    if (roomsUI.isOpen) roomsUI.render();
+    const el = $('#netStatus');
+    if (el && net.active && net.room) el.textContent = `Sala «${net.room.name}» (${net.room.code}) · ${net.remote.size + 1}/${net.room.max} jugadores · ${net.ping} ms${net.reconnecting ? ' · reconectando…' : ''}`;
+    if (!$('#mpLobby').hidden && net.status && /Entrando|Creando/.test(net.status) && !$('#lobbyStatus').textContent) $('#lobbyStatus').textContent = net.status;
+  }, 500);
+  // Enlace de invitación: ?sala=CÓDIGO&srv=DIRECCIÓN
+  const q = new URLSearchParams(location.search), code = (q.get('sala') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code) {
+    roomsUI.invite = code;
+    setTimeout(() => {
+      $('#btnMulti').onclick();
+      if (q.get('srv')) $('#mpUrl').value = q.get('srv');
+      const inv = $('#mpInvite'); inv.hidden = false; inv.textContent = `Te invitaron a la sala ${code}. Escribe tu nombre y pulsa Conectar.`;
+    }, 300);
+  }
+  roomsUI.refreshResume();
+}
+// Las pantallas nuevas se cierran con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Escape' && roomsUI.isOpen && $('#roomScreen').classList.contains('show')) { e.preventDefault(); e.stopImmediatePropagation(); roomsUI.close(); }
+}, true);
+// se monta después de la interfaz de siempre (initMultiplayerUI se llama al arrancar)
+{ const _imu = initMultiplayerUI; initMultiplayerUI = function () { _imu(); initRoomsUI(); }; }
+/* ==========================================================================
+   §36 PANTALLA COMPLETA Y MANDOS (Bluetooth / USB)
+   --------------------------------------------------------------------------
+   · Pantalla completa: botón ⛶ en el menú, en la pausa y en la barra táctil,
+     y la acción «Pantalla completa» (F2, reasignable). En iPhone, donde el
+     navegador no la permite, se explica cómo añadir el juego a la pantalla de
+     inicio (allí se abre sin barras).
+   · Mandos: cualquier mando que el navegador reconozca (Xbox, PlayStation,
+     Switch Pro, 8BitDo, genéricos USB…) mediante la Gamepad API.
+       – Jugando: stick izquierdo = moverse (analógico), stick derecho = cámara,
+         y cada botón dispara una ACCIÓN de la lista de controles (KEY_ACTIONS).
+         Como usa la misma lista que el teclado, cualquier acción que se añada
+         en el futuro aparece sola en Ajustes → Mando y se puede asignar.
+       – En menús, inventario, cofres, mapa…: aparece un cursor que se mueve con
+         el stick izquierdo o la cruceta; A = clic, X = clic derecho, B = volver,
+         stick derecho = desplazar.
+       – Vibración al recibir daño y al golpear (si el mando la admite).
+       – Sensibilidad, zona muerta, invertir eje Y, vibración y la asignación de
+         cada botón se cambian en Ajustes → Mando.
+   ========================================================================== */
+const PAD_NAMES_XBOX = ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'View', 'Menú', 'L3', 'R3', 'Cruceta ↑', 'Cruceta ↓', 'Cruceta ←', 'Cruceta →', 'Guía'];
+const PAD_NAMES_PS = ['✕', '○', '□', '△', 'L1', 'R1', 'L2', 'R2', 'Share', 'Options', 'L3', 'R3', 'Cruceta ↑', 'Cruceta ↓', 'Cruceta ←', 'Cruceta →', 'PS'];
+const PAD_NAMES_NIN = ['B', 'A', 'Y', 'X', 'L', 'R', 'ZL', 'ZR', '−', '+', 'L3', 'R3', 'Cruceta ↑', 'Cruceta ↓', 'Cruceta ←', 'Cruceta →', 'Home'];
+// Botón (índice del mapeo estándar) → acción. Los botones sin acción quedan libres.
+const DEFAULT_PAD = { 0: 'jump', 1: 'sneak', 2: 'dodge', 3: 'inventory', 4: 'hotbarPrev', 5: 'hotbarNext', 6: 'use', 7: 'attack', 8: 'map', 9: 'pause', 10: 'sprint', 11: 'swapHand', 12: 'quests', 13: 'drop', 14: 'achievements', 15: 'fly' };
+settings.pad = Object.assign({ sens: 1, dead: 0.16, invertY: false, vibration: true, cursor: 1 }, settings.pad || {});
+settings.pad.map = Object.assign({}, DEFAULT_PAD, settings.pad.map || {});
+const PAD_SKIP = new Set(['lookUp', 'lookDown', 'lookLeft', 'lookRight', 'forward', 'back', 'left', 'right']);   // ya los hacen los sticks
+
+/* ---------- Pantalla completa ---------- */
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+const fsSupported = () => !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+function toggleFullscreen() {
+  if (!fsSupported()) {
+    hud.toast(/iPhone|iPod/.test(navigator.userAgent) ? 'En iPhone: botón Compartir → «Añadir a pantalla de inicio» para jugar a pantalla completa' : 'Este navegador no permite la pantalla completa', 4500);
+    return;
+  }
+  const lockedBefore = controlsLocked();
+  if (fsElement()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+  try {
+    const r = req.call(el, { navigationUI: 'hide' });
+    if (r && r.catch) r.catch(() => hud.toast('El navegador no dejó pasar a pantalla completa'));
+    // al cambiar de modo algunos navegadores sueltan el ratón: se vuelve a capturar
+    if (lockedBefore && r && r.then) r.then(() => { if (game.state === 'playing' && !controlsLocked() && !noLockMode()) try { controls.lock(); } catch {} });
+  } catch { hud.toast('El navegador no dejó pasar a pantalla completa'); }
+}
+function updateFsButtons() {
+  const on = !!fsElement();
+  for (const b of $$('#fsMenuBtn, #fsTouch')) { b.textContent = on ? '🗗' : '⛶'; b.title = on ? 'Salir de pantalla completa' : 'Pantalla completa'; }
+  const p = $('#pFull'); if (p) p.textContent = on ? '🗗 Salir de pantalla completa' : '⛶ Pantalla completa';
+  document.body.classList.toggle('is-fs', on);
+}
+
+/* ---------- Mandos ---------- */
+const pad = {
+  index: null, prev: [], name: '', style: 'xbox', lastActive: 0, joyOwned: false, cursorX: innerWidth / 2, cursorY: innerHeight / 2,
+  held: new Map(),          // botón → acciones que mantiene
+  rebind: null,             // acción esperando un botón (Ajustes → Mando)
+  hover: null, cursorDown: null, lastT: performance.now(), repeat: {},
+  get connected() { return this.index != null; },
+  get() { const list = navigator.getGamepads ? navigator.getGamepads() : []; return (this.index != null && list[this.index]) || null; },
+  names() { return this.style === 'ps' ? PAD_NAMES_PS : this.style === 'nin' ? PAD_NAMES_NIN : PAD_NAMES_XBOX; },
+  btnName(i) { return i == null ? '—' : this.names()[i] || `Botón ${i}`; },
+  detectStyle(id) { const s = String(id).toLowerCase(); if (/xbox|045e|xinput/.test(s)) return 'xbox'; return /054c|playstation|dualshock|dualsense|wireless controller/.test(s) ? 'ps' : /057e|nintendo|pro controller|joy-con/.test(s) ? 'nin' : 'xbox'; },
+  onConnect(g) {
+    if (this.index != null && this.get()) return;
+    this.index = g.index; this.name = g.id.replace(/\(.*?\)/g, '').trim() || 'Mando'; this.style = this.detectStyle(g.id); this.prev = [];
+    hud.toast(`🎮 Mando conectado: ${this.name}`, 2500); this.renderSettings();
+  },
+  onDisconnect(g) {
+    if (g.index !== this.index) return;
+    this.releaseAll(); this.index = null; this.setCursor(false); document.body.classList.remove('pad-on');
+    hud.toast('🎮 Mando desconectado', 2000);
+    const next = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(Boolean); if (next) this.onConnect(next);
+    this.renderSettings();
+  },
+  releaseAll() {
+    for (const acts of this.held.values()) for (const a of acts) { input.padActs.delete(a); actionUp(a); }
+    this.held.clear(); if (this.joyOwned) { input.joy.x = input.joy.y = 0; this.joyOwned = false; }
+  },
+  markActive() { this.lastActive = performance.now(); document.body.classList.add('pad-on'); },
+  rumble(weak, strong, ms) {
+    if (!settings.pad.vibration || performance.now() - this.lastActive > 15000) return;
+    const g = this.get(), v = g && g.vibrationActuator;
+    try { if (v && v.playEffect) v.playEffect('dual-rumble', { duration: ms, weakMagnitude: weak, strongMagnitude: strong }); else if (g && g.hapticActuators && g.hapticActuators[0]) g.hapticActuators[0].pulse(strong, ms); } catch {}
+  },
+  stick(x, y) {
+    const d = settings.pad.dead, m = Math.hypot(x, y);
+    if (m < d) return [0, 0];
+    const k = Math.min(1, (m - d) / (1 - d)) / m;
+    return [x * k, y * k];
+  },
+  // ¿El juego está en primera persona (sin menús encima)?
+  inWorld() { return game.state === 'playing' && !document.body.classList.contains('overlay') && !chatUI.isOpen; },
+  poll() {
+    const now = performance.now(), dt = Math.min(0.1, (now - this.lastT) / 1000); this.lastT = now;
+    const g = this.get(); if (!g) return;
+    const b = g.buttons.map((x) => x.pressed || x.value > 0.45), was = this.prev;
+    const edge = (i) => b[i] && !was[i], up = (i) => !b[i] && was[i];
+    let any = b.some(Boolean);
+    const [lx, ly] = this.stick(g.axes[0] || 0, g.axes[1] || 0), [rx, ry] = this.stick(g.axes[2] || 0, g.axes[3] || 0);
+    if (lx || ly || rx || ry) any = true;
+    if (any) this.markActive();
+    // Ajustes → Mando: esperando un botón para asignar
+    if (this.rebind) { const i = b.findIndex((v, k) => v && !was[k]); if (i >= 0) { this.finishRebind(i); } this.prev = b; return; }
+    if (this.inWorld()) {
+      this.setCursor(false);
+      // movimiento analógico (no pisa el joystick táctil)
+      if (lx || ly) { input.joy.x = lx; input.joy.y = ly; this.joyOwned = true; }
+      else if (this.joyOwned) { input.joy.x = input.joy.y = 0; this.joyOwned = false; }
+      // cámara: curva suave para apuntar con precisión
+      if (rx || ry) {
+        const s = 3.2 * settings.pad.sens * dt;
+        rotateCam(rx * Math.abs(rx) * s, ry * Math.abs(ry) * s * (settings.pad.invertY ? -1 : 1));
+      }
+      for (let i = 0; i < b.length; i++) {
+        const a = settings.pad.map[i];
+        if (edge(i) && a) this.press(i, a);
+        else if (up(i)) this.release(i);
+      }
+    } else {
+      this.releaseAll();
+      this.menuInput(g, b, edge, up, lx, ly, rx, ry, dt);
+    }
+    this.prev = b;
+  },
+  press(i, a) {
+    // un botón actúa como la tecla de su acción: también activa las acciones que comparten esa tecla (p. ej. agacharse y bajar volando)
+    const code = settings.keys[a], acts = code ? actionsFor(code) : [a];
+    if (!acts.includes(a)) acts.push(a);
+    this.held.set(i, acts);
+    for (const x of acts) { input.padActs.add(x); actionDown(x); }
+    if (a === 'hotbarNext' || a === 'hotbarPrev') { this.held.delete(i); for (const x of acts) input.padActs.delete(x); }
+  },
+  release(i) {
+    const acts = this.held.get(i); if (!acts) return;
+    this.held.delete(i);
+    for (const x of acts) { input.padActs.delete(x); actionUp(x); }
+  },
+  /* --- Cursor para menús --- */
+  setCursor(on) {
+    if (!on) { if (document.body.classList.contains('pad-cursor')) { document.body.classList.remove('pad-cursor'); this.setHover(null); } return; }
+    document.body.classList.add('pad-cursor');
+    const c = $('#padCursor'); c.style.transform = `translate(${this.cursorX}px, ${this.cursorY}px)`;
+  },
+  target() { const c = $('#padCursor'), v = c.style.display; c.style.display = 'none'; const el = document.elementFromPoint(this.cursorX, this.cursorY); c.style.display = v; return el; },
+  setHover(el) {
+    const btn = el && el.closest ? el.closest('button, .slot, .stab, a, label, input, select, summary, [data-act], .worldCard, .roomItem, .tradeRow') : null;
+    if (btn === this.hover) return;
+    if (this.hover) this.hover.classList.remove('padFocus');
+    this.hover = btn; if (btn) btn.classList.add('padFocus');
+  },
+  fire(el, type, button = 0) {
+    const opt = { bubbles: true, cancelable: true, view: window, clientX: this.cursorX, clientY: this.cursorY, button, buttons: type.endsWith('down') ? 1 << (button === 2 ? 1 : 0) : 0, pointerId: 77, pointerType: 'mouse', isPrimary: true };
+    el.dispatchEvent(type.startsWith('pointer') ? new PointerEvent(type, opt) : new MouseEvent(type, opt));
+  },
+  menuInput(g, b, edge, up, lx, ly, rx, ry, dt) {
+    // mover el cursor: stick izquierdo (aceleración) o cruceta (pasos finos con repetición)
+    const sp = 900 * settings.pad.cursor * dt;
+    let mx = lx * Math.abs(lx) * sp, my = ly * Math.abs(ly) * sp;
+    const rep = (i) => { if (!b[i]) { this.repeat[i] = 0; return false; } const t = performance.now(); if (!this.repeat[i]) { this.repeat[i] = t + 320; return true; } if (t >= this.repeat[i]) { this.repeat[i] = t + 70; return true; } return false; };
+    // sobre un deslizador o una lista desplegable, la cruceta ← → cambia su valor
+    const ctl = this.hover && (this.hover.matches('input[type=range], select') ? this.hover : this.hover.querySelector && this.hover.querySelector('input[type=range], select'));
+    const L = rep(14), R = rep(15);
+    if (ctl && (L || R)) {
+      if (ctl.tagName === 'SELECT') ctl.selectedIndex = clamp(ctl.selectedIndex + (R ? 1 : -1), 0, ctl.options.length - 1);
+      else { const st = +ctl.step || 1; ctl.value = clamp(+ctl.value + (R ? st : -st) * (ctl.max - ctl.min > 20 * st ? 4 : 1), +ctl.min, +ctl.max); }
+      ctl.dispatchEvent(new Event('input', { bubbles: true })); ctl.dispatchEvent(new Event('change', { bubbles: true }));
+    } else { if (L) mx -= 18; if (R) mx += 18; }
+    if (rep(12)) my -= 18; if (rep(13)) my += 18;
+    const moved = mx || my;
+    if (moved) { this.cursorX = clamp(this.cursorX + mx, 0, innerWidth - 2); this.cursorY = clamp(this.cursorY + my, 0, innerHeight - 2); }
+    const active = moved || b.some(Boolean) || rx || ry;
+    if (!active && !document.body.classList.contains('pad-cursor')) return;
+    this.setCursor(true);
+    const el = this.target(); this.setHover(el);
+    if (moved && el) { this.fire(el, 'pointermove'); this.fire(el, 'mousemove'); }
+    // desplazar listas con el stick derecho
+    if (ry && el) { let s = el; while (s && s !== document.body && !(s.scrollHeight > s.clientHeight + 4 && /auto|scroll/.test(getComputedStyle(s).overflowY))) s = s.parentElement; if (s) s.scrollTop += ry * 900 * dt; }
+    // A = clic, X = clic derecho (en el inventario, coger la mitad)
+    for (const [i, button] of [[0, 0], [2, 2]]) {
+      if (edge(i) && el) { this.cursorDown = el; this.fire(el, 'pointerdown', button); this.fire(el, 'mousedown', button); }
+      if (up(i) && this.cursorDown) {
+        const t = this.target() || this.cursorDown;
+        this.fire(t, 'pointerup', button); this.fire(t, 'mouseup', button);
+        if (button === 0) { if (t.closest && t.closest('input, select, textarea')) t.focus(); t.click(); }
+        else t.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: this.cursorX, clientY: this.cursorY }));
+        this.cursorDown = null;
+      }
+    }
+    if (edge(1)) this.back();
+    // el mismo botón que abrió una pantalla la cierra (inventario, mapa, misiones)
+    for (let i = 0; i < b.length; i++) {
+      const act = settings.pad.map[i];
+      if (edge(i) && ((act === 'inventory' && game.state === 'inventory') || (act === 'map' && game.state === 'map') || (act === 'quests' && game.state === 'quests'))) this.back();
+    }
+    if (edge(9)) { if (game.state === 'paused') $('#pResume').click(); else this.back(); }
+    // LB / RB cambian de pestaña en las pantallas con pestañas
+    if (edge(4) || edge(5)) {
+      const tabs = $$('.screen.show .stab').filter((t) => t.offsetParent);
+      const cur = tabs.findIndex((t) => t.classList.contains('on'));
+      if (tabs.length) tabs[(cur + (edge(5) ? 1 : -1) + tabs.length) % tabs.length].click();
+    }
+  },
+  // B: cerrar lo que esté abierto, como Escape
+  back() {
+    if (chatUI.isOpen) { chatUI.close(); return; }
+    if (game.state === 'inventory') { closeInventory(); return; }
+    if (game.state === 'map') { mapUI.hide(); return; }
+    if (game.state === 'quests') { questUI.hide(); return; }
+    if (game.state === 'dialog') { dialog.close(); return; }
+    if (roomsUI.isOpen) { roomsUI.close(); return; }
+    if (game.state === 'paused' && $('#pauseScreen').classList.contains('show')) { $('#pResume').click(); return; }
+    const scr = $('.screen.show'); if (!scr) return;
+    const back = [...scr.querySelectorAll('button')].find((x) => x.offsetParent && (/Back$|Close$|^mpBack$|^lobbyLeave$|^settingsBack$/.test(x.id) || /^(Volver|Cerrar|Hecho)\b/.test(x.textContent.trim())));
+    if (back) back.click();
+  },
+  /* --- Ajustes → Mando --- */
+  startRebind(action, btn) { this.rebind = { action, btn }; btn.textContent = 'Pulsa un botón…'; btn.classList.add('wait'); },
+  finishRebind(i) {
+    const { action } = this.rebind; this.rebind = null;
+    for (const k of Object.keys(settings.pad.map)) if (settings.pad.map[k] === action) delete settings.pad.map[k];
+    settings.pad.map[i] = action; saveSettings(); this.renderSettings();
+  },
+  renderSettings() {
+    const box = $('#padPanel'); if (!box) return;
+    box.innerHTML = '';
+    const st = document.createElement('div'); st.className = 'padStatus' + (this.connected ? ' on' : '');
+    st.innerHTML = this.connected ? `<i>🎮</i><div><b>${escapeHtml(this.name)}</b><br>Conectado. Stick izquierdo: moverse · stick derecho: cámara · en los menús, A hace clic y B vuelve.</div>`
+      : '<i>🎮</i><div><b>No hay ningún mando conectado</b><br>Conecta un mando por USB o Bluetooth y pulsa cualquier botón para que el navegador lo detecte.</div>';
+    box.append(st);
+    const row = (label, el) => { const r = document.createElement('label'); r.className = 'setRow'; r.innerHTML = `<span>${label}</span>`; r.append(el); box.append(r); return r; };
+    const range = (key, min, max, step, fmt) => {
+      const w = document.createElement('div'); w.className = 'rangeWrap';
+      const i = document.createElement('input'); i.type = 'range'; i.min = min; i.max = max; i.step = step; i.value = settings.pad[key];
+      const v = document.createElement('b'); v.textContent = fmt(+i.value);
+      i.oninput = () => { settings.pad[key] = +i.value; v.textContent = fmt(+i.value); saveSettings(); };
+      w.append(i, v); return w;
+    };
+    const check = (key, after) => { const i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!settings.pad[key]; i.onchange = () => { settings.pad[key] = i.checked; saveSettings(); if (after) after(); }; return i; };
+    row('Sensibilidad de la cámara', range('sens', 0.3, 3, 0.05, (v) => Math.round(v * 100) + '%'));
+    row('Zona muerta de los sticks', range('dead', 0.05, 0.4, 0.01, (v) => Math.round(v * 100) + '%'));
+    row('Velocidad del cursor en menús', range('cursor', 0.4, 2.5, 0.05, (v) => Math.round(v * 100) + '%'));
+    row('Invertir eje vertical', check('invertY'));
+    row('Vibración', check('vibration', () => settings.pad.vibration && this.rumble(0.4, 0.6, 160)));
+    const help = document.createElement('p'); help.className = 'keysHelp';
+    help.textContent = 'Toca una acción y pulsa el botón del mando que quieras usar. Cada botón hace una sola acción.';
+    box.append(help);
+    const byAction = {}; for (const [k, a] of Object.entries(settings.pad.map)) byAction[a] = +k;
+    for (const [id, label] of KEY_ACTIONS) {
+      if (PAD_SKIP.has(id)) continue;
+      const r = document.createElement('div'); r.className = 'keyRow';
+      const btn = document.createElement('button'); btn.className = 'keyBtn padBtn'; btn.textContent = this.btnName(byAction[id]);
+      btn.onclick = (e) => { e.stopPropagation(); if (!this.connected) { hud.toast('Conecta un mando primero'); return; } this.startRebind(id, btn); };
+      r.innerHTML = `<span>${label}</span>`; r.append(btn); box.append(r);
+    }
+    const reset = document.createElement('button'); reset.className = 'btn small'; reset.textContent = 'Restablecer botones del mando';
+    reset.onclick = () => { settings.pad.map = { ...DEFAULT_PAD }; saveSettings(); this.renderSettings(); };
+    box.append(reset);
+  },
+};
+
+function initPadAndFullscreen() {
+  if (!fsSupported()) document.body.classList.add('no-fs');
+  for (const id of ['#fsMenuBtn', '#fsTouch', '#pFull']) { const b = $(id); if (b) b.addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); }); }
+  for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, updateFsButtons);
+  updateFsButtons();
+  addEventListener('gamepadconnected', (e) => pad.onConnect(e.gamepad));
+  addEventListener('gamepaddisconnected', (e) => pad.onDisconnect(e.gamepad));
+  // con el ratón o la pantalla táctil, el cursor del mando se esconde y vuelven los controles táctiles
+  addEventListener('mousemove', (e) => { if (e.isTrusted && (Math.abs(e.movementX) + Math.abs(e.movementY) > 2)) pad.setCursor(false); }, true);
+  addEventListener('touchstart', () => { document.body.classList.remove('pad-on'); pad.setCursor(false); }, { capture: true, passive: true });
+  const loop = () => { try { if (pad.connected || navigator.getGamepads) { if (!pad.connected) { const g = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(Boolean); if (g) pad.onConnect(g); } pad.poll(); } } catch (err) { console.error('mando:', err); } requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  // vibración: al recibir daño y al golpear
+  const _damage = Player.prototype.damage;
+  Player.prototype.damage = function (n, ...rest) { const hp = this.health, r = _damage.call(this, n, ...rest); if (this.health < hp) pad.rumble(0.35, Math.min(1, 0.3 + (hp - this.health) / 10), 180); return r; };
+  const _hurt = Mob.prototype.hurt;
+  Mob.prototype.hurt = function (...a) { const r = _hurt.apply(this, a); if (r !== false && game.player && this.lastHit === 'player') pad.rumble(0.25, 0.1, 70); return r; };
+  // pestaña Mando de los ajustes
+  const tab = $('#settingsScreen .stab[data-tab="pad"]'); if (tab) tab.addEventListener('click', () => pad.renderSettings());
+  pad.renderSettings();
+}
+initPadAndFullscreen();
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
