@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.2</title>
+<title>MiniCraft 4.3</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -608,13 +608,16 @@
   .offSlot { margin-top: 6px; }
   .tbtn.small { font-size: 11px; }
   /* §31: diálogos, misiones y seguimiento */
-  .dlgCard { width: min(560px, 100%); }
+  .dlgCard { width: min(560px, 100%); max-height: 96vh; display: flex; flex-direction: column; }
+  .dlgCard #dlgOpts { overflow-y: auto; min-height: 0; }
+  @media (max-height: 520px) { .dlgCard { padding: 10px 12px; } #dlgText { min-height: 0; padding: 6px 8px; font-size: 14px; } .dlgCard #dlgOpts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; } .dlgCard #dlgOpts .btn { font-size: 13.5px; padding: 6px 8px; margin: 0; min-height: 0; } .dlgCard #dlgOpts .projList { grid-column: 1 / -1; font-size: 12.5px; } .dlgCard #dlgText { min-height: 0; padding: 6px 8px; font-size: 14px; } }
   .dlgHead { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .dlgHead > div:nth-child(2) { flex: 1; min-width: 0; } .dlgHead b { display: block; font-size: 22px; } .dlgHead span#dlgProf { font-size: 13px; color: #b9bcc6; }
   #dlgFace { flex: none; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; color: #fff; border: 2px solid #000; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.18); text-shadow: 0 2px 0 #000; }
   #dlgRep { flex: none; padding: 2px 8px; font-size: 12px; border: 1px solid; border-radius: 999px; white-space: nowrap; }
   #dlgText { min-height: 54px; padding: 10px 12px; margin: 0 0 8px; font-size: 16px; line-height: 1.4; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 4px; }
   #dlgGoods { font-size: 12px; color: #b9bcc6; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; min-height: 4px; margin-bottom: 4px; }
+  .dlgMood { color: #ff6b81; letter-spacing: 1px; margin-right: 8px; font-size: 13px; } .dlgNow { color: #9fd0a8; margin-right: 10px; }
   #dlgGoods .tIcon { width: 20px; height: 20px; display: inline-block; background: center/contain no-repeat; image-rendering: pixelated; }
   #dlgOpts .btn { justify-content: flex-start; text-align: left; font-size: 16px; } #dlgOpts .btn em { margin-left: auto; font-style: normal; font-size: 12px; color: #c9ccd4; }
   .projList { margin: 6px 0; padding-left: 18px; font-size: 14px; line-height: 1.6; } .projList .ok { color: #7be06a; } .projList .bad { color: #ff8a7a; } .projList em { color: #aab; font-style: normal; }
@@ -850,7 +853,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.2!</span>
+      <span class="ver">¡Versión 4.3!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -860,7 +863,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.2</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.3</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -6006,7 +6009,7 @@ class EntityManager {
     for (const o of arr || []) {
       if (!o || !Array.isArray(o.p) || o.p.some((v) => !Number.isFinite(v))) continue;
       if (o.k === 'item') { if (ITEMS[o.s?.[0]]) { const e = new ItemDrop({ id: o.s[0], count: o.s[1], dmg: o.s[2], ...(o.s[3] ? { ench: o.s[3] } : {}) }, ...o.p); e.pickupDelay = 0; this.add(e); } }
-      else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; v.vinv = Array.isArray(o.vi) ? o.vi : null; v.giftDay = o.gd; v.questDay = o.qd; this.add(v); }
+      else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; v.vinv = Array.isArray(o.vi) ? o.vi : null; v.giftDay = o.gd; v.questDay = o.qd; if (v.loadExtra) v.loadExtra(o); this.add(v); }
       else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; if (o.tm) { m.tamed = true; m.saddled = !!o.sd; m.sitting = !!o.st; } m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.age < 0) m.mesh.scale.setScalar(0.55); }
     }
   }
@@ -7876,6 +7879,28 @@ STRUCTS.push(
 );
 const POI_ICON_42 = { cabin: '🏚', menhir: '🪨', well: '🕳', obelisk: '🗿', wreck: '⚓', treasure: '💰', watch: '🏰' };
 const POI_NAMES_42 = { cabin: 'Cabaña abandonada', menhir: 'Círculo de piedras', well: 'Pozo olvidado', obelisk: 'Monolito', wreck: 'Naufragio', treasure: 'Tesoro enterrado', watch: 'Atalaya en ruinas' };
+/* ==========================================================================
+   §37 ALDEAS VIVAS 4.3 — datos
+   --------------------------------------------------------------------------
+   Oficios de los visitantes, la mula de carga de las caravanas, las
+   especialidades de las aldeas y las listas de intercambios.
+   La lógica (rutinas, economía, memoria, crecimiento y eventos) está en §38.
+   ========================================================================== */
+Object.assign(PROFESSIONS, {
+  trader: { name: 'Mercader ambulante', robe: rgb(120, 60, 150), trim: rgb(240, 200, 80), hat: 'straw' },
+  caravaner: { name: 'Jefe de caravana', robe: rgb(170, 50, 40), trim: rgb(240, 210, 120), hat: 'cap' },
+  stranger: { name: 'Visitante misterioso', robe: rgb(26, 22, 38), trim: rgb(110, 70, 170), hat: 'none' },
+});
+TRADES.trader = []; TRADES.caravaner = []; TRADES.stranger = [];      // sus ofertas se sortean al llegar (v.offers)
+
+// Mula de carga: acompaña a las caravanas
+MOBS.mule = { name: 'Mula de carga', hp: 16, w: 0.9, h: 1.5, speed: 1.6, xp: 1, sound: 'sheep', drops: [[I.LEATHER, 0, 2]],
+  model: (m) => { const BR = rgb(120, 96, 70), DK = rgb(84, 64, 46), K = rgb(18, 14, 12), SK = rgb(190, 150, 90), RD = rgb(170, 50, 40);
+    return MOB_MODELS.quadruped(m, { legH: 12, legW: 3.4, bodyW: 10, bodyH: 9, bodyL: 18, headW: 6, headH: 7, headL: 9, headY: 3,
+      body: BR, leg: DK, head: BR, hoof: rgb(40, 32, 28),
+      bodyExtra: [[10.6, 1.4, 10, 0, 4.9, 0, RD], [5, 7, 8, 7.4, 1.5, 0, SK], [5, 7, 8, -7.4, 1.5, 0, SK], [5.4, 1, 8.4, 7.4, 5.2, 0, DK], [5.4, 1, 8.4, -7.4, 5.2, 0, DK], [2, 6, 1.6, 0, 1, -9.6, DK]],
+      headExtra: [[5, 4, 3, 0, -1.5, 5.6, rgb(200, 186, 160)], ...eyesHD(4, 1.6, 2.2, rgb(240, 240, 235), K, { w: 1.4, h: 1.4, pw: 0.8, ph: 1 }), [1.6, 5, 1, -2.4, 5.6, -2, DK], [1.6, 5, 1, 2.4, 5.6, -2, DK]] }); } };
+
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -10496,7 +10521,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -10507,7 +10532,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.2  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.3  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -10532,7 +10557,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -11370,7 +11395,7 @@ function doTrade(v, idx) {
       }
     }
     if (best) {
-      const NAMES = { village: 'Aldea', dragon: 'Ruinas del dragón', temple: 'Templo del desierto', tower: 'Torre antigua', ruins: 'Ruinas', camp: 'Campamento', mine: 'Mina abandonada', dungeon: 'Mazmorra', abyss: 'Santuario abisal' };
+      const NAMES = { village: 'Aldea', dragon: 'Ruinas del dragón', temple: 'Templo del desierto', tower: 'Torre antigua', ruins: 'Ruinas', camp: 'Campamento', mine: 'Mina abandonada', dungeon: 'Mazmorra', abyss: 'Santuario abisal', ...POI_NAMES_42 };
       p.markers.push({ name: NAMES[best.S.type] + ' (rumor)', x: best.c.x, z: best.c.z, icon: best.S.type, ref: best.c.id });
       hud.toast(`El explorador marca en tu mapa: ${NAMES[best.S.type]} a ${Math.round(best.d)} bloques`);
     } else hud.toast('El explorador no conoce más lugares cerca.');
@@ -13203,7 +13228,7 @@ const questUI = {
         const t = repTier(r.rep), pct = (r.rep + 100) / 2;
         box.insertAdjacentHTML('beforeend', `<div class="qCard"><div class="qHead"><b>🏘 ${villageName(id)}</b><span>${VILLAGE_LEVELS[r.lvl]}${r.bq ? ' · en obras' : ''}</span></div>
           <div class="qGoal" style="color:${t[2]}">${t[1]} (${r.rep > 0 ? '+' : ''}${r.rep})</div><u class="rep"><s style="width:${pct}%;background:${t[2]}"></s></u>
-          <div class="qRew">Precios ×${priceMult(id).toFixed(2)}${r.lvl < 5 ? ` · Siguiente nivel: ${VILLAGE_LEVELS[r.lvl + 1]} (reputación ${VILLAGE_UPGRADES[r.lvl + 1].rep})` : ''}</div></div>`);
+          <div class="qRew">Precios ×${priceMult(id).toFixed(2)}${r.lvl < 5 ? ` · Siguiente nivel: ${VILLAGE_LEVELS[r.lvl + 1]} (reputación ${VILLAGE_UPGRADES[r.lvl + 1].rep})` : ''}</div>${villageExtraHTML(id, r)}</div>`);
       }
     }
     this.dirty = false;
@@ -13439,6 +13464,25 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.3', name: 'Aldeas vivas', date: 'noviembre de 2026', items: [
+    'Rutina diaria de los aldeanos: reunión en la plaza al amanecer, trabajo por la mañana, descanso a mediodía, visitas a otros vecinos por la tarde, paseo antes de anochecer y a casa a dormir. Al hablar con uno ves qué está haciendo.',
+    'Ya no se quedan trabados: ahora buscan el camino rodeando casas y vallas, cruzando puertas y subiendo escalones.',
+    'Se resguardan en casa cuando llueve. Si aparece un monstruo suena la alarma de la aldea y todos corren a refugiarse; también durante los asedios, invasiones, lunas de sangre, tormentas eléctricas y lluvias de meteoritos.',
+    'Vida social: los vecinos se paran a charlar (con globos de diálogo), se compran cosas entre ellos y te saludan según lo que piensen de ti.',
+    'Celebran: bailan en la plaza durante el festival y salen de noche a mirar la aurora.',
+    'Memoria: cada aldeano recuerda cuánto habláis, lo que le compras, los regalos, los encargos que le hiciste, si le pegaste y si le salvaste de un monstruo. Sus saludos cambian según eso.',
+    'Amistad (corazones en el diálogo): hasta un 15 % de descuento con ese aldeano y, al llegar a 5 corazones, un regalo único según su oficio. Puedes regalarle el objeto que lleves en la mano; cada oficio tiene sus gustos.',
+    'Aldeas especializadas: agrícola, ganadera, maderera, minera, comercial o pesquera, según dónde estén. Cada una vende lo suyo más barato y tiene intercambios propios.',
+    'Economía: los precios suben si compras mucho lo mismo y bajan solos con los días. Cada día la aldea busca un producto y lo paga mejor (hasta 6 encargos al día).',
+    'Prosperidad: sube al comerciar, cumplir encargos y misiones, hacer regalos, aportar al proyecto y defender la aldea. Una aldea próspera crece sola: faroles, jardines, huertos, casas con vecinos nuevos y un monumento.',
+    'Misiones comunitarias: toda la aldea reúne un material o limpia de monstruos los alrededores. Aportas hablando con cualquier vecino; al completarla ganas esmeraldas, reputación y prosperidad.',
+    'Opción «Sobre la aldea» en el diálogo: especialidad, vecinos, estado, prosperidad, encargo del día y misión comunitaria. También en el registro de aventuras.',
+    'Caravana comercial (evento de día): llega a la plaza con su jefe, dos escoltas y mulas de carga. Compra y vende al por mayor durante unos minutos.',
+    'Mercader ambulante (evento de día, en cualquier lugar): vende objetos poco comunes de tierras lejanas.',
+    'Visitante misterioso (evento de noche en una aldea): una figura encapuchada que ofrece objetos muy raros y rumores de lugares secretos a cambio de oro y diamantes.',
+    'Criatura nueva: la mula de carga. 4 logros nuevos de aldeas.',
+    'Los rumores del explorador ahora también llevan a los lugares de la 4.2 (naufragios, monolitos, tesoros…).',
+  ] },
   { v: '4.2', name: 'Un mundo más vivo', date: 'noviembre de 2026', items: [
     'Nuevo generador de mundos. Se usa en los mundos que crees a partir de ahora; tus mundos anteriores siguen exactamente igual, con su terreno de siempre.',
     'Relieve más variado: llanos de verdad, zonas de colinas onduladas, mesetas con bordes escarpados y tres tipos de montaña (crestas afiladas, macizos redondeados y agujas). Las cumbres ya no quedan cortadas en plano.',
@@ -13635,7 +13679,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.3', name: 'Aldeas vivas', items: ['Aldeanos con rutinas, refugio y memoria.', 'Aldeas que crecen, economía, caravanas y mercaderes.'] },
   { v: '4.4', name: 'Zonas nuevas', items: ['Mazmorras, templos y minas.', 'Islas flotantes y ciudades submarinas.'] },
   { v: '4.5', name: 'Personaje', items: ['Árbol de habilidades.', 'Conjuntos de armadura, accesorios, mochilas, mascotas y monturas.'] },
   { v: '4.6', name: 'Combate y jefes', items: ['Enemigos más listos y ataques especiales.', 'Jefes nuevos con sus arenas.'] },
@@ -16507,6 +16550,744 @@ const dynLight = {
     for (; k < 4; k++) U[k].w = 0;
   },
 };
+// ---------- Especialidades de aldea ----------
+// trades.all: intercambios extra de cualquier aldeano; wants: lo que la aldea compra más caro (uno distinto cada día)
+const VILLAGE_SPECS = {
+  agricola: { name: 'agrícola', icon: '🌾', desc: 'Vive de sus campos: pan y hortalizas baratos.',
+    trades: [[[I.EMERALD, 1], [I.BREAD, 10], 12], [[I.EMERALD, 2], [I.GOLDEN_CARROT, 4], 6]], wants: [I.IRON_INGOT, I.COAL, COBBLE, TORCH] },
+  ganadera: { name: 'ganadera', icon: '🐄', desc: 'Cría ganado: cuero, lana y carne.',
+    trades: [[[I.EMERALD, 1], [I.LEATHER, 5], 10], [[I.EMERALD, 1], [WOOL, 8], 10], [[I.EMERALD, 1], [I.BEEF, 6], 8]], wants: [I.WHEAT, I.CARROT, OAK_PLANKS, I.IRON_INGOT] },
+  maderera: { name: 'maderera', icon: '🪓', desc: 'Tala los bosques cercanos: madera a buen precio.',
+    trades: [[[I.EMERALD, 1], [OAK_LOG, 16], 12], [[I.EMERALD, 1], [I.STICK, 32], 8], [[I.EMERALD, 2], [BOOKSHELF, 2], 6]], wants: [I.IRON_INGOT, I.BREAD, I.COAL, I.STRING] },
+  minera: { name: 'minera', icon: '⛏', desc: 'Trabaja las minas: carbón, hierro y algún diamante.',
+    trades: [[[I.EMERALD, 1], [I.COAL, 12], 12], [[I.EMERALD, 2], [I.IRON_INGOT, 5], 8], [[I.EMERALD, 7], [I.DIAMOND, 1], 2]], wants: [I.BREAD, TORCH, OAK_PLANKS, I.LEATHER] },
+  comercial: { name: 'comercial', icon: '💰', desc: 'Cruce de caminos: objetos difíciles de encontrar.',
+    trades: [[[I.EMERALD, 3], [I.SADDLE, 1], 2], [[I.EMERALD, 2], [I.COMPASS, 1], 3], [[I.GOLD_INGOT, 2], [I.EMERALD, 1], 12]], wants: [I.GOLD_INGOT, I.LEATHER, WOOL, I.COAL] },
+  pesquera: { name: 'pesquera', icon: '🎣', desc: 'Vive del mar: pescado fresco y aparejos.',
+    trades: [[[I.EMERALD, 1], [I.RAW_FISH, 8], 12], [[I.EMERALD, 1], [I.COOKED_FISH, 5], 10], [[I.EMERALD, 2], [I.STRING, 8], 6]], wants: [OAK_PLANKS, I.COAL, I.BREAD, I.IRON_INGOT] },
+};
+// Lo que paga la aldea por el encargo del día: [cantidad, esmeraldas]
+const WANT_DEF = new Map([[I.IRON_INGOT, [6, 3]], [I.COAL, [16, 3]], [COBBLE, [48, 3]], [TORCH, [24, 3]], [I.WHEAT, [24, 3]], [I.CARROT, [16, 3]], [OAK_PLANKS, [48, 3]],
+  [I.BREAD, [8, 3]], [I.STRING, [8, 3]], [I.LEATHER, [6, 3]], [I.GOLD_INGOT, [3, 3]], [WOOL, [10, 3]]]);
+// Misiones comunitarias: [objeto, cantidad]
+const COMMUNITY_POOL = [[I.WHEAT, 48], [COBBLE, 96], [OAK_PLANKS, 64], [I.IRON_INGOT, 16], [I.COAL, 32], [I.BREAD, 24], [WOOL, 20], [TORCH, 48], [I.LEATHER, 12]];
+
+// ---------- Ofertas de los visitantes ([[pago, n], [recibe, n], máximo]) ----------
+const E43 = I.EMERALD;
+const TRADER_POOL = [[[E43, 4], [I.SADDLE, 1], 1], [[E43, 3], [GLOWSTONE, 6], 3], [[E43, 3], [SEA_LANTERN, 4], 3], [[E43, 2], [CRYSTAL, 4], 4], [[E43, 2], [GLOW_FLOWER, 4], 4],
+  [[E43, 5], [I.GOLDEN_APPLE, 1], 2], [[E43, 6], [I.CROSSBOW, 1], 1], [[E43, 3], [I.FIRE_ARROW, 12], 3], [[E43, 5], [potionId('regen', 0), 1], 2], [[E43, 5], [potionId('strength', 0), 1], 2],
+  [[E43, 8], [I.STAR_SHARD, 2], 2], [[E43, 6], [I.STORM_ESSENCE, 2], 2], [[E43, 2], [I.MELON_SLICE, 12], 4], [[E43, 3], [CHERRY_PLANKS, 24], 3], [[E43, 2], [LANTERN, 4], 4], [[E43, 3], [I.BED_ITEM, 1], 2]];
+const CARAVAN_POOL = [[[I.WHEAT, 32], [E43, 3], 4], [[COBBLE, 64], [E43, 3], 4], [[I.COAL, 24], [E43, 3], 4], [[I.IRON_INGOT, 8], [E43, 4], 4], [[OAK_LOG, 32], [E43, 3], 4], [[I.LEATHER, 8], [E43, 3], 4],
+  [[WOOL, 16], [E43, 3], 4], [[I.GOLD_INGOT, 4], [E43, 4], 4], [[I.DIAMOND, 1], [E43, 6], 3],
+  [[E43, 2], [I.IRON_INGOT, 6], 4], [[E43, 3], [I.GOLD_INGOT, 3], 4], [[E43, 8], [I.DIAMOND, 1], 2], [[E43, 2], [GLASS, 24], 4], [[E43, 2], [I.ARROW, 24], 4], [[E43, 3], [I.BREAD, 16], 4], [[E43, 4], [I.SADDLE, 1], 1]];
+const STRANGER_POOL = [[[I.DIAMOND, 2], [I.TOTEM, 1], 1], [[I.GOLD_INGOT, 6], [I.EVENT_HORN, 1], 1], [[I.GOLD_INGOT, 3], ['reveal', 1], 2], [[E43, 10], [I.ARCANE_DUST, 4], 2],
+  [[E43, 12], [I.STAR_SHARD, 3], 2], [[I.DIAMOND, 1], [I.ELIXIR_ARCANE, 1], 2], [[E43, 6], [I.GOLDEN_APPLE, 2], 2], [[I.GOLD_INGOT, 4], [I.ELIXIR_STORM, 1], 2]];
+// Lo que le gusta recibir a cada oficio (regalos)
+const GIFT_LIKES = {
+  farmer: [I.WHEAT_SEEDS, I.BEET_SEEDS, I.BREAD, I.APPLE, I.CARROT, I.GOLDEN_CARROT], smith: [I.IRON_INGOT, I.COAL, I.GOLD_INGOT, I.DIAMOND],
+  merchant: [I.EMERALD, I.GOLD_INGOT, I.DIAMOND, I.LEATHER], builder: [STONE_BRICKS, GLASS, COBBLE, OAK_PLANKS, LANTERN], explorer: [I.COMPASS, I.ARROW, I.APPLE, I.BREAD, TORCH],
+  guard: [I.BREAD, I.IRON_INGOT, I.ARROW, I.SHIELD],
+};
+// Regalo único de un aldeano cuando llegáis a ser grandes amigos
+const BEST_FRIEND_GIFT = { farmer: [I.GOLDEN_CARROT, 8], smith: [toolId('diamond', 'pickaxe'), 1], merchant: [I.EMERALD, 12], builder: [SEA_LANTERN, 8], explorer: [I.COMPASS, 1], guard: [I.SHIELD, 1] };
+
+/* ==========================================================================
+   §38 ALDEAS VIVAS 4.3 — lógica
+   --------------------------------------------------------------------------
+   · Rutinas: reunión matinal en la plaza, trabajo, descanso de mediodía,
+     visitas a otros vecinos, paseo de la tarde y a casa de noche. Se refugian
+     de la lluvia y de los peligros (alarma de aldea) y celebran las fiestas.
+   · Vida social: los vecinos charlan entre sí y se compran cosas.
+   · Memoria: cada aldeano recuerda lo que has hecho por él (o contra él).
+   · Economía: especialidad de cada aldea, precios según la demanda, encargo
+     del día, prosperidad y misiones comunitarias.
+   · Crecimiento: una aldea próspera levanta por su cuenta faroles, jardines,
+     huertos, casas y un monumento.
+   · Visitantes: caravanas, mercader ambulante y visitante misterioso.
+   Todo se guarda con el jugador (p.villages) y con cada aldeano.
+   ========================================================================== */
+const village43 = {
+  t: 0, alerts: new Map(), specs: new Map(), plazas: new Map(), groups: new Map(), bubbles: [], bubTex: new Map(), toastT: 0, thanksDay: -1, thanks: 0,
+  now() { return game.env.days + game.env.time; },
+  /* ---------- datos de la aldea ---------- */
+  plaza(id) {
+    let c = this.plazas.get(id);
+    if (c === undefined) { const info = villageInfo(id); c = info ? { x: info.x + 0.5, z: info.z + 0.5, y: info.y, S: info.S } : null; this.plazas.set(id, c); }
+    return c;
+  },
+  spec(id) {
+    let s = this.specs.get(id);
+    if (s === undefined) {
+      s = null;
+      const c = this.plaza(id);
+      if (c && world && world.gen) {
+        const h = strHash(id + ':spec'), b = world.gen.column(Math.floor(c.x), Math.floor(c.z)).b;
+        let sea = 0; for (let a = 0; a < 8; a++) if (world.gen.column(Math.floor(c.x + Math.cos(a * Math.PI / 4) * 44), Math.floor(c.z + Math.sin(a * Math.PI / 4) * 44)).b === BIOME.OCEAN) sea++;
+        const pick = (a, b2, p) => ((h % 100) < p ? a : b2);
+        const k = sea >= 2 ? 'pesquera' : b === BIOME.DESERT || b === BIOME.BADLANDS ? pick('comercial', 'minera', 55) : b === BIOME.TAIGA || b === BIOME.FOREST ? pick('maderera', 'minera', 65)
+          : b === BIOME.SAVANNA ? pick('ganadera', 'comercial', 60) : b === BIOME.CHERRY ? pick('comercial', 'agricola', 55) : pick('agricola', 'ganadera', 55);
+        s = { key: k, ...VILLAGE_SPECS[k] };
+      }
+      this.specs.set(id, s);
+    }
+    return s;
+  },
+  rec(id) {
+    const r = vrec(id); if (!r) return null;
+    r.pros ??= 0; r.dem ||= {}; r.auto ??= 0; r.wu ??= 0;
+    return r;
+  },
+  addPros(id, n) { const r = this.rec(id); if (r) r.pros = Math.max(0, +(r.pros + n).toFixed(1)); },
+  // encargo del día: un producto que la aldea compra más caro
+  wanted(id) {
+    const s = this.spec(id); if (!s) return null;
+    const item = s.wants[(strHash(id) + game.env.days) % s.wants.length], d = WANT_DEF.get(item);
+    return d ? { id: item, n: d[0], em: d[1] } : null;
+  },
+  /* ---------- memoria y amistad ---------- */
+  mem(v) { return (v.mem ||= { met: game.env.days, talks: 0, trades: 0, gifts: 0, quests: 0, hits: 0, saved: 0 }); },
+  friendship(v) { const m = v.mem; if (!m) return 0; return clamp(Math.min(3, m.talks * 0.3) + Math.min(6, m.trades * 0.4) + m.gifts * 2 + m.quests * 3 + m.saved * 4 - m.hits * 6, -10, 20); },
+  hearts(v) { return clamp(Math.floor(this.friendship(v) / 4), 0, 5); },
+  /* ---------- alarma ---------- */
+  alert(id, secs, why) {
+    const a = this.alerts.get(id), fresh = !a || a.t <= 0;
+    this.alerts.set(id, { t: Math.max(a ? a.t : 0, secs), why });
+    const c = this.plaza(id), p = game.player;
+    if (fresh && c && this.toastT <= 0 && Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < 70) {
+      this.toastT = 45; sfx.play('chime', { pitch: 1.6 }); setTimeout(() => sfx.play('chime', { pitch: 1.6 }), 260);
+      hud.toast(`🔔 ¡Alarma en ${villageName(id)}! ${why}: los vecinos corren a refugiarse`, 3200);
+    }
+  },
+  alerted(id) { const a = this.alerts.get(id); return a && a.t > 0 ? a : null; },
+  /* ---------- globos de diálogo ---------- */
+  bubble(v, emoji, secs = 2.2) {
+    if (!emoji || v.dead) return;
+    let tex = this.bubTex.get(emoji);
+    if (!tex) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
+      g.fillStyle = 'rgba(255,255,255,.94)'; g.strokeStyle = '#222'; g.lineWidth = 3;
+      g.beginPath(); g.moveTo(14, 4); g.lineTo(50, 4); g.quadraticCurveTo(60, 4, 60, 14); g.lineTo(60, 38); g.quadraticCurveTo(60, 48, 50, 48); g.lineTo(38, 48); g.lineTo(32, 60); g.lineTo(27, 48); g.lineTo(14, 48);
+      g.quadraticCurveTo(4, 48, 4, 38); g.lineTo(4, 14); g.quadraticCurveTo(4, 4, 14, 4); g.closePath(); g.fill(); g.stroke();
+      g.font = '30px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#111'; g.fillText(emoji, 32, 27);
+      tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; this.bubTex.set(emoji, tex);
+    }
+    let b = this.bubbles.find((x) => x.v === v);
+    if (!b) { b = { v, s: new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false })) }; b.s.scale.set(0.62, 0.62, 1); b.s.renderOrder = 5; scene.add(b.s); this.bubbles.push(b); }
+    else if (b.s.material.map !== tex) { b.s.material.map = tex; b.s.material.needsUpdate = true; }
+    b.t = secs; b.age = 0;
+  },
+  updateBubbles(dt) {
+    for (let i = this.bubbles.length - 1; i >= 0; i--) {
+      const b = this.bubbles[i]; b.t -= dt; b.age += dt;
+      if (b.t <= 0 || b.v.dead || b.v.deathT || !game.entities.list.includes(b.v)) { scene.remove(b.s); b.s.material.dispose(); this.bubbles.splice(i, 1); continue; }
+      const k = Math.min(1, b.age * 8) * Math.min(1, b.t * 5);
+      b.s.position.set(b.v.pos.x, b.v.pos.y + 2.5 + Math.sin(b.age * 3) * 0.03, b.v.pos.z); b.s.scale.set(0.62 * k, 0.62 * k, 1);
+      b.s.visible = !b.v.sleeping && b.v.pos.distanceToSquared(camera.position) < 40 * 40;
+    }
+  },
+  clear() {
+    for (const b of this.bubbles) { scene.remove(b.s); b.s.material.dispose(); }
+    this.bubbles.length = 0; this.alerts.clear(); this.specs.clear(); this.plazas.clear(); this.groups.clear();
+  },
+  /* ---------- bucle ---------- */
+  update(dt) {
+    const p = game.player;
+    if (!p || !world || game.state === 'menu' || game.state === 'loading') { if (this.bubbles.length || this.plazas.size) this.clear(); return; }
+    this.updateBubbles(dt);
+    if (game.state !== 'playing') return;
+    this.toastT -= dt;
+    for (const a of this.alerts.values()) a.t -= dt;
+    if ((this.t -= dt) > 0) return;
+    this.t = 0.5;
+    // vecinos cargados, por aldea
+    this.groups.clear();
+    for (const e of game.entities.list) if (e instanceof Villager && e.planId != null && !e.temp && !e.deathT) { let g = this.groups.get(e.planId); if (!g) this.groups.set(e.planId, (g = [])); g.push(e); }
+    const ev = events.cur;
+    for (const [id, list] of this.groups) {
+      // alarma: algún vecino ve un monstruo, o hay un suceso peligroso en marcha
+      if (list.some((v) => v.threat)) this.alert(id, 12, 'Hay monstruos cerca');
+      if (ev && (ev.id === 'siege' && ev.vil && String(ev.vil.id) === String(id))) this.alert(id, 3, 'Atacan los saqueadores');
+      else if (ev && (ev.id === 'bloodmoon' || ev.id === 'invasion' || ev.id === 'meteor' || ev.id === 'storm')) this.alert(id, 3, ev.E.name);
+      this.social(id, list);
+    }
+    // cambio de día en las aldeas que conoces
+    for (const id of Object.keys(p.villages || {})) { const r = this.rec(id); if (r.day !== game.env.days) this.daily(id, r); }
+  },
+  /* ---------- vida social: charlas y compras entre vecinos ---------- */
+  social(id, list) {
+    if (this.alerted(id) || game.env.isNight()) return;
+    for (const a of list) {
+      if (a.chatT > 0 || a.prof === 'guard' && Math.random() < 0.7 || a.trading || a.sleeping || (a.chatCd = (a.chatCd || 0) - 0.5) > 0) continue;
+      const b = list.find((o) => o !== a && !(o.chatT > 0) && !o.trading && !o.sleeping && o.pos.distanceToSquared(a.pos) < 3.2 * 3.2 && Math.abs(o.pos.y - a.pos.y) < 1.5);
+      if (!b || Math.random() > 0.35) continue;
+      const secs = 4 + Math.random() * 3.5;
+      a.chatT = b.chatT = secs; a.chatWith = b; b.chatWith = a; a.chatCd = 14 + Math.random() * 16; b.chatCd = 14 + Math.random() * 16; a.chatK = 0; b.chatK = 0.6;
+      // de vez en cuando uno le compra algo al otro: las mercancías circulan por la aldea
+      if (a.vinv && b.vinv && Math.random() < 0.4) {
+        const [seller, buyer] = b.vinv.length && Math.random() < 0.5 ? [b, a] : [a, b], g = seller.vinv.find((x) => x[0] !== I.EMERALD && x[1] > 1);
+        if (g) { g[1]--; villagerGive(buyer, g[0], 1); villagerGive(seller, I.EMERALD, 1); a.chatDeal = b.chatDeal = g[0]; }
+      }
+    }
+  },
+  /* ---------- cada día ---------- */
+  daily(id, r) {
+    const first = r.day == null; r.day = game.env.days; r.wu = 0;
+    for (const k of Object.keys(r.dem)) { r.dem[k] = Math.floor(r.dem[k] / 2); if (!r.dem[k]) delete r.dem[k]; }
+    if (first) return;
+    this.addPros(id, 1);                                             // la aldea prospera poco a poco por sí sola
+    // misión comunitaria: caduca a los 4 días; tras completarse descansa 2
+    if (r.com && game.env.days > r.com.exp) { r.com = null; }
+    if (!r.com && game.env.days >= (r.comNext || 0)) {
+      const s = this.spec(id), pool = COMMUNITY_POOL.filter(([it]) => !s || !s.trades.some((t) => t[1][0] === it));
+      if (Math.random() < 0.3) r.com = { k: 'h', n: 10, have: 0, exp: game.env.days + 4 };
+      else { const [it, n] = pool[Math.floor(Math.random() * pool.length)]; r.com = { k: 'c', id: it, n, have: 0, exp: game.env.days + 4 }; }
+    }
+    this.grow(id, r);
+  },
+  comText(c) { return c.k === 'h' ? `Acabar con ${c.n} monstruos cerca de la aldea` : `Reunir ${c.n}× ${itemName(c.id)}`; },
+  comDone(id, r) {
+    const c = r.com; r.com = null; r.comNext = game.env.days + 2;
+    addRep(id, 8); this.addPros(id, 15); game.player.addXp(40);
+    const em = rint(6, 10), left = game.player.inv.add(I.EMERALD, em); if (left) game.entities.dropItem({ id: I.EMERALD, count: left }, game.player.pos.x, game.player.pos.y + 1.2, game.player.pos.z);
+    game.player.discover(I.EMERALD); hud.update(); sfx.play('fanfare');
+    notify('🤝 Misión comunitaria', `${villageName(id)}: «${this.comText(c)}» completada. +${em} esmeraldas`, 'ach');
+    journalAdd('🤝', `Ayudaste a ${villageName(id)}: ${this.comText(c)}`);
+    game.stats.add('community'); game.unlock('village_community');
+    for (const v of this.groups.get(id) || []) this.bubble(v, '🎉', 4);
+  },
+  /* ---------- crecimiento por prosperidad ---------- */
+  GROWTH: [[8, 'faroles en las calles', 'lamps'], [20, 'un jardín de flores', 'garden'], [36, 'un huerto nuevo', 'farm'], [55, 'una casa para un nuevo vecino', 'house'], [80, 'un monumento en la plaza', 'monument'],
+    [110, 'otra casa para un nuevo vecino', 'house'], [150, 'más faroles y otro jardín', 'lamps+garden'], [200, 'otra casa para un nuevo vecino', 'house']],
+  nextGrowth(r) { return this.GROWTH[r.auto] || null; },
+  grow(id, r) {
+    const G = this.nextGrowth(r); if (!G || r.bq || r.pros < G[0]) return false;
+    const info = villageInfo(id); if (!info) return false;
+    const rnd = mulberry32(strHash(id) ^ ((r.auto + 1) * 104729)), L = [], spawn = [], taken = [], occ = info.plan.occ;
+    const wood = [OAK_PLANKS, SPRUCE_PLANKS, BIRCH_PLANKS][strHash(id) % 3];
+    for (const kind of G[2].split('+')) {
+      if (kind === 'lamps') for (let k = 0; k < 5; k++) { const s = findSpot(info, 5, info.S - 8, 1, 1, rnd, occ, taken); if (s) L.push(s.x, s.g + 1, s.z, FENCE, 0, s.x, s.g + 2, s.z, FENCE, 0, s.x, s.g + 3, s.z, LANTERN, 0); }
+      else if (kind === 'garden') {
+        const s = findSpot(info, 6, info.S - 8, 5, 5, rnd, occ, taken); if (!s) continue;
+        const fl = [POPPY, DANDELION, BLUE_ORCHID, PINK_PETALS];
+        for (let dx = 0; dx < 5; dx++) for (let dz = 0; dz < 5; dz++) {
+          const edge = dx === 0 || dz === 0 || dx === 4 || dz === 4, gate = edge && dx === 2 && dz === 0;
+          for (let y = s.g + 1; y <= s.g + 3; y++) L.push(s.x + dx, y, s.z + dz, AIR, 0);
+          L.push(s.x + dx, s.g, s.z + dz, gate ? DIRT_PATH : GRASS, 0);
+          if (edge && !gate) L.push(s.x + dx, s.g + 1, s.z + dz, FENCE, 0); else if (!edge && !(dx === 2 && dz === 2)) L.push(s.x + dx, s.g + 1, s.z + dz, fl[Math.floor(rnd() * fl.length)], 0);
+        }
+        L.push(s.x + 2, s.g + 1, s.z + 2, HAY_BALE, 0);
+      } else if (kind === 'farm') {
+        const s = findSpot(info, 10, info.S - 6, 7, 5, rnd, occ, taken); if (!s) continue;
+        const crop = [WHEAT, CARROTS, POTATOES][Math.floor(rnd() * 3)];
+        for (let dx = 0; dx < 7; dx++) for (let dz = 0; dz < 5; dz++) {
+          const edge = dx === 0 || dz === 0 || dx === 6 || dz === 4, water = !edge && dx === 3;
+          for (let y = s.g + 1; y <= s.g + 3; y++) L.push(s.x + dx, y, s.z + dz, AIR, 0);
+          L.push(s.x + dx, s.g, s.z + dz, edge ? OAK_LOG : water ? WATER : FARMLAND, 0);
+          if (!edge && !water) L.push(s.x + dx, s.g + 1, s.z + dz, crop, Math.floor(rnd() * 3));
+        }
+      } else if (kind === 'house') {
+        const s = findSpot(info, 12, info.S - 6, 5, 6, rnd, occ, taken); if (!s) continue;
+        const h = bpHouse(L, s.x, s.z, s.g, wood), prof = ['farmer', 'smith', 'builder', 'explorer', 'merchant'][Math.floor(rnd() * 5)];
+        spawn.push([prof, ...h.home, ...h.work]);
+      } else if (kind === 'monument') {
+        const s = findSpot(info, 5, 12, 3, 3, rnd, occ, taken); if (!s) continue;
+        for (let dx = 0; dx < 3; dx++) for (let dz = 0; dz < 3; dz++) { for (let y = s.g + 1; y <= s.g + 6; y++) L.push(s.x + dx, y, s.z + dz, AIR, 0); L.push(s.x + dx, s.g, s.z + dz, STONE_BRICKS, 0); }
+        L.push(s.x + 1, s.g + 1, s.z + 1, CHISELED_BRICKS, 0, s.x + 1, s.g + 2, s.z + 1, STONE_BRICKS, 0, s.x + 1, s.g + 3, s.z + 1, CHISELED_BRICKS, 0, s.x + 1, s.g + 4, s.z + 1, SEA_LANTERN, 0);
+        for (const [dx, dz] of [[0, 0], [2, 0], [0, 2], [2, 2]]) L.push(s.x + dx, s.g + 1, s.z + dz, STONEBRICK_SLAB, 0);
+      }
+    }
+    if (!L.length) { r.auto++; return false; }                        // no hay sitio: se pasa a la siguiente mejora
+    r.auto++; r.bq = L; r.bi = 0; r.spawn = (r.spawn || []).concat(spawn);
+    notify('🏡 La aldea prospera', `Los vecinos de ${villageName(id)} están levantando ${G[1]}.`, 'poi');
+    journalAdd('🏡', `${villageName(id)} creció: ${G[1]}`);
+    game.unlock('village_prosper');
+    return true;
+  },
+};
+
+/* ---------- Rutinas ---------- */
+// Fase del día de un vecino. Devuelve [modo, texto para el diálogo]
+function villagerPhase(v) {
+  const env = game.env, t = env.time, id = v.planId, ev = events.cur;
+  const mine = ev && ev.vil && String(ev.vil.id) === String(id);
+  if (mine && ev.id === 'festival') return ['party', 'de fiesta en la plaza'];
+  if (ev && ev.id === 'aurora' && env.isNight() && !village43.alerted(id)) return ['watch', 'mirando la aurora'];
+  if (village43.alerted(id)) return ['shelter', 'refugiado en casa'];
+  if (t > 0.44 || t < 0.03) return ['home', t > 0.5 || t < 0.03 ? 'durmiendo' : 'volviendo a casa'];
+  if (env.rainAmt > 0.45) return ['rain', 'resguardado de la lluvia'];
+  if (t < 0.09) return ['plaza', 'en la reunión de la mañana'];
+  if (t < 0.25) return ['work', 'trabajando'];
+  if (t < 0.3) return ['plaza', 'descansando en la plaza'];
+  if (t < 0.39) return [(strHash(v.vname + env.days) & 3) === 0 ? 'visit' : 'work', 'trabajando'];
+  return ['stroll', 'paseando por la aldea'];
+}
+// Movimiento propio (para los modos que no pasan por la rutina base)
+function villagerWalk(v, goal, speed, dt) {
+  if (goal) { const want = Math.atan2(goal[0] - v.pos.x, goal[1] - v.pos.z), dy = ((want - v.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI; v.yaw += clamp(dy, -6 * dt, 6 * dt); }
+  const k = Math.min(1, (v.onGround ? 10 : 2) * dt);
+  v.vel.x += (Math.sin(v.yaw) * speed - v.vel.x) * k; v.vel.z += (Math.cos(v.yaw) * speed - v.vel.z) * k;
+  if (v.hitH && v.onGround && speed) v.vel.y = JUMP_SPEED;
+  v.physics(dt, { swimUp: true });
+  v.walk += Math.hypot(v.vel.x, v.vel.z) * dt * 4;
+  v.syncMesh(dt); v.mesh.rotation.x = 0;
+}
+// Camino a pie hasta (gx, gz): A* sobre el suelo, subiendo un bloque, bajando hasta tres y cruzando puertas.
+// Devuelve los centros de las casillas; si no llega, el tramo que más se acerca.
+function villagePath(v, gx, gz) {
+  const free = (x, y, z) => { const id = world.get(x, y, z); return !id || (!B_SOLID[id] && !B_WATERY[id] && id !== LAVA) || id === DOOR || id === TRAPDOOR; };
+  const floor = (x, y, z) => { const id = world.get(x, y, z); return B_SOLID[id] && BLOCKS[id].shape !== 'fence' && id !== DOOR && id !== TRAPDOOR; };
+  const stand = (x, y, z) => floor(x, y - 1, z) && free(x, y, z) && free(x, y + 1, z);
+  const sx = Math.floor(v.pos.x), sz = Math.floor(v.pos.z), tx = Math.floor(gx), tz = Math.floor(gz);
+  let sy = Math.floor(v.pos.y + 0.3); for (let k = 0; k < 4 && !stand(sx, sy, sz); k++) sy--;
+  if (!stand(sx, sy, sz)) return null;
+  const key = (x, y, z) => x + ',' + y + ',' + z, h = (x, z) => Math.abs(x - tx) + Math.abs(z - tz);
+  const start = { x: sx, y: sy, z: sz, g: 0, f: h(sx, sz), p: null }, open = [start], seen = new Map([[key(sx, sy, sz), start]]);
+  let best = start, n = 0;
+  while (open.length && n++ < 900) {
+    let bi = 0; for (let i = 1; i < open.length; i++) if (open[i].f < open[bi].f) bi = i;
+    const c = open[bi]; open[bi] = open[open.length - 1]; open.pop();
+    if (h(c.x, c.z) < h(best.x, best.z)) best = c;
+    if (c.x === tx && c.z === tz) { best = c; break; }
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = c.x + dx, nz = c.z + dz; if (!world.isLoaded(nx, nz)) continue;
+      let ny = -1;
+      if (stand(nx, c.y, nz)) ny = c.y;
+      else if (free(c.x, c.y + 2, c.z) && stand(nx, c.y + 1, nz)) ny = c.y + 1;
+      else if (free(nx, c.y, nz) && free(nx, c.y + 1, nz)) { for (let d = 1; d <= 3; d++) if (stand(nx, c.y - d, nz)) { ny = c.y - d; break; } else if (!free(nx, c.y - d, nz)) break; }
+      if (ny < 0) continue;
+      const k = key(nx, ny, nz), g = c.g + 1 + (ny !== c.y ? 0.6 : 0), o = seen.get(k);
+      if (o) { if (g < o.g) { o.g = g; o.f = g + h(nx, nz); o.p = c; } continue; }
+      const node = { x: nx, y: ny, z: nz, g, f: g + h(nx, nz), p: c }; seen.set(k, node); open.push(node);
+    }
+  }
+  const out = []; for (let c = best; c && c.p; c = c.p) out.push([c.x + 0.5, c.z + 0.5]);
+  return out.reverse();
+}
+// Siguiente punto hacia dest por el camino calculado (lo recalcula si cambia el destino, cada pocos segundos o si se atasca)
+function villageStep(v, dest, dt) {
+  const far = Math.hypot(dest[0] - v.pos.x, dest[1] - v.pos.z);
+  if (far < 1.6) { v.path = null; return dest; }
+  v.pathT = (v.pathT || 0) - dt;
+  if (!v.path || v.pathT <= 0 || !v.pathDest || Math.hypot(v.pathDest[0] - dest[0], v.pathDest[1] - dest[1]) > 1.5) {
+    v.path = villagePath(v, dest[0], dest[1]) || []; v.pi = 0; v.pathDest = [dest[0], dest[1]]; v.pathT = 3 + Math.random() * 2;
+  }
+  while (v.pi < v.path.length - 1 && Math.hypot(v.path[v.pi][0] - v.pos.x, v.path[v.pi][1] - v.pos.z) < 1.0) v.pi++;
+  const w = v.path[v.pi];
+  if (!w || (v.pi === v.path.length - 1 && Math.hypot(w[0] - v.pos.x, w[1] - v.pos.z) < 1.0)) return dest;       // último tramo: recto al destino
+  return w;
+}
+const faceTo = (v, x, z) => { v.yaw = Math.atan2(x - v.pos.x, z - v.pos.z); };
+const TOPICS = { farmer: ['🌾', '🥕', '🍞', '☀'], smith: ['⚒', '🔥', '⛏', '🛡'], merchant: ['💰', '💎', '📦', '🤝'], builder: ['🧱', '🏠', '🪵', '📐'], explorer: ['🗺', '🧭', '⛰', '🏛'], guard: ['⚔', '🛡', '👀', '🌙'] };
+// Visitantes de paso: van a su sitio, atienden y se marchan cuando se les acaba el tiempo
+function visitorAI(dt, game) {
+  this.invuln -= dt; this.hurtT -= dt;
+  const p = game.player, leaving = village43.now() > this.tempUntil;
+  let goal = null, speed = 0;
+  if (leaving) {
+    this.leaveT = (this.leaveT || 0) + dt;
+    if (this.prof === 'stranger' || this.leaveT > 12 || this.pos.distanceTo(p.pos) > 48 || village43.now() - this.tempUntil > 0.03) {      // (0,03 días: se fue hace rato, p. ej. al recargar)
+      game.particles.emit(this.pos.x, this.pos.y + 1, this.pos.z, this.prof === 'stranger' ? [0.4, 0.2, 0.7] : [0.8, 0.8, 0.8], 14, { speed: 2, up: 2, life: 0.8 });
+      this.dead = true; return;
+    }
+    const s = this.spot || [this.pos.x, this.pos.z], dx = this.pos.x - s[0], dz = this.pos.z - s[1], d = Math.hypot(dx, dz) || 1;
+    goal = [this.pos.x + (d > 0.5 ? dx / d : Math.sin(this.yaw)) * 8, this.pos.z + (d > 0.5 ? dz / d : Math.cos(this.yaw)) * 8]; speed = 2.1;
+  } else if (this.trading) faceTo(this, p.pos.x, p.pos.z);
+  else if (this.spot && Math.hypot(this.spot[0] - this.pos.x, this.spot[1] - this.pos.z) > 1.3) { goal = villageStep(this, this.spot, dt); speed = 1.9; }
+  else if (this.pos.distanceTo(p.pos) < 9) { faceTo(this, p.pos.x, p.pos.z); if (!this.hailed) { this.hailed = true; village43.bubble(this, this.prof === 'stranger' ? '❓' : '💰', 3); sfx.play('villager', { pos: this.pos, pitch: this.prof === 'stranger' ? 0.6 : 1.1 }); } }
+  villagerWalk(this, goal, speed, dt);
+}
+class PackMule extends Mob {
+  constructor(x, y, z, leader) { super('mule', x, y, z); this.leader = leader; this.persistent = true; this.slot = Math.random() * 6.28; }
+  update(dt, game) {
+    if (this.deathT) return super.update(dt, game);
+    this.invuln -= dt; this.hurtT -= dt;
+    const L = this.leader;
+    if (!L || L.dead) { this.dead = true; return; }
+    const gx = L.pos.x + Math.cos(this.slot) * 2.6, gz = L.pos.z + Math.sin(this.slot) * 2.6, d = Math.hypot(gx - this.pos.x, gz - this.pos.z);
+    villagerWalk(this, d > 1.2 ? [gx, gz] : null, d > 6 ? 2.6 : d > 1.2 ? 1.7 : 0, dt);
+  }
+  toJSON() { return null; }                 // no se guarda: se va con la caravana
+}
+{
+  const prev = Villager.prototype.update;
+  Villager.prototype.update = function (dt, game) {
+    if (this.deathT) return prev.call(this, dt, game);
+    if (this.temp && this.prof !== 'guard') return visitorAI.call(this, dt, game);
+    if (this.temp && village43.now() > this.tempUntil) { this.leaveT = (this.leaveT || 0) + dt; if (this.leaveT > 10 || this.pos.distanceTo(game.player.pos) > 48 || village43.now() - this.tempUntil > 0.03) { this.dead = true; return; } return villagerWalk(this, [this.pos.x + Math.sin(this.yaw) * 8, this.pos.z + Math.cos(this.yaw) * 8], 2.1, dt); }
+    if (this.prof === 'guard' || this.planId == null) return prev.call(this, dt, game);
+    const c = village43.plaza(this.planId), [mode, label] = villagerPhase(this), p = game.player;
+    if (mode !== this.routine) {
+      this.routine = mode; this.rSpot = null;
+      if (mode === 'shelter') village43.bubble(this, '❗', 2.5); else if (mode === 'rain') village43.bubble(this, '☔', 2.5); else if (mode === 'party') village43.bubble(this, '🎉', 3); else if (mode === 'watch') village43.bubble(this, '✨', 3);
+    }
+    this.routineText = label;
+    // charla en curso: quietos y mirándose
+    if (this.chatT > 0 && (mode === 'shelter' || this.trading || this.threat || !this.chatWith || this.chatWith.dead)) this.chatT = 0;
+    if (this.chatT > 0) {
+      this.chatT -= dt; this.target = [this.pos.x, this.pos.z]; this.idleT = 2;
+      if ((this.chatK = (this.chatK || 0) - dt) <= 0) { this.chatK = 1.3; const T = TOPICS[this.prof] || ['💬']; village43.bubble(this, this.chatDeal ? '🪙' : Math.random() < 0.25 ? ['💬', '😀', '❤', '🤔'][rint(0, 3)] : T[rint(0, T.length - 1)], 1.1); this.chatDeal = null; }
+      const r = prev.call(this, dt, game); faceTo(this, this.chatWith.pos.x, this.chatWith.pos.z); return r;
+    }
+    // modos nocturnos que la rutina base no contempla
+    if (mode === 'watch' && c) {
+      this.sleeping = false;
+      const a = (strHash(this.vname) % 628) / 100, spot = [c.x + Math.cos(a) * 4.5, c.z + Math.sin(a) * 4.5], d = Math.hypot(spot[0] - this.pos.x, spot[1] - this.pos.z);
+      villagerWalk(this, d > 1 ? spot : null, d > 1 ? 1.8 : 0, dt);
+      if (d <= 1) { this.model.head.rotation.x = -0.6; if (Math.random() < dt * 0.15) village43.bubble(this, ['✨', '😮', '💫'][rint(0, 2)], 2); }
+      return;
+    }
+    this.model.head.rotation.x *= 0.9;
+    // objetivo de la fase (la rutina base se encarga de caminar hasta this.target)
+    if (!this.rSpot && c) {
+      const h = strHash(this.vname + mode), a = (h % 628) / 100, rr = 3.6 + ((h >> 8) % 30) / 10;
+      if (mode === 'plaza' || mode === 'party') this.rSpot = [c.x + Math.cos(a) * rr, c.z + Math.sin(a) * rr];
+      else if (mode === 'shelter' || mode === 'rain') this.rSpot = [this.home[0] + 0.5, this.home[2] + 0.5];
+      else if (mode === 'visit') { const o = (village43.groups.get(this.planId) || []).filter((x) => x !== this && x.work && x.prof !== 'guard'); const w = o.length ? o[h % o.length].work : this.work; this.rSpot = [w[0] + 0.5 + Math.cos(a) * 1.5, w[2] + 0.5 + Math.sin(a) * 1.5]; }
+      else if (mode === 'stroll') this.rSpot = [c.x + Math.cos(a) * (6 + rr * 2), c.z + Math.sin(a) * (6 + rr * 2)];
+    }
+    if (mode === 'work') {                                                   // junto a su puesto, con algún paseo
+      if (!this.rSpot || (this.workT = (this.workT || 0) - dt) <= 0) {
+        const near = Math.random() < 0.6, base = near ? this.work : this.home, sp = near ? 4 : 14;
+        this.rSpot = [base[0] + 0.5 + (Math.random() - 0.5) * sp, base[2] + 0.5 + (Math.random() - 0.5) * sp]; this.workT = 8 + Math.random() * 18;
+      }
+    }
+    if (mode === 'stroll' && this.rSpot && Math.hypot(this.rSpot[0] - this.pos.x, this.rSpot[1] - this.pos.z) < 1.2 && Math.random() < dt * 0.12) this.rSpot = null;     // sigue paseando
+    // camino: la rutina base anda en línea recta hacia this.target (de día) o hacia su casa (de noche o con peligro),
+    // así que se le da como objetivo el siguiente punto del camino
+    const realHome = this.home, homeDest = [realHome[0] + 0.5, realHome[2] + 0.5];
+    const goHome = mode === 'home' || this.threat;
+    const dest = goHome ? homeDest : this.rSpot;
+    if (dest && !this.trading) {
+      const w = villageStep(this, dest, dt);
+      if (goHome) { if (w !== dest) this.home = [w[0] - 0.5, realHome[1], w[1] - 0.5]; }
+      else { this.target = w; this.idleT = 3; }
+    }
+    // con alarma corren
+    this.baseSpec ||= this.spec; this.fastSpec ||= { ...this.spec, speed: 3.1 };
+    this.spec = mode === 'shelter' ? this.fastSpec : this.baseSpec;
+    let r;
+    try { r = prev.call(this, dt, game); } finally { this.home = realHome; }
+    if (this.deathT || this.sleeping || this.trading || this.threat) return r;
+    const arrived = this.rSpot && Math.hypot(this.rSpot[0] - this.pos.x, this.rSpot[1] - this.pos.z) < 1.3;
+    if (mode === 'party' && arrived && c) {                                    // bailan mirando a la plaza
+      faceTo(this, c.x, c.z);
+      if (this.onGround && Math.random() < dt * 1.6) { this.vel.y = 4.6; if (Math.random() < 0.3) village43.bubble(this, ['🎵', '🎉', '😀', '🍰'][rint(0, 3)], 1.5); }
+    } else if ((mode === 'plaza' || mode === 'stroll' || mode === 'work') && Math.hypot(this.vel.x, this.vel.z) < 0.3) {
+      // saluda al jugador que se acerca, según lo que recuerde de él
+      const d = this.pos.distanceTo(p.pos);
+      if (d < 4.5 && !p.dead) {
+        faceTo(this, p.pos.x, p.pos.z);
+        if ((this.waveT = (this.waveT || 0) - dt) <= 0) {
+          this.waveT = 40 + Math.random() * 30;
+          const rep = vrec(this.planId, false)?.rep ?? 0, h = village43.hearts(this);
+          village43.bubble(this, rep <= -40 || (this.mem && this.mem.hits > this.mem.gifts) ? '😠' : h >= 3 ? '❤' : rep >= 15 || h >= 1 ? '👋' : '🙂', 2.2);
+        }
+      }
+    }
+    return r;
+  };
+  const prevJSON = Villager.prototype.toJSON;
+  Villager.prototype.toJSON = function () {
+    const o = prevJSON.call(this);
+    if (this.mem) o.mm = this.mem;
+    if (this.temp) { o.tmp = this.temp; o.tu = this.tempUntil; o.sp = this.spot; }
+    if (this.offers) o.of = this.offers;
+    return o;
+  };
+  Villager.prototype.loadExtra = function (o) {
+    if (o.mm && typeof o.mm === 'object') this.mem = { met: o.mm.met | 0, talks: o.mm.talks | 0, trades: o.mm.trades | 0, gifts: o.mm.gifts | 0, quests: o.mm.quests | 0, hits: o.mm.hits | 0, saved: o.mm.saved | 0, best: !!o.mm.best };
+    if (o.tmp) { this.temp = o.tmp; this.tempUntil = +o.tu || 0; this.spot = Array.isArray(o.sp) ? o.sp : null; }
+    if (Array.isArray(o.of)) this.offers = o.of;
+  };
+  const prevHurt = Villager.prototype.hurt;
+  Villager.prototype.hurt = function (dmg, from) {
+    const byPlayer = this.lastHit === 'player', r = prevHurt.call(this, dmg, from);
+    if (r && byPlayer && !this.temp) { village43.mem(this).hits++; village43.bubble(this, '😠', 2.5); }
+    return r;
+  };
+}
+
+/* ---------- Economía: precios, especialidad y encargo del día ---------- */
+{
+  const prev = villagerTrades;
+  villagerTrades = function (v) {
+    if (v.offers) {                                                    // visitantes: lista sorteada al llegar
+      while (v.uses.length < v.offers.length) v.uses.push(0);
+      const m = v.planId != null ? priceMult(v.planId) : 1;
+      return v.offers.map(([[a, an], b, max]) => [[a, a === I.EMERALD ? Math.max(1, Math.round(an * m)) : an], b, max]);
+    }
+    const rows = prev(v), r = vrec(v.planId, false), s = village43.spec(v.planId), m = priceMult(v.planId);
+    if (s && v.prof !== 'guard') for (const [[a, an], b, max] of s.trades) rows.push([[a, Math.max(1, Math.round(an * m * 0.85))], b, max]);     // la especialidad sale más barata
+    // amistad con este vecino: hasta un 15 % de descuento · demanda: cada compra reciente encarece ese intercambio
+    const fm = 1 - village43.hearts(v) * 0.03;
+    const out = rows.map(([[a, an], b, max], i) => { const dm = 1 + Math.min(0.6, 0.06 * (r?.dem?.[v.prof + ':' + i] || 0)); return [[a, Math.max(1, Math.round(an * dm * (a === I.EMERALD ? fm : 1) + (dm > 1 ? 0.2 : 0)))], b, max]; });
+    const w = village43.wanted(v.planId);
+    if (w && r && v.prof !== 'guard') out.push([[w.id, w.n], [I.EMERALD, w.em], (v.uses[out.length] || 0) + Math.max(0, 6 - (r.wu || 0))]);
+    while (v.uses.length < out.length) v.uses.push(0);
+    return out;
+  };
+  const prevTrade = doTrade;
+  doTrade = function (v, idx) {
+    const before = v.uses[idx] || 0, rows = villagerTrades(v).length;
+    prevTrade(v, idx);
+    if ((v.uses[idx] || 0) <= before) return;
+    village43.bubble(v, '🪙', 1.6);
+    if (v.temp) { if (v.temp === 'caravan') game.unlock('village_caravan'); if (v.planId != null) village43.addPros(v.planId, 1); return; }
+    const r = village43.rec(v.planId); if (!r) return;
+    const m = village43.mem(v); m.trades++;
+    const w = village43.wanted(v.planId);
+    if (w && v.prof !== 'guard' && idx === rows - 1) { r.wu = (r.wu || 0) + 1; village43.addPros(v.planId, 2); }      // encargo del día
+    else { const k = v.prof + ':' + idx; r.dem[k] = (r.dem[k] || 0) + 1; village43.addPros(v.planId, 1); }
+    village43.checkFriend(v);
+  };
+}
+village43.checkFriend = function (v) {
+  const m = v.mem; if (!m || m.best || this.hearts(v) < 5 || v.temp) return;
+  m.best = true;
+  const g = BEST_FRIEND_GIFT[v.prof] || [I.EMERALD, 8], p = game.player, left = p.inv.add(g[0], g[1]);
+  if (left) game.entities.dropItem({ id: g[0], count: left }, p.pos.x, p.pos.y + 1.2, p.pos.z);
+  p.discover(g[0]); hud.update(); sfx.play('levelup'); this.bubble(v, '❤', 4);
+  notify('❤ Gran amistad', `${v.vname} te considera de la familia y te regala ${g[1]}× ${itemName(g[0])}.`, 'ach');
+  journalAdd('❤', `${v.vname}, de ${villageName(v.planId)}, es ahora tu gran amigo`);
+  game.unlock('village_friend');
+};
+
+/* ---------- Memoria: misiones, rescates ---------- */
+{
+  const prevQuest = completeQuest;
+  completeQuest = function (q) {
+    const r = prevQuest(q);
+    if (q && q.kind === 'side' && q.village != null) {
+      village43.addPros(q.village, 5);
+      const v = (village43.groups.get(q.village) || []).find((x) => x.vname === q.giver);
+      if (v) { village43.mem(v).quests++; village43.bubble(v, '❤', 3); village43.checkFriend(v); }
+    }
+    return r;
+  };
+  const prevKilled = game.onMobKilled;
+  game.onMobKilled = function (m) {
+    prevKilled.call(this, m);
+    if (!m || m.lastHit !== 'player' || !m.spec || !m.spec.hostile || !m.pos) return;
+    const V = village43, day = game.env.days;
+    for (const [id, list] of V.groups) {
+      const c = V.plaza(id); if (!c || Math.hypot(m.pos.x - c.x, m.pos.z - c.z) > c.S + 30) continue;
+      const r = V.rec(id);
+      if (r && r.com && r.com.k === 'h') { r.com.have++; if (r.com.have >= r.com.n) V.comDone(id, r); else if (r.com.have % 5 === 0) hud.toast(`🤝 ${villageName(id)}: ${r.com.have}/${r.com.n} monstruos`, 1800); }
+      // el vecino al que amenazaba se acuerda de quién lo salvó
+      let best = null, bd = 12;
+      for (const v of list) { const d = v.pos.distanceTo(m.pos); if (d < bd && (v.threat === m || d < 6)) { bd = d; best = v; } }
+      if (best) {
+        V.mem(best).saved++; V.bubble(best, '❤', 3.5);
+        if (V.thanksDay !== day) { V.thanksDay = day; V.thanks = 0; }
+        if (V.thanks++ < 5) addRep(id, 1);
+        if (V.mem(best).saved === 1) hud.toast(`${best.vname} te da las gracias por salvarle la vida`, 2400);
+        V.checkFriend(best);
+      }
+    }
+  };
+}
+
+/* ---------- Diálogo ---------- */
+{
+  const prevGreeting = greeting;
+  greeting = function (v) {
+    const m = v.mem, r = vrec(v.planId, false), pick = (a) => a[Math.floor(Math.random() * a.length)];
+    if (m && r && r.rep > -40 && Math.random() < 0.55) {
+      const L = [], h = village43.hearts(v);
+      if (m.hits > 0 && m.hits * 2 > m.gifts + m.saved) L.push(pick(['Aún me duele el golpe que me diste…', 'No me he olvidado de lo que me hiciste.']));
+      if (m.saved > 0) L.push(pick([`Nunca olvidaré que me salvaste de aquel monstruo.`, m.saved > 1 ? `Ya me has salvado ${m.saved} veces. ¡Te debo la vida!` : 'Si no llega a ser por ti, no lo cuento.']));
+      if (m.quests > 0) L.push(pick(['Aquel encargo que me hiciste me sacó de un buen apuro.', m.quests > 2 ? 'Siempre puedo contar contigo. ¡Gracias!' : 'Gracias otra vez por tu ayuda.']));
+      if (m.trades >= 8) L.push(pick(['¡Mi mejor cliente! Para ti, precio de amigo.', 'Contigo da gusto hacer negocios.']));
+      if (m.gifts > 0) L.push(pick(['Todavía guardo el regalo que me trajiste.', 'Qué detalle tuviste conmigo el otro día.']));
+      if (h >= 4) L.push(`¡${game.player.name || 'Amigo'}! Ya eres como de la familia.`);
+      if (m.talks > 6 && game.env.days - m.met > 3) L.push(`Nos conocemos desde hace ${game.env.days - m.met} días, ¿eh? Cómo pasa el tiempo.`);
+      if (m.talks <= 1) L.push(`No te había visto antes por aquí. Soy ${v.vname}.`);
+      if (L.length) return pick(L);
+    }
+    const w = village43.wanted(v.planId);
+    if (w && r && r.rep > -10 && Math.random() < 0.25) return `Hoy andamos escasos de ${itemName(w.id).toLowerCase()}. Si traes, lo pagamos bien.`;
+    return prevGreeting(v);
+  };
+  const VISITOR_LINES = {
+    trader: ['Vengo de muy lejos con cosas que no verás en ninguna aldea.', 'Mira sin compromiso… pero no tardes, que sigo mi camino.'],
+    caravaner: ['¡La caravana ha llegado! Compramos al por mayor y pagamos al contado.', 'Tenemos prisa: mañana nos espera otra aldea.'],
+    stranger: ['…Tengo lo que buscas. La pregunta es qué estás dispuesto a dar.', 'Nadie me ha visto llegar. Nadie me verá marchar.'],
+  };
+  const prevOpen = dialog.open, prevHeader = dialog.header, prevMenu = dialog.menu;
+  dialog.open = function (v) {
+    if (v.temp && v.prof !== 'guard') {                                // visitantes: solo comercian
+      this.v = v; v.trading = true; game.releaseInputs(); game.state = 'dialog';
+      if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+      showScreen('dialogScreen'); sfx.play('villager', { pos: v.pos, pitch: v.prof === 'stranger' ? 0.6 : 1.1 });
+      const L = VISITOR_LINES[v.prof] || ['Hola.']; this.say(L[Math.floor(Math.random() * L.length)]); this.menu();
+      return;
+    }
+    if (v.planId != null && !v.temp) { const m = village43.mem(v); if (m.talkDay !== game.env.days) { m.talkDay = game.env.days; m.talks++; } }
+    return prevOpen.call(this, v);
+  };
+  dialog.header = function () {
+    const v = this.v;
+    if (v.temp && v.prof !== 'guard') {
+      const P = PROFESSIONS[v.prof], left = Math.max(0, (v.tempUntil - village43.now()) * game.env.dayLength);
+      $('#dlgName').textContent = v.vname; $('#dlgProf').textContent = `${P.name}${v.planId != null ? ' · de paso por ' + villageName(v.planId) : ''}`;
+      $('#dlgRep').textContent = `Se va en ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`; $('#dlgRep').style.color = '#ffd84a'; $('#dlgRep').style.borderColor = '#ffd84a';
+      $('#dlgFace').style.background = `rgb(${P.robe.map((c) => Math.round(c * 255)).join(',')})`; $('#dlgFace').textContent = v.prof === 'stranger' ? '?' : v.vname[0];
+      $('#dlgGoods').innerHTML = '';
+      return;
+    }
+    prevHeader.call(this);
+    const s = village43.spec(v.planId), h = village43.hearts(v);
+    if (s) $('#dlgProf').textContent += ` ${s.icon}`;
+    $('#dlgGoods').insertAdjacentHTML('afterbegin', `<span class="dlgMood" title="Amistad con ${escapeHtml(v.vname)}">${'❤'.repeat(h)}${'♡'.repeat(5 - h)}</span><span class="dlgNow">Ahora: ${v.routineText || 'ocupado'}</span>`);
+  };
+  dialog.menu = function () {
+    const v = this.v, box = $('#dlgOpts'), p = game.player;
+    const opt = (label, fn, cls = '') => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.innerHTML = label; b.onclick = fn; return b; };
+    if (v.temp && v.prof !== 'guard') {
+      box.innerHTML = ''; this.header();
+      box.append(opt('💱 Ver lo que ofrece', () => { this.close(false); openInventory('trade', v); }, 'primary'), opt('👋 Adiós', () => this.close()));
+      return;
+    }
+    prevMenu.call(this);
+    if (v.planId == null) return;
+    const r = village43.rec(v.planId), hostile = r.rep <= -40, bye = box.lastElementChild, extra = [];
+    if (!hostile && r.com) extra.push(opt(`🤝 Misión comunitaria <em>${r.com.have}/${r.com.n}</em>`, () => this.community(), r.com.k === 'c' && p.inv.count(r.com.id) > 0 ? 'primary' : ''));
+    const held = p.held();
+    if (!hostile && held && v.mem?.giftDay !== game.env.days) extra.push(opt(`🎁 Regalar <em>${escapeHtml(itemName(held.id))}</em>`, () => this.giveGift()));
+    extra.push(opt('🏘 Sobre la aldea', () => this.about()));
+    for (const b of extra) box.insertBefore(b, bye);
+  };
+  dialog.back = function () { const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Volver'; b.onclick = () => this.menu(); return b; };
+  dialog.community = function () {
+    const v = this.v, id = v.planId, r = village43.rec(id), c = r.com, box = $('#dlgOpts'), p = game.player; box.innerHTML = '';
+    if (!c) { this.menu(); return; }
+    const days = Math.max(0, c.exp - game.env.days);
+    this.say(c.k === 'h' ? `Los monstruos no nos dejan dormir. Si entre todos acabamos con ${c.n} cerca de la aldea, volveremos a estar tranquilos.` : `Toda la aldea está reuniendo ${itemName(c.id).toLowerCase()}. Entre todos tenemos que juntar ${c.n}. ¿Nos echas una mano?`);
+    const ul = document.createElement('ul'); ul.className = 'projList';
+    ul.innerHTML = `<li>${village43.comText(c)}: <b>${c.have}/${c.n}</b>${c.k === 'c' && p.inv.count(c.id) ? ` <em>(tienes ${p.inv.count(c.id)})</em>` : ''}</li><li>Quedan ${days} día${days === 1 ? '' : 's'} · Recompensa: esmeraldas, reputación y prosperidad para la aldea</li>`;
+    box.append(ul);
+    if (c.k === 'c') {
+      const b = document.createElement('button'); b.className = 'btn primary'; b.textContent = `Aportar ${itemName(c.id)}`;
+      b.onclick = () => {
+        const k = game.mode === 'creative' ? c.n - c.have : Math.min(c.n - c.have, p.inv.count(c.id));
+        if (k <= 0) { this.say('No llevas nada de eso encima.'); return; }
+        if (game.mode === 'survival') p.inv.remove(c.id, k);
+        c.have += k; hud.update(); sfx.play('pop'); village43.addPros(id, k / 16);
+        if (c.have >= c.n) { village43.comDone(id, r); this.say('¡Lo hemos conseguido! Toda la aldea te lo agradece.'); this.menu(); return; }
+        this.say('¡Gracias! Cada granito cuenta.'); this.community();
+      };
+      box.append(b);
+    }
+    box.append(this.back());
+  };
+  dialog.giveGift = function () {
+    const v = this.v, p = game.player, s = p.held(); if (!s) { this.menu(); return; }
+    const m = village43.mem(v), liked = (GIFT_LIKES[v.prof] || []).includes(s.id), id = s.id;
+    if (game.mode === 'survival') { s.count--; if (!s.count) p.inv.slots[p.selected] = null; p.inv.changed(); }
+    m.giftDay = game.env.days; villagerGive(v, id, 1); hud.update(); sfx.play('pop');
+    if (liked) { m.gifts++; addRep(v.planId, 1); village43.addPros(v.planId, 1); village43.bubble(v, '❤', 3); this.say(`¡${itemName(id)}! Justo lo que me hacía falta. ¡Muchas gracias!`); }
+    else { m.gifts += 0.25; village43.bubble(v, '🙂', 2.5); this.say(`Oh… ${itemName(id).toLowerCase()}. Gracias, supongo que algún uso le daré.`); }
+    village43.checkFriend(v); this.menu();
+  };
+  dialog.about = function () {
+    const v = this.v, id = v.planId, r = village43.rec(id), s = village43.spec(id), box = $('#dlgOpts'), G = village43.nextGrowth(r), w = village43.wanted(id), a = village43.alerted(id), ev = events.cur;
+    const pop = (village43.groups.get(id) || []).length, mine = ev && ev.vil && String(ev.vil.id) === String(id);
+    box.innerHTML = '';
+    this.say(s ? `${villageName(id)} es una aldea ${s.name}. ${s.desc}` : `Esta es ${villageName(id)}.`);
+    const ul = document.createElement('ul'); ul.className = 'projList';
+    ul.innerHTML = `<li>${VILLAGE_LEVELS[r.lvl]}${s ? ` ${s.icon} ${s.name}` : ''} · ${pop} vecino${pop === 1 ? '' : 's'}</li>
+      <li>Estado: <b>${a ? '🔔 en alerta (' + a.why.toLowerCase() + ')' : mine ? ev.E.icon + ' ' + ev.E.name.toLowerCase() : r.bq ? '🏗 en obras' : 'tranquila'}</b></li>
+      <li>Prosperidad: <b>${Math.floor(r.pros)}</b>${G ? ` <em>(a los ${G[0]}: ${G[1]})</em>` : ' <em>(no puede crecer más por su cuenta)</em>'}</li>
+      ${w ? `<li>Hoy buscan: <b>${w.n}× ${itemName(w.id)}</b> <em>(pagan ${w.em} esmeraldas; quedan ${Math.max(0, 6 - (r.wu || 0))} encargos)</em></li>` : ''}
+      ${r.com ? `<li>Misión comunitaria: ${village43.comText(r.com)} <b>${r.com.have}/${r.com.n}</b></li>` : ''}
+      <li class="muted">La prosperidad sube al comerciar, cumplir encargos y misiones, hacer regalos y defender la aldea.</li>`;
+    box.append(ul, this.back());
+  };
+}
+// Resumen para la pestaña «Aldeas y reputación» del registro de aventuras
+function villageExtraHTML(id, r) {
+  const s = village43.spec(id), G = village43.nextGrowth(village43.rec(id)), w = village43.wanted(id);
+  return `<div class="qRew">${s ? `${s.icon} Aldea ${s.name} · ` : ''}Prosperidad ${Math.floor(r.pros || 0)}${G ? ` (a los ${G[0]}: ${G[1]})` : ''}${w ? ` · Hoy buscan ${itemName(w.id)}` : ''}${r.com ? ` · 🤝 ${village43.comText(r.com)} ${r.com.have}/${r.com.n}` : ''}</div>`;
+}
+
+/* ---------- Visitantes: caravana, mercader ambulante y visitante misterioso ---------- */
+Object.assign(EVENTS, {
+  caravan: { name: 'Caravana comercial', icon: '🐪', when: 'day', near: 'village', chance: 0.4, dur: 300, color: '#e8b04a', desc: 'Una caravana ha llegado a la aldea. Compra y vende al por mayor antes de que se marche.' },
+  trader: { name: 'Mercader ambulante', icon: '🎒', when: 'day', chance: 0.2, dur: 240, color: '#c88aff', desc: 'Un mercader de tierras lejanas pasa cerca con objetos poco comunes.' },
+  visitor: { name: 'Visitante misterioso', icon: '🕯', when: 'night', near: 'village', chance: 0.25, dur: 200, color: '#8f7ad8', desc: 'Una figura encapuchada espera en la plaza. Dicen que vende cosas que nadie más tiene.' },
+});
+EVENT_IDS.push('caravan', 'trader', 'visitor');
+function pickOffers(pool, n) { const a = pool.map((o) => o); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n).map(([pay, get, max]) => [[...pay], [...get], max]); }
+function spawnVisitor(prof, x, y, z, ev, opts = {}) {
+  const v = new Villager(x, y + 0.1, z, { prof, home: [Math.floor(x), y, Math.floor(z)], planId: opts.planId ?? null, name: opts.name });
+  v.temp = opts.temp || prof; v.tempUntil = village43.now() + (ev.dur + 2) / game.env.dayLength; v.spot = opts.spot || [x, z];
+  if (opts.pool) v.offers = pickOffers(opts.pool, opts.n);
+  v.uses = (v.offers || []).map(() => 0);
+  game.entities.add(v);
+  return v;
+}
+const visitorsGone = (ev) => { for (const e of ev.d.who || []) if (!e.dead) e.tempUntil = village43.now() - 1e-6; };
+const leftText = (ev) => `${Math.floor(ev.t / 60)}:${String(Math.floor(ev.t % 60)).padStart(2, '0')}`;
+Object.assign(events.H, {
+  caravan: {
+    start(ev) {
+      const v = ev.vil, c = village43.plaza(v.id); if (!c) return false;
+      const pt = ringPoint({ pos: { x: c.x, z: c.z } }, 14, 22) || ringPoint({ pos: { x: c.x, z: c.z } }, 6, 14); if (!pt) return false;
+      const spot = [c.x + 3.5, c.z + 4.5];
+      const boss = spawnVisitor('caravaner', pt[0], pt[1], pt[2], ev, { planId: v.id, temp: 'caravan', spot, pool: CARAVAN_POOL, n: 8 });
+      const who = [boss];
+      for (let k = 0; k < 2; k++) { const g = spawnVisitor('guard', pt[0] + (k ? 1.5 : -1.5), pt[1], pt[2] + 1, ev, { planId: v.id, temp: 'escort' }); g.work = [Math.floor(c.x) + (k ? 5 : -5), c.y, Math.floor(c.z) + 5]; g.home = g.work; who.push(g); }
+      for (let k = 0; k < 2; k++) { const m = new PackMule(pt[0] + (k ? 2 : -2), pt[1] + 0.1, pt[2] - 1.5, boss); game.entities.add(m); who.push(m); }
+      ev.d = { who, boss };
+      hud.toast(`🐪 Una caravana llega a ${villageName(v.id)}`, 3200);
+      village43.addPros(v.id, 3);
+      for (const x of village43.groups.get(v.id) || []) village43.bubble(x, '🐪', 3);
+    },
+    tick(ev) { if (ev.d.boss.dead || ev.d.boss.deathT) return this.end(false, 'La caravana fue atacada y se dispersó'); },
+    info(ev) { return `${villageName(ev.vil.id)} · se marcha en ${leftText(ev)}`; },
+    timeoutMsg: 'La caravana siguió su camino',
+    stop(ev) { visitorsGone(ev); },
+  },
+  trader: {
+    start(ev) {
+      const pt = ringPoint(game.player, 9, 16); if (!pt) return false;
+      const t = spawnVisitor('trader', pt[0], pt[1], pt[2], ev, { pool: TRADER_POOL, n: 6 });
+      ev.d = { who: [t], boss: t };
+      hud.toast('🎒 Un mercader ambulante anda cerca', 3000);
+    },
+    tick(ev) { if (ev.d.boss.dead || ev.d.boss.deathT) return this.end(false, 'El mercader ya no está'); if (ev.d.boss.pos.distanceTo(game.player.pos) > 90) return this.end(false, 'Dejaste atrás al mercader'); },
+    info(ev) { return `Se marcha en ${leftText(ev)} · a ${Math.round(ev.d.boss.pos.distanceTo(game.player.pos))} bloques`; },
+    timeoutMsg: 'El mercader siguió su camino',
+    stop(ev) { visitorsGone(ev); },
+  },
+  visitor: {
+    start(ev) {
+      const v = ev.vil, c = village43.plaza(v.id); if (!c) return false;
+      const pt = ringPoint({ pos: { x: c.x, z: c.z } }, 4, 8); if (!pt) return false;
+      const s = spawnVisitor('stranger', pt[0], pt[1], pt[2], ev, { planId: null, pool: STRANGER_POOL, n: 4, name: '???' });
+      ev.d = { who: [s], boss: s, vx: pt[0], vz: pt[2] };
+      game.particles.emit(pt[0], pt[1] + 1, pt[2], [0.4, 0.2, 0.7], 20, { speed: 2, up: 2, life: 1 });
+      hud.toast(`🕯 Alguien espera en la plaza de ${villageName(v.id)}…`, 3200);
+    },
+    tick(ev) {
+      if (ev.d.boss.dead || ev.d.boss.deathT) return this.end(false, 'El visitante desapareció');
+      if (!game.env.isNight() && ev.t < ev.dur - 20) return this.end(false, 'Con la luz del día, el visitante se desvaneció');
+    },
+    info(ev) { return `${villageName(ev.vil.id)} · se desvanece en ${leftText(ev)}`; },
+    timeoutMsg: 'El visitante se desvaneció',
+    stop(ev) { visitorsGone(ev); },
+  },
+});
+ACHIEVEMENTS.push(['village_friend', 'Como de la familia', 'Llega a ser gran amigo de un aldeano.'], ['village_caravan', 'Al por mayor', 'Comercia con una caravana.'],
+  ['village_community', 'Todos a una', 'Completa una misión comunitaria.'], ['village_prosper', 'Tierra próspera', 'Consigue que una aldea crezca por su propia prosperidad.']);
+// sucesos que suben la prosperidad
+{
+  const fr = events.H.festival.reward, sr = events.H.siege.reward;
+  events.H.festival.reward = function (ev) { fr.call(this, ev); village43.addPros(ev.vil.id, 5); };
+  events.H.siege.reward = function (ev) { sr.call(this, ev); village43.addPros(ev.vil.id, 20); for (const v of village43.groups.get(ev.vil.id) || []) { village43.mem(v).saved += 0.5; village43.bubble(v, '🎉', 4); } };
+  const prevContribute = contribute;
+  contribute = function (planId) { const r0 = vrec(planId), before = Object.values(r0.proj || {}).reduce((a, b) => a + b, 0), res = prevContribute(planId), after = Object.values(vrec(planId).proj || {}).reduce((a, b) => a + b, 0); if (res === 'start') village43.addPros(planId, 10); else if (after > before) village43.addPros(planId, (after - before) / 16); return res; };
+}
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
