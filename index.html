@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.3</title>
+<title>MiniCraft 4.4</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -853,7 +853,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.3!</span>
+      <span class="ver">¡Versión 4.4!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -863,7 +863,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.3</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1360,8 +1360,13 @@ defBlock(COPPER_BLOCK, 'Bloque de cobre', 'Almacena 9 lingotes de cobre.', T.cop
 
 // Tablas planas para consultas rápidas en bucles calientes (mallado, física).
 // Se recalculan tras registrar los bloques de la 3.0 (§2b).
-const B_OPAQUE = new Uint8Array(256), B_SOLID = new Uint8Array(256), B_LIGHT = new Uint8Array(256), B_CUBE = new Uint8Array(256);
-const B_WATERY = new Uint8Array(256);   // agua y plantas sumergidas: cuentan como agua para nadar y para dibujarla
+// 4.4: los bloques 0-255 son los clásicos; los nuevos usan identificadores a partir de 1024 (los objetos ocupan 256-1023).
+const MAX_BLOCK_ID = 2048;
+const B_OPAQUE = new Uint8Array(MAX_BLOCK_ID), B_SOLID = new Uint8Array(MAX_BLOCK_ID), B_LIGHT = new Uint8Array(MAX_BLOCK_ID), B_CUBE = new Uint8Array(MAX_BLOCK_ID);
+// Un cambio de bloque guardado: los clásicos como siempre (id | meta << 8, menor que 65536); los nuevos, por encima.
+const packBlock = (id, meta) => (id < 256 ? id | (meta << 8) : 65536 + id + (meta << 12));
+const editId = (v) => (v < 65536 ? v & 255 : (v - 65536) & 4095), editMeta = (v) => (v < 65536 ? v >> 8 : (v - 65536) >> 12);
+const B_WATERY = new Uint8Array(MAX_BLOCK_ID);   // agua y plantas sumergidas: cuentan como agua para nadar y para dibujarla
 function rebuildBlockTables() {
   for (const b of BLOCKS) if (b) {
     B_OPAQUE[b.id] = b.opaque ? 1 : 0;
@@ -1380,7 +1385,7 @@ const FACING_DIR = [[0, -1], [1, 0], [0, 1], [-1, 0]];
 /* ==========================================================================
    §3 TEXTURAS PROCEDURALES (atlas 256×256 = 16×16 casillas de 16 px)
    ========================================================================== */
-const TILE_PX = 16, ATLAS_TILES = 16, ATLAS_PX = TILE_PX * ATLAS_TILES; // 256 casillas (la 3.0 usa ~130)
+const TILE_PX = 16, ATLAS_TILES = 32, ATLAS_PX = TILE_PX * ATLAS_TILES; // 1024 casillas desde la 4.4 (antes 16×16 = 256)
 const TILE_AVG = [];   // color medio de cada casilla (partículas)
 
 function buildAtlas() {
@@ -2543,6 +2548,60 @@ rebuildBlockTables();
     paint(T.void_bricks, (x, y) => (hash2(x, y, 217) > 0.96 ? [120, 250, 236] : null));
   };
 }
+/* ==========================================================================
+   §2e BLOQUES Y OBJETOS DE LAS ZONAS NUEVAS (4.4)
+   --------------------------------------------------------------------------
+   Primeros bloques con identificador extendido (≥ 1024; ver MAX_BLOCK_ID en §2).
+   Los mundos y partidas anteriores no cambian: sus bloques siguen siendo 0-255.
+   ========================================================================== */
+for (const n of ['sky_stone', 'cloud', 'aerite_ore', 'aerite_block', 'sky_bricks', 'sea_stone', 'sea_bricks', 'sea_bricks_mossy', 'dungeon_bricks', 'lab_tile', 'rune_block', 'rune_block_top']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+const SKY_STONE = 1024, CLOUD = 1025, AERITE_ORE = 1026, AERITE_BLOCK = 1027, SKY_BRICKS = 1028, SEA_STONE = 1029, SEA_BRICKS = 1030, SEA_BRICKS_MOSSY = 1031,
+  DUNGEON_BRICKS = 1032, LAB_TILE = 1033, RUNE_BLOCK = 1034;
+Object.assign(I, { AERITE: 551, FEATHER_CHARM: 552, ABYSS_PEARL: 553, TIDE_CHARM: 554, GEAR: 555 });
+
+defBlock(SKY_STONE, 'Piedra celeste', 'Roca clara y ligera de las islas flotantes.', T.sky_stone, { hardness: 1.6, tool: 'pickaxe', level: 0 });
+defBlock(CLOUD, 'Nube', 'Nube tan densa que se puede pisar. Amortigua las caídas.', T.cloud, { hardness: 0.3, sound: 'cloth', soft: true });
+defBlock(AERITE_ORE, 'Mena de aerita', 'Mineral azul celeste que solo aparece en las islas flotantes. Requiere pico de hierro.', T.aerite_ore,
+  { hardness: 3.2, tool: 'pickaxe', level: 2, drop: I.AERITE, xp: 5, light: 3 });
+defBlock(AERITE_BLOCK, 'Bloque de aerita', 'Nueve aeritas juntas. Brilla suavemente.', T.aerite_block, { hardness: 3, tool: 'pickaxe', level: 1, light: 8, sound: 'glass' });
+defBlock(SKY_BRICKS, 'Ladrillos celestes', 'Con ellos se levantaron los santuarios de las islas flotantes.', T.sky_bricks, { hardness: 2, tool: 'pickaxe', level: 0 });
+defBlock(SEA_STONE, 'Piedra marina', 'Roca verdosa pulida por las corrientes del fondo del mar.', T.sea_stone, { hardness: 1.8, tool: 'pickaxe', level: 0 });
+defBlock(SEA_BRICKS, 'Ladrillos marinos', 'Ladrillos de las ciudades sumergidas.', T.sea_bricks, { hardness: 2.2, tool: 'pickaxe', level: 0 });
+defBlock(SEA_BRICKS_MOSSY, 'Ladrillos marinos con algas', 'Ladrillos marinos cubiertos de algas tras siglos bajo el agua.', T.sea_bricks_mossy, { hardness: 2.2, tool: 'pickaxe', level: 0 });
+defBlock(DUNGEON_BRICKS, 'Ladrillos de mazmorra', 'Ladrillos oscuros y húmedos de catacumbas y castillos.', T.dungeon_bricks, { hardness: 2.6, tool: 'pickaxe', level: 0 });
+defBlock(LAB_TILE, 'Baldosa de laboratorio', 'Baldosa blanca y lisa de un laboratorio olvidado.', T.lab_tile, { hardness: 1.6, tool: 'pickaxe', level: 0 });
+defBlock(RUNE_BLOCK, 'Bloque rúnico', 'Piedra tallada con runas que aún brillan. Marca lugares secretos.', { side: T.rune_block, top: T.rune_block_top }, { hardness: 3, tool: 'pickaxe', level: 1, light: 9 });
+rebuildBlockTables();
+
+{
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { paint, rnd, bricks, ore, get } = h, N = (v) => (rnd() - 0.5) * v;
+    paint(T.sky_stone, (x, y) => { const v = (hash2(x >> 1, y >> 1, 441) - 0.5) * 16, n = N(12), c = hash2(x, y, 442) > 0.94 ? 18 : 0; return [206 + v + n + c, 216 + v + n + c, 232 + v * 0.6 + n]; });
+    paint(T.cloud, (x, y) => { const v = Math.sin(x * 0.8 + 1) * Math.sin(y * 0.8 + 2) * 7, n = N(6); return [244 + v + n, 247 + v + n, 252]; });
+    paint(T.aerite_ore, (x, y) => get(T.sky_stone, x, y));
+    paint(T.aerite_ore, (x, y) => { const s = hash2(x >> 1, y >> 1, 443), e = hash2(x, y, 444); return s > 0.72 ? (e > 0.5 ? [90, 200, 255] : [40, 140, 235]) : null; });
+    paint(T.aerite_block, (x, y) => { const edge = x === 0 || y === 0 || x === 15 || y === 15, d = ((x + y) % 6 === 0) ? 26 : 0, n = N(10); return edge ? [36, 120, 210] : [84 + d + n, 190 + d * 0.6 + n, 250]; });
+    bricks(T.sky_bricks, 8, 8, [150, 164, 190], [214, 224, 240], 10);
+    paint(T.sea_stone, (x, y) => { const v = (hash2(x >> 1, y >> 1, 445) - 0.5) * 22, n = N(14); return [70 + v + n, 128 + v + n, 124 + v * 0.8 + n]; });
+    bricks(T.sea_bricks, 4, 8, [32, 78, 82], [78, 150, 146], 14);
+    bricks(T.sea_bricks_mossy, 4, 8, [32, 78, 82], [78, 150, 146], 14);
+    paint(T.sea_bricks_mossy, (x, y) => (hash2(x >> 1, y, 446) > 0.62 ? [40 + N(16), 120 + N(30), 60 + N(16)] : null));
+    bricks(T.dungeon_bricks, 4, 8, [20, 20, 26], [62, 62, 74], 12);
+    paint(T.dungeon_bricks, (x, y) => (hash2(x, y, 447) > 0.955 ? [44, 70, 48] : null));
+    paint(T.lab_tile, (x, y) => { const g = x % 8 === 0 || y % 8 === 0, n = N(6); return g ? [170, 178, 188] : [232 + n, 236 + n, 240 + n]; });
+    const rune = (t, side) => paint(t, (x, y) => {
+      const edge = x === 0 || y === 0 || x === 15 || y === 15, n = N(10), base = [58 + n, 56 + n, 70 + n];
+      const R = side ? ['................', '....#.....#.....', '....#....###....', '..#####...#.....', '....#.....#..#..', '....#.....####..', '..........#.....', '................',
+        '..#...#.........', '..##.##...###...', '..#.#.#...#.#...', '..#...#...###...', '..#...#...#.....', '..........#.....', '................', '................']
+        : ['................', '.....######.....', '...##......##...', '..#....##....#..', '..#...#..#...#..', '.#...#....#...#.', '.#..#..##..#..#.', '.#..#.#..#.#..#.',
+          '.#..#.#..#.#..#.', '.#..#..##..#..#.', '.#...#....#...#.', '..#...#..#...#..', '..#....##....#..', '...##......##...', '.....######.....', '................'];
+      return edge ? [34, 32, 44] : R[y][x] === '#' ? [110, 240, 230] : base;
+    });
+    rune(T.rune_block, true); rune(T.rune_block_top, false);
+  };
+}
 
 /* ==========================================================================
    §5 BIOMAS Y GENERACIÓN PROCEDURAL
@@ -3129,7 +3188,7 @@ class WorldGen {
 class Chunk {
   constructor(cx, cz) {
     this.cx = cx; this.cz = cz; this.key = cx + ',' + cz;
-    this.blocks = new Uint8Array(16 * 16 * WY);
+    this.blocks = new Uint16Array(16 * 16 * WY);      // 16 bits desde la 4.4 (bloques con id ≥ 1024)
     this.meta = new Uint8Array(16 * 16 * WY);
     this.hm = new Uint8Array(256);        // altura del primer bloque opaco + 1
     this.biome = new Uint8Array(256);
@@ -3165,7 +3224,7 @@ class Chunk {
 }
 
 // Tipos de bloque que se siguen por índice (cultivos, tierra arada, generadores, decoración)
-const SPECIAL = new Uint8Array(256);
+const SPECIAL = new Uint8Array(MAX_BLOCK_ID);
 for (const b of BLOCKS) if (b) SPECIAL[b.id] = b.crop ? 1 : b.id === FARMLAND ? 2 : b.id === SPAWNER ? 3 : (b.id === SIGN || b.id === PAINTING) ? 4 : b.mech ? 5 : 0;
 function trackSpecial(ch, i, k, add) {
   const set = k === 1 ? ch.crops : k === 2 ? ch.farmland : k === 3 ? ch.spawners : k === 5 ? (ch.mech ||= new Set()) : ch.decor;
@@ -3217,7 +3276,7 @@ class World {
     const ch = new Chunk(cx, cz);
     this.gen.generateChunk(ch);
     const ed = this.edits.get(ch.key);
-    if (ed) for (const [i, v] of ed) { ch.blocks[i] = v & 255; ch.meta[i] = v >> 8; }
+    if (ed) for (const [i, v] of ed) { ch.blocks[i] = editId(v); ch.meta[i] = editMeta(v); }
     ch.computeHeightMap(); ch.computeCounts(); ch.scanLights();
     this.chunks.set(ch.key, ch);
     if (this.onLoad) this.onLoad(ch);
@@ -3239,7 +3298,7 @@ class World {
     if (old && !id) c.counts[s]--; else if (!old && id) c.counts[s]++;
     let ed = this.edits.get(c.key);
     if (!ed) { ed = new Map(); this.edits.set(c.key, ed); }
-    ed.set(i, id | (meta << 8));
+    ed.set(i, packBlock(id, meta));
     // Mapa de alturas
     const ci = lx | (lz << 4), oldHm = c.hm[ci];
     if (B_OPAQUE[id] && y + 1 > oldHm) c.hm[ci] = y + 1;
@@ -3820,9 +3879,11 @@ Object.assign(WorldGen.prototype, {
       const m = S.rad + 8, span = S.region - 2 * m;
       const x = gx * S.region + m + Math.floor(hash2(gx, gz, this.seed + S.salt) * span), z = gz * S.region + m + Math.floor(hash2(gz, gx, this.seed + S.salt * 3) * span);
       const c = this.column(x, z);
-      let ok = S.any || (S.sea ? c.b === BIOME.OCEAN && c.h <= SEA - 4 && c.h >= SEA - 15 : S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80);
-      if (ok && c.lake) ok = false;
-      if (ok && this.gen >= 3 && !S.land && !S.sea) {                     // ninguna estructura de superficie pisa un lago
+      const [d0, d1] = Array.isArray(S.sea) ? S.sea : [4, 15];                 // profundidad admitida para las estructuras del fondo del mar
+      let ok = S.any || (S.sea ? c.b === BIOME.OCEAN && c.h <= SEA - d0 && c.h >= SEA - d1 : S.sky ? c.h <= 58 : S.land ? c.h > SEA + 2 : S.biomes.includes(c.b) && c.h > SEA && c.h < 80);
+      if (ok && c.lake && !S.sky) ok = false;
+      if (ok && S.sky) for (let a = 0; a < 8 && ok; a++) if (this.column(x + Math.round(Math.cos(a * 0.785) * 16), z + Math.round(Math.sin(a * 0.785) * 16)).h > 59) ok = false;   // las islas flotantes necesitan cielo libre
+      if (ok && this.gen >= 3 && !S.land && !S.sea && !S.sky) {                     // ninguna estructura de superficie pisa un lago
         for (let ox = -112; ox <= 112 && ok; ox += 112) for (let oz = -112; oz <= 112; oz += 112) { const lk = this.lakeAt(x + ox, z + oz); if (lk && Math.hypot(lk.x - x, lk.z - z) < lk.R + S.rad + 8) { ok = false; break; } }
       }
       if (dimOf(x, z) !== (S.dim || 0)) ok = false;                       // cada estructura pertenece a una dimensión (§34)
@@ -4128,7 +4189,7 @@ class GeoBuf {
   }
 }
 const solidBuf = new GeoBuf(), waterBuf = new GeoBuf();
-const pIds = new Uint8Array(PAD * PAD * PAD), pMeta = new Uint8Array(PAD * PAD * PAD);
+const pIds = new Uint16Array(PAD * PAD * PAD), pMeta = new Uint8Array(PAD * PAD * PAD);      // ids de 16 bits (4.4)
 const pSky = new Uint8Array(PAD * PAD * PAD), pBlk = new Uint8Array(PAD * PAD * PAD);
 const colHm = new Int16Array(22 * 22), colBiome = new Uint8Array(20 * 20);
 const tintG = new Float32Array(256 * 3), tintF = new Float32Array(256 * 3), tintW = new Float32Array(256 * 3);
@@ -7576,7 +7637,7 @@ MOBS.goldstag = {
    Aquí: biomas nuevos, detalles naturales del terreno (rocas, troncos caídos,
    charcas, agujas de hielo, geodas…) y estructuras abandonadas y secretos.
    ========================================================================== */
-const WORLD_GEN = 3;       // generador de los mundos nuevos
+const WORLD_GEN = 4;       // generador de los mundos nuevos (3 = relieve de la 4.2; 4 = el mismo relieve más las zonas de la 4.4)
 
 // ---------- Biomas nuevos (se añaden al final: los identificadores guardados no cambian) ----------
 {
@@ -7901,6 +7962,342 @@ MOBS.mule = { name: 'Mula de carga', hp: 16, w: 0.9, h: 1.5, speed: 1.6, xp: 1, 
       bodyExtra: [[10.6, 1.4, 10, 0, 4.9, 0, RD], [5, 7, 8, 7.4, 1.5, 0, SK], [5, 7, 8, -7.4, 1.5, 0, SK], [5.4, 1, 8.4, 7.4, 5.2, 0, DK], [5.4, 1, 8.4, -7.4, 5.2, 0, DK], [2, 6, 1.6, 0, 1, -9.6, DK]],
       headExtra: [[5, 4, 3, 0, -1.5, 5.6, rgb(200, 186, 160)], ...eyesHD(4, 1.6, 2.2, rgb(240, 240, 235), K, { w: 1.4, h: 1.4, pw: 0.8, ph: 1 }), [1.6, 5, 1, -2.4, 5.6, -2, DK], [1.6, 5, 1, 2.4, 5.6, -2, DK]] }); } };
 
+/* ==========================================================================
+   §39 ZONAS NUEVAS 4.4 — objetos, criaturas, botines y estructuras
+   --------------------------------------------------------------------------
+   Catacumbas, templo antiguo, castillo en ruinas, laboratorio, cámaras
+   secretas, islas flotantes y ciudad sumergida. Solo aparecen en mundos del
+   generador 4 (los creados desde la 4.4); el terreno es el del generador 3.
+   Los cofres sellados (plan.seals) no se abren hasta vencer a sus guardianes:
+   esa regla y los amuletos están en §40.
+   ========================================================================== */
+defItem(I.AERITE, 'Aerita', 'Gema ligera como el aire, de las islas flotantes.', { rarity: 2 });
+defItem(I.FEATHER_CHARM, 'Amuleto de pluma', 'Llévalo en cualquiera de las dos manos: caes despacio y sin hacerte daño.', { stack: 1, rarity: 3, charm: 'feather' });
+defItem(I.ABYSS_PEARL, 'Perla abisal', 'La guardan los centinelas de las ciudades sumergidas.', { rarity: 3 });
+defItem(I.TIDE_CHARM, 'Amuleto de las mareas', 'Llévalo en cualquiera de las dos manos: respiras bajo el agua y ves mejor en la oscuridad del fondo.', { stack: 1, rarity: 3, charm: 'tide' });
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  Object.assign(ICON_OVERRIDE, {
+    [I.AERITE]: P((p) => { p.poly([[8, 1], [13, 6], [8, 15], [3, 6]], (x, y) => (x + y < 14 ? [150, 225, 255] : [50, 150, 240])); p.line([[3, 6], [13, 6]], 0.8, [220, 245, 255]); p.set(7, 4, [255, 255, 255]); }),
+    [I.FEATHER_CHARM]: P((p) => { p.line([[4, 1], [8, 4], [12, 1]], 1, [220, 190, 90]); p.poly([[8, 4], [12, 9], [8, 15], [5, 9]], (x, y) => (x < 8 ? [240, 246, 255] : [190, 215, 240])); p.line([[8, 5], [8, 14]], 0.8, [120, 150, 190]); p.disk(8, 4, 1.3, [70, 180, 250]); }),
+    [I.ABYSS_PEARL]: P((p) => { p.disk(8, 8, 5.6, (x, y) => (x + y < 13 ? [150, 240, 225] : x + y < 19 ? [50, 150, 150] : [20, 70, 90])); p.set(6, 5, [255, 255, 255]); p.set(7, 5, [230, 255, 250]); }),
+    [I.TIDE_CHARM]: P((p) => { p.line([[4, 1], [8, 4], [12, 1]], 1, [220, 190, 90]); p.disk(8, 9, 5, (x, y) => (y < 9 ? [70, 190, 200] : [24, 96, 130])); p.line([[4, 9], [6, 7.5], [8, 9], [10, 10.5], [12, 9]], 1, [220, 250, 250]); }),
+  });
+  shaped(SKY_BRICKS, 4, ['ss', 'ss'], { s: SKY_STONE }, 'Zonas');
+  shaped(AERITE_BLOCK, 1, ['aaa', 'aaa', 'aaa'], { a: I.AERITE }, 'Zonas');
+  shapeless(I.AERITE, 9, [AERITE_BLOCK], 'Zonas');
+  shaped(I.FEATHER_CHARM, 1, [' f ', 'aga', ' a '], { f: I.FEATHER, a: I.AERITE, g: I.GOLD_INGOT }, 'Zonas');
+  shaped(SEA_BRICKS, 4, ['ss', 'ss'], { s: SEA_STONE }, 'Zonas');
+  shapeless(SEA_BRICKS_MOSSY, 1, [SEA_BRICKS, MOSS], 'Zonas');
+  shaped(I.TIDE_CHARM, 1, [' p ', 'pgp', ' p '], { p: I.ABYSS_PEARL, g: I.GOLD_INGOT }, 'Zonas');
+  shapeless(DUNGEON_BRICKS, 4, [STONE_BRICKS, STONE_BRICKS, STONE_BRICKS, STONE_BRICKS, I.COAL], 'Zonas');
+  shapeless(LAB_TILE, 4, [SMOOTH_STONE, SMOOTH_STONE, SMOOTH_STONE, SMOOTH_STONE, I.BONE_MEAL], 'Zonas');
+  shaped(RUNE_BLOCK, 1, [' d ', 'dcd', ' d '], { d: I.ARCANE_DUST, c: CHISELED_BRICKS }, 'Zonas');
+}
+
+/* ---------- Criaturas de las zonas ---------- */
+Object.assign(MOBS, {
+  harpy: { name: 'Arpía', hp: 18, w: 0.8, h: 0.9, speed: 4.3, xp: 9, sound: 'raider', hostile: true, ai: 'flyer', melee: 4, daylight: true, drops: [[I.FEATHER, 1, 3], [I.AERITE, 0, 1]],
+    model: (m) => MOB_MODELS.bird(m, { s: 2.1, body: rgb(120, 96, 150), wing: rgb(70, 56, 104), tip: rgb(230, 236, 250), belly: rgb(214, 200, 226), beak: rgb(240, 200, 90), tailC: rgb(70, 56, 104), head: rgb(226, 190, 170) }) },
+  sentinel: { name: 'Centinela marino', hp: 28, w: 1.0, h: 0.8, speed: 3.6, xp: 12, sound: 'guardian', ai: 'fish', hostile: true, melee: 5, drops: [[I.ABYSS_PEARL, 0, 1], [I.RAW_FISH, 0, 2]],
+    model: (m) => { const G = rgb(40, 130, 126), W = rgb(190, 236, 220), S = rgb(240, 150, 70), E = rgb(255, 60, 60);
+      return MOB_MODELS.fish(m, { L: 24, H: 9, W: 8, c1: G, c2: W, fin: rgb(24, 86, 92),
+        extra: [[1, 4, 1, 0, 6.5, 6, S], [1, 4, 1, 0, 6.5, 0, S], [1, 4, 1, 0, 6.5, -6, S], [1, 1, 4, 5.5, 1, 4, S], [1, 1, 4, -5.5, 1, 4, S], [2.4, 2.4, 0.6, 0, 1, 12.2, E]] }); } },
+  automaton: { name: 'Autómata', hp: 36, w: 0.7, h: 2.0, speed: 1.9, xp: 12, sound: 'golem', hostile: true, melee: 6, daylight: true, drops: [[I.IRON_INGOT, 1, 2], [I.ARCANE_DUST, 0, 1], [GLOWSTONE, 0, 1]],
+    model: (m) => MOB_MODELS.humanoid(m, { limb: 4, skin: rgb(150, 156, 166), arm: rgb(120, 126, 138), shirt: rgb(96, 102, 116), pants: rgb(70, 74, 88), eye: rgb(110, 240, 230),
+      headExtra: [[8.4, 1.2, 8.4, 0, 8.6, 0, rgb(200, 150, 60)], [1, 3, 1, 0, 10.5, 0, rgb(200, 150, 60)], [1.6, 1.6, 1.6, 0, 12.6, 0, rgb(110, 240, 230)]],
+      bodyExtra: [[4, 4, 0.6, 0, 1, 2.2, rgb(110, 240, 230)], [8.4, 1, 4.4, 0, -3, 0, rgb(200, 150, 60)]] }) },
+});
+
+/* ---------- Botines ---------- */
+Object.assign(LOOT, {
+  catacomb: [[I.BONE, 2, 6, 5], [I.ARROW, 4, 12, 4], [I.IRON_INGOT, 1, 4, 4], [I.GOLD_INGOT, 1, 3, 3], [I.EMERALD, 1, 4, 3], [I.COAL, 2, 8, 3], [I.BREAD, 1, 3, 2], [I.GOLDEN_APPLE, 1, 1, 1], [DUNGEON_BRICKS, 4, 12, 2]],
+  atemple: [[I.GOLD_INGOT, 2, 6, 5], [I.EMERALD, 2, 6, 4], [I.ARCANE_DUST, 1, 3, 3], [I.DIAMOND, 1, 2, 2], [I.GOLDEN_APPLE, 1, 1, 2], [RUNE_BLOCK, 1, 2, 2], [I.COMPASS, 1, 1, 1], [potionId('night', 0), 1, 1, 2]],
+  castle: [[I.IRON_INGOT, 2, 6, 5], [I.ARROW, 6, 16, 4], [I.BREAD, 2, 5, 4], [armorId('iron', 'helmet'), 1, 1, 2], [armorId('iron', 'chest'), 1, 1, 1],
+    [toolId('iron', 'sword'), 1, 1, 2], [I.EMERALD, 1, 4, 3], [I.GOLD_INGOT, 1, 3, 3]],
+  lab: [[I.ARCANE_DUST, 2, 5, 5], [I.BOTTLE, 2, 5, 4], [GLOWSTONE, 2, 5, 3], [potionId('regen', 0), 1, 1, 3], [potionId('strength', 0), 1, 1, 3], [potionId('speed', 0), 1, 1, 3], [I.ELIXIR_ARCANE, 1, 1, 2],
+    [I.STORM_ESSENCE, 1, 3, 2], [I.IRON_INGOT, 2, 5, 3], [LAB_TILE, 4, 10, 2]],
+  sky: [[I.AERITE, 2, 5, 6], [I.FEATHER, 2, 6, 4], [I.GOLD_INGOT, 1, 4, 3], [I.DIAMOND, 1, 2, 2], [I.STAR_SHARD, 1, 3, 2], [I.GOLDEN_APPLE, 1, 1, 2], [SKY_BRICKS, 4, 10, 2]],
+  sea: [[I.GOLD_INGOT, 1, 5, 5], [I.EMERALD, 1, 5, 4], [SEA_LANTERN, 1, 3, 3], [I.ABYSS_PEARL, 1, 1, 2], [I.IRON_INGOT, 2, 5, 3], [potionId('water', 0), 1, 1, 3], [SEA_BRICKS, 4, 12, 2]],
+  // cofres sellados
+  vault44: [[I.DIAMOND, 2, 5, 5], [I.EMERALD, 4, 10, 5], [I.GOLD_INGOT, 4, 8, 4], [I.GOLDEN_APPLE, 1, 2, 3], [I.ARCANE_DUST, 2, 5, 3], [I.TOTEM, 1, 1, 1], [toolId('diamond', 'sword'), 1, 1, 1, true],
+    [toolId('diamond', 'pickaxe'), 1, 1, 1, true], [I.ELIXIR_STORM, 1, 1, 2]],
+  skyvault: [[I.AERITE, 5, 9, 6], [I.DIAMOND, 2, 4, 4], [I.STAR_SHARD, 2, 4, 3], [I.GOLDEN_APPLE, 1, 2, 3], [I.TOTEM, 1, 1, 1], [AERITE_BLOCK, 1, 1, 2], [I.EVENT_HORN, 1, 1, 1]],
+  seavault: [[I.ABYSS_PEARL, 2, 4, 6], [I.DIAMOND, 2, 4, 4], [I.GOLD_INGOT, 4, 8, 4], [I.EMERALD, 4, 9, 4], [SEA_LANTERN, 2, 4, 3], [I.TOTEM, 1, 1, 1], [I.ABYSS_HEART, 1, 1, 1]],
+});
+
+/* ---------- Estructuras ---------- */
+const seal44 = (plan, x, y, z, loot) => { plan.chest(x, y, z, loot, 0); (plan.seals ||= new Set()).add(`${x},${y},${z}`); };
+const dungMix = (rnd) => { const v = rnd(); return v < 0.14 ? CRACKED_BRICKS : v < 0.26 ? MOSSY_BRICKS : DUNGEON_BRICKS; };
+// caja hueca: paredes con wall(rnd) y aire dentro
+function box44(plan, x0, y0, z0, x1, y1, z1, wall, rnd, fill = AIR) {
+  for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) {
+    const shell = x === x0 || x === x1 || y === y0 || y === y1 || z === z0 || z === z1;
+    plan.set(x, y, z, shell ? wall(rnd) : fill);
+  }
+}
+// pinchos siempre fuera (bloque de energía debajo)
+const spike44 = (plan, x, y, z) => { plan.set(x, y - 1, z, POWER_BLOCK); plan.set(x, y, z, SPIKES, 8); };
+
+function buildCatacomb(plan, cx, cz, rnd, gen) {
+  const top = gen.column(cx, cz).h, y0 = clamp(top - 20 - Math.floor(rnd() * 8), 8, 30), cell = 12;
+  const rooms = []; for (let gx = -1; gx <= 1; gx++) for (let gz = -1; gz <= 1; gz++) if ((!gx && !gz) || rnd() < 0.7) rooms.push([gx, gz]);
+  const has = (gx, gz) => rooms.some((r) => r[0] === gx && r[1] === gz);
+  const far = rooms.filter((r) => r[0] || r[1]).sort((a, b) => (Math.abs(b[0]) + Math.abs(b[1])) - (Math.abs(a[0]) + Math.abs(a[1])));
+  const vault = far[0] || null;
+  for (const [gx, gz] of rooms) {
+    const x = cx + gx * cell, z = cz + gz * cell;
+    box44(plan, x - 4, y0, z - 4, x + 4, y0 + 5, z + 4, dungMix, rnd);
+    if (rnd() < 0.7) plan.set(x, y0 + 4, z, LANTERN, 1);
+    for (let k = 0; k < 3; k++) plan.set(x - 3 + Math.floor(rnd() * 7), y0 + 4, z - 3 + Math.floor(rnd() * 7), COBWEB);
+  }
+  // pasillos (después de las salas, para abrir sus paredes)
+  for (const [gx, gz] of rooms) {
+    const x = cx + gx * cell, z = cz + gz * cell;
+    if (has(gx + 1, gz)) for (let k = 4; k <= 8; k++) for (let w = -1; w <= 1; w++) for (let y = 0; y <= 4; y++) plan.set(x + k, y0 + y, z + w, Math.abs(w) === 1 || y === 0 || y === 4 ? dungMix(rnd) : AIR);
+    if (has(gx, gz + 1)) for (let k = 4; k <= 8; k++) for (let w = -1; w <= 1; w++) for (let y = 0; y <= 4; y++) plan.set(x + w, y0 + y, z + k, Math.abs(w) === 1 || y === 0 || y === 4 ? dungMix(rnd) : AIR);
+  }
+  for (const [gx, gz] of rooms) {
+    const x = cx + gx * cell, z = cz + gz * cell;
+    if (!gx && !gz) continue;
+    if (vault && gx === vault[0] && gz === vault[1]) {                       // cámara del tesoro
+      seal44(plan, x, y0 + 1, z, 'vault44');
+      for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) spike44(plan, x + dx * 2, y0 + 1, z + dz * 2);
+      plan.mobs.push(['brute', x + 2.5, y0 + 1, z + 2.5], ['skeleton', x - 2.5, y0 + 1, z - 2.5], ['skeleton', x + 2.5, y0 + 1, z - 2.5]);
+      for (const [dx, dz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) plan.set(x + dx, y0 + 1, z + dz, RUNE_BLOCK);
+      continue;
+    }
+    const kind = rnd();
+    if (kind < 0.4) { plan.spawner(x, y0 + 1, z, rnd() < 0.5 ? 'zombie' : 'skeleton'); plan.chest(x + 3, y0 + 1, z - 3, 'catacomb', 0); }
+    else if (kind < 0.7) {                                                  // sala de tumbas
+      for (const dx of [-2, 0, 2]) { plan.set(x + dx, y0 + 1, z - 2, STONE_SLAB); plan.set(x + dx, y0 + 1, z - 1, STONE_SLAB); plan.set(x + dx, y0 + 1, z + 2, STONE_SLAB); plan.set(x + dx, y0 + 1, z + 1, STONE_SLAB); }
+      plan.chest(x - 3, y0 + 1, z, 'catacomb', 0); plan.mobs.push(['skeleton', x + 0.5, y0 + 1, z + 0.5]);
+    } else {                                                               // sala de trampas
+      for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) if ((dx || dz) && (dx + dz) % 2 === 0) spike44(plan, x + dx, y0 + 1, z + dz);
+      plan.chest(x, y0 + 1, z, 'catacomb', 0);
+    }
+  }
+  // entrada: brocal en la superficie y pozo con escalera hasta la sala central
+  for (let y = y0 + 6; y <= top + 1; y++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) plan.set(cx + dx, y, cz - 2 + dz, dx || dz ? (y > top ? MOSSY_COBBLE : dungMix(rnd)) : AIR);
+  plan.set(cx, top + 1, cz - 1, AIR); plan.set(cx, top + 2, cz - 2, AIR);
+  plan.set(cx, y0 + 5, cz - 2, AIR);
+  for (let y = y0 + 1; y <= top + 1; y++) plan.set(cx, y, cz - 2, LADDER, 2);
+  for (let y = y0 + 1; y <= y0 + 4; y++) plan.set(cx, y, cz - 3, DUNGEON_BRICKS);
+  plan.poi = { type: 'catacomb', name: 'Catacumbas', x: cx, z: cz, y: top };
+}
+
+function buildATemple(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h, mix = (r) => { const v = r(); return v < 0.3 ? MOSSY_BRICKS : v < 0.42 ? CRACKED_BRICKS : STONE_BRICKS; };
+  // pirámide escalonada maciza, con cimientos hasta el suelo
+  for (let t = 0; t < 4; t++) { const R = 8 - t * 2; for (let x = -R; x <= R; x++) for (let z = -R; z <= R; z++) {
+    if (t === 0) { const g = gen.column(cx + x, cz + z).h; for (let y = Math.min(g, H); y <= H; y++) plan.set(cx + x, y, cz + z, mix(rnd)); for (let y = H + 9; y <= H + 13; y++) plan.set(cx + x, y, cz + z, AIR); }
+    for (let y = 1; y <= 2; y++) plan.set(cx + x, H + t * 2 + y, cz + z, mix(rnd));
+  } }
+  plan.set(cx, H + 9, cz, RUNE_BLOCK); plan.set(cx, H + 10, cz, GLOWSTONE);
+  // sala interior y entrada por el sur
+  for (let x = -5; x <= 5; x++) for (let z = -5; z <= 5; z++) for (let y = 1; y <= 4; y++) plan.set(cx + x, H + y, cz + z, AIR);
+  for (let z = 6; z <= 9; z++) for (let x = -1; x <= 1; x++) for (let y = 1; y <= 3; y++) plan.set(cx + x, H + y, cz + z, AIR);
+  for (const [dx, dz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) { for (let y = 1; y <= 4; y++) plan.set(cx + dx, H + y, cz + dz, y === 2 ? RUNE_BLOCK : CHISELED_BRICKS); }
+  plan.set(cx, H + 1, cz, CHISELED_BRICKS); plan.chest(cx, H + 2, cz, 'atemple', 0);
+  plan.set(cx - 4, H + 4, cz, LANTERN, 1); plan.set(cx + 4, H + 4, cz, LANTERN, 1);
+  plan.mobs.push(['skeleton', cx - 3.5, H + 1, cz + 0.5], ['skeleton', cx + 3.5, H + 1, cz + 0.5]);
+  // cámara secreta: bajo una losa agrietada, detrás del altar
+  plan.set(cx, H, cz - 4, CRACKED_BRICKS);
+  for (let y = H - 9; y < H; y++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) plan.set(cx + dx, y, cz - 4 + dz, dx || dz ? STONE_BRICKS : AIR);
+  for (let y = H - 9; y < H; y++) plan.set(cx, y, cz - 4, LADDER, 2);
+  box44(plan, cx - 4, H - 14, cz - 8, cx + 4, H - 9, cz, mix, rnd);
+  for (let y = H - 13; y <= H - 10; y++) plan.set(cx, y, cz - 4, LADDER, 2);
+  plan.set(cx, H - 9, cz - 4, LADDER, 2); for (let y = H - 13; y <= H - 10; y++) plan.set(cx, y, cz - 5, CHISELED_BRICKS);
+  seal44(plan, cx, H - 13, cz - 7, 'vault44');
+  spike44(plan, cx - 1, H - 13, cz - 6); spike44(plan, cx + 1, H - 13, cz - 6); spike44(plan, cx - 2, H - 13, cz - 7); spike44(plan, cx + 2, H - 13, cz - 7);
+  plan.set(cx - 3, H - 13, cz - 7, RUNE_BLOCK); plan.set(cx + 3, H - 13, cz - 7, RUNE_BLOCK);
+  plan.mobs.push(['brute', cx - 2.5, H - 13, cz - 2.5], ['skeleton', cx + 2.5, H - 13, cz - 2.5]);
+  plan.spawner(cx + 3, H - 13, cz - 1, 'skeleton');
+  plan.poi = { type: 'atemple', name: 'Templo antiguo', x: cx, z: cz, y: H };
+}
+
+function buildCastle(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h, R = 11;
+  const wallCol = (x, z, h, ruin) => {
+    const g = gen.column(x, z).h, n = ruin ? h - Math.floor(rnd() * rnd() * (h + 2)) : h;
+    for (let y = Math.min(g, H); y <= H + n; y++) plan.set(x, y, z, dungMix(rnd));
+    for (let y = H + Math.max(n, 0) + 1; y <= H + 12; y++) plan.set(x, y, z, AIR);
+  };
+  // patio
+  for (let x = -R + 1; x < R; x++) for (let z = -R + 1; z < R; z++) {
+    const g = gen.column(cx + x, cz + z).h;
+    for (let y = Math.min(g, H); y <= H; y++) plan.set(cx + x, y, cz + z, y === H ? (rnd() < 0.25 ? GRAVEL : rnd() < 0.3 ? COBBLE : GRASS) : DIRT);
+    for (let y = H + 1; y <= H + 12; y++) plan.set(cx + x, y, cz + z, AIR);
+  }
+  // muralla con almenas y puerta al sur
+  for (let k = -R; k <= R; k++) {
+    const cren = k % 2 === 0 ? 6 : 5;
+    wallCol(cx + k, cz - R, cren, true); wallCol(cx - R, cz + k, cren, true); wallCol(cx + R, cz + k, cren, true);
+    if (Math.abs(k) > 1) wallCol(cx + k, cz + R, cren, true); else { wallCol(cx + k, cz + R, 0, false); for (let y = 4; y <= 5; y++) plan.set(cx + k, H + y, cz + R, dungMix(rnd)); }
+  }
+  // torres en las esquinas
+  for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+    const tx = cx + sx * R, tz = cz + sz * R, th = 8 + Math.floor(rnd() * 3);
+    for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+      const edge = Math.abs(x) === 2 || Math.abs(z) === 2;
+      if (edge) wallCol(tx + x, tz + z, th, true); else { for (let y = H + 1; y <= H + th; y++) plan.set(tx + x, y, tz + z, AIR); plan.set(tx + x, H, tz + z, COBBLE); plan.set(tx + x, H + 5, tz + z, rnd() < 0.8 ? OAK_PLANKS : AIR); }
+    }
+    plan.set(tx - sx * 2, H + 1, tz, AIR); plan.set(tx - sx * 2, H + 2, tz, AIR);          // acceso desde el patio
+    if (sx === 1 && sz === -1) plan.chest(tx, H + 6, tz, 'castle', 0);
+  }
+  // torre del homenaje con sótano
+  for (let x = -4; x <= 4; x++) for (let z = -4; z <= 4; z++) {
+    const edge = Math.abs(x) === 4 || Math.abs(z) === 4;
+    if (edge) wallCol(cx + x, cz + z - 3, 9, true);
+    else { plan.set(cx + x, H, cz + z - 3, STONE_BRICKS); plan.set(cx + x, H + 5, cz + z - 3, rnd() < 0.85 ? OAK_PLANKS : AIR); }
+  }
+  for (let y = 1; y <= 2; y++) plan.set(cx, H + y, cz + 1, AIR);                             // puerta
+  for (let y = 1; y <= 5; y++) { plan.set(cx + 3, H + y, cz - 6, LADDER, 2); } plan.set(cx + 3, H + 5, cz - 6, LADDER, 2);
+  plan.chest(cx - 3, H + 6, cz - 6, 'castle', 0); plan.set(cx - 3, H + 1, cz, BARREL); plan.set(cx + 3, H + 1, cz, CRAFTING_TABLE);
+  box44(plan, cx - 4, H - 6, cz - 7, cx + 4, H - 1, cz + 1, dungMix, rnd);
+  plan.set(cx - 3, H, cz - 6, CRACKED_BRICKS); plan.set(cx - 3, H - 1, cz - 6, AIR);              // losa agrietada: bajada al sótano
+  for (let y = H - 5; y <= H - 1; y++) plan.set(cx - 3, y, cz - 6, LADDER, 2);
+  for (let z = -6; z <= 0; z++) plan.set(cx + 1, H - 5, cz + z, IRON_BARS), plan.set(cx + 1, H - 4, cz + z, IRON_BARS);
+  plan.set(cx + 1, H - 5, cz - 3, AIR); plan.set(cx + 1, H - 4, cz - 3, AIR);
+  seal44(plan, cx + 3, H - 5, cz - 3, 'vault44');
+  plan.spawner(cx - 1, H - 5, cz, rnd() < 0.5 ? 'zombie' : 'skeleton');
+  plan.mobs.push(['brute', cx + 2.5, H - 5, cz - 1.5], ['skeleton', cx + 6.5, H + 1, cz + 5.5], ['skeleton', cx - 6.5, H + 1, cz + 5.5], ['skeleton', cx + 0.5, H + 1, cz + 7.5]);
+  plan.set(cx + 5, H + 1, cz + 4, CAMPFIRE); plan.set(cx - 6, H + 1, cz - 2, HAY_BALE); plan.set(cx - 7, H + 1, cz - 2, HAY_BALE);
+  plan.poi = { type: 'castle', name: 'Castillo en ruinas', x: cx, z: cz, y: H };
+}
+
+function buildLab(plan, cx, cz, rnd, gen) {
+  const top = gen.column(cx, cz).h, y0 = clamp(top - 16, 9, 44), tile = () => LAB_TILE;
+  // caseta de entrada
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+    const edge = Math.abs(x) === 2 || Math.abs(z) === 2, g = gen.column(cx + x, cz + z).h;
+    for (let y = Math.min(g, top); y <= top; y++) plan.set(cx + x, y, cz + z, LAB_TILE);
+    for (let y = 1; y <= 3; y++) plan.set(cx + x, top + y, cz + z, edge ? (y === 2 && (x === 0 || z === 0) ? GLASS : LAB_TILE) : AIR);
+    plan.set(cx + x, top + 4, cz + z, SMOOTH_STONE);
+  }
+  plan.set(cx, top + 1, cz + 2, AIR); plan.set(cx, top + 2, cz + 2, AIR);
+  // pozo con escalera
+  for (let y = y0 + 5; y <= top; y++) for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) plan.set(cx + dx, y, cz - 1 + dz, dx || dz ? LAB_TILE : AIR);
+  // sala principal y cámara de contención
+  box44(plan, cx - 6, y0, cz - 5, cx + 6, y0 + 5, cz + 4, tile, rnd);
+  box44(plan, cx + 6, y0, cz - 4, cx + 13, y0 + 5, cz + 3, tile, rnd);
+  for (let x = -5; x <= 12; x++) for (let z = -4; z <= 3; z++) if (x !== 6) plan.set(cx + x, y0, cz + z, (x + z) % 2 ? SMOOTH_STONE : LAB_TILE);
+  for (let y = y0 + 1; y <= top + 1; y++) plan.set(cx, y, cz - 1, LADDER, 2);
+  for (let y = y0 + 1; y <= y0 + 4; y++) plan.set(cx, y, cz - 2, LAB_TILE);
+  for (const [dx, dz] of [[-3, -2], [3, -2], [-3, 2], [3, 2], [9, 0]]) plan.set(cx + dx, y0 + 5, cz + dz, SEA_LANTERN);
+  // mesas de trabajo, estanterías y tanques de muestras
+  plan.set(cx - 5, y0 + 1, cz - 4, BREWING_STAND); plan.set(cx - 4, y0 + 1, cz - 4, BREWING_STAND); plan.set(cx - 3, y0 + 1, cz - 4, ENCHANT_TABLE);
+  for (let z = 0; z <= 3; z++) { plan.set(cx - 5, y0 + 1, cz + z, BOOKSHELF); plan.set(cx - 5, y0 + 2, cz + z, BOOKSHELF); }
+  for (const tx of [2, 4]) { for (let y = 1; y <= 3; y++) plan.set(cx + tx, y0 + y, cz + 3, y === 2 ? WATER : GLASS); plan.set(cx + tx, y0 + 2, cz + 2, GLASS); plan.set(cx + tx, y0 + 1, cz + 2, LAB_TILE); plan.set(cx + tx, y0 + 3, cz + 2, LAB_TILE); }
+  plan.chest(cx + 4, y0 + 1, cz - 4, 'lab', 0);
+  // puerta de barrotes a la cámara
+  for (let y = 1; y <= 3; y++) for (let z = -1; z <= 0; z++) plan.set(cx + 6, y0 + y, cz + z, y === 3 ? LAB_TILE : AIR);
+  seal44(plan, cx + 11, y0 + 1, cz, 'vault44'); plan.chest(cx + 11, y0 + 1, cz - 3, 'lab', 0);
+  plan.spawner(cx + 9, y0 + 1, cz + 2, 'automaton');
+  plan.mobs.push(['automaton', cx + 8.5, y0 + 1, cz - 1.5], ['automaton', cx + 10.5, y0 + 1, cz + 1.5], ['automaton', cx + 2.5, y0 + 1, cz - 0.5]);
+  plan.set(cx + 12, y0 + 1, cz + 2, RUNE_BLOCK); plan.set(cx + 12, y0 + 1, cz - 3 + 1, CRYSTAL_BLOCK);
+  plan.poi = { type: 'lab', name: 'Laboratorio misterioso', x: cx, z: cz, y: top };
+}
+
+function buildCrypt(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h, y0 = Math.max(6, H - 9);
+  plan.set(cx, H, cz, RUNE_BLOCK);
+  for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) plan.set(cx + dx, gen.column(cx + dx, cz + dz).h, cz + dz, MOSSY_COBBLE);
+  box44(plan, cx - 3, y0, cz - 3, cx + 3, y0 + 4, cz + 3, dungMix, rnd);
+  seal44(plan, cx, y0 + 1, cz, 'vault44');
+  plan.set(cx, y0 + 3, cz, LANTERN, 1);
+  plan.mobs.push(['skeleton', cx - 1.5, y0 + 1, cz - 1.5], ['skeleton', cx + 2.5, y0 + 1, cz + 2.5]);
+  for (const [dx, dz] of [[-2, 2], [2, -2]]) plan.set(cx + dx, y0 + 1, cz + dz, COBWEB);
+  plan.poi = { type: 'crypt', name: 'Cámara secreta', x: cx, z: cz, y: y0, underground: true };
+}
+
+function buildSkyIsles(plan, cx, cz, rnd, gen) {
+  let ground = 0; for (let a = 0; a < 8; a++) ground = Math.max(ground, gen.column(cx + Math.round(Math.cos(a * 0.785) * 14), cz + Math.round(Math.sin(a * 0.785) * 14)).h);
+  const Y = clamp(Math.max(ground, SEA) + 24, 76, 82), seedN = Math.floor(rnd() * 1e6);
+  const island = (ox, oz, oy, R, T, main) => {
+    for (let x = -R - 2; x <= R + 2; x++) for (let z = -R - 2; z <= R + 2; z++) {
+      const d = Math.hypot(x, z) + (hash2(ox + x, oz + z, seedN) - 0.5) * 2.2;
+      if (d > R + 1.6) continue;
+      if (d > R) { if (hash2(ox + x, oz + z, seedN + 3) < 0.55) plan.set(ox + x, oy - 1, oz + z, CLOUD); if (hash2(ox + x, oz + z, seedN + 4) < 0.3) plan.set(ox + x, oy, oz + z, CLOUD); continue; }
+      const t = Math.max(1, Math.round((1 - (d / R) * (d / R)) * T + hash2(ox + x, oz + z, seedN + 1) * 1.5));
+      for (let k = 0; k <= t; k++) plan.set(ox + x, oy - k, oz + z, k === 0 ? GRASS : k < 3 && t > 3 ? DIRT : hash3(ox + x, oy - k, oz + z, seedN + 2) < 0.05 ? AERITE_ORE : SKY_STONE);
+      for (let k = 1; k <= 9; k++) plan.set(ox + x, oy + k, oz + z, AIR);
+      const v = hash2(ox + x, oz + z, seedN + 5);
+      if (v < 0.12 && d < R - 1 && !(main && d < 4.5)) plan.set(ox + x, oy + 1, oz + z, v < 0.05 ? TALL_GRASS : v < 0.08 ? BLUE_ORCHID : DANDELION);
+    }
+  };
+  const tree = (x, y, z) => { for (let k = 1; k <= 4; k++) plan.set(x, y + k, z, BIRCH_LOG); for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) for (let dy = 3; dy <= 5; dy++) if (Math.abs(dx) + Math.abs(dz) + (dy - 3) * 1.2 < 3.6 && (dx || dz || dy > 4)) plan.set(x + dx, y + dy, z + dz, BIRCH_LEAVES); };
+  const R = 9 + Math.floor(rnd() * 3);
+  island(cx, cz, Y, R, 8, true);
+  const n = 2 + Math.floor(rnd() * 2);
+  for (let k = 0; k < n; k++) {
+    const a = rnd() * 6.283, d = R + 8 + rnd() * 6, r = 4 + Math.floor(rnd() * 2), ox = cx + Math.round(Math.cos(a) * d), oz = cz + Math.round(Math.sin(a) * d), oy = Y - 3 + Math.floor(rnd() * 7);
+    island(ox, oz, oy, r, 5, false); if (rnd() < 0.7) tree(ox, oy, oz);
+    if (k === 0) plan.chest(ox + 1, oy + 1, oz, 'sky', 0);
+  }
+  tree(cx - R + 3, Y, cz + 2); tree(cx + 2, Y, cz + R - 3);
+  // santuario
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) { plan.set(cx + x, Y, cz + z, SKY_BRICKS); plan.set(cx + x, Y + 1, cz + z, AIR); if (Math.abs(x) === 2 && Math.abs(z) === 2) { for (let y = 1; y <= 3; y++) plan.set(cx + x, Y + y, cz + z, SKY_BRICKS); plan.set(cx + x, Y + 4, cz + z, AERITE_BLOCK); } }
+  seal44(plan, cx, Y + 1, cz, 'skyvault');
+  plan.mobs.push(['harpy', cx + 3.5, Y + 4, cz + 3.5], ['harpy', cx - 3.5, Y + 5, cz - 3.5], ['harpy', cx + 0.5, Y + 6, cz - 4.5]);
+  // estanque que se desborda en cascada hasta el suelo: sirve para subir nadando
+  for (let x = R - 4; x <= R - 2; x++) for (let z = -1; z <= 1; z++) { plan.set(cx + x, Y, cz + z, WATER); plan.set(cx + x, Y - 1, cz + z, SKY_STONE); }
+  for (let x = R - 1; x <= R + 2; x++) { plan.set(cx + x, Y, cz, WATER); plan.set(cx + x, Y - 1, cz, x <= R ? SKY_STONE : WATER); plan.set(cx + x, Y + 1, cz, AIR); }
+  const fx = cx + R + 2, g = gen.column(fx, cz), base = Math.max(g.h, g.wl ?? SEA);
+  for (let y = base + 1; y < Y; y++) plan.set(fx, y, cz, WATER);
+  plan.poi = { type: 'skyisle', name: 'Islas flotantes', x: cx, z: cz, y: Y };
+}
+
+function buildSeaCity(plan, cx, cz, rnd, gen) {
+  const y0 = gen.column(cx, cz).h, W = WATER, mix = (r) => (r() < 0.35 ? SEA_BRICKS_MOSSY : SEA_BRICKS);
+  const floorAt = (x, z) => gen.column(x, z).h;
+  // plaza con estatua
+  for (let x = -4; x <= 4; x++) for (let z = -4; z <= 4; z++) { const g = floorAt(cx + x, cz + z); for (let y = Math.min(g, y0); y <= y0; y++) plan.set(cx + x, y, cz + z, y === y0 ? (Math.abs(x) === 4 && Math.abs(z) === 4 ? SEA_LANTERN : mix(rnd)) : SEA_STONE); for (let y = y0 + 1; y <= y0 + 6; y++) plan.set(cx + x, y, cz + z, W); }
+  for (let y = 1; y <= 4; y++) plan.set(cx, y0 + y, cz, y === 4 ? SEA_LANTERN : SEA_STONE);
+  // casas en ruinas alrededor
+  const n = 5 + Math.floor(rnd() * 2);
+  for (let k = 0; k < n; k++) {
+    const a = k / n * 6.283 + rnd() * 0.4, d = 12 + rnd() * 5, hx = cx + Math.round(Math.cos(a) * d), hz = cz + Math.round(Math.sin(a) * d);
+    if (hz < cz - 8 && Math.abs(hx - cx) < 9) continue;                     // sitio del templo
+    const g = floorAt(hx, hz); if (g > SEA - 6) continue;
+    for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) {
+      const edge = Math.abs(x) === 3 || Math.abs(z) === 3, gg = floorAt(hx + x, hz + z);
+      for (let y = Math.min(gg, g); y <= g; y++) plan.set(hx + x, y, hz + z, SEA_STONE);
+      const hgt = edge ? 1 + Math.floor(rnd() * 4) : 0;
+      for (let y = 1; y <= 5; y++) plan.set(hx + x, g + y, hz + z, edge && y <= hgt ? mix(rnd) : W);
+    }
+    plan.set(hx, g + 1, hz + 3, W); plan.set(hx, g + 2, hz + 3, W);
+    if (k % 2 === 0) plan.chest(hx - 2, g + 1, hz - 2, 'sea', 0); else plan.set(hx + 2, g + 1, hz - 2, SEA_LANTERN);
+  }
+  // templo central, al norte de la plaza
+  const tz = cz - 13, ty = floorAt(cx, tz);
+  for (let x = -5; x <= 5; x++) for (let z = -4; z <= 4; z++) {
+    const g = floorAt(cx + x, tz + z);
+    for (let y = Math.min(g, ty); y <= ty; y++) plan.set(cx + x, y, tz + z, SEA_STONE);
+    for (let y = 1; y <= 6; y++) {
+      const shell = Math.abs(x) === 5 || Math.abs(z) === 4 || y === 6;
+      plan.set(cx + x, ty + y, tz + z, shell ? mix(rnd) : W);
+    }
+  }
+  for (let y = 1; y <= 3; y++) for (let x = -1; x <= 1; x++) plan.set(cx + x, ty + y, tz + 4, W);                     // entrada
+  for (const [dx, dz] of [[-3, -2], [3, -2], [-3, 2], [3, 2]]) for (let y = 1; y <= 5; y++) plan.set(cx + dx, ty + y, tz + dz, y === 3 ? SEA_LANTERN : SEA_STONE);
+  plan.set(cx, ty + 1, tz - 2, SEA_BRICKS); seal44(plan, cx, ty + 2, tz - 2, 'seavault');
+  plan.set(cx - 1, ty + 1, tz - 2, RUNE_BLOCK); plan.set(cx + 1, ty + 1, tz - 2, RUNE_BLOCK);
+  plan.mobs.push(['sentinel', cx - 2.5, ty + 3, tz + 0.5], ['sentinel', cx + 2.5, ty + 3, tz + 0.5], ['sentinel', cx + 0.5, ty + 4, tz + 8.5]);
+  plan.poi = { type: 'seacity', name: 'Ciudad sumergida', x: cx, z: cz, y: y0 };
+}
+
+STRUCTS.push(
+  { type: 'catacomb', minGen: 4, region: 260, chance: 0.55, salt: 51, rad: 22, build: (p, x, z, b, r, g) => buildCatacomb(p, x, z, r, g), land: true },
+  { type: 'atemple', minGen: 4, region: 300, chance: 0.5, salt: 52, rad: 12, biomes: [B_.FOREST, B_.BIRCH, B_.JUNGLE, B_.PLAINS, B_.MEADOW, B_.DARK_FOREST, B_.SWAMP, B_.HIGHLANDS], build: (p, x, z, b, r, g) => buildATemple(p, x, z, r, g), flat: 5 },
+  { type: 'castle', minGen: 4, region: 340, chance: 0.5, salt: 53, rad: 16, biomes: [B_.PLAINS, B_.MEADOW, B_.HIGHLANDS, B_.TAIGA, B_.TUNDRA, B_.FOREST, B_.SAVANNA], build: (p, x, z, b, r, g) => buildCastle(p, x, z, r, g), flat: 4 },
+  { type: 'lab', minGen: 4, region: 380, chance: 0.5, salt: 54, rad: 16, build: (p, x, z, b, r, g) => buildLab(p, x, z, r, g), land: true },
+  { type: 'crypt', minGen: 4, region: 150, chance: 0.5, salt: 55, rad: 5, biomes: [B_.PLAINS, B_.FOREST, B_.BIRCH, B_.MEADOW, B_.TAIGA, B_.TUNDRA, B_.DESERT, B_.DUNES, B_.SAVANNA, B_.HIGHLANDS, B_.DARK_FOREST, B_.SWAMP, B_.BADLANDS], build: (p, x, z, b, r, g) => buildCrypt(p, x, z, r, g), flat: 4 },
+  { type: 'skyisle', minGen: 4, region: 300, chance: 0.55, salt: 56, rad: 30, sky: true, build: (p, x, z, b, r, g) => buildSkyIsles(p, x, z, r, g) },
+  { type: 'seacity', minGen: 4, region: 360, chance: 0.6, salt: 57, rad: 24, sea: [9, 22], build: (p, x, z, b, r, g) => buildSeaCity(p, x, z, r, g) },
+);
+Object.assign(POI_ICON_42, { catacomb: '⚰', atemple: '🛕', castle: '🏯', lab: '⚗', crypt: '🔒', skyisle: '☁', seacity: '🔱' });
+Object.assign(POI_NAMES_42, { catacomb: 'Catacumbas', atemple: 'Templo antiguo', castle: 'Castillo en ruinas', lab: 'Laboratorio misterioso', crypt: 'Cámara secreta', skyisle: 'Islas flotantes', seacity: 'Ciudad sumergida' });
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -10521,7 +10918,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -10532,7 +10929,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.3  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.4  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -10557,7 +10954,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -10900,7 +11297,7 @@ class NetClient {
     if (world.isLoaded(m.x, m.z)) { world.set(m.x, m.y, m.z, m.id, m.meta | 0); return; }
     const key = (m.x >> 4) + ',' + (m.z >> 4), i = (m.x & 15) | ((m.z & 15) << 4) | (m.y << 8);
     let ed = world.edits.get(key); if (!ed) { ed = new Map(); world.edits.set(key, ed); }
-    ed.set(i, m.id | ((m.meta | 0) << 8));
+    ed.set(i, packBlock(m.id, m.meta | 0));
   }
   // Firma de una entidad de bloque: solo su contenido (el progreso de los hornos no cuenta como cambio)
   sig(t) { return t.inv ? JSON.stringify(t.inv.toJSON()) : t.type === 'sign' ? 's' + t.text : 'p' + t.art; }
@@ -12832,7 +13229,7 @@ function tickConstruction() {
         } else if (b) {
           const key = (x >> 4) + ',' + (z >> 4), i = (x & 15) | ((z & 15) << 4) | (y << 8);
           let ed = world.edits.get(key); if (!ed) { ed = new Map(); world.edits.set(key, ed); }
-          ed.set(i, b | (m << 8));
+          ed.set(i, packBlock(b, m));
         }
       }
       if (r.bi >= r.bq.length) { r.bq = null; r.bi = 0; notify('🏘 Obra terminada', `${villageName(id)} ya es ${VILLAGE_LEVELS[r.lvl]}`, 'poi'); }
@@ -13314,7 +13711,11 @@ const EGG_COLORS = {
 const EGGS = {};
 {
   let id = 600;
-  for (const [type, s] of Object.entries(MOBS)) {
+  // Los huevos se numeran por orden. Las criaturas añadidas desde la 4.3 van siempre al final para que
+  // los huevos ya guardados en inventarios y cofres no cambien de criatura. (Las nuevas: añadir aquí al final.)
+  const LATE_MOBS = ['mule', 'harpy', 'sentinel', 'automaton'];
+  const mobOrder = [...Object.entries(MOBS).filter(([t]) => !LATE_MOBS.includes(t)), ...LATE_MOBS.filter((t) => MOBS[t]).map((t) => [t, MOBS[t]])];
+  for (const [type, s] of mobOrder) {
     if (s.boss || type.startsWith('__') || type === 'villager' || !s.model) continue;
     EGGS[type] = id;
     defItem(id, `Huevo de ${s.name.toLowerCase()}`, `Úsalo sobre un bloque para que aparezca ${/a$/.test(s.name) ? 'una' : 'un'} ${s.name.toLowerCase()}. En creativo no se gasta.`, { egg: type, stack: 64 });
@@ -13464,6 +13865,25 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.4', name: 'Zonas nuevas', date: 'noviembre de 2026', items: [
+    'Siete zonas nuevas para explorar, cada una con sus enemigos, trampas, secretos y botín. Aparecen en los mundos que crees a partir de ahora; tus mundos anteriores no cambian.',
+    'Catacumbas: salas y pasillos bajo tierra a los que se baja por un pozo. Tumbas, generadores de monstruos, salas de pinchos y una cámara del tesoro.',
+    'Templo antiguo: pirámide escalonada con una sala de runas y, bajo una losa agrietada, una cámara secreta con trampas.',
+    'Castillo en ruinas: muralla con almenas, torres, torre del homenaje y un sótano con calabozo.',
+    'Laboratorio misterioso: una caseta blanca esconde un laboratorio subterráneo con soportes de pociones, tanques de muestras y autómatas.',
+    'Cámara secreta: un bloque rúnico medio enterrado marca una cripta sin entrada. Hay que cavar.',
+    'Islas flotantes: un grupo de islas suspendidas en el cielo con un santuario, árboles y mena de aerita. Un estanque se desborda en cascada hasta el suelo: sube nadando por ella.',
+    'Ciudad sumergida: plaza, casas en ruinas y un templo en el fondo del mar, hechos de ladrillos marinos.',
+    'Cofres sellados: el mejor botín de cada zona está en un cofre que no se abre ni se rompe hasta vencer a los guardianes que lo protegen.',
+    'Criaturas nuevas: arpía (vuela y ataca en las islas flotantes), centinela marino (nada y defiende la ciudad sumergida) y autómata (lento y duro, en los laboratorios).',
+    'Materiales nuevos: aerita (de las islas flotantes) y perla abisal (de los centinelas y cofres del fondo del mar).',
+    'Amuleto de pluma (aerita, pluma y oro): en cualquiera de las dos manos, caes despacio y sin hacerte daño. Amuleto de las mareas (perlas abisales y oro): respiras y ves bajo el agua.',
+    '11 bloques nuevos: piedra celeste, nube (amortigua las caídas), mena y bloque de aerita, ladrillos celestes, piedra marina, ladrillos marinos (y con algas), ladrillos de mazmorra, baldosa de laboratorio y bloque rúnico (da luz).',
+    '4 logros nuevos. Los lugares se marcan en el mapa al descubrirlos y los rumores del explorador y del visitante misterioso también pueden llevarte a ellos.',
+    'Motor: el juego ya admite más de 256 tipos de bloque (antes estaba al límite) y más texturas. Las partidas anteriores se leen igual que siempre.',
+    'Corrección: desde la 4.3 los huevos de chamán, bruto, murciélago, caballo, lobo y panda guardados en inventarios y cofres se habían convertido en el de otra criatura; vuelven a ser los correctos.',
+    'Multijugador: hay que actualizar server.js para poder colocar los bloques nuevos; las salas nuevas incluyen las zonas nuevas.',
+  ] },
   { v: '4.3', name: 'Aldeas vivas', date: 'noviembre de 2026', items: [
     'Rutina diaria de los aldeanos: reunión en la plaza al amanecer, trabajo por la mañana, descanso a mediodía, visitas a otros vecinos por la tarde, paseo antes de anochecer y a casa a dormir. Al hablar con uno ves qué está haciendo.',
     'Ya no se quedan trabados: ahora buscan el camino rodeando casas y vallas, cruzando puertas y subiendo escalones.',
@@ -13679,7 +14099,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.4', name: 'Zonas nuevas', items: ['Mazmorras, templos y minas.', 'Islas flotantes y ciudades submarinas.'] },
   { v: '4.5', name: 'Personaje', items: ['Árbol de habilidades.', 'Conjuntos de armadura, accesorios, mochilas, mascotas y monturas.'] },
   { v: '4.6', name: 'Combate y jefes', items: ['Enemigos más listos y ataques especiales.', 'Jefes nuevos con sus arenas.'] },
   { v: '4.7', name: 'Actividades', items: ['Pesca, cocina, cría y cultivos por bioma.', 'Misiones secundarias y expediciones.'] },
@@ -14802,7 +15221,7 @@ Object.assign(NetClient.prototype, {
           const [a, b] = e.split(':'), i = parseInt(a, 36), v = parseInt(b, 36);
           if (!Number.isFinite(i) || !Number.isFinite(v) || (ed && ed.get(i) === v)) continue;
           const x = cx * 16 + (i & 15), z = cz * 16 + ((i >> 4) & 15), y = i >> 8;
-          if (world.isLoaded(x, z)) world.set(x, y, z, v & 255, v >> 8);
+          if (world.isLoaded(x, z)) world.set(x, y, z, editId(v), editMeta(v));
           else { if (!ed) { ed = new Map(); world.edits.set(key, ed); } ed.set(i, v); }
         }
       }
@@ -17287,6 +17706,81 @@ ACHIEVEMENTS.push(['village_friend', 'Como de la familia', 'Llega a ser gran ami
   events.H.siege.reward = function (ev) { sr.call(this, ev); village43.addPros(ev.vil.id, 20); for (const v of village43.groups.get(ev.vil.id) || []) { village43.mem(v).saved += 0.5; village43.bubble(v, '🎉', 4); } };
   const prevContribute = contribute;
   contribute = function (planId) { const r0 = vrec(planId), before = Object.values(r0.proj || {}).reduce((a, b) => a + b, 0), res = prevContribute(planId), after = Object.values(vrec(planId).proj || {}).reduce((a, b) => a + b, 0); if (res === 'start') village43.addPros(planId, 10); else if (after > before) village43.addPros(planId, (after - before) / 16); return res; };
+}
+/* ==========================================================================
+   §40 ZONAS NUEVAS 4.4 — reglas de juego
+   --------------------------------------------------------------------------
+   · Cofres sellados: no se abren ni se rompen mientras quede algún guardián
+     de su estructura cerca. Al caer el último se rompe el sello (se guarda).
+   · Amuleto de pluma: caída lenta y sin daño. Amuleto de las mareas: respirar
+     y ver bajo el agua. Funcionan en la mano principal o en la secundaria.
+   · Las nubes amortiguan las caídas.
+   ========================================================================== */
+LOOT.castle.push([I.SHIELD, 1, 1, 2], [I.CROSSBOW, 1, 1, 1]);
+const zones44 = {
+  t: 0,
+  charm(kind) { const p = game.player; return [p.held(), p.offhand.slots[0]].some((s) => s && ITEMS[s.id].charm === kind); },
+  // null = libre; si no, cuántos guardianes quedan
+  sealed(x, y, z) {
+    const ch = world.chunk(x >> 4, z >> 4); if (!ch || !ch.plans) return null;
+    const key = `${x},${y},${z}`;
+    for (const id of ch.plans) {
+      const plan = getPlan(id); if (!plan || !plan.seals || !plan.seals.has(key)) continue;
+      const st = game.structState(id);
+      if (st.us && st.us.includes(key)) return null;
+      if (game.mode === 'creative') return null;
+      if (!st.sp && plan.mobs.length) return { n: plan.mobs.length, id };                      // aún no han aparecido
+      let n = 0;
+      for (const e of game.entities.list) if (e.kind === 'mob' && e.planId === id && e.spec.hostile && !e.dead && !e.deathT && Math.hypot(e.pos.x - x, e.pos.y - y, e.pos.z - z) < 26) n++;
+      if (n) return { n, id };
+      (st.us ||= []).push(key);                                                                // sello roto
+      game.particles.emit(x + 0.5, y + 1, z + 0.5, [0.45, 0.95, 0.9], 30, { speed: 3, up: 3, life: 1 });
+      sfx.play('chime', { pitch: 1.2 }); hud.toast('🔓 El sello se rompe: el cofre es tuyo', 2600);
+      game.stats.add('seals'); game.unlock('zone_vault');
+      return null;
+    }
+    return null;
+  },
+  deny(s) { sfx.play('click'); hud.toast(`🔒 Cofre sellado: ${s.n === 1 ? 'queda 1 guardián' : 'quedan ' + s.n + ' guardianes'} cerca`, 2200); },
+  update(dt) {
+    const p = game.player;
+    if (!p || !world || game.state !== 'playing' || p.dead) return;
+    // amuleto de pluma: caída lenta y sin daño
+    if (!p.onGround && !p.flying && !p.inWater && p.vel.y < 0) {
+      if (this.charm('feather')) {
+        if (p.vel.y < -4.2) p.vel.y = -4.2;
+        p.fallStart = p.pos.y;
+        if (Math.random() < dt * 14) game.particles.emit(p.pos.x + (Math.random() - 0.5) * 0.6, p.pos.y + 0.2, p.pos.z + (Math.random() - 0.5) * 0.6, [0.95, 0.97, 1], 1, { gravity: -0.4, up: 0.4, speed: 0.3, life: 0.7, size: 0.06 });
+      } else if (p.fallStart !== null) {
+        // nubes: amortiguan la caída
+        const x = Math.floor(p.pos.x), z = Math.floor(p.pos.z), y = Math.floor(p.pos.y);
+        if (world.get(x, y - 1, z) === CLOUD || world.get(x, y - 2, z) === CLOUD) p.fallStart = p.pos.y;
+      }
+    }
+    if ((this.t -= dt) > 0) return;
+    this.t = 0.5;
+    // amuleto de las mareas
+    if (p.headInWater && this.charm('tide')) { p.air = MAX_AIR; const nv = p.effects.get('night'); if (!nv || nv.t < 4) game.applyEffect('night', 1, 12); }
+    // logros de exploración
+    let sky = false, sea = false; const kinds = new Set();
+    for (const v of p.pois.values()) { kinds.add(v.type); if (v.type === 'skyisle') sky = true; else if (v.type === 'seacity') sea = true; }
+    if (sky) game.unlock('zone_sky'); if (sea) game.unlock('zone_sea');
+    if (['catacomb', 'atemple', 'castle', 'lab', 'crypt', 'skyisle', 'seacity'].every((k) => kinds.has(k))) game.unlock('zone_all');
+  },
+};
+ACHIEVEMENTS.push(['zone_vault', 'Rompesellos', 'Abre un cofre sellado venciendo a sus guardianes.'], ['zone_sky', 'Por las nubes', 'Descubre unas islas flotantes.'],
+  ['zone_sea', 'Atlántida', 'Descubre una ciudad sumergida.'], ['zone_all', 'Cartógrafo de lo oculto', 'Descubre los siete tipos de zona de la 4.4.']);
+{
+  const _interact = game.interact, _break = game.breakBlock;
+  game.interact = function () {
+    const t = this.target;
+    if (t && t.id === CHEST && !down('sneak')) { const s = zones44.sealed(t.x, t.y, t.z); if (s) { zones44.deny(s); return true; } }
+    return _interact.call(this);
+  };
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    if (byPlayer && world.get(x, y, z) === CHEST) { const s = zones44.sealed(x, y, z); if (s) { zones44.deny(s); return; } }
+    return _break.call(this, x, y, z, byPlayer);
+  };
 }
 
 /* ==========================================================================

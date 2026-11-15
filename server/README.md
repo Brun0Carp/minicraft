@@ -87,3 +87,6 @@ Cada sala se guarda cada 30 segundos, cuando se queda vacía y al cerrar: la sal
 Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pasa a ser la sala INICIO tal cual. El juego 3.6 necesita este servidor (protocolo 4).
 
 **4.1 y 4.2:** actualiza `server.js` (no cambia el protocolo ni el formato de los datos). Desde la 4.1 reenvía la luz que lleva cada jugador en la mano; desde la 4.2 las salas **nuevas** se crean con el generador de mundos nuevo (`gen: 3`). Las salas que ya existían conservan su mundo tal cual.
+
+
+**4.4:** actualiza `server.js`. Acepta los bloques nuevos (identificadores a partir de 1024); con un servidor anterior esos bloques no se pueden colocar. Las salas **nuevas** se crean con `gen: 4` (el relieve de la 4.2 más las zonas de la 4.4); las existentes conservan su mundo. El formato de los datos guardados no cambia para los bloques anteriores.

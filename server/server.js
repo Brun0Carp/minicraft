@@ -87,7 +87,7 @@ const index = new Map();          // código → resumen de todas las salas guar
 class Room {
   constructor(code, file) {
     this.code = code; this.file = file;
-    this.W = { v: 2, gen: 3, seed: 0, mode: 'survival', time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {},
+    this.W = { v: 2, gen: 4, seed: 0, mode: 'survival', time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {},
       name: 'Sala', owner: null, trusted: [], banned: [], max: Math.min(8, cfg.max), pvp: true, cheats: true, build: 'all', priv: false, pass: '', created: Date.now() };
     this.edits = new Map();         // "cx,cz" → Map(índice local → id | meta << 8), igual que en el cliente
     this.drops = new Map();         // objetos en el suelo: id → { s: [id, cantidad, daño, encantamientos], p: [x, y, z], t: creado }
@@ -102,7 +102,7 @@ class Room {
         const d = JSON.parse(fs.readFileSync(f, 'utf8'));
         if (!Number.isFinite(d.seed)) throw new Error('sin semilla');
         const W = this.W;
-        Object.assign(W, { gen: d.gen === 2 || d.gen === 3 ? d.gen : 1, seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
+        Object.assign(W, { gen: [2, 3, 4].includes(d.gen) ? d.gen : 1, seed: d.seed, mode: d.mode === 'creative' ? 'creative' : 'survival', time: +d.time || 0, days: d.days | 0,
           weather: WEATHERS.includes(d.weather) ? d.weather : 'clear', weatherT: +d.weatherT || 600, tiles: d.tiles || {}, players: d.players || {}, bosses: d.bosses || {} });
         if (d.v >= 2) Object.assign(W, { name: String(d.name || W.name).slice(0, 32), owner: d.owner || null, trusted: Array.isArray(d.trusted) ? d.trusted : [],
           banned: Array.isArray(d.banned) ? d.banned : [], max: isInt(d.max, 1, 64) ? d.max : W.max, pvp: d.pvp !== false, cheats: d.cheats !== false,
@@ -370,11 +370,11 @@ function handle(c, m) {
       break;
     }
     case 'block': {
-      if (!isInt(m.x, -3e7, 3e7) || !isInt(m.z, -3e7, 3e7) || !isInt(m.y, 0, WY - 1) || !isInt(m.id, 0, 255)) return;
+      if (!isInt(m.x, -3e7, 3e7) || !isInt(m.z, -3e7, 3e7) || !isInt(m.y, 0, WY - 1) || !isInt(m.id, 0, 2047)) return;
       if (!R.canBuild(c)) return c.send({ type: 'deny', x: m.x, y: m.y, z: m.z });     // el cliente deshace el cambio
       const meta = isInt(m.meta, 0, 255) ? m.meta : 0, key = (m.x >> 4) + ',' + (m.z >> 4), i = (m.x & 15) | ((m.z & 15) << 4) | (m.y << 8);
       let ed = R.edits.get(key); if (!ed) { ed = new Map(); R.edits.set(key, ed); }
-      ed.set(i, m.id | (meta << 8)); R.dirty = true;
+      ed.set(i, m.id < 256 ? m.id | (meta << 8) : 65536 + m.id + (meta << 12)); R.dirty = true;      // igual que packBlock() del cliente
       R.broadcast({ type: 'block', x: m.x, y: m.y, z: m.z, id: m.id, meta }, c);
       break;
     }
