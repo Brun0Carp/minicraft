@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================================
-   SERVIDOR MULTIJUGADOR DE MINICRAFT 4.9 — SALAS
+   SERVIDOR MULTIJUGADOR DE LINKCRAFT 5.0 (ANTES MINICRAFT) — SALAS
    ----------------------------------------------------------------------------
    Sin dependencias: solo hace falta Node.js 18 o superior.
 
@@ -31,7 +31,7 @@
      max       16               tope de jugadores por sala (el anfitrión elige hasta este número)
      rooms     40               salas guardadas como máximo en el servidor
      password  (ninguna)        contraseña para entrar al servidor
-     name      Servidor MiniCraft
+     name      Servidor LinkCraft
      data      ./data           carpeta donde se guardan las salas
      game      (auto)           ruta del index.html del juego
      De la sala INICIO (solo al crearla, salvo pvp/cheats):
@@ -60,7 +60,7 @@ const cfg = {
   rooms: Math.max(1, parseInt(opt('rooms', 40), 10) || 40),
   lobby: yes(opt('lobby', 'on')),
   password: String(opt('password', '') || ''),
-  name: String(opt('name', 'Servidor MiniCraft')).slice(0, 60),
+  name: String(opt('name', 'Servidor LinkCraft')).slice(0, 60),
   data: path.resolve(opt('data', path.join(__dirname, 'data'))),
   game: opt('game', null),
 };
@@ -881,13 +881,13 @@ const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
   if (url === '/status' || url === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
-    return res.end(JSON.stringify({ minicraft: PROTOCOL, name: cfg.name, players: allPlayers(), max: cfg.max, rooms: index.size, password: !!cfg.password, public: publicRooms() }));
+    return res.end(JSON.stringify({ linkcraft: PROTOCOL, minicraft: PROTOCOL, name: cfg.name, players: allPlayers(), max: cfg.max, rooms: index.size, password: !!cfg.password, public: publicRooms() }));
   }
   if (url === '/' || url === '/index.html') {
     const f = findGame();
     if (f) { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }); return fs.createReadStream(f).pipe(res); }
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end('<meta charset="utf-8"><body style="font-family:sans-serif;max-width:560px;margin:40px auto"><h1>Servidor de MiniCraft en marcha</h1><p>No se encontró <code>index.html</code> junto al servidor. Copia el archivo del juego a esta carpeta o usa <code>--game=ruta/index.html</code>. Mientras tanto puedes conectarte desde el juego con la dirección de este servidor.</p>');
+    return res.end('<meta charset="utf-8"><body style="font-family:sans-serif;max-width:560px;margin:40px auto"><h1>Servidor de LinkCraft en marcha</h1><p>No se encontró <code>index.html</code> junto al servidor. Copia el archivo del juego a esta carpeta o usa <code>--game=ruta/index.html</code>. Mientras tanto puedes conectarte desde el juego con la dirección de este servidor.</p>');
   }
   res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('No encontrado');
 });

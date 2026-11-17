@@ -7,10 +7,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.9</title>
+<title>LinkCraft 5.0</title>
 <!--
   ============================================================================
-  MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
+  LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
   ============================================================================
   Cómo usarlo: guarda este archivo como index.html y ábrelo en un navegador
   moderno (Chrome, Edge, Firefox, Safari; Android, iOS o PC). Three.js y la
@@ -781,6 +781,20 @@
   #netReconnect { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 60; display: none; flex-direction: column; align-items: center; gap: 6px; padding: 14px 20px;
     background: rgba(12,12,16,.88); border: 2px solid #b8862b; border-radius: 6px; text-align: center; pointer-events: auto; }
   body.net-lost #netReconnect { display: flex; }
+
+  /* 5.0: interfaz */
+  #bottomHud { transform: translateX(-50%) scale(var(--hudS, 1)); transform-origin: 50% 100%; }
+  #minimapContainer { transform: scale(var(--hudS, 1)); transform-origin: 100% 0; }
+  #menuToast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); z-index: 70; max-width: 90vw; padding: 9px 16px; background: rgba(16,16,20,.92); border: 2px solid #0b0b0b; border-radius: 6px; color: #fff; font-size: 15px; text-align: center; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  #menuToast.show { opacity: 1; transform: translate(-50%, 0); }
+  .stTiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; margin-bottom: 4px; }
+  .stTile { padding: 8px 6px; background: rgba(255,255,255,.06); border: 2px solid #0b0b0b; border-radius: 5px; text-align: center; } .stTile b { display: block; font-size: 18px; color: #ffef3a; } .stTile span { font-size: 11.5px; color: #b9bcc6; }
+  .stHead { margin: 10px 0 2px; font-size: 14px; color: #dfe3ea; } .stRow.zero { opacity: .5; }
+  #logList { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin: 8px 0; text-align: left; }
+  .logRow { padding: 5px 8px; background: rgba(255,255,255,.05); border-left: 3px solid #5a6170; font-size: 13.5px; } .logRow em { display: block; font-style: normal; font-size: 11px; color: #8a8f99; }
+  .logRow.ach { border-color: #ffe14d; } .logRow.poi { border-color: #5ad2ff; }
+  .bakRow small { flex: 1 1 100%; order: 3; } .wver { color: #7be06a; }
+  details.trash { margin-top: 8px; text-align: left; } details.trash summary { cursor: pointer; padding: 6px; color: #c9ccd4; } details.trash .rp { margin-top: 5px; }
   /* 4.9: grupo, comercio, avisos y misiones cooperativas */
   .net49Only { display: none !important; } body.net49 .net49Only { display: inline-block !important; } body.net49 #pGroup.net49Only { display: block !important; }
   body:not(.net49) #grpTouch { display: none !important; }
@@ -912,6 +926,7 @@
 <div id="eventIntro"><b></b><span></span></div>
 <div id="netReconnect"><b>Conexión perdida</b><span id="netRecMsg">Reconectando…</span><div class="row"><button id="netRecNow" class="btn small primary">Reintentar ahora</button><button id="netRecQuit" class="btn small">Salir al menú</button></div></div>
 <div id="netPrompts"></div>
+<div id="menuToast"></div>
 <div id="plList" style="display:none"></div>
 <div id="hud">
   <div id="crosshair"></div>
@@ -978,8 +993,8 @@
 <div id="mainMenu" class="screen">
   <div class="menuWrap">
     <div class="title">
-      <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.9!</span>
+      <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
+      <span class="ver">¡Versión 5.0!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -989,7 +1004,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.9</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1008,7 +1023,8 @@
     <div class="cardHead"><h2>Seleccionar mundo</h2><span id="worldCount" class="chip"></span></div>
     <div id="worldList"></div>
     <div class="row"><button id="btnNewWorld" class="btn primary"><i class="bico" data-icon="new"></i>Crear mundo nuevo</button></div>
-    <div class="row"><button id="btnImport" class="btn">Importar archivo</button><button id="btnPaste" class="btn">Pegar texto</button></div>
+    <div class="row"><button id="btnImport" class="btn">Importar archivo</button><button id="btnPaste" class="btn">Pegar texto</button><button id="btnExportAll" class="btn">Exportar todos</button></div>
+    <div id="trashBox"></div>
     <input id="importFile" type="file" accept=".json,application/json" hidden>
     <div id="pasteBox"><textarea id="pasteText" placeholder="Pega aquí el texto de un mundo exportado"></textarea><button id="pasteGo" class="btn small">Importar como mundo nuevo</button><span id="pasteMsg"></span></div>
     <button id="worldsBack" class="btn">Volver</button>
@@ -1017,7 +1033,7 @@
 <div id="mpScreen" class="screen">
   <div class="card mpCard">
     <div id="mpConnect">
-      <h2>Multijugador</h2><p class="cardSub">Conéctate a un servidor de MiniCraft para crear una sala o unirte a la de tus amigos.</p>
+      <h2>Multijugador</h2><p class="cardSub">Conéctate a un servidor de LinkCraft para crear una sala o unirte a la de tus amigos.</p>
       <p id="mpInvite" hidden></p>
       <label class="field" for="mpName">Tu nombre</label>
       <input id="mpName" type="text" maxlength="16" autocomplete="off">
@@ -1229,6 +1245,7 @@
     <button id="pResume" class="btn primary">Volver al juego</button>
     <div class="row"><button id="pMap" class="btn">🗺 Mapa</button><button id="pAch" class="btn">🏆 Logros</button></div>
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
+    <button id="pLog" class="btn">🔔 Avisos</button>
     <div class="row"><button id="pCodex" class="btn">📖 Enciclopedia</button><button id="pChar" class="btn">🌟 Personaje</button></div>
     <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
     <button id="pGroup" class="btn net49Only">🤝 Grupo: equipo, comercio, terrenos y misiones</button>
@@ -1256,6 +1273,10 @@
   </div>
 </div>
 <div id="achScreen" class="screen"><div class="card"><h2>🏆 Logros</h2><p id="achCount" class="muted" style="color:#aaa;text-align:center"></p><div id="achList"></div><button id="achBack" class="btn">Volver</button></div></div>
+<div id="logScreen" class="screen"><div class="card"><h2>🔔 Avisos recientes</h2><div id="logList"></div><div class="row"><button id="logClear" class="btn small">Vaciar</button></div><button id="logClose" class="btn primary">Volver</button></div></div>
+<div id="bakScreen" class="screen"><div class="card wideCard"><h2 id="bakTitle">Copias de seguridad</h2>
+  <p class="g49info">LinkCraft guarda copias automáticas: el guardado anterior, cómo quedó el último día que jugaste y la partida tal como estaba antes de cada actualización. Al restaurar una, la partida actual no se pierde: queda como «Antes de la última restauración».</p>
+  <div id="bakList" class="g49list"></div><button id="bakClose" class="btn primary">Volver</button></div></div>
 <div id="statsScreen" class="screen"><div class="card"><h2>📊 Estadísticas</h2><div id="statsList"></div><button id="statsBack" class="btn">Volver</button></div></div>
 <div id="signScreen" class="screen"><div class="card"><h2>Cartel</h2><textarea id="signText" maxlength="50" placeholder="Hasta 3 líneas"></textarea><button id="signSave" class="btn primary">Hecho</button></div></div>
 <div id="loadingScreen" class="screen">
@@ -4943,11 +4964,13 @@ class ChunkManager {
         if (c.dirty[s]) { this.rebuild(c, s, nb); if (performance.now() - t0 > budgetMs) break; }
       }
     }
-    // Descarga de chunks lejanos
-    const lim = (R + 3) * (R + 3);
-    for (const c of [...this.world.chunks.values()]) {
-      const dx = c.cx - pcx, dz = c.cz - pcz;
-      if (dx * dx + dz * dz > lim) this.disposeChunk(c);
+    // Descarga de chunks lejanos (5.0: solo al cambiar de chunk o cada medio segundo, sin copiar la lista en cada fotograma)
+    const now = performance.now();
+    if (pcx !== this.lastPcx || pcz !== this.lastPcz || now - (this.unloadT || 0) > 500) {
+      this.lastPcx = pcx; this.lastPcz = pcz; this.unloadT = now;
+      const lim = (R + 3) * (R + 3), far = [];
+      for (const c of this.world.chunks.values()) { const dx = c.cx - pcx, dz = c.cz - pcz; if (dx * dx + dz * dz > lim) far.push(c); }
+      for (const c of far) this.disposeChunk(c);
     }
     return total ? ready / total : 1;
   }
@@ -5982,8 +6005,8 @@ function itemModel(id) {
 
 /* ---------- Partículas (InstancedMesh de cubitos) ---------- */
 class Particles {
-  constructor(scene, max = 240) {
-    this.max = max; this.list = [];
+  constructor(scene, max = 800) {
+    this.cap = max; this.list = []; this.pool = [];          // 5.0: los objetos se reutilizan (no se crea basura en cada chispa)
     const g = new THREE.BoxGeometry(1, 1, 1);
     this.mesh = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color: 0xffffff }), max);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -5992,15 +6015,19 @@ class Particles {
     scene.add(this.mesh);
     this._m = new THREE.Matrix4(); this._c = new THREE.Color();
   }
+  // límite según «Efectos de partículas» (Bajo, Medio, Alto, Ultra)
+  get max() { return Math.min(this.cap, FX_MAX[settings.fxLevel] || 240); }
   emit(x, y, z, color, n, opts = {}) {
     if (!settings.particles) return;
-    for (let i = 0; i < n && this.list.length < this.max; i++) {
-      this.list.push({
-        x: x + (Math.random() - 0.5) * (opts.spread ?? 0.7), y: y + (Math.random() - 0.5) * (opts.spread ?? 0.7), z: z + (Math.random() - 0.5) * (opts.spread ?? 0.7),
-        vx: (Math.random() - 0.5) * (opts.speed ?? 3), vy: Math.random() * (opts.up ?? 3), vz: (Math.random() - 0.5) * (opts.speed ?? 3),
-        life: (opts.life ?? 0.7) * (0.6 + Math.random() * 0.6), size: (opts.size ?? 0.1) * (0.7 + Math.random() * 0.6),
-        g: opts.gravity ?? 14, c: color.map((v) => v * (0.75 + Math.random() * 0.35)),
-      });
+    if (n > 3) n = Math.max(1, Math.round(n * (FX_MUL[settings.fxLevel] || 1)));
+    const max = this.max, sp = opts.spread ?? 0.7, spd = opts.speed ?? 3, up = opts.up ?? 3, life = opts.life ?? 0.7, size = opts.size ?? 0.1, g = opts.gravity ?? 14;
+    for (let i = 0; i < n && this.list.length < max; i++) {
+      const p = this.pool.pop() || { c: [0, 0, 0] };
+      p.x = x + (Math.random() - 0.5) * sp; p.y = y + (Math.random() - 0.5) * sp; p.z = z + (Math.random() - 0.5) * sp;
+      p.vx = (Math.random() - 0.5) * spd; p.vy = Math.random() * up; p.vz = (Math.random() - 0.5) * spd;
+      p.life = life * (0.6 + Math.random() * 0.6); p.size = size * (0.7 + Math.random() * 0.6); p.g = g;
+      p.c[0] = color[0] * (0.75 + Math.random() * 0.35); p.c[1] = color[1] * (0.75 + Math.random() * 0.35); p.c[2] = color[2] * (0.75 + Math.random() * 0.35);
+      this.list.push(p);
     }
   }
   update(dt, light) {
@@ -6008,7 +6035,7 @@ class Particles {
     for (let i = this.list.length - 1; i >= 0; i--) {
       const p = this.list[i];
       p.life -= dt;
-      if (p.life <= 0) { this.list.splice(i, 1); continue; }
+      if (p.life <= 0) { const last = this.list.pop(); if (last !== p) this.list[i] = last; this.pool.push(p); continue; }      // quitar sin desplazar la lista
       p.vy -= p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
       if (p.g > 0 && B_SOLID[world.get(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z))]) { p.vy = 0; p.vx *= 0.5; p.vz *= 0.5; p.y = Math.floor(p.y) + 1.001; }
     }
@@ -10477,7 +10504,7 @@ function renderWorldList() {
         <span class="wmode ${creative ? 'creative' : 'survival'}"><i class="bico" style="background-image:url(${menuIcon(creative ? 'creative' : 'survival')})"></i>${creative ? 'Creativo' : 'Supervivencia'}</span>
         <b class="wname">${escapeHtml(w.name)}</b></div>
       <dl class="wmeta"><dt>Última partida</dt><dd>${fmtDate(w.last)}</dd><dt>Semilla</dt><dd class="seed">${w.seed}</dd>
-        <dt>Guardado</dt><dd>${kb} KB${w.keepInventory ? ' · conserva inventario' : ''}</dd></dl>
+        <dt>Guardado</dt><dd>${kb} KB${w.keepInventory ? ' · conserva inventario' : ''}${w.verified ? ' · <span class="wver" title="Lo guardado se volvió a leer y coincide">✔ comprobado</span>' : ''}</dd></dl>
       <div class="wactions"></div>`;
     drawWorldThumb(card.querySelector('canvas'), w.seed, w.gen || 1);
     const acts = card.querySelector('.wactions');
@@ -10486,7 +10513,7 @@ function renderWorldList() {
     card.querySelector('.wthumb').onclick = () => game.startWorld(w.id);
     const del = document.createElement('button'); del.className = 'btn small danger'; del.textContent = 'Borrar';
     del.onclick = () => {
-      if (del.dataset.sure) { deleteWorld(w.id); renderWorldList(); }
+      if (del.dataset.sure) { deleteWorld(w.id); renderWorldList(); hud.toast('Mundo movido a la papelera: puedes recuperarlo abajo', 3000); }
       else { del.dataset.sure = 1; del.textContent = '¿Seguro?'; setTimeout(() => { del.textContent = 'Borrar'; delete del.dataset.sure; }, 2500); }
     };
     const exp = document.createElement('button'); exp.className = 'btn small'; exp.textContent = 'Exportar';
@@ -10495,27 +10522,20 @@ function renderWorldList() {
       try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([e.text], { type: 'application/json' })); a.download = e.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); } catch {}
       try { await navigator.clipboard.writeText(e.text); hud.toast('Mundo exportado: se descargó el archivo y se copió el texto al portapapeles', 3500); } catch { hud.toast('Mundo exportado como archivo', 3000); }
     };
-    let hasBak = false; try { hasBak = !!saveStore.get(SAVE_PREFIX + w.id + '-bak'); } catch {}
     acts.append(play, exp);
-    if (hasBak) {
-      const rb = document.createElement('button'); rb.className = 'btn small'; rb.textContent = 'Restaurar copia'; rb.title = 'Vuelve al guardado anterior';
-      rb.onclick = () => {
-        if (!rb.dataset.sure) { rb.dataset.sure = 1; rb.textContent = '¿Restaurar?'; setTimeout(() => { rb.textContent = 'Restaurar copia'; delete rb.dataset.sure; }, 2500); return; }
-        try { const bak = saveStore.get(SAVE_PREFIX + w.id + '-bak'); const d = JSON.parse(bak); if (validateSave(d).length) throw 0;
-          const cur = saveStore.get(SAVE_PREFIX + w.id); saveStore.set(SAVE_PREFIX + w.id, bak); if (cur) saveStore.set(SAVE_PREFIX + w.id + '-bak', cur); hud.toast('Copia de seguridad restaurada'); }
-        catch { hud.toast('La copia de seguridad está dañada; no se cambió nada'); }
-        renderWorldList();
-      };
-      acts.append(rb);
-    }
+    // copias de seguridad (guardado anterior, copia del día, antes de cada actualización…)
+    const nb = backups50.list(w.id).filter((b) => b.suf).length;
+    if (nb) { const rb = document.createElement('button'); rb.className = 'btn small'; rb.textContent = `Copias (${nb})`; rb.title = 'Ver y restaurar las copias de seguridad de este mundo'; rb.onclick = () => backups50.show(w.id); acts.append(rb); }
     acts.append(del);
     box.append(card);
   });
 }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+// 5.0: borrar no destruye nada al momento: el mundo va a la papelera (se recupera desde «Seleccionar mundo»)
 function deleteWorld(id) {
-  saveWorldIndex(listWorlds().filter((w) => w.id !== id));
-  try { for (const suf of ['', '-bak', '-v3']) saveStore.remove(SAVE_PREFIX + id + suf); } catch {}
+  const w = listWorlds().find((x) => x.id === id);
+  if (w && trash50.put(w)) { saveWorldIndex(listWorlds().filter((x) => x.id !== id)); return; }
+  hud.toast('⚠ No se pudo mover el mundo a la papelera: no se borró nada', 3500);
 }
 
 function initMenus() {
@@ -10552,7 +10572,7 @@ function initMenus() {
 
 function initSettingsUI() {
   const rows = [
-    ['preset', 'Preajuste gráfico', 'select', ['personalizado', 'rendimiento', 'equilibrado', 'calidad']],
+    ['preset', 'Calidad gráfica', 'select', ['personalizado', 'bajo', 'medio', 'alto', 'ultra']],
     ['renderDistance', 'Distancia de renderizado', 'range', 2, 8, 1, (v) => v + ' chunks'],
     ['fov', 'Campo de visión', 'range', 55, 100, 1, (v) => v + '°'],
     ['brightness', 'Brillo', 'range', -1, 1, 0.05, (v) => (v > 0 ? '+' : '') + Math.round(v * 100) + '%'],
@@ -10560,7 +10580,9 @@ function initSettingsUI() {
     ['touchSensitivity', 'Sensibilidad táctil', 'range', 0.3, 2.5, 0.05, (v) => Math.round(v * 100) + '%'],
     ['volume', 'Volumen de efectos', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['music', 'Volumen de la música', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
-    ['quality', 'Resolución', 'select', ['baja', 'media', 'alta']],
+    ['quality', 'Resolución', 'select', ['baja', 'media', 'alta', 'ultra']],
+    ['fxLevel', 'Efectos de partículas', 'select', ['bajo', 'medio', 'alto', 'ultra']], ['detail', 'Detalle lejano (criaturas y carga del mundo)', 'select', ['bajo', 'medio', 'alto', 'ultra']],
+    ['hudScale', 'Tamaño de la interfaz', 'range', 0.7, 1.3, 0.05, (v) => Math.round(v * 100) + '%'], ['mmZoom', 'Zoom del minimapa', 'select', ['cerca', 'normal', 'lejos']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
     ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'], ['mobBars', 'Barra de vida al apuntar', 'check'],
   ];
@@ -10570,26 +10592,23 @@ function initSettingsUI() {
   for (const [key, label, type, a, b, step, fmt] of rows) {
     if ((key === 'sensitivity' && IS_TOUCH) || (key === 'touchSensitivity' && !IS_TOUCH)) continue;
     const box = $(TAB[key] || '#settingsList');
-    const row = document.createElement('label'); row.className = 'setRow' + (['preset', 'renderDistance', 'fov', 'quality'].includes(key) ? ' full' : '');
+    const row = document.createElement('label'); row.className = 'setRow' + (['preset', 'renderDistance', 'fov', 'quality', 'detail'].includes(key) ? ' full' : '');
     const name = document.createElement('span'); name.textContent = label;
     let input, val;
     if (type === 'range') {
       input = document.createElement('input'); input.type = 'range'; input.min = a; input.max = b; input.step = step; input.value = settings[key];
       val = document.createElement('em'); val.textContent = fmt(settings[key]);
-      input.oninput = () => { settings[key] = +input.value; val.textContent = fmt(settings[key]); applySettings(key); };
+      input.oninput = () => { settings[key] = +input.value; val.textContent = fmt(settings[key]); applySettings(key); presetTouched50(key); };
     } else if (type === 'select') {
       input = document.createElement('select'); for (const o of a) { const op = document.createElement('option'); op.value = o; op.textContent = o[0].toUpperCase() + o.slice(1); input.append(op); }
       input.value = settings[key] ?? a[0]; input.onchange = () => {
         settings[key] = input.value;
-        const P = { rendimiento: { renderDistance: 2, quality: 'baja', fancyLeaves: false, particles: false, clouds: false },
-          equilibrado: { renderDistance: 3, quality: 'media', fancyLeaves: false, particles: true, clouds: true },
-          calidad: { renderDistance: 6, quality: 'alta', fancyLeaves: true, particles: true, clouds: true } }[input.value];
-        if (key === 'preset' && P) { Object.assign(settings, P); for (const k in P) applySettings(k); initSettingsUI(); return; }
-        applySettings(key);
+        if (key === 'preset' && GFX_PRESETS[input.value]) { applyPreset50(input.value); initSettingsUI(); return; }
+        applySettings(key); presetTouched50(key);
       };
     } else {
       input = document.createElement('input'); input.type = 'checkbox'; input.checked = !!settings[key];
-      input.onchange = () => { settings[key] = input.checked; applySettings(key); };
+      input.onchange = () => { settings[key] = input.checked; applySettings(key); presetTouched50(key); };
     }
     row.append(name, input); if (val) row.append(val);
     box.append(row);
@@ -10610,6 +10629,8 @@ function applySettings(key) {
   if (key === 'volume') sfx.setVolume(settings.volume);
   if (key === 'fov') { camera.fov = settings.fov; camera.updateProjectionMatrix(); }
   if (key === 'quality') setQuality();
+  if (key === 'hudScale') document.documentElement.style.setProperty('--hudS', settings.hudScale);
+  if (key === 'mmZoom') minimap.setZoom();
   if (key === 'fancyLeaves' && world) for (const c of world.chunks.values()) c.dirty.fill(1);
   if (key === 'renderDistance' && game.chunks) game.chunks.order = null;
   saveSettings();
@@ -10646,7 +10667,7 @@ const hud3 = {
     if (this.last.fx !== fx) {
       this.last.fx = fx;
       $('#effectsHud').innerHTML = [...p.effects.entries()].map(([k, e]) => {
-        const ef = EFFECTS[k], t = Math.max(0, Math.ceil(e.t)), c = `rgb(${ef.color.join(',')})`;
+        const ef = EFFECTS[k] || { name: k, color: [150, 150, 150], icon: '?' }, t = Math.max(0, Math.ceil(e.t)), c = `rgb(${ef.color.join(',')})`;
         return `<div class="eff${t < 10 ? ' ending' : ''}"><i style="background:${c}">${ef.icon}</i><span>${ef.name} ${ROMAN[e.lvl]}<em>${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</em></span></div>`;
       }).join('');
     }
@@ -10890,10 +10911,10 @@ function initUI3() {
   $('#importFile').onchange = async (e) => {
     const f = e.target.files[0]; e.target.value = ''; if (!f) return;
     const err = importWorld(await f.text());
-    hud.toast(err || 'Mundo importado correctamente', 3500); if (!err) renderWorldList();
+    hud.toast(err || importWorld.msg || 'Mundo importado correctamente', 3500); if (!err) renderWorldList();
   };
   $('#btnPaste').onclick = () => { $('#pasteBox').classList.toggle('show'); };
-  $('#pasteGo').onclick = () => { const err = importWorld($('#pasteText').value); $('#pasteMsg').textContent = err || '¡Mundo importado!'; if (!err) { $('#pasteText').value = ''; renderWorldList(); } };
+  $('#pasteGo').onclick = () => { const err = importWorld($('#pasteText').value); $('#pasteMsg').textContent = err || importWorld.msg || '¡Mundo importado!'; if (!err) { $('#pasteText').value = ''; renderWorldList(); } };
   // Multijugador
   initMultiplayerUI();
 }
@@ -11337,18 +11358,38 @@ function saveGame(silent) {
   if (!world || !game.meta || game.state === 'menu') return;
   if (game.meta.net) { net.savePlayer(); return; }      // en un servidor, el mundo lo guarda el servidor
   const dormant = {}; for (const [k, a] of world.dormant) dormant[k] = a;
-  const data = { v: SAVE_VERSION, meta: game.meta, player: game.player.toJSON(), env: game.env.toJSON(), edits: packEdits(), tiles: packTiles(),
+  const data = { v: SAVE_VERSION, game: GAME_VERSION, meta: game.meta, player: game.player.toJSON(), env: game.env.toJSON(), edits: packEdits(), tiles: packTiles(),
     entities: game.entities.toJSON(game.player), dormant, structs: [...game.structs], map: Object.fromEntries(world.mapData), saved: Date.now() };
   const key = SAVE_PREFIX + game.meta.id, json = JSON.stringify(data);
   try {
-    const old = saveStore.get(key);
-    // la primera vez que una partida antigua se guarda con la 4.0 se conserva intacta
-    if (old && !saveStore.get(key + '-v3') && !/"v":4/.test(old.slice(0, 12))) try { saveStore.set(key + '-v3', old); } catch {}
-    try { if (old) saveStore.set(key + '-bak', old); } catch { saveStore.remove(key + '-bak'); }
-    saveStore.set(key, json);
-    const list = listWorlds(), w = list.find((x) => x.id === game.meta.id);
-    if (w) { w.last = Date.now(); saveWorldIndex(list); }
-    if (!silent) hud.toast('Partida guardada');
+    const old = saveStore.get(key), id = game.meta.id;
+    const ov = old ? +((/"v":(\d+)/.exec(old.slice(0, 24)) || [])[1] || 0) : SAVE_VERSION, vkey = key + (ov < 4 ? '-v3' : '-v' + ov);
+    const commit = () => {
+      try {
+        if (old) {
+          // copia del día anterior: la primera vez que se guarda en un día nuevo se conserva cómo quedó el último día
+          const day = new Date().toDateString(), oldAt = savedAt(old);
+          if (oldAt && new Date(oldAt).toDateString() !== day && oldAt > savedAt(saveStore.get(key + '-day'))) saveStore.set(key + '-day', old);
+          try { saveStore.set(key + '-bak', old); } catch { saveStore.remove(key + '-bak'); }
+        }
+        saveStore.set(key, json);
+        const list = listWorlds(), w = list.find((x) => x.id === id);
+        if (w) { w.last = Date.now(); saveWorldIndex(list); }
+        if (!silent) hud.toast('Partida guardada');
+        // comprobar que lo guardado se puede leer igual
+        saveStore.verify(key, json).then((ok) => {
+          const l2 = listWorlds(), w2 = l2.find((x) => x.id === id); if (!w2) return;
+          w2.verified = ok ? Date.now() : 0; saveWorldIndex(l2);
+          if (!ok) hud.toast('⚠ El guardado no se pudo comprobar: se volverá a intentar en el próximo guardado', 4000);
+        });
+      } catch (e) { hud.toast('⚠ No se pudo guardar: almacenamiento lleno'); }
+    };
+    // la primera vez que una partida de una versión anterior se guarda con esta, se conserva intacta
+    // y no se toca hasta comprobar que esa copia quedó bien escrita
+    if (old && ov < SAVE_VERSION && !saveStore.get(vkey)) {
+      saveStore.set(vkey, old);
+      saveStore.verify(vkey, old).then((ok) => { if (ok) commit(); else { saveStore.remove(vkey); hud.toast('⚠ No se pudo comprobar la copia de seguridad: la partida no se modificó', 4500); } });
+    } else commit();
   } catch (e) { hud.toast('⚠ No se pudo guardar: almacenamiento lleno'); }
 }
 function loadSave(id) {
@@ -11381,7 +11422,7 @@ renderer.domElement.id = 'game';
 document.body.prepend(renderer.domElement);
 function setQuality() {
   const dpr = window.devicePixelRatio || 1;
-  renderer.setPixelRatio({ baja: Math.min(dpr, 0.75), media: Math.min(dpr, 1.25), alta: Math.min(dpr, 2) }[settings.quality] || 1);
+  renderer.setPixelRatio({ baja: Math.min(dpr, 0.75), media: Math.min(dpr, 1.25), alta: Math.min(dpr, 2), ultra: Math.min(dpr * 1.5, 3) }[settings.quality] || 1);      // ultra: supermuestreo
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 setQuality();
@@ -12179,7 +12220,7 @@ const game = {
       
       this.flowT = (this.flowT || 0) + dt; if (this.flowT > 0.25) { this.flowT = 0; this.updateFlow(); }
       this.env.update(dt, camera, p, p.headInWater);
-      this.chunks.update(p.pos.x, p.pos.z, IS_TOUCH ? 7 : 9);
+      this.chunks.update(p.pos.x, p.pos.z, chunkBudget50());
       this.updateHeld(dt);
       sfx.listener.pos.copy(camera.position); camera.getWorldDirection(sfx.listener.right); sfx.listener.right.cross(camera.up).normalize();
       this.particles.update(dt, lightLevel(p.pos.x, p.pos.y + 1, p.pos.z));
@@ -12300,7 +12341,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -12311,7 +12352,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.9  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12336,7 +12377,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -13194,7 +13235,7 @@ function doTrade(v, idx) {
 function validateSave(d) {
   const errs = [];
   if (!d || typeof d !== 'object') return ['No es un objeto JSON'];
-  if (![2, 3, 4].includes(d.v)) errs.push('Versión de partida desconocida');
+  if (!Number.isInteger(d.v) || d.v < 2 || d.v > SAVE_VERSION) errs.push(d.v > SAVE_VERSION ? 'Partida de una versión más nueva del juego' : 'Versión de partida desconocida');
   if (!d.meta || typeof d.meta.name !== 'string' || !Number.isFinite(d.meta.seed)) errs.push('Faltan los datos del mundo');
   if (d.meta && !['survival', 'creative'].includes(d.meta.mode)) errs.push('Modo de juego no válido');
   const p = d.player;
@@ -13203,17 +13244,35 @@ function validateSave(d) {
   if (d.edits && typeof d.edits !== 'object') errs.push('Bloques modificados dañados');
   return errs;
 }
-function exportWorld(id) {
-  const raw = saveStore.get(SAVE_PREFIX + id); if (!raw) { hud.toast('No hay datos guardados de este mundo'); return null; }
+// (suf: exportar una copia de seguridad en lugar de la partida actual)
+function exportWorld(id, suf = '') {
+  const raw = saveStore.get(SAVE_PREFIX + id + suf); if (!raw) { hud.toast('No hay datos guardados de este mundo'); return null; }
   const d = JSON.parse(raw);
-  const text = JSON.stringify({ format: 'minicraft-world', v: d.v, exported: Date.now(), data: d });
-  return { text, name: (d.meta.name || 'mundo').replace(/[^\wáéíóúñ -]/gi, '_') + '.minicraft.json' };
+  const text = JSON.stringify({ format: 'linkcraft-world', game: GAME_VERSION, v: d.v, exported: Date.now(), data: d });
+  return { text, name: (d.meta.name || 'mundo').replace(/[^\wáéíóúñ -]/gi, '_') + (suf ? suf : '') + '.linkcraft.json' };
 }
-// Importa como mundo NUEVO: nunca sobrescribe una partida existente
+// Todos los mundos en un solo archivo
+function exportAllWorlds() {
+  const worlds = [];
+  for (const w of listWorlds()) { const raw = saveStore.get(SAVE_PREFIX + w.id); if (raw) try { worlds.push(JSON.parse(raw)); } catch {} }
+  if (!worlds.length) return null;
+  return { text: JSON.stringify({ format: 'linkcraft-bundle', game: GAME_VERSION, exported: Date.now(), worlds }), name: `linkcraft-mundos-${new Date().toISOString().slice(0, 10)}.linkcraft.json`, n: worlds.length };
+}
+// Importa como mundo NUEVO: nunca sobrescribe una partida existente.
+// Acepta mundos exportados por LinkCraft y por MiniCraft (formato anterior) y archivos con varios mundos.
 function importWorld(text) {
   let o;
+  importWorld.msg = null;
   try { o = JSON.parse(text); } catch { return 'El archivo no es JSON válido.'; }
-  const d = o && o.format === 'minicraft-world' ? o.data : o;
+  if (o && o.format === 'linkcraft-bundle' && Array.isArray(o.worlds)) {
+    let ok = 0, bad = 0;
+    for (const d of o.worlds) { if (importWorld(JSON.stringify(d))) bad++; else ok++; }
+    if (!ok) return 'Ningún mundo del archivo se pudo importar.';
+    importWorld.msg = `${ok === 1 ? 'Se importó 1 mundo' : `Se importaron ${ok} mundos`}${bad ? ` (${bad} dañado${bad === 1 ? '' : 's'} no se importaron)` : ''}`;
+    return null;
+  }
+  const d = o && (o.format === 'linkcraft-world' || o.format === 'minicraft-world') ? o.data : o;
+  if (d && (d.v | 0) > SAVE_VERSION) return 'Este mundo es de una versión más nueva del juego. Actualiza LinkCraft para abrirlo.';
   const errs = validateSave(d); if (errs.length) return 'Archivo no válido: ' + errs.join(', ') + '.';
   const id = 'w' + Date.now().toString(36);
   const meta = { ...d.meta, id, name: (d.meta.name || 'Mundo') + ' (importado)', last: Date.now() };
@@ -15253,6 +15312,25 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.0', name: 'Nuevo nombre, calidad gráfica y guardado seguro', date: 'noviembre de 2026', items: [
+    'MiniCraft pasa a llamarse LinkCraft. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando igual.',
+    'Calidad gráfica Bajo, Medio, Alto y Ultra (Ajustes → Gráficos). Cada nivel ajusta la distancia, la resolución (Ultra usa supermuestreo), las hojas, las nubes, la luz dinámica, las partículas y el detalle lejano. Si cambias un ajuste suelto, la calidad pasa a «Personalizado».',
+    'Ajustes nuevos: «Efectos de partículas», «Detalle lejano» (hasta qué distancia las criaturas se mueven con todo detalle y cuánto tiempo por fotograma se dedica a cargar el mundo), «Tamaño de la interfaz» (barra rápida, vida y minimapa) y «Zoom del minimapa» (cerca, normal o lejos).',
+    'La calidad automática ahora baja de nivel en nivel (Ultra → Alto → Medio → Bajo) si el juego va lento.',
+    'Rendimiento: las partículas reutilizan sus objetos en lugar de crear uno nuevo por chispa, la descarga de chunks lejanos solo se revisa al cambiar de chunk o cada medio segundo, y el detalle de las criaturas lejanas depende de la calidad.',
+    'Avisos (Pausa → 🔔 Avisos): lista de lo último que mostró el juego (logros, descubrimientos, eventos y mensajes), con la hora y el día.',
+    'Estadísticas nuevas por secciones: resumen (días, tiempo de juego, nivel y logros), exploración, combate, construcción, oficios y aldeas, con todas las estadísticas de las versiones nuevas (pesca, cocina, expediciones, domas, misiones…).',
+    'Los avisos también se ven en los menús (por ejemplo, al importar o borrar un mundo).',
+    'Guardado comprobado: después de cada guardado se vuelve a leer lo escrito y se compara. En la lista de mundos aparece «✔ comprobado».',
+    'Antes de guardar por primera vez una partida de una versión anterior se guarda una copia intacta, se comprueba y solo entonces se toca la partida. Si la copia no se puede comprobar, la partida no se modifica.',
+    'Copia diaria: la primera vez que juegas en un día nuevo se conserva cómo quedó el mundo el último día jugado.',
+    'Pantalla de copias de cada mundo (botón «Copias»): partida actual, guardado anterior, copia diaria y copias de antes de cada actualización, con fecha, tamaño y si están íntegras. Puedes restaurar o exportar cada una; al restaurar, la partida actual se guarda como «Antes de la última restauración».',
+    'Papelera: borrar un mundo lo mueve a la papelera (se guardan los últimos 6) y se puede recuperar o eliminar para siempre.',
+    '«Exportar todos» guarda todos los mundos en un solo archivo, e «Importar archivo» acepta ese archivo, los mundos sueltos de LinkCraft y los exportados con MiniCraft. Un mundo de una versión más nueva no se importa (avisa que hay que actualizar).',
+    'Servidor multijugador renombrado a «Servidor LinkCraft» (mismo protocolo: los servidores y salas de la 4.9 siguen sirviendo).',
+    'Corregido: el efecto «Hambre» que causan los mutantes no existía y rompía la barra de efectos (aparecían errores en la consola). Ahora se muestra y hace gastar comida más rápido.',
+    'Corregido: los avisos que se daban en los menús (importar un mundo, por ejemplo) no se veían.',
+  ] },
   { v: '4.9', name: 'Multijugador', date: 'noviembre de 2026', items: [
     'Panel de grupo (tecla G, botón 👥 o Pausa → Grupo) con pestañas Jugadores, Equipo, Terrenos y Misiones. Necesita el servidor 4.9; con un servidor anterior no aparece.',
     'Lista de jugadores conectados con vida, latencia, distancia, rol, equipo y si pueden construir. Manteniendo Tab se ve una lista rápida sobre el juego.',
@@ -15573,13 +15651,12 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '5.0', name: 'Expansión total', items: ['Interfaz, calidad gráfica y optimización final.'] },
 ];
 function openNews() {
   const box = $('#newsList'); box.innerHTML = '';
   const sec = (e, future, open) => {
     const d = document.createElement('details'); d.className = 'newsVer' + (future ? ' future' : ''); d.open = open;
-    d.innerHTML = `<summary><b>${future ? 'Próximamente · ' : ''}MiniCraft ${e.v}</b><span>${escapeHtml(e.name)}${e.date ? ' · ' + e.date : ''}</span></summary><ul>${e.items.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+    d.innerHTML = `<summary><b>${future ? 'Próximamente · ' : ''}${parseFloat(e.v) >= 5 ? 'LinkCraft' : 'MiniCraft'} ${e.v}</b><span>${escapeHtml(e.name)}${e.date ? ' · ' + e.date : ''}</span></summary><ul>${e.items.map((t) => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
     box.append(d);
   };
   CHANGELOG.forEach((e, i) => sec(e, false, i === 0));
@@ -18220,7 +18297,8 @@ const biomeMusic = {
      · Si el navegador no permite IndexedDB (modo privado de algunos
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
-const SAVE_VERSION = 4;
+const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
+const GAME_VERSION = '5.0';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -18277,7 +18355,7 @@ const saveStore = {
     this.cache.set(k, v);
     this.tx('readwrite', (st) => st.put(v, k)).catch((e) => { this.errors++; hud.toast('⚠ No se pudo guardar en el navegador: ' + (e && e.name === 'QuotaExceededError' ? 'no queda espacio' : 'error de almacenamiento'), 4000); });
     // pestaña cerrándose: copia de emergencia por si IndexedDB no llega a terminar
-    if (document.visibilityState === 'hidden' && k.startsWith(SAVE_PREFIX) && !k.endsWith('-bak') && !k.endsWith('-v3') && v.length < 2.5e6) {
+    if (document.visibilityState === 'hidden' && k.startsWith(SAVE_PREFIX) && !/-(bak|v\d+|day|restore)$/.test(k) && v.length < 2.5e6) {
       try { localStorage.setItem('mc2-emerg-' + k.slice(SAVE_PREFIX.length), JSON.stringify({ t: Date.now(), v })); } catch {}
     }
   },
@@ -18287,6 +18365,14 @@ const saveStore = {
     this.cache.delete(k); this.tx('readwrite', (st) => st.delete(k)).catch(() => {});
   },
   size(k) { const v = this.get(k); return v ? v.length : 0; },
+  // Lee de vuelta lo guardado (de IndexedDB, no de la copia en memoria) y lo compara
+  async verify(k, v) {
+    try {
+      if (this.mode !== 'idb') return localStorage.getItem(k) === v;
+      const back = await this.tx('readonly', (st) => st.get(k));
+      return back === v;
+    } catch { return false; }
+  },
   async usage() { try { const e = await navigator.storage.estimate(); return e; } catch { return null; } },
 };
 function savedAt(json) { if (!json) return 0; const m = /"saved":(\d+)/.exec(json.slice(-80)) || /"saved":(\d+)/.exec(json); return m ? +m[1] : 0; }
@@ -18302,6 +18388,7 @@ function migrateSave(d) {
     d.events = d.events || null;
     d.migratedFrom = v;
   }
+  if (v < 5 && v >= 4) d.migratedFrom = v;          // 4 → 5: mismo formato; la copia «-v4» se guarda antes de tocarla
   d.v = Math.max(v, SAVE_VERSION);
   return d;
 }
@@ -18332,7 +18419,7 @@ settings.saver ??= false;
     if (p && !this.spec.boss && !this.remote && !this.eventMob && !this.deathT) {
       const d2 = (this.pos.x - p.pos.x) ** 2 + (this.pos.z - p.pos.z) ** 2, far = settings.renderDistance * 16 + 8;
       this.mesh.visible = d2 < far * far;
-      if (d2 > 1600) {
+      if (d2 > entFull2_50()) {
         this._acc = (this._acc || 0) + dt;
         if (this._acc < 0.25) return;
         dt = Math.min(this._acc, 0.3); this._acc = 0;
@@ -18358,6 +18445,14 @@ const perfAuto = {
     const fps = this.frames / this.t; this.t = 0; this.frames = 0;
     if (fps >= 24) { this.armed = false; return; }
     this.steps++;
+    // 5.0: con un preajuste (Bajo, Medio, Alto, Ultra) se baja uno (o dos si va muy lento)
+    { const ord = ['ultra', 'alto', 'medio', 'bajo'], i = ord.indexOf(settings.preset);
+      if (i >= 0 && i < 3) {
+        const to = ord[Math.min(3, i + (fps < 15 ? 2 : 1))]; applyPreset50(to);
+        hud.toast(`Calidad ajustada a «${to[0].toUpperCase() + to.slice(1)}» para ir más fluido (${Math.round(fps)} FPS). Puedes cambiarlo en Ajustes → Gráficos.`, 4500);
+        if (to === 'bajo' || this.steps >= 2) this.armed = false; else this.wait = 4;
+        return;
+      } }
     if (settings.renderDistance > 3) settings.renderDistance = Math.max(3, settings.renderDistance - (fps < 15 ? 2 : 1));
     if (this.steps >= 2 || fps < 15) { settings.particles = true; settings.clouds = false; settings.fancyLeaves = false; settings.quality = 'baja'; }
     saveSettings(); for (const k of ['quality', 'fancyLeaves', 'renderDistance']) try { applySettings(k); } catch {}
@@ -22092,6 +22187,243 @@ settings.keys.group ??= 'KeyG'; DEFAULT_KEYS.group = 'KeyG'; settings.keys.playe
     ['lock49', 'Bajo llave', 'Ponle candado a un cofre en un servidor.'], ['coop49', 'Todos a una', 'Ayuda a completar una misión cooperativa.'],
     ['gev49', 'Contra el reloj', 'Ayuda a completar un evento de grupo a tiempo.']);
   shapeless(TEAM_CHEST, 1, [CHEST, I.EMERALD, I.GOLD_INGOT], 'Muebles');
+}
+
+/* ==========================================================================
+   §50 LINKCRAFT 5.0 — CALIDAD GRÁFICA, RENDIMIENTO, INTERFAZ Y GUARDADO
+   --------------------------------------------------------------------------
+   · Calidad gráfica Bajo / Medio / Alto / Ultra (Ajustes → Gráficos): cada
+     nivel fija distancia, resolución (Ultra = supermuestreo), hojas, nubes,
+     luz dinámica, cantidad de partículas y detalle lejano (radio en el que
+     las criaturas se actualizan del todo y tiempo por fotograma para cargar
+     el mundo). Cambiar cualquiera de esos ajustes pasa a «Personalizado».
+     La calidad automática baja de nivel en nivel si el juego va lento.
+   · Tamaño de la interfaz (barra rápida, vida y minimapa) y zoom del minimapa.
+   · Registro de avisos (Pausa → Avisos): lo último que mostró el juego.
+   · Estadísticas por secciones, con todas las de las versiones nuevas.
+   · Guardado: cada guardado se vuelve a leer para comprobarlo; antes de tocar
+     una partida de una versión anterior se guarda una copia y se comprueba;
+     copia del día anterior; pantalla de copias por mundo (restaurar y
+     exportar cada una, sin perder la actual); papelera de mundos borrados;
+     exportar todos los mundos en un archivo e importarlo.
+   · El efecto «Hambre» (lo causan los mutantes) existía sin definir y
+     rompía el HUD: ahora está definido y hace gastar comida más rápido.
+   ========================================================================== */
+
+/* ---------- Calidad gráfica ---------- */
+const GFX_PRESETS = {
+  bajo: { renderDistance: 2, quality: 'baja', fancyLeaves: false, particles: true, clouds: false, dynLight: false, fxLevel: 'bajo', detail: 'bajo' },
+  medio: { renderDistance: 3, quality: 'media', fancyLeaves: false, particles: true, clouds: true, dynLight: true, fxLevel: 'medio', detail: 'medio' },
+  alto: { renderDistance: 5, quality: 'alta', fancyLeaves: true, particles: true, clouds: true, dynLight: true, fxLevel: 'alto', detail: 'alto' },
+  ultra: { renderDistance: 8, quality: 'ultra', fancyLeaves: true, particles: true, clouds: true, dynLight: true, fxLevel: 'ultra', detail: 'ultra' },
+};
+const FX_MAX = { bajo: 120, medio: 240, alto: 400, ultra: 800 };          // partículas a la vez
+const FX_MUL = { bajo: 0.5, medio: 0.8, alto: 1, ultra: 1.4 };            // cantidad en cada estallido
+const ENT_FULL = { bajo: 24, medio: 32, alto: 40, ultra: 56 };            // bloques: criaturas actualizadas en cada fotograma
+const CHUNK_MS = { bajo: 5, medio: 7, alto: 9, ultra: 12 };               // ms por fotograma para generar y mallar el mundo
+{
+  const OLD = { rendimiento: 'bajo', equilibrado: 'medio', calidad: 'alto' };       // preajustes de la 4.x
+  if (OLD[settings.preset]) settings.preset = OLD[settings.preset];
+  if (!['personalizado', ...Object.keys(GFX_PRESETS)].includes(settings.preset)) settings.preset = 'personalizado';
+  settings.fxLevel ??= IS_TOUCH ? 'medio' : 'alto';
+  settings.detail ??= IS_TOUCH ? 'medio' : 'alto';
+  settings.hudScale ??= 1;
+  settings.mmZoom ??= 'normal';
+}
+function chunkBudget50() { return CHUNK_MS[settings.detail] || 9; }
+function entFull2_50() { const r = ENT_FULL[settings.detail] || 40; return r * r; }
+function applyPreset50(name) {
+  const P = GFX_PRESETS[name]; if (!P) return;
+  Object.assign(settings, P); settings.preset = name;
+  for (const k in P) try { applySettings(k); } catch {}
+  saveSettings();
+}
+// Al tocar un ajuste que forma parte de los niveles, el nivel pasa a «Personalizado»
+function presetTouched50(key) {
+  const P = GFX_PRESETS[settings.preset]; if (!P || !(key in P) || settings[key] === P[key]) return;
+  settings.preset = 'personalizado'; saveSettings();
+  const sel = $('#settingsList select'); if (sel) sel.value = 'personalizado';
+}
+const MM_ZOOM = { cerca: 16, normal: 25, lejos: 40 };
+minimap.setZoom = function () {
+  const R = MM_ZOOM[settings.mmZoom] || 25; if (R === this.R && this.buf) return;
+  this.R = R;
+  if (this.buf) { this.buf.width = this.buf.height = R * 2; this.img = this.bctx.createImageData(R * 2, R * 2); }
+  this.lastKey = '';
+};
+minimap.setZoom();
+
+/* ---------- Liberar memoria: etiquetas de mascotas de otros jugadores ---------- */
+{
+  const _remove = EntityManager.prototype.remove;
+  EntityManager.prototype.remove = function (e) {
+    _remove.call(this, e);
+    if (e && e.petTag49) { e.petTag49.material.map.dispose(); e.petTag49.material.dispose(); e.petTag49 = null; }
+  };
+}
+
+/* ---------- Efecto «Hambre» ---------- */
+EFFECTS.hunger = { name: 'Hambre', color: [128, 150, 60], icon: '🍗' };
+const v50 = {
+  update(dt) {
+    const p = game.player; if (!p || p.dead) return;
+    const h = game.effLvl('hunger'); if (h > 0) p.exhaust(dt * 0.6 * h);     // gasta comida (unos 1,5 puntos de hambre cada 10 s)
+  },
+};
+
+/* ---------- Registro de avisos ---------- */
+const notifLog = {
+  list: [], unread: 0,
+  add(text, kind) {
+    text = String(text || '').trim(); if (!text) return;
+    const last = this.list[0], now = Date.now();
+    if (last && last.text === text && now - last.t < 3000) return;
+    this.list.unshift({ t: now, day: game.env ? game.env.days + 1 : null, text, kind });
+    if (this.list.length > 80) this.list.length = 80;
+    this.unread++; this.badge();
+  },
+  badge() { const b = $('#pLog'); if (b) b.textContent = this.unread ? `🔔 Avisos (${this.unread})` : '🔔 Avisos'; },
+  show() {
+    const box = $('#logList'), fmt = (t) => new Date(t).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
+    box.innerHTML = this.list.length ? this.list.map((e) => `<div class="logRow ${e.kind || ''}"><em>${fmt(e.t)}${e.day ? ` · día ${e.day}` : ''}</em><span>${escapeHtml(e.text)}</span></div>`).join('')
+      : '<p class="g49info">Todavía no hubo avisos en esta sesión.</p>';
+    this.unread = 0; this.badge(); showScreen('logScreen');
+  },
+};
+{
+  const _notify = notify;
+  notify = function (title, text, kind) { notifLog.add(`${title} ${text || ''}`, kind || 'info'); return _notify(title, text, kind); };
+  const _toast = hud.toast;
+  hud.toast = function (msg, ms) {
+    notifLog.add(msg, 'toast');
+    const r = _toast.call(this, msg, ms);
+    // en los menús el HUD no se ve: el aviso se muestra igual
+    if (document.body.classList.contains('in-menu') || game.state === 'menu') {
+      const t = $('#menuToast'); t.textContent = msg; t.classList.add('show');
+      clearTimeout(this._mt); this._mt = setTimeout(() => t.classList.remove('show'), ms || 2200);
+    }
+    return r;
+  };
+}
+
+/* ---------- Estadísticas ---------- */
+Object.assign(STAT_NAMES, { fished: 'Peces pescados', cooked: 'Platos cocinados', foraged: 'Plantas silvestres recogidas', expeditions: 'Expediciones', brewed: 'Pociones preparadas',
+  enchanted: 'Objetos encantados', tamed: 'Animales domados', quests: 'Misiones completadas', villageUps: 'Mejoras de aldea', community: 'Encargos de la comunidad', sleeps: 'Noches dormidas', seals: 'Sellos rotos' });
+const STAT_GROUPS = [
+  ['🧭 Exploración', ['distance', 'biomes', 'structures', 'expeditions', 'foraged']],
+  ['⚔ Combate', ['kills', 'hostileKills', 'bosses', 'damage', 'damageTaken', 'deaths']],
+  ['🧱 Construcción', ['mined', 'placed', 'crafted']],
+  ['🌾 Oficios y vida', ['harvested', 'fished', 'cooked', 'eaten', 'potions', 'brewed', 'enchanted', 'bred', 'tamed', 'sleeps']],
+  ['🏘 Aldeas y misiones', ['trades', 'quests', 'villageUps', 'community', 'seals']],
+];
+openStats = function () {
+  const p = game.player, s = { ...p.stats, biomes: p.biomes.size, structures: p.pois.size };
+  const fmt = (k, v) => (k === 'playTime' ? `${Math.floor(v / 3600)} h ${Math.floor(v / 60) % 60} min` : k === 'distance' ? `${Math.round(v).toLocaleString('es')} m` : Math.round(v).toLocaleString('es'));
+  const tile = (label, val) => `<div class="stTile"><b>${val}</b><span>${label}</span></div>`;
+  let h = `<div class="stTiles">${tile('Días sobrevividos', game.env.days + 1)}${tile('Tiempo de juego', fmt('playTime', s.playTime || 0))}${tile('Nivel', p.level)}${tile('Logros', `${p.ach.size}/${ACHIEVEMENTS.length}`)}</div>`;
+  for (const [title, keys] of STAT_GROUPS) {
+    h += `<h3 class="stHead">${title}</h3>`;
+    h += keys.map((k) => `<div class="stRow${s[k] ? '' : ' zero'}"><span>${STAT_NAMES[k] || k}</span><b>${fmt(k, s[k] || 0)}</b></div>`).join('');
+  }
+  $('#statsList').innerHTML = h;
+  showScreen('statsScreen');
+};
+
+/* ---------- Copias de seguridad por mundo ---------- */
+const BAK_SUFS = [['', 'Partida actual'], ['-bak', 'Guardado anterior'], ['-day', 'Cómo quedó el último día jugado'], ['-restore', 'Antes de la última restauración'],
+  ['-v4', 'Antes de actualizar a LinkCraft 5.0'], ['-v3', 'Antes de actualizar a la 4.0']];
+const backups50 = {
+  id: null,
+  list(id) {
+    const out = [];
+    for (const [suf, label] of BAK_SUFS) {
+      const raw = saveStore.get(SAVE_PREFIX + id + suf); if (!raw) continue;
+      let ok = false; try { ok = !validateSave(migrateSave(JSON.parse(raw))).length; } catch {}
+      out.push({ suf, label, at: savedAt(raw), size: raw.length, ok });
+    }
+    return out;
+  },
+  show(id) {
+    this.id = id;
+    const w = listWorlds().find((x) => x.id === id) || trash50.all().find((x) => x.id === id);
+    $('#bakTitle').textContent = `Copias de «${w ? w.name : 'mundo'}»`;
+    const box = $('#bakList');
+    box.innerHTML = this.list(id).map((b) => `<div class="rp bakRow"><b>${b.label}</b><small>${b.at ? fmtDate(b.at) : 'sin fecha'} · ${Math.max(1, Math.round(b.size / 1024))} KB · ${b.ok ? '✔ íntegra' : '✖ dañada'}</small>
+      ${b.suf && b.ok ? `<button class="btn small" data-bak="restore" data-suf="${b.suf}">Restaurar</button>` : ''}<button class="btn small" data-bak="export" data-suf="${b.suf}">Exportar</button></div>`).join('');
+    showScreen('bakScreen');
+  },
+  // La partida actual se guarda primero en «-restore» (comprobada) y solo entonces se reemplaza
+  async restore(suf) {
+    const id = this.id, key = SAVE_PREFIX + id, raw = saveStore.get(key + suf);
+    let d; try { d = JSON.parse(raw); if (validateSave(migrateSave(d)).length) throw 0; } catch { hud.toast('Esa copia está dañada: no se cambió nada', 3000); return; }
+    const cur = saveStore.get(key);
+    if (cur && suf !== '-restore') { saveStore.set(key + '-restore', cur); if (!(await saveStore.verify(key + '-restore', cur))) { hud.toast('⚠ No se pudo comprobar la copia de la partida actual: no se cambió nada', 3500); return; } }
+    else if (cur && suf === '-restore') { saveStore.set(key + '-bak', cur); if (!(await saveStore.verify(key + '-bak', cur))) { hud.toast('⚠ No se pudo comprobar la copia de la partida actual: no se cambió nada', 3500); return; } }
+    saveStore.set(key, raw);
+    const ok = await saveStore.verify(key, raw);
+    hud.toast(ok ? 'Copia restaurada. La partida que había quedó en «Antes de la última restauración».' : '⚠ La copia se restauró pero no se pudo comprobar', 3800);
+    this.show(id); renderWorldList();
+  },
+  export(suf) {
+    const e = exportWorld(this.id, suf); if (!e) return;
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([e.text], { type: 'application/json' })); a.download = e.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); hud.toast('Copia exportada como archivo'); } catch {}
+  },
+};
+
+/* ---------- Papelera de mundos ---------- */
+const TRASH_KEY = 'mc2-trash', TRASH_MAX = 6;
+const trash50 = {
+  all() { try { const l = JSON.parse(localStorage.getItem(TRASH_KEY)); return Array.isArray(l) ? l : []; } catch { return []; } },
+  save(l) { try { localStorage.setItem(TRASH_KEY, JSON.stringify(l)); return true; } catch { return false; } },
+  // Solo se quita de la lista de mundos: los datos y sus copias siguen guardados
+  put(w) {
+    const l = this.all().filter((x) => x.id !== w.id); l.unshift({ ...w, deletedAt: Date.now() });
+    while (l.length > TRASH_MAX) this.purge(l.pop().id, true);
+    return this.save(l);
+  },
+  recover(id) {
+    const l = this.all(), w = l.find((x) => x.id === id); if (!w) return;
+    const { deletedAt, ...meta } = w; const list = listWorlds(); if (!list.some((x) => x.id === id)) { list.push(meta); saveWorldIndex(list); }
+    this.save(l.filter((x) => x.id !== id)); hud.toast(`«${w.name}» volvió a la lista de mundos`); renderWorldList();
+  },
+  purge(id, silent) {
+    for (const [suf] of BAK_SUFS) saveStore.remove(SAVE_PREFIX + id + suf);
+    for (let v = 1; v <= SAVE_VERSION; v++) saveStore.remove(SAVE_PREFIX + id + '-v' + v);
+    if (!silent) { this.save(this.all().filter((x) => x.id !== id)); hud.toast('Mundo eliminado para siempre'); renderWorldList(); }
+  },
+  render() {
+    const box = $('#trashBox'); if (!box) return;
+    const l = this.all();
+    box.innerHTML = l.length ? `<details class="trash"><summary>🗑 Papelera (${l.length})</summary>${l.map((w) => `<div class="rp"><b>${escapeHtml(w.name)}</b><small>borrado ${fmtDate(w.deletedAt)}</small>
+      <button class="btn small primary" data-tr="recover" data-id="${escapeHtml(w.id)}">Recuperar</button><button class="btn small danger" data-tr="purge" data-id="${escapeHtml(w.id)}">Eliminar para siempre</button></div>`).join('')}
+      <p class="g49info">Se guardan los últimos ${TRASH_MAX} mundos borrados.</p></details>` : '';
+  },
+};
+{
+  const _render = renderWorldList;
+  renderWorldList = function () { const r = _render(); trash50.render(); return r; };
+  $('#trashBox').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tr]'); if (!b) return;
+    if (b.dataset.tr === 'recover') trash50.recover(b.dataset.id);
+    else if (b.dataset.sure) trash50.purge(b.dataset.id);
+    else { b.dataset.sure = 1; b.textContent = '¿Seguro? No se puede deshacer'; setTimeout(() => { if (b.isConnected) { b.textContent = 'Eliminar para siempre'; delete b.dataset.sure; } }, 3000); }
+  });
+  $('#bakList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-bak]'); if (!b) return;
+    if (b.dataset.bak === 'export') { backups50.export(b.dataset.suf); return; }
+    if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = '¿Restaurar?'; setTimeout(() => { if (b.isConnected) { b.textContent = 'Restaurar'; delete b.dataset.sure; } }, 2500); return; }
+    backups50.restore(b.dataset.suf);
+  });
+  $('#bakClose').onclick = () => { showScreen('worldsScreen'); renderWorldList(); };
+  $('#btnExportAll').onclick = async () => {
+    const e = exportAllWorlds(); if (!e) { hud.toast('No hay mundos guardados para exportar'); return; }
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([e.text], { type: 'application/json' })); a.download = e.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); } catch {}
+    hud.toast(`Se exportaron ${e.n} mundo${e.n === 1 ? '' : 's'} en un archivo. Para recuperarlos usa «Importar archivo».`, 3500);
+  };
+  $('#pLog').onclick = () => notifLog.show();
+  $('#logClose').onclick = () => showScreen('pauseScreen');
+  $('#logClear').onclick = () => { notifLog.list = []; notifLog.show(); };
+  document.documentElement.style.setProperty('--hudS', settings.hudScale);
 }
 
 /* ==========================================================================

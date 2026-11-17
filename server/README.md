@@ -1,4 +1,4 @@
-# Servidor multijugador de MiniCraft (salas)
+# Servidor multijugador de LinkCraft (salas)
 
 Un solo archivo (`server.js`), sin dependencias. Solo necesitas [Node.js](https://nodejs.org) 18 o superior.
 
@@ -54,7 +54,7 @@ Se pasan como `--opcion=valor` o como variable de entorno en mayúsculas (`PORT=
 | `mode` | `survival` | Modo de la sala INICIO (solo al crearla) |
 | `pvp` | `on` | PvP en la sala INICIO |
 | `cheats` | `on` | `off` impide /tiempo y /clima en la sala INICIO |
-| `name` | Servidor MiniCraft | Nombre que ven los jugadores |
+| `name` | Servidor LinkCraft | Nombre que ven los jugadores |
 | `data` | `./data` | Carpeta donde se guarda el mundo |
 | `game` | automático | Ruta del `index.html` del juego |
 
@@ -113,3 +113,5 @@ Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pa
 **4.6:** actualiza `server.js`. Las salas **nuevas** se crean con `gen: 5` (el mundo de la 4.4 más las arenas de los tres jefes nuevos); las existentes conservan su mundo. No cambia el protocolo ni el formato de los datos.
 
 **4.9:** actualiza `server.js` (un solo archivo, sin dependencias: copia el nuevo encima del anterior y reinicia con `node server.js`). Añade todo lo de la sección «Grupo, equipos, comercio y terrenos». No cambia el protocolo; las salas guardadas se cargan tal cual y ganan los campos nuevos al guardarse.
+
+**5.0 (LinkCraft):** el juego y el servidor pasan a llamarse LinkCraft (el nombre por defecto del servidor es «Servidor LinkCraft»; `/status` responde también con la clave `minicraft` para herramientas viejas). No cambia el protocolo ni los datos: si ya tienes el servidor 4.9, solo cambia el nombre que muestra. El juego 5.0 entra a servidores 4.9 y 4.x sin problemas.
