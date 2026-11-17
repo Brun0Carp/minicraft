@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.0</title>
+<title>LinkCraft 5.1</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -994,7 +994,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.0!</span>
+      <span class="ver">¡Versión 5.1!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1004,7 +1004,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -2687,9 +2687,10 @@ Object.assign(I, { FLINT_STEEL: 521, INFERNITE: 522, EMBER: 523, EMBER_CORE: 524
   INFERNITE_SWORD: 529, INFERNITE_PICK: 530, VOID_BLADE: 531 });
 
 {
-  const LAVA_TOP = [[0, 0, 0, 1, 14 / 16, 1]];
-  defBlock(LAVA, 'Lava', 'Roca fundida del Inframundo. Quema a quien la toca.', T.lava,
-    { shape: 'lava', boxes: (m, nb, mode) => (mode === 'collide' ? [] : nb && nb(4) === LAVA ? FULL_BOX : LAVA_TOP), opaque: false, solid: false, selectable: false, replaceable: true,
+  // 5.1: la lava que corre es más baja cuanto más lejos está de su fuente (meta: nivel 0-7; +8 = cayendo)
+  const LAVA_TOP = Array.from({ length: 8 }, (_, l) => [[0, 0, 0, 1, (14 / 16) * (8 - l) / 8, 1]]);
+  defBlock(LAVA, 'Lava', 'Roca fundida. Quema a quien la toca y corre cuesta abajo.', T.lava,
+    { shape: 'lava', boxes: (m, nb, mode) => (mode === 'collide' ? [] : (nb && nb(4) === LAVA) || (m & 8) ? FULL_BOX : LAVA_TOP[m & 7]), opaque: false, solid: false, selectable: false, replaceable: true,
       cullSelf: true, hardness: -1, drop: null, light: 15, damage: 4, sound: 'stone' });
   defBlock(PORTAL, 'Portal', '', T.portal_nether,
     { shape: 'portal', boxes: (m) => [m & 2 ? [6 / 16, 0, 0, 10 / 16, 1, 1] : [0, 0, 6 / 16, 1, 1, 10 / 16]], opaque: false, solid: false, hardness: 0, drop: null, light: 11, sound: 'glass', hidden: true,
@@ -4777,19 +4778,43 @@ function emitCube(x, y, z, p, id, def, fancy) {
   }
 }
 
+// Altura del agua en una celda del bloque acolchado (-1 = no es agua). 5.1: el agua que corre
+// es más baja cuanto más lejos está de su fuente; la que cae o tiene agua encima llena el bloque.
+function liquidH(q) {
+  const id = pIds[q]; if (!B_WATERY[id]) return -1;
+  if (B_WATERY[pIds[q + PAD2]]) return 1;
+  if (id !== WATER) return 0.875;
+  const m = pMeta[q]; return m & 8 ? 0.875 : 0.875 * (8 - (m & 7)) / 8;
+}
+// Altura de una esquina: promedio de las celdas de agua que la comparten (superficie en pendiente)
+function liquidCorner(p, cx, cz) {
+  let s = 0, n = 0;
+  for (let a = cx - 1; a <= cx; a++) for (let b = cz - 1; b <= cz; b++) {
+    const h = liquidH(p + a + b * PAD); if (h < 0) continue;
+    if (h >= 1) return 1; s += h; n++;
+  }
+  return n ? s / n : 0.875;
+}
 function emitLiquid(x, y, z, p) {
-  const above = pIds[p + PAD2];
-  const topH = B_WATERY[above] ? 1 : 0.875;
-  const k = (x | (z << 4)) * 3;
+  const k = (x | (z << 4)) * 3, own = liquidH(p);
+  const ch = own >= 1 ? [1, 1, 1, 1] : [liquidCorner(p, 0, 0), liquidCorner(p, 1, 0), liquidCorner(p, 0, 1), liquidCorner(p, 1, 1)];
   for (let f = 0; f < 6; f++) {
     const fp = p + NOFF[f], n = pIds[fp];
-    if (B_WATERY[n] || B_OPAQUE[n] || n === ICE) continue;
+    let low = 0;
+    if (B_WATERY[n]) {
+      if (f === 2 || f === 3) continue;                      // arriba y abajo: entre aguas no hay cara
+      // de lado: solo el escalón que asoma por encima del agua vecina más baja
+      let edge = 0; for (const c of FACES[f].corners) if (c[1]) edge = Math.max(edge, ch[c[0] + c[2] * 2]);
+      const nh = liquidH(fp); if (nh >= edge - 0.01) continue;
+      low = nh;
+    }
+    if (B_OPAQUE[n] || n === ICE) continue;
     if (f === 2 && n !== AIR) continue;
     const face = FACES[f], sh = f === 3 ? 1 : f === 2 ? 0.6 : 0.82;
     const sk = pSky[fp] / 15, bl = pBlk[fp] / 15;
     waterBuf.grow(40, 6);
     for (const c of face.corners) {
-      const cy = c[1] ? topH : 0, wx = x + c[0], wz = z + c[2];
+      const cy = c[1] ? ch[c[0] + c[2] * 2] : low, wx = x + c[0], wz = z + c[2];
       const uv = f === 3 || f === 2 ? [wx, wz] : f < 2 ? [wz, y + cy] : [wx, y + cy];
       waterBuf.vert(wx, y + cy, wz, uv[0], uv[1], sh * tintW[k], sh * tintW[k + 1], sh * tintW[k + 2], sk, bl);
     }
@@ -11800,6 +11825,7 @@ const game = {
       const d = new THREE.Vector3(); camera.getWorldDirection(d);
       const w = raycastBlocks(camera.position, d, REACH + MODS.reach, true);
       if (w && w.id === WATER) {
+        if (s.id === I.BUCKET && (world.getMeta(w.x, w.y, w.z) & 15)) { hud.toast('El cubo solo se llena en una fuente de agua (no en el agua que corre)'); return false; }
         if (s.id === I.BUCKET) world.set(w.x, w.y, w.z, AIR, 0);
         consume(); give(s.id === I.BUCKET ? I.WATER_BUCKET : I.WATER_BOTTLE); sfx.play('bucket'); this.swing = 1; hud.update(); return true;
       }
@@ -12341,7 +12367,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); fluids.update50(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -12352,7 +12378,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12377,7 +12403,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15312,6 +15338,16 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.1', name: 'Agua y lava que corren', date: 'noviembre de 2026', items: [
+    'El agua y la lava ahora caen por la gravedad: si debajo hay un hueco, bajan formando una cascada hasta tocar suelo, y ahí se extienden. De lado avanzan hacia el desnivel más cercano.',
+    'Al cargarse una zona, el agua y la lava que quedaron al borde de un hueco (una cueva junto a un arroyo, un lago subterráneo junto a un pozo) empiezan a correr. Las cascadas que crea el terreno se mantienen como estaban.',
+    'El agua llega a 7 bloques de su fuente y se ve más baja cuanto más lejos está, con la superficie en pendiente. La lava es más lenta y llega a 3 bloques (7 en el Inframundo).',
+    'Al quitar la fuente (con un cubo o tapándola), el agua o la lava que corría se retira. Dos fuentes de agua juntas forman una tercera.',
+    'Agua y lava se enfrían al tocarse: una fuente de lava se vuelve obsidiana, la lava que corre se vuelve roca y la lava que cae en el agua se vuelve piedra.',
+    'El agua y la lava que corren se llevan por delante las plantas, la hierba y las flores.',
+    'El cubo solo se llena en una fuente de agua, no en el agua que corre.',
+    'Multijugador: el agua la mueve el jugador que provoca el cambio y los demás la reciben; respeta los permisos de construir y los terrenos protegidos.',
+  ] },
   { v: '5.0', name: 'Nuevo nombre, calidad gráfica y guardado seguro', date: 'noviembre de 2026', items: [
     'MiniCraft pasa a llamarse LinkCraft. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando igual.',
     'Calidad gráfica Bajo, Medio, Alto y Ultra (Ajustes → Gráficos). Cada nivel ajusta la distancia, la resolución (Ultra usa supermuestreo), las hojas, las nubes, la luz dinámica, las partículas y el detalle lejano. Si cambias un ajuste suelto, la calidad pasa a «Personalizado».',
@@ -18298,7 +18334,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.0';
+const GAME_VERSION = '5.1';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -22424,6 +22460,220 @@ const trash50 = {
   $('#logClose').onclick = () => showScreen('pauseScreen');
   $('#logClear').onclick = () => { notifLog.list = []; notifLog.show(); };
   document.documentElement.style.setProperty('--hudS', settings.hudScale);
+}
+
+/* ==========================================================================
+   §51 AGUA Y LAVA QUE CORREN (5.1)
+   --------------------------------------------------------------------------
+   Antes el agua solo rellenaba huecos al romper un bloque a su lado, sin caer
+   por los bordes, y la lava no se movía. Ahora las dos son fluidos de verdad:
+     · Meta del bloque: nivel 0 = fuente, 1-7 = agua o lava que corre (cuanto
+       más alto, más lejos de la fuente y más baja), +8 = cayendo.
+     · Caen primero: si debajo hay aire (o una planta), bajan formando una
+       cascada hasta tocar suelo, y ahí se extienden. De lado avanzan hacia el
+       desnivel más cercano (hasta 4 bloques), como en una pendiente.
+     · El agua llega a 7 bloques de su fuente; la lava a 3 en el mundo normal
+       (más lenta) y a 7 en el Inframundo. Al quitar la fuente, lo que corría
+       se retira. Dos fuentes de agua juntas forman una tercera.
+     · Agua y lava: el agua que toca una fuente de lava la vuelve obsidiana y
+       la lava que corre se vuelve roca; la lava que entra en el agua, piedra.
+     · Los mundos generados: cuando se carga una zona, el agua y la lava que
+       quedaron al borde de un hueco (una cueva junto a un arroyo, un lago
+       subterráneo junto a un pozo) empiezan a correr. Las cascadas generadas
+       por el terreno no se deshacen.
+     · Rendimiento: cada bloque se actualiza solo cuando algo cambia a su lado,
+       con una espera (agua 0,25 s; lava 1 s, 0,5 s en el Inframundo) y un
+       tope de actualizaciones por fotograma.
+     · Multijugador: el agua la mueve quien provoca el cambio y los demás
+       reciben los bloques (no se calcula dos veces); se respetan los permisos
+       de construir y los terrenos protegidos.
+   ========================================================================== */
+const FLUID_TICK = 0.05;                     // s por paso de la cola
+const fluids = {
+  q: new Map(), pending: new Set(), tick: 0, acc: 0, scanQ: [], changes: 0,
+  isFluid(id) { return id === WATER || id === LAVA; },
+  nether(x, z) { return dimOf(x, z) === 1; },
+  delay(id, x, z) { return id === WATER ? 5 : this.nether(x, z) ? 10 : 20; },
+  step(id, x, z) { return id === WATER || this.nether(x, z) ? 1 : 2; },
+  reset() { this.q.clear(); this.pending.clear(); this.scanQ = []; this.tick = 0; this.acc = 0; },
+  // ¿Puede este cliente mover fluidos? (en un servidor, sin permiso de construir, no)
+  allowed(x, y, z) {
+    if (!net.active) return true;
+    if (!net.canBuild()) return false;
+    return typeof net49 === 'undefined' || !net49.blockedAt(x, y, z);
+  },
+  schedule(x, y, z, ticks) {
+    if (y < 1 || y >= WY) return;
+    const k = x + ',' + y + ',' + z; if (this.pending.has(k)) return;
+    this.pending.add(k);
+    const t = this.tick + Math.max(1, ticks | 0); let a = this.q.get(t); if (!a) { a = []; this.q.set(t, a); } a.push(x, y, z);
+  },
+  // Cambió un bloque: él y sus vecinos líquidos se revisan
+  touch(x, y, z) {
+    const id = world.get(x, y, z);
+    if (this.isFluid(id)) this.schedule(x, y, z, this.delay(id, x, z));
+    for (const [dx, dy, dz] of NB6) {
+      const n = world.get(x + dx, y + dy, z + dz);
+      if (this.isFluid(n)) this.schedule(x + dx, y + dy, z + dz, this.delay(n, x + dx, z + dz));
+    }
+  },
+  loaded(x, z) { return world.isLoaded(x, z); },
+  // Bloques que un fluido puede ocupar (aire y plantas; se los lleva por delante)
+  open(x, y, z) {
+    if (y < 1 || !this.loaded(x, z)) return false;
+    const b = world.get(x, y, z);
+    if (b === AIR) return true;
+    const d = BLOCKS[b]; return !!(d && d.replaceable && !d.liquid && b !== LAVA && !B_WATERY[b] && d.shape !== 'lava');
+  },
+  isSource(id, m) { return (m & 7) === 0 && !(m & 8); },
+  // Una fuente sobre agua con dos o más lados al vacío es parte de una cascada del terreno: no se abre de lado
+  isColumn(x, y, z, id) {
+    let open = 0;
+    for (const [dx, dz] of FACING_DIR) if (this.open(x + dx, y, z + dz) && this.open(x + dx, y - 1, z + dz)) open++;
+    return open >= 2;
+  },
+  set(x, y, z, id, meta) {
+    if (!this.allowed(x, y, z)) return false;
+    this.changes++;
+    return world.set(x, y, z, id, meta);
+  },
+  // Agua y lava se tocan
+  meet(x, y, z, into) {
+    const b = world.get(x, y, z), m = world.getMeta(x, y, z);
+    let r = 0;
+    if (into === WATER && b === LAVA) r = this.isSource(b, m) ? OBSIDIAN : COBBLE;
+    else if (into === LAVA && b === WATER) r = STONE;
+    if (!r) return false;
+    if (this.set(x, y, z, r, 0)) {
+      if (game.particles) game.particles.emit(x + 0.5, y + 1, z + 0.5, [0.75, 0.75, 0.78], 8, { gravity: -2, up: 1.2, life: 0.9, size: 0.14 });
+      if (game.player && game.player.pos.distanceTo({ x: x + 0.5, y: y + 0.5, z: z + 0.5 }) < 16) sfx.play('fire', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 } });
+    }
+    return true;
+  },
+  // Coloca fluido si mejora lo que hay (más cerca de la fuente o cayendo)
+  pour(x, y, z, id, meta) {
+    if (!this.loaded(x, z) || y < 1) return;
+    const b = world.get(x, y, z);
+    if ((id === WATER && b === LAVA) || (id === LAVA && b === WATER)) { this.meet(x, y, z, id); return; }
+    if (b === id) {
+      const m = world.getMeta(x, y, z); if (this.isSource(b, m)) return;
+      const cur = m & 8 ? 0 : m & 7, nw = meta & 8 ? 0 : meta & 7;
+      if (nw < cur || ((meta & 8) && !(m & 8))) this.set(x, y, z, id, meta);
+      return;
+    }
+    if (this.open(x, y, z)) this.set(x, y, z, id, meta);
+  },
+  // Distancia (≤ 4) al desnivel más cercano en cada dirección
+  slopeDirs(x, y, z) {
+    const best = [], dist = [9, 9, 9, 9];
+    FACING_DIR.forEach(([dx, dz], i) => {
+      for (let k = 1; k <= 4; k++) {
+        const ax = x + dx * k, az = z + dz * k;
+        if (!this.open(ax, y, az) && !(world.get(ax, y, az) === world.get(x, y, z))) break;
+        if (this.open(ax, y - 1, az) || world.get(ax, y - 1, az) === world.get(x, y, z) && world.getMeta(ax, y - 1, az) !== 0) { dist[i] = k; break; }
+      }
+    });
+    const min = Math.min(...dist);
+    FACING_DIR.forEach((d, i) => { if (min === 9 || dist[i] === min) best.push(d); });
+    return best;
+  },
+  update(x, y, z) {
+    if (!this.loaded(x, z)) return;
+    let id = world.get(x, y, z); if (!this.isFluid(id)) return;
+    let m = world.getMeta(x, y, z);
+    const step = this.step(id, x, z);
+    // lava que toca agua (de lado o desde arriba): se enfría
+    if (id === LAVA) {
+      for (const [dx, dy, dz] of NB6) if (dy >= 0 && world.get(x + dx, y + dy, z + dz) === WATER) { this.set(x, y, z, this.isSource(id, m) ? OBSIDIAN : COBBLE, 0); return; }
+    }
+    // 1) lo que corre se recalcula según quién lo alimenta
+    if (!this.isSource(id, m)) {
+      let want = -1;
+      if (world.get(x, y + 1, z) === id) want = 8;
+      else {
+        let best = 99, srcN = 0;
+        for (const [dx, dz] of FACING_DIR) {
+          const nx = x + dx, nz = z + dz; if (world.get(nx, y, nz) !== id) continue;
+          const nm = world.getMeta(nx, y, nz), below = world.get(nx, y - 1, nz);
+          if (this.isSource(id, nm)) srcN++;
+          // un vecino alimenta de lado si es fuente o si no puede seguir cayendo
+          const feeds = this.isSource(id, nm) ? !(below === id && this.isColumn(nx, y, nz, id)) : !(this.open(nx, y - 1, nz) || below === id);
+          if (feeds) best = Math.min(best, nm & 8 ? 0 : nm & 7);
+        }
+        if (id === WATER && srcN >= 2 && (B_SOLID[world.get(x, y - 1, z)] || (world.get(x, y - 1, z) === WATER && this.isSource(WATER, world.getMeta(x, y - 1, z))))) want = 0;
+        else if (best + step <= 7) want = best + step;
+      }
+      if (want < 0) { this.set(x, y, z, AIR, 0); return; }
+      if (want !== m) { this.set(x, y, z, id, want); m = want; return; }        // el cambio vuelve a programar este bloque y sus vecinos
+    }
+    // 2) caer
+    const src = this.isSource(id, m), level = m & 8 ? 0 : m & 7;
+    if (this.open(x, y - 1, z) || ((id === WATER && world.get(x, y - 1, z) === LAVA) || (id === LAVA && world.get(x, y - 1, z) === WATER))) { this.pour(x, y - 1, z, id, 8); return; }
+    if (world.get(x, y - 1, z) === id && (!src || this.isColumn(x, y, z, id))) {
+      // sobre lo que corre debajo (no una fuente): se mantiene lleno
+      const bm = world.getMeta(x, y - 1, z); if (!this.isSource(id, bm) && !(bm & 8)) this.pour(x, y - 1, z, id, 8);
+      return;
+    }
+    // 3) extenderse de lado, hacia el desnivel más cercano
+    const nl = level + step; if (nl > 7) return;
+    for (const [dx, dz] of this.slopeDirs(x, y, z)) this.pour(x + dx, y, z + dz, id, nl);
+  },
+  // Al cargarse una zona: el agua y la lava al borde de un hueco empiezan a correr
+  scanChunk(c) {
+    const B = c.blocks, M = c.meta, x0 = c.cx * 16, z0 = c.cz * 16;
+    let n = 0;
+    for (let y = 1; y < WY - 1 && n < 48; y++) for (let lz = 0; lz < 16 && n < 48; lz++) for (let lx = 0; lx < 16; lx++) {
+      const i = lx | (lz << 4) | (y << 8), id = B[i];
+      if (id !== WATER && id !== LAVA) continue;
+      const x = x0 + lx, z = z0 + lz, below = B[i - 256];
+      let go = this.open(x, y - 1, z);
+      // fuente apoyada en suelo firme con un hueco al lado (una cueva junto al arroyo)
+      if (!go && below !== id && below !== WATER && below !== LAVA && !(M[i] & 8))
+        for (const [dx, dz] of FACING_DIR) if (this.open(x + dx, y, z + dz)) { go = true; break; }
+      if (go) { this.schedule(x, y, z, 2 + (n & 7)); n++; }
+    }
+  },
+  update50(dt) {
+    if (!world || !game.player || game.state === 'loading' || game.state === 'menu') return;
+    // zonas recién cargadas (cuando ya están sus vecinas, para mirar los bordes)
+    if (this.scanQ.length && (!net.active || net.isHost())) {
+      for (let k = 0; k < this.scanQ.length && k < 6; k++) {
+        const c = this.scanQ.shift();
+        if (!world.chunks.has(c.key) || c !== world.chunk(c.cx, c.cz)) continue;
+        let ready = true; for (const [dx, dz] of FACING_DIR) if (!world.chunk(c.cx + dx, c.cz + dz)) { ready = false; break; }
+        if (!ready) { if ((c.scanTries = (c.scanTries || 0) + 1) < 600) this.scanQ.push(c); continue; }
+        const d = Math.hypot(c.cx * 16 + 8 - game.player.pos.x, c.cz * 16 + 8 - game.player.pos.z);
+        if (d > 80) continue;
+        this.scanChunk(c);
+      }
+    } else if (net.active) this.scanQ.length = 0;
+    this.acc += dt;
+    let budget = 260;
+    while (this.acc >= FLUID_TICK && budget > 0) {
+      this.acc -= FLUID_TICK; this.tick++;
+      const a = this.q.get(this.tick); if (!a) continue;
+      this.q.delete(this.tick);
+      for (let i = 0; i < a.length; i += 3) {
+        const x = a[i], y = a[i + 1], z = a[i + 2];
+        this.pending.delete(x + ',' + y + ',' + z);
+        if (budget-- > 0) this.update(x, y, z);
+        else this.schedule(x, y, z, 1);                     // sin tiempo en este fotograma: al siguiente
+      }
+    }
+    if (this.acc > 1) this.acc = 1;                          // tras una pausa larga no se acumulan pasos
+  },
+};
+const NB6 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+{
+  // cualquier cambio de bloque (de este jugador, no los recibidos de otro) despierta a los fluidos vecinos
+  bus.on('block', (d) => { if (world && !(net.active && net.applying)) fluids.touch(d.x, d.y, d.z); });
+  // el flujo antiguo pasa a ser este
+  game.queueFlow = function (x, y, z) { fluids.touch(x, y, z); };
+  game.updateFlow = function () {};
+  const _load = World.prototype.loadChunk;
+  World.prototype.loadChunk = function (cx, cz) { const c = _load.call(this, cx, cz); if (c && this === world) fluids.scanQ.push(c); return c; };
+  const _start = game.startWorld;
+  game.startWorld = async function (...a) { fluids.reset(); return _start.apply(this, a); };
 }
 
 /* ==========================================================================

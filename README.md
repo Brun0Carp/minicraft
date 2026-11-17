@@ -1,4 +1,4 @@
-# LinkCraft 5.0
+# LinkCraft 5.1
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -111,6 +111,13 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - Papelera de mundos.
 - Exportar e importar todos los mundos.
 
+**Agua y lava que corren (5.1)**
+- El agua y la lava caen formando cascadas por los bordes, por ejemplo desde un arroyo hacia una cueva, y se extienden hacia el desnivel más cercano.
+- Hay niveles (el agua llega a 7 bloques; la lava a 3, o 7 en el Inframundo) y la superficie se ve en pendiente.
+- Lo que corre se retira al quitar la fuente.
+- Agua y lava que se tocan forman obsidiana, roca o piedra.
+- Al cargar una zona, los fluidos que quedaron al borde de un hueco empiezan a correr.
+
 ## Funciones existentes que se mejoraron
 
 - **Generación del mundo:** ríos, cuevas y fronteras de biomas más naturales. Los mundos anteriores conservan su terreno.
@@ -118,6 +125,7 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - **Comercio con aldeanos:** precios dinámicos, descuentos por amistad y encargo del día.
 - **IA de los enemigos:** esquivan obstáculos, no se tiran a pozos y los arqueros apuntan adonde vas.
 - **Jefes anteriores:** el Dragón, el Gólem, el Señor de las brasas y el Heraldo del vacío ahora usan todos sus ataques.
+- **Agua:** antes solo rellenaba el hueco al romper un bloque a su lado; ahora corre y cae con gravedad, y la lava también (5.1).
 - **Agricultura:** la tierra regada y abonada crece según el bioma.
 - **Cría de animales:** el comedero los alimenta solo.
 - **Monturas:** cada caballo tiene su velocidad.
