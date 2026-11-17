@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.8</title>
+<title>MiniCraft 4.9</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -781,6 +781,41 @@
   #netReconnect { position: fixed; left: 50%; top: 18%; transform: translateX(-50%); z-index: 60; display: none; flex-direction: column; align-items: center; gap: 6px; padding: 14px 20px;
     background: rgba(12,12,16,.88); border: 2px solid #b8862b; border-radius: 6px; text-align: center; pointer-events: auto; }
   body.net-lost #netReconnect { display: flex; }
+  /* 4.9: grupo, comercio, avisos y misiones cooperativas */
+  .net49Only { display: none !important; } body.net49 .net49Only { display: inline-block !important; } body.net49 #pGroup.net49Only { display: block !important; }
+  body:not(.net49) #grpTouch { display: none !important; }
+  @media (max-width: 440px) { body.net49 .topBtns { gap: 5px; } body.net49 .topBtns .tbtn { width: 40px; height: 40px; font-size: 16px; } }
+  #trackers { position: absolute; left: calc(8px + env(safe-area-inset-left)); top: 34%; display: flex; flex-direction: column; gap: 5px; pointer-events: none; max-width: min(260px, 46vw); }
+  #trackers #questTracker { position: static; }
+  body.touch #trackers { top: auto; bottom: calc(46% + env(safe-area-inset-bottom)); }
+  body.inv-open #coopTracker, body.cinematic #coopTracker, body.overlay #coopTracker { display: none !important; }
+  #coopTracker { padding: 5px 9px; background: rgba(0,0,0,.45); border-left: 3px solid #5ad2ff; text-shadow: 0 1px 0 #000; display: flex; flex-direction: column; gap: 4px; }
+  #coopTracker b { display: block; font-size: 12.5px; color: #8fe0ff; } #coopTracker .gev b { color: #ffb44d; } #coopTracker span { font-size: 11.5px; color: #eee; }
+  #coopTracker i, .g49q i { display: block; height: 4px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; } #coopTracker s, .g49q s { display: block; height: 100%; background: #5ad2ff; } #coopTracker .gev s { background: #ffb44d; }
+  #netPrompts { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 45; display: flex; flex-direction: column; gap: 6px; width: min(460px, calc(100vw - 20px)); pointer-events: none; }
+  body.overlay #netPrompts, body.in-menu:not(.net-on) #netPrompts { top: calc(8px + env(safe-area-inset-top)); }
+  .np49 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; background: rgba(16,18,24,.92); border: 2px solid #5ad2ff; border-radius: 6px; pointer-events: auto; font-size: 14px; }
+  .np49 span { flex: 1 1 180px; } .np49 button { padding: 5px 9px; font-size: 13px; }
+  #plList { position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 44; min-width: min(360px, 92vw); max-width: 96vw; padding: 8px 12px; background: rgba(0,0,0,.72); border: 2px solid #0b0b0b; border-radius: 6px; pointer-events: none; font-size: 14px; }
+  #plList > b { display: block; text-align: center; margin-bottom: 5px; color: #ffe14d; }
+  #plList > div { display: flex; align-items: center; gap: 8px; padding: 2px 0; } #plList span { flex: 1; } #plList em { font-style: normal; color: #aab0bb; font-size: 12px; } #plList small { color: #ccc; } #plList .lat { color: #7be06a; min-width: 64px; text-align: right; } #plList .lost { opacity: .55; }
+  .tdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; border: 1px solid #000; flex: none; vertical-align: middle; }
+  .grpCard { height: min(92vh, 720px); display: flex; flex-direction: column; }
+  #grpBody { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 8px; text-align: left; }
+  #grpBody h3 { margin: 10px 0 5px; font-size: 15px; } #grpPrompts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; } #grpPrompts:empty { display: none; }
+  .g49list { display: flex; flex-direction: column; gap: 5px; } .g49info { font-size: 13px; color: #b9bcc6; margin: 4px 0 8px; }
+  .g49p small, #grpBody .rp small { font-size: 12px; color: #c9ccd4; } .g49p.lost { opacity: .6; }
+  .g49form { flex-wrap: wrap; gap: 6px; align-items: center; } .g49form input, .g49form select { flex: 1 1 160px; margin: 0; }
+  .g49colors { display: flex; gap: 4px; } .g49c { width: 24px; height: 24px; border: 2px solid #0b0b0b; border-radius: 4px; cursor: pointer; padding: 0; } .g49c.on { border-color: #fff; box-shadow: 0 0 0 2px #000; }
+  .g49q { padding: 8px 10px; background: rgba(0,0,0,.35); border: 2px solid #0b0b0b; border-radius: 5px; } .g49q p { margin: 3px 0 6px; font-size: 13.5px; } .g49q small { display: block; margin-top: 5px; font-size: 12px; color: #c9ccd4; }
+  .chatLine.team { color: #9cf5a6; } #chatTeam.on { background: #2f6b3c; }
+  .tradeCard { width: min(560px, 100%); text-align: left; display: flex; flex-direction: column; gap: 6px; max-height: 96vh; overflow-y: auto; }
+  .trdCols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .trdCols h3 { margin: 0 0 4px; font-size: 14px; } .trdCols h3 small { font-size: 11.5px; color: #e07a6a; } .trdCols h3 small.ok { color: #7be06a; }
+  .trdGrid { grid-template-columns: repeat(3, var(--s)) !important; } #trdInv .slot, #trdMine .slot { cursor: pointer; }
+  .cbInfo { font-size: 12.5px; color: #8fe0ff; align-self: center; }
+  @media (max-height: 520px) { .grpCard { height: 98vh; padding: 6px 10px; } .grpCard .cardHead { margin: 0 0 2px; } .grpCard .cardHead h2 { font-size: 17px; } .grpCard .stabs { margin-bottom: 4px; } .grpCard .stab { padding: 4px 6px; font-size: 13px; }
+    .tradeCard { padding: 6px 10px; gap: 3px; } .tradeCard .cardHead h2 { font-size: 16px; } .tradeCard .termHint { display: none; } }
+
   #netReconnect b { color: #ffcf5a; font-size: 18px; } #netReconnect span { font-size: 14px; color: #dde; }
   @media (max-width: 640px) { .roomCols, .crGrid { grid-template-columns: 1fr; } .roomCode b { font-size: 22px; } }
 
@@ -875,7 +910,9 @@
 <div id="padCursor"></div>
 <div id="eventBar"><b></b><span></span><u><i></i></u></div>
 <div id="eventIntro"><b></b><span></span></div>
-<div id="netReconnect"><b>Conexión perdida</b><span id="netRecMsg">Reconectando…</span><button id="netRecQuit" class="btn small">Salir al menú</button></div>
+<div id="netReconnect"><b>Conexión perdida</b><span id="netRecMsg">Reconectando…</span><div class="row"><button id="netRecNow" class="btn small primary">Reintentar ahora</button><button id="netRecQuit" class="btn small">Salir al menú</button></div></div>
+<div id="netPrompts"></div>
+<div id="plList" style="display:none"></div>
 <div id="hud">
   <div id="crosshair"></div>
   <div id="abilityCd"><i></i></div>
@@ -889,8 +926,8 @@
   <div id="hurtDir"><i></i></div>
   <div id="compass"><div></div></div>
   <div id="chatLog"></div>
-  <div id="chatBar"><div id="chatHint"></div><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatSend" class="btn small">Enviar</button></div>
-  <div id="questTracker"></div>
+  <div id="chatBar"><div id="chatHint"></div><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatTeam" class="btn small net49Only" title="Escribir solo a tu equipo">Equipo</button><button id="chatSend" class="btn small">Enviar</button></div>
+  <div id="trackers"><div id="questTracker"></div><div id="coopTracker" style="display:none"></div></div>
   <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
@@ -922,6 +959,7 @@
     </div>
     <div class="topBtns">
       <button class="tbtn" id="chatBtn" data-act="chat">💬</button>
+      <button class="tbtn" id="grpTouch" title="Grupo">👥</button>
       <button class="tbtn" data-act="quests">📜</button>
       <button class="tbtn" id="codexTouch" title="Enciclopedia">📖</button>
       <button class="tbtn" data-act="map">🗺</button>
@@ -941,7 +979,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.8!</span>
+      <span class="ver">¡Versión 4.9!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -951,7 +989,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.8</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.9</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1130,6 +1168,27 @@
     <button id="charClose" class="btn primary">Cerrar</button>
   </div>
 </div>
+<div id="grpScreen" class="screen">
+  <div class="card wideCard grpCard">
+    <div class="cardHead"><h2>🤝 Grupo</h2></div>
+    <div id="grpPrompts"></div>
+    <div class="stabs"><button class="stab on" data-gtab="players">Jugadores</button><button class="stab" data-gtab="team">Equipo</button><button class="stab" data-gtab="land">Terrenos</button><button class="stab" data-gtab="coop">Misiones</button></div>
+    <div id="grpBody"></div>
+    <button id="grpClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
+<div id="tradeScreen" class="screen">
+  <div class="card tradeCard">
+    <div class="cardHead"><h2>🤝 <span id="trdTitle">Comercio</span></h2></div>
+    <div class="trdCols">
+      <div><h3>Tu oferta <small id="trdMeSt">Sin aceptar</small></h3><div id="trdMine" class="grid9 trdGrid"></div></div>
+      <div><h3><span id="trdTheirLbl">Su oferta</span> <small id="trdThemSt">Sin aceptar</small></h3><div id="trdTheirs" class="grid9 trdGrid"></div></div>
+    </div>
+    <p class="termHint">Toca un objeto de tu inventario para ofrecer la pila (clic derecho o Mayús: uno). Toca tu oferta para recuperarla. Cualquier cambio quita las aceptaciones; el trato se cierra cuando los dos aceptan.</p>
+    <div id="trdInv" class="grid9"></div>
+    <div class="row"><button id="trdReady" class="btn primary">✔ Aceptar el trato</button><button id="trdClose" class="btn danger">Cancelar</button></div>
+  </div>
+</div>
 <div id="termScreen" class="screen">
   <div class="card termCard">
     <div class="cardHead"><h2>🗄 Panel de almacén</h2></div>
@@ -1172,6 +1231,7 @@
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
     <div class="row"><button id="pCodex" class="btn">📖 Enciclopedia</button><button id="pChar" class="btn">🌟 Personaje</button></div>
     <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
+    <button id="pGroup" class="btn net49Only">🤝 Grupo: equipo, comercio, terrenos y misiones</button>
     <button id="pFull" class="btn fsOnly">⛶ Pantalla completa</button>
     <button id="pSettings" class="btn">Ajustes</button>
     <button id="pQuit" class="btn">Guardar y salir al menú</button>
@@ -2966,6 +3026,17 @@ rebuildBlockTables();
     paint(T.frost_trap, (x, y) => { const g = x % 3 === 0 || y % 3 === 0, n = N(16); return g ? [60, 70, 90] : [170 + n, 220 + n, 250]; });
   };
 }
+
+/* ==========================================================================
+   §2h BLOQUE DEL MULTIJUGADOR (4.9)
+   --------------------------------------------------------------------------
+   Cofre de equipo (1079): en un servidor abre el almacén compartido del
+   equipo del jugador (lo guarda el servidor). La lógica está en §49.
+   ========================================================================== */
+const TEAM_CHEST = 1079;
+defBlock(TEAM_CHEST, 'Cofre de equipo', 'En un servidor multijugador abre el almacén que comparte todo tu equipo (27 espacios guardados en el servidor; solo un miembro a la vez puede tenerlo abierto).',
+  { top: T.chest_top, bottom: T.chest_top, side: T.chest_side, front: T.chest_front },
+  { shape: 'box', box: [1, 0, 1, 15, 14, 15], opaque: false, hardness: 2.5, tool: 'axe', sound: 'wood', interact: 'tchest49', oriented: true, tint: [0.6, 0.76, 1] });
 
 /* ==========================================================================
    §5 BIOMAS Y GENERACIÓN PROCEDURAL
@@ -12240,7 +12311,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.8  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.9  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12265,7 +12336,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -12658,7 +12729,9 @@ class NetClient {
       for (const e of list) {
         if (e.kind !== 'mob' || e.remote || e.constructor !== Mob || e.planId != null || l.length >= 60) continue;   // los de las estructuras son de cada jugador
         if (Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) > 72) continue;
-        l.push([e.id, e.type, +e.pos.x.toFixed(2), +e.pos.y.toFixed(2), +e.pos.z.toFixed(2), +e.yaw.toFixed(2), Math.max(0, Math.ceil(e.hp)), (e.deathT ? 1 : 0) | (e.burnT > 0 ? 2 : 0)]);
+        const a = [e.id, e.type, +e.pos.x.toFixed(2), +e.pos.y.toFixed(2), +e.pos.z.toFixed(2), +e.yaw.toFixed(2), Math.max(0, Math.ceil(e.hp)), (e.deathT ? 1 : 0) | (e.burnT > 0 ? 2 : 0) | (e.tamed ? 4 : 0) | (e.sitting ? 8 : 0)];
+        if (e.tamed && e.pname) a.push(String(e.pname).slice(0, 18));        // 4.9: los demás ven el nombre y el dueño de la mascota
+        l.push(a);
       }
       if (l.length || this.sentEnts) this.send({ type: 'ents', l });
       this.sentEnts = l.length > 0;
@@ -15180,6 +15253,26 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.9', name: 'Multijugador', date: 'noviembre de 2026', items: [
+    'Panel de grupo (tecla G, botón 👥 o Pausa → Grupo) con pestañas Jugadores, Equipo, Terrenos y Misiones. Necesita el servidor 4.9; con un servidor anterior no aparece.',
+    'Lista de jugadores conectados con vida, latencia, distancia, rol, equipo y si pueden construir. Manteniendo Tab se ve una lista rápida sobre el juego.',
+    'El minimapa muestra a los demás jugadores (con el color de su equipo) y los bordes de los terrenos protegidos.',
+    'Invitaciones: invita a la sala a cualquiera que esté en el servidor (en la recepción o en otra sala). Le llega un aviso y entra con un toque.',
+    'Equipos: créalos con nombre y color, invita a otros jugadores y expulsa como líder. Los compañeros llevan el nombre en el color del equipo y no se hacen daño entre sí.',
+    'Chat de equipo: escribe /e mensaje o activa el botón «Equipo» del chat.',
+    'Cofre de equipo (cofre + esmeralda + lingote de oro): 27 espacios compartidos que guarda el servidor. Solo un miembro a la vez puede tenerlo abierto, así nadie pierde ni duplica objetos. También se abre desde el panel.',
+    'Comercio entre jugadores: propón un trato a alguien a menos de 16 bloques, pon hasta 9 pilas cada uno y acepten los dos. Cualquier cambio quita las aceptaciones y el servidor cierra el trato. Si se cancela o se corta la conexión, recuperas lo que pusiste.',
+    'Terrenos protegidos de 17×17, 33×33 o 49×49 bloques (hasta 3 por jugador): solo construyen el dueño, su equipo, los jugadores que autorice y el anfitrión. Al entrar o salir de uno aparece un aviso.',
+    'Candados: en un cofre o barril abierto, «🔒 Candado» hace que solo tú (y el anfitrión) puedan abrirlo o romperlo.',
+    'Permisos para construir por jugador: el anfitrión puede dejar construir o no a cada jugador, además del permiso general de la sala.',
+    'Misiones cooperativas: un objetivo para toda la sala (minar, cazar, pescar, cocinar, cosechar, construir, explorar o vencer a un jefe). Todos los que ayudan reciben esmeraldas y experiencia, aunque se hayan desconectado.',
+    'Eventos de grupo contra reloj cada 15-25 minutos con dos jugadores o más; el anfitrión también puede empezar uno desde el panel o con /evento.',
+    'Las mascotas de los demás jugadores se ven con su nombre y el de su dueño, y no se pueden atacar.',
+    'El inventario se guarda en el servidor pocos segundos después de cada cambio, al comerciar, al usar el cofre de equipo y al salir.',
+    'Desconexiones: quien pierde la conexión sigue viéndose «sin conexión» 20 segundos y, si vuelve a tiempo, la sala lo cuenta como reconexión. Al salir a propósito los demás lo ven enseguida. Nuevo botón «Reintentar ahora» al reconectar.',
+    'Siete logros nuevos de multijugador.',
+    'Corregido: con el permiso de construir quitado todavía se podían usar tolvas, dispensadores y otros mecanismos de la 4.8.',
+  ] },
   { v: '4.8', name: 'Construcción y mecanismos', date: 'noviembre de 2026', items: [
     'Bloques de decoración nuevos: ladrillos blancos, baldosas negras, madera tallada, mosaico, hormigón blanco, gris y rojo, baldosas de cobre y vidrio enmarcado.',
     'Muebles nuevos: cajonera (guarda 27 objetos), butaca (para sentarse), mesa baja, alfombras roja y azul y jardinera.',
@@ -15480,7 +15573,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.9', name: 'Multijugador', items: ['Equipos, comercio, cofres compartidos y protección de terrenos.'] },
   { v: '5.0', name: 'Expansión total', items: ['Interfaz, calidad gráfica y optimización final.'] },
 ];
 function openNews() {
@@ -16740,10 +16832,14 @@ const roomsUI = {
     for (const p of R.list) {
       const d = document.createElement('div'); d.className = 'rp';
       const me = p.id === net.id;
-      d.innerHTML = `<b>${escapeHtml(p.name)}</b><span class="tag ${p.role}">${ROLE_NAMES[p.role]}${p.role === 'host' && !p.own && R.owner ? ' temporal' : ''}</span>${me ? '<span class="tag me">Tú</span>' : ''}`;
+      d.innerHTML = `<b>${escapeHtml(p.name)}</b><span class="tag ${p.role}">${ROLE_NAMES[p.role]}${p.role === 'host' && !p.own && R.owner ? ' temporal' : ''}</span>${me ? '<span class="tag me">Tú</span>' : ''}${p.build === false && p.role !== 'host' ? '<span class="tag visitor">No construye</span>' : ''}`;
       if (host && !me) {
         const btn = (txt, act, cls) => { const b = document.createElement('button'); b.className = 'btn small' + (cls ? ' ' + cls : ''); b.textContent = txt; b.onclick = () => this.admin(act, p); d.append(b); };
         if (p.role !== 'host') btn(p.role === 'trusted' ? 'Quitar confianza' : 'Dar confianza', p.role === 'trusted' ? 'untrust' : 'trust');
+        if (p.role !== 'host' && net49.feat.has('perm')) {          // 4.9: permiso para construir de cada jugador
+          btn(p.build === false ? 'Puede construir' : 'No puede construir', p.build === false ? 'allow' : 'deny');
+          if (p.perm != null) btn('Permiso general', 'resetperm');
+        }
         if (!r.def) btn('Ceder sala', 'host');
         btn('Expulsar', 'kick'); btn('Vetar', 'ban', 'danger');
       }
@@ -21317,6 +21413,686 @@ const elevScreen = {
 ACHIEVEMENTS.push(['automation', 'Cadena de montaje', 'Haz que una tolva pase un objeto a otro contenedor.'], ['storage48', 'Almacén ordenado', 'Usa un panel de almacén con tres contenedores o más cerca.'],
   ['logic48', 'Lógica pura', 'Activa una compuerta Y o un biestable.'], ['trapper', 'Trampero', 'Atrapa a un monstruo con una trampa de fuego o de hielo.'],
   ['double_door', 'Gran entrada', 'Abre una puerta doble.'], ['decorator', 'Decorador', 'Coloca 20 bloques o muebles de decoración nuevos.']);
+
+/* ==========================================================================
+   §49 MULTIJUGADOR 4.9 — GRUPO, EQUIPOS, COMERCIO, TERRENOS Y MISIONES
+   --------------------------------------------------------------------------
+   Todo pasa por el servidor WebSocket (server/server.js 4.9): el cliente solo
+   muestra y pide; el servidor decide y guarda. Si el servidor es anterior a
+   la 4.9 no anuncia estas funciones («feat» en la bienvenida) y el juego no
+   muestra nada de esto.
+     · Panel de grupo (tecla G, botón 👥): jugadores con latencia, vida,
+       equipo y permisos; invitaciones; equipo; terrenos; misiones.
+     · Lista rápida de jugadores mientras se mantiene Tab.
+     · Equipos: color en el nombre, sin fuego amigo, chat de equipo (/e) y
+       cofre de equipo (bloque o botón del panel).
+     · Comercio: los dos ponen hasta 9 pilas y confirman; el servidor cierra
+       el trato. Lo ofrecido sale del inventario mientras dura el trato.
+     · Terrenos protegidos y cofres con candado (el servidor rechaza cambios).
+     · Misiones cooperativas y eventos de grupo con progreso compartido.
+     · Mascotas sincronizadas con nombre y dueño; inventario guardado en el
+       servidor al cambiar; aviso de jugadores que perdieron la conexión.
+   ========================================================================== */
+const TEAM_COLORS49 = ['#e05050', '#4a8ef0', '#4cc35a', '#e8b83a', '#a463e0', '#f08a3a', '#3ac3c8', '#e070b8'];
+const CLAIM_SIZES49 = [8, 16, 24];
+const COOP_ICON49 = { mine: '⛏', kill: '⚔', fish: '🎣', cook: '🍲', harvest: '🌾', place: '🧱', explore: '🧭', boss: '👑' };
+const STAT_KIND49 = { hostileKills: 'kill', fished: 'fish', cooked: 'cook', harvested: 'harvest', placed: 'place', structures: 'explore', bosses: 'boss' };
+const toStack49 = (s) => (s ? (s.ench ? [s.id, s.count, s.dmg || 0, s.ench] : [s.id, s.count, s.dmg || 0]) : null);
+const fromStack49 = (a) => (Array.isArray(a) && ITEMS[a[0]] && a[1] > 0 ? { id: a[0], count: a[1], dmg: a[2] || 0, ...(a[3] && typeof a[3] === 'object' ? { ench: a[3] } : {}) } : null);
+FREE_INTERACT.add('tchest49'); FREE_INTERACT.add('elev48');      // (elegir piso en un elevador no cambia el mundo)
+
+const net49 = {
+  feat: new Set(), teams: [], claims: [], locks: new Map(), coop: null, gev: null, gevAt: 0, pings: new Map(), lost: new Map(),
+  prompts: [], trade: null, tchest: null, online: null, prog: {}, progT: 0, invSig: '', invT: 0, latT: 4, claimIn: undefined, hudT: 0, lastT: null,
+  has(f) { return !!(net.active && this.feat.has(f)); },
+  any() { return !!(net.active && this.feat.size); },
+  reset() {
+    this.abortTrade(); this.closeTeamChest(true);
+    this.teams = []; this.claims = []; this.locks.clear(); this.coop = this.gev = null; this.pings.clear(); this.lost.clear();
+    this.prompts = []; this.online = null; this.prog = {}; this.claimIn = undefined; this.renderPrompts(); this.renderHud();
+    if (grp49.open) grp49.hide();
+  },
+  myTeam() { const id = net.you && net.you.team; return id ? this.teams.find((t) => t.id === id) || null : null; },
+  rosterOf(pid) { return net.roster ? net.roster.list.find((p) => p.id === pid) || null : null; },
+  teamOfPid(pid) { const r = this.rosterOf(pid); return r && r.team ? this.teams.find((t) => t.id === r.team) || null : null; },
+  nameOf(pid) { return this.rosterOf(pid)?.name || net.remote.get(pid)?.spec?.name || '?'; },
+  claimAt(x, z) { return this.claims.find((c) => Math.abs(x - c.x) <= c.r && Math.abs(z - c.z) <= c.r) || null; },
+  // ¿Por qué no puedo cambiar este bloque? (null = sí puedo). El servidor lo comprueba igual.
+  blockedAt(x, y, z) {
+    if (!net.active) return null;
+    const lk = this.locks.get(`${x},${y},${z}`); if (lk && !lk[1] && !net.isHost()) return `Ese cofre tiene candado de ${lk[0]}`;
+    const c = this.claimAt(x, z); if (c && !c.can) return `Terreno protegido «${c.name}» de ${c.ownerName}`;
+    return null;
+  },
+  denyMsg(msg) { const now = performance.now(); if (now - (this.denyT || 0) < 1500) return; this.denyT = now; hud.toast(msg, 2400); },
+
+  /* --- Mensajes del servidor --- */
+  receive(m) {
+    switch (m.type) {
+      case 'teams': this.teams = Array.isArray(m.l) ? m.l : []; this.retagAll(); grp49.render(); return true;
+      case 'claims': this.claims = Array.isArray(m.l) ? m.l : []; this.claimIn = undefined; grp49.render(); return true;
+      case 'locks': this.locks = new Map((m.l || []).map(([k, n, mine]) => [k, [n, !!mine]])); if (ui.mode === 'chest') renderInventory(); return true;
+      case 'coop': this.coop = m.q || null; this.renderHud(); grp49.render(); return true;
+      case 'gev': this.gev = m.g || null; this.gevAt = performance.now(); this.renderHud(); grp49.render(); return true;
+      case 'pings':
+        this.pings = new Map((m.l || []).map(([id, lat, hp]) => [id, [lat, hp]]));
+        if (grp49.open && grp49.tab === 'players') grp49.updateStats();
+        if (plList49.open) plList49.render();
+        return true;
+      case 'lost': { const r = net.remote.get(m.id); this.lost.set(m.id, { name: m.name, until: performance.now() + (m.secs || 20) * 1000 }); if (r) { r.lost49 = true; this.retag(r); } grp49.render(); return true; }
+      case 'leave': this.lost.delete(m.id); return false;
+      case 'coopDone':
+        chatUI.add(m.ok ? `✔ ${m.which === 'coop' ? 'Misión cooperativa' : 'Evento de grupo'} completado: ${m.title}` : `✖ Terminó el evento «${m.title}» (${m.prog}/${m.n})`, 'sys');
+        if (m.ok) { sfx.play('levelup'); if (m.helped) game.unlock(m.which === 'coop' ? 'coop49' : 'gev49'); }
+        return true;
+      case 'reward': {
+        const p = game.player; if (!p || !Array.isArray(m.l)) return true;
+        for (const r of m.l) {
+          const em = Math.max(0, Math.min(64, r.em | 0)), xp = Math.max(0, Math.min(500, r.xp | 0));
+          const left = em ? p.inv.add(I.EMERALD, em) : 0; if (left) game.entities.dropItem({ id: I.EMERALD, count: left }, p.pos.x, p.pos.y + 1, p.pos.z);
+          if (xp) p.addXp(xp);
+          hud.toast(`🤝 Recompensa de «${r.title}»: ${em} esmeraldas y ${xp} de experiencia`, 3200);
+        }
+        hud.update(); net.savePlayer(); return true;
+      }
+      case 'teamInvite':
+        this.prompt({ key: 'team:' + m.team, text: `${m.from} te invita a su equipo «${m.name}»`, color: m.color,
+          yes: () => net.send({ type: 'team', act: 'accept', team: m.team }), no: () => net.send({ type: 'team', act: 'decline' }) });
+        return true;
+      case 'invite':
+        this.prompt({ key: 'room:' + m.code, text: `${m.from} te invita a la sala «${m.room}»${m.locked && !m.pass ? ' (tiene contraseña)' : ''}`, yesTxt: 'Ir a la sala',
+          yes: () => this.goRoom(m.code, m.pass), no: () => {} });
+        return true;
+      case 'online': this.online = Array.isArray(m.l) ? m.l : []; grp49.render(); return true;
+      case 'trade': this.onTrade(m); return true;
+      case 'tchest': this.onTeamChest(m); return true;
+      case 'chat':
+        if (m.team) { chatUI.add(`[Equipo] <${m.name}> ${m.text}`, 'team'); return true; }
+        return false;
+    }
+    return false;
+  },
+  // Avisos con respuesta (invitaciones y comercio): en el HUD y arriba del panel de grupo
+  prompt(p) {
+    this.prompts = this.prompts.filter((q) => q.key !== p.key); p.until = performance.now() + 45000; this.prompts.push(p);
+    sfx.play('pop'); chatUI.add(`${p.text}. ${IS_TOUCH ? 'Responde en el aviso.' : `Responde en el aviso o con ${keyName(settings.keys.group)} (panel de grupo).`}`, 'sys');
+    this.renderPrompts(); grp49.render();
+  },
+  answer(key, yes) {
+    const p = this.prompts.find((q) => q.key === key); if (!p) return;
+    this.prompts = this.prompts.filter((q) => q !== p);
+    (yes ? p.yes : p.no)?.(); sfx.play('click'); this.renderPrompts(); grp49.render();
+  },
+  promptHtml(p) {
+    return `<div class="np49"${p.color ? ` style="border-color:${p.color}"` : ''}><span>${escapeHtml(p.text)}</span><button class="btn small primary" data-yes="${escapeHtml(p.key)}">${escapeHtml(p.yesTxt || 'Aceptar')}</button><button class="btn small" data-no="${escapeHtml(p.key)}">Rechazar</button></div>`;
+  },
+  renderPrompts() {
+    const el = $('#netPrompts'); if (!el) return;
+    const now = performance.now(); this.prompts = this.prompts.filter((p) => p.until > now);
+    const html = this.prompts.slice(-2).map((p) => this.promptHtml(p)).join('');
+    if (el._h !== html) { el._h = html; el.innerHTML = html; }           // sin redibujar si no cambió (no corta un toque a medias)
+  },
+  // Ir a otra sala del mismo servidor (invitación)
+  goRoom(code, pass) {
+    if (net.active) { const url = net.url, name = net.myName, sp = net.srvPass; hud.toast('Cambiando de sala…'); net.join(url, name, sp, { code, pass: pass || undefined }); }
+    else if (net.connected) net.send({ type: 'join', code, pass: pass || undefined });
+  },
+
+  /* --- Etiquetas de nombre con el color del equipo; mascotas de otros jugadores --- */
+  retag(r) {
+    if (!r || !r.tagTex) return;
+    const cv = r.tagTex.image, x = cv.getContext('2d'), team = this.teamOfPid(r.pid), name = r.spec.name + (r.lost49 ? ' (sin conexión)' : '');
+    x.clearRect(0, 0, cv.width, cv.height);
+    x.font = '700 30px ' + getComputedStyle(document.body).fontFamily; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const w = Math.min(250, x.measureText(name).width + 24);
+    x.fillStyle = 'rgba(0,0,0,.55)'; x.fillRect(128 - w / 2, 12, w, 40);
+    if (team) { x.fillStyle = team.color; x.fillRect(128 - w / 2, 48, w, 4); x.fillRect(128 - w / 2, 12, 5, 40); }
+    x.fillStyle = r.lost49 ? '#aaa' : team ? team.color : '#fff'; x.fillText(name, 128, 33, 240);
+    r.tagTex.needsUpdate = true; r.tag.material.opacity = r.lost49 ? 0.6 : 1;
+  },
+  retagAll() { for (const r of net.remote.values()) this.retag(r); },
+  petTag(e, text) {
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 48; const x = cv.getContext('2d');
+    x.font = '600 24px ' + getComputedStyle(document.body).fontFamily; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const w = Math.min(250, x.measureText(text).width + 18);
+    x.fillStyle = 'rgba(0,0,0,.5)'; x.fillRect(128 - w / 2, 8, w, 32); x.fillStyle = '#ffe9a8'; x.fillText(text, 128, 25, 240);
+    const tex = new THREE.CanvasTexture(cv), spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false }));
+    spr.scale.set(1.5, 0.28, 1); spr.position.y = (e.spec.h || 1) + 0.45; e.mesh.add(spr); e.petTag49 = spr;
+  },
+
+  /* --- Comercio --- */
+  onTrade(m) {
+    const T = this.trade;
+    switch (m.act) {
+      case 'req':
+        this.prompt({ key: 'trade:' + m.from, text: `${m.name} quiere comerciar contigo`, yesTxt: 'Comerciar',
+          yes: () => net.send({ type: 'trade', act: 'accept', from: m.from }), no: () => net.send({ type: 'trade', act: 'decline', from: m.from }) });
+        return;
+      case 'declined': hud.toast(`${m.name} no quiso comerciar`); return;
+      case 'open':
+        this.abortTrade();
+        this.trade = { id: m.id, with: m.with, name: m.name, mine: [], theirs: [], me: false, them: false };
+        trade49.show(); return;
+      case 'offer': if (T && T.id === m.id) { T.theirs = (m.items || []).map(fromStack49); trade49.render(); } return;
+      case 'ready': if (T && T.id === m.id) { T.me = !!m.me; T.them = !!m.them; trade49.render(); } return;
+      case 'done': {
+        if (!T || T.id !== m.id) return;
+        const p = game.player; let n = 0;
+        for (const s of (m.give || []).map(fromStack49)) if (s) { n += s.count; const left = p.inv.add(s.id, s.count, s.dmg, s.ench); if (left) game.entities.dropItem({ ...s, count: left }, p.pos.x, p.pos.y + 1, p.pos.z); p.discover(s.id); }
+        this.trade = null; trade49.hide();
+        hud.toast(`🤝 Trato cerrado con ${T.name}${n ? `: recibiste ${n} objeto${n === 1 ? '' : 's'}` : ''}`, 2600); sfx.play('levelup');
+        game.unlock('trade49'); hud.update(); net.savePlayer(); return;
+      }
+      case 'cancel': if (T && T.id === m.id) { this.abortTrade(); hud.toast(m.why || 'Se canceló el trato', 2400); } return;
+    }
+  },
+  // Devuelve lo que estaba sobre la mesa (cancelación, desconexión o cambio de sala)
+  abortTrade() {
+    const T = this.trade; if (!T) return;
+    this.trade = null;
+    const p = game.player;
+    if (p) for (const s of T.mine) if (s) { const left = p.inv.add(s.id, s.count, s.dmg, s.ench); if (left) game.entities.dropItem({ ...s, count: left }, p.pos.x, p.pos.y + 1, p.pos.z); }
+    trade49.hide(); if (p) { hud.update(); net.savePlayer(); }
+  },
+  sendOffer() { const T = this.trade; if (T) net.send({ type: 'trade', act: 'offer', id: T.id, items: T.mine.map(toStack49) }); },
+
+  /* --- Cofre de equipo --- */
+  openTeamChest() {
+    if (!this.has('tchest')) { hud.toast('El cofre de equipo funciona en servidores multijugador 4.9: allí lo comparte todo tu equipo', 3200); return; }
+    if (!this.myTeam()) { hud.toast('Únete a un equipo (panel de grupo) para usar el cofre de equipo', 2800); return; }
+    net.send({ type: 'tchest', act: 'open' });
+  },
+  onTeamChest(m) {
+    if (m.act === 'none') { hud.toast('No estás en ningún equipo'); return; }
+    if (m.act === 'busy') { hud.toast(`${m.name} está usando el cofre del equipo`); return; }
+    if (m.act === 'refund') {
+      const p = game.player; if (!p) return;
+      for (const s of (m.inv || []).map(fromStack49)) if (s) { const left = p.inv.add(s.id, s.count, s.dmg, s.ench); if (left) game.entities.dropItem({ ...s, count: left }, p.pos.x, p.pos.y + 1, p.pos.z); }
+      hud.toast('El equipo se disolvió: recibiste lo que quedaba en su cofre', 2800); hud.update(); net.savePlayer(); return;
+    }
+    if (m.act === 'all') {
+      if (game.state !== 'playing' && game.state !== 'group') { net.send({ type: 'tchest', act: 'close' }); return; }
+      if (grp49.open) grp49.hide();
+      const inv = new Inventory(27); inv.slots = Array.from({ length: 27 }, (_, i) => fromStack49((m.inv || [])[i]));
+      this.tchest = { type: 'chest', inv, title: `Cofre del equipo «${m.name}»`, team49: true };
+      this.tchestSig = JSON.stringify(inv.toJSON());
+      openInventory('chest', this.tchest); game.unlock('teamchest49');
+    }
+  },
+  syncTeamChest(close) {
+    const t = this.tchest; if (!t) return;
+    const sig = JSON.stringify(t.inv.toJSON());
+    if (close || sig !== this.tchestSig) {
+      this.tchestSig = sig;
+      net.send({ type: 'tchest', act: close ? 'close' : 'save', inv: t.inv.slots.map(toStack49) });
+      if (!close) net.savePlayer();           // lo que entra o sale del cofre queda guardado en los dos lados a la vez
+    }
+    if (close) { this.tchest = null; net.savePlayer(); }
+  },
+  closeTeamChest(lost) { if (this.tchest && ui.tile === this.tchest) closeInventory(); else if (this.tchest && !lost) this.syncTeamChest(true); this.tchest = null; },
+
+  /* --- Progreso de misiones cooperativas y eventos de grupo --- */
+  addProg(k, n = 1) { if (!this.has('coop')) return; if ((this.coop && this.coop.k === k) || (this.gev && this.gev.k === k)) this.prog[k] = (this.prog[k] || 0) + n; },
+  flushProg() { for (const k in this.prog) { const n = Math.min(50, this.prog[k]); if (n > 0) net.send({ type: 'prog', k, n }); } this.prog = {}; },
+  renderHud() {
+    const el = $('#coopTracker'); if (!el) return;
+    if (!net.active || (!this.coop && !this.gev)) { el.style.display = 'none'; return; }
+    let h = '';
+    const bar = (q) => `<i><s style="width:${Math.round(100 * Math.min(1, q.prog / q.n))}%"></s></i>`;
+    if (this.gev) {
+      const left = Math.max(0, this.gev.left - Math.floor((performance.now() - this.gevAt) / 1000));
+      h += `<div class="gev"><b>${COOP_ICON49[this.gev.k] || '★'} ${escapeHtml(this.gev.title)} · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}</b><span>${this.gev.prog}/${this.gev.n}</span>${bar(this.gev)}</div>`;
+    }
+    if (this.coop) h += `<div><b>🤝 ${escapeHtml(this.coop.title)}</b><span>${this.coop.prog}/${this.coop.n}</span>${bar(this.coop)}</div>`;
+    el.innerHTML = h; el.style.display = '';
+  },
+
+  /* --- Cada fotograma (desde net.tick) --- */
+  tick(dt) {
+    if (!net.active || !net.connected || !game.player || game.state === 'loading' || game.state === 'menu') return;
+    const p = game.player;
+    if ((this.progT += dt) >= 1) { this.progT = 0; this.flushProg(); }
+    // inventario: se guarda en el servidor poco después de cambiar (no solo cada 30 s)
+    if ((this.invT += dt) >= 2) {
+      this.invT = 0;
+      const sig = JSON.stringify([p.inv.toJSON(), p.armor.toJSON(), p.offhand.toJSON(), Math.ceil(p.health), p.level]);
+      if (sig !== this.invSig) { this.invSig = sig; net.savePlayer(); }
+    }
+    if (this.feat.has('pings') && (this.latT += dt) >= 5) { this.latT = 0; net.send({ type: 'lat', ms: net.ping | 0 }); }
+    if ((this.hudT += dt) >= 0.5) {
+      this.hudT = 0; this.renderHud(); this.renderPrompts();
+      const c = this.claimAt(Math.floor(p.pos.x), Math.floor(p.pos.z)), id = c ? c.id : null;
+      if (this.claimIn !== undefined && id !== this.claimIn) {
+        if (c) hud.toast(`${c.mine ? '🏠' : c.can ? '🤝' : '🔒'} ${c.name}${c.mine ? ' (tu terreno)' : ` · terreno de ${c.ownerName}${c.can ? ' (puedes construir)' : ''}`}`, 2200);
+        else { const o = this.claims.find((x) => x.id === this.claimIn); if (o) hud.toast(`Saliste de «${o.name}»`, 1500); }
+      }
+      this.claimIn = id;
+      const now = performance.now(); for (const [id2, l] of this.lost) if (l.until < now) this.lost.delete(id2);
+    }
+  },
+};
+
+/* ---------- Panel de grupo ---------- */
+const grp49 = {
+  open: false, tab: 'players', size: 8, color: TEAM_COLORS49[0],
+  show(tab) {
+    if (!net49.any()) { hud.toast(net.active ? 'Este servidor no tiene las funciones de grupo (actualízalo a la 4.9)' : 'El panel de grupo es para partidas multijugador'); return; }
+    if (tab) this.tab = tab;
+    this.open = true; game.releaseInputs(); game.state = 'group';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('grpScreen'); this.render(); game.unlock('group49');
+  },
+  hide() { if (!this.open) return; this.open = false; showScreen(null); if (game.state === 'group') { game.state = 'playing'; game.resume(); } },
+  render() {
+    if (!this.open) return;
+    $$('#grpScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.gtab === this.tab));
+    $$('#grpScreen .stab').forEach((b) => { b.hidden = !({ players: true, team: net49.feat.has('teams'), land: net49.feat.has('claims'), coop: net49.feat.has('coop') })[b.dataset.gtab]; });
+    const ph = net49.prompts.map((p) => net49.promptHtml(p)).join(''), pe = $('#grpPrompts'); if (pe._h !== ph) { pe._h = ph; pe.innerHTML = ph; }
+    const body = $('#grpBody'), html = this[this.tab]();
+    if (body._h === html) return;                 // sin cambios: no se redibuja (no corta un toque ni lo que se está escribiendo)
+    const scroll = body.scrollTop, vals = {}, focus = document.activeElement && body.contains(document.activeElement) ? document.activeElement.id : null;
+    for (const el of body.querySelectorAll('input[id], select[id]')) vals[el.id] = el.value;
+    body._h = html; body.innerHTML = html; body.scrollTop = scroll;
+    for (const id in vals) { const el = body.querySelector('#' + id); if (el) el.value = vals[id]; }
+    if (focus) body.querySelector('#' + focus)?.focus();
+  },
+  // vida, latencia y distancia de cada jugador sin redibujar la lista
+  statLine(p) {
+    const me = net.id, r = net.remote.get(p.id), pg = net49.pings.get(p.id), p0 = game.player;
+    const lat = p.id === me ? net.ping : pg ? pg[0] : p.lat, hp = p.id === me ? Math.ceil(p0.health) : pg ? pg[1] : r ? r.hp : '?';
+    const dist = p.id !== me && r && r.t ? Math.round(Math.hypot(r.t.x - p0.pos.x, r.t.z - p0.pos.z)) : null;
+    return `❤ ${hp} · ${lat | 0} ms${dist != null ? ` · ${dist} m` : ''}`;
+  },
+  updateStats() {
+    for (const el of $$('#grpBody .g49st')) { const p = this.rosterP(+el.dataset.pid); if (p) el.textContent = this.statLine(p); }
+  },
+  rosterP(id) { return (net.roster || { list: [] }).list.find((p) => p.id === id); },
+  btn(txt, act, data = {}, cls = '') { return `<button class="btn small ${cls}" data-act="${act}"${Object.entries(data).map(([k, v]) => ` data-${k}="${escapeHtml(String(v))}"`).join('')}>${txt}</button>`; },
+  players() {
+    const R = net.roster || { list: [] }, me = net.id, host = net.isHost(), myTeam = net49.myTeam(), p0 = game.player;
+    let h = `<p class="g49info">Sala «${escapeHtml(net.room?.name || '')}» · código <b>${escapeHtml(net.room?.code || '')}</b> · ${R.list.length}/${net.room?.max || '?'} jugadores. Mantén ${IS_TOUCH ? 'este panel abierto' : 'Tab'} para ver la lista rápida.</p><div class="g49list">`;
+    for (const p of R.list) {
+      const team = net49.teams.find((t) => t.id === p.team);
+      h += `<div class="rp g49p"><i class="tdot" style="background:${team ? team.color : '#777'}"></i><b>${escapeHtml(p.name)}</b>`;
+      h += `<span class="tag ${p.role}">${ROLE_NAMES[p.role] || p.role}</span>${p.id === me ? '<span class="tag me">Tú</span>' : ''}${team ? `<span class="tag" style="background:${team.color}">${escapeHtml(team.name)}</span>` : ''}`;
+      if (p.build === false) h += '<span class="tag visitor">No construye</span>';
+      h += `<small class="g49st" data-pid="${p.id}">${this.statLine(p)}</small>`;
+      if (p.id !== me) {
+        if (net49.feat.has('trade')) h += this.btn('🤝 Comerciar', 'trade', { id: p.id });
+        if (net49.feat.has('teams') && myTeam && !p.team) h += this.btn('➕ Al equipo', 'tinv', { id: p.id });
+        if (host && net49.feat.has('perm')) {
+          if (p.role !== 'host') h += p.build === false ? this.btn('✔ Puede construir', 'perm', { id: p.id, v: 'allow' }) : this.btn('✖ No construye', 'perm', { id: p.id, v: 'deny' });
+          if (p.perm != null && p.role !== 'host') h += this.btn('↺ Permiso general', 'perm', { id: p.id, v: 'resetperm' });
+        }
+      }
+      h += '</div>';
+    }
+    for (const [id, l] of net49.lost) h += `<div class="rp g49p lost"><i class="tdot"></i><b>${escapeHtml(l.name)}</b><small>sin conexión: tiene unos segundos para volver</small></div>`;
+    h += '</div>';
+    if (net49.feat.has('invite')) {
+      h += `<h3>Invitar a la sala</h3><p class="g49info">Comparte el código <b>${escapeHtml(net.room?.code || '')}</b> o el enlace, o invita a alguien que esté ahora en este servidor.</p>`;
+      h += `<div class="row">${this.btn('🔗 Copiar enlace', 'link')}${this.btn('🔍 Buscar jugadores del servidor', 'online')}</div>`;
+      if (net49.online) {
+        h += net49.online.length ? '<div class="g49list">' + net49.online.map((o) => `<div class="rp"><b>${escapeHtml(o.name)}</b><small>${escapeHtml(o.where)}</small>${this.btn('✉ Invitar', 'invite', { id: o.id })}</div>`).join('') + '</div>'
+          : '<p class="g49info">No hay nadie más en el servidor fuera de esta sala.</p>';
+      }
+    }
+    return h;
+  },
+  team() {
+    const T = net49.myTeam(), R = net.roster || { list: [] };
+    let h = '';
+    if (!T) {
+      h += `<p class="g49info">Los miembros de un equipo ven su color en el nombre, no se hacen daño entre sí, tienen chat propio (/e mensaje o el botón «Equipo» del chat) y comparten el cofre de equipo y sus terrenos.</p>`;
+      h += `<h3>Crear un equipo</h3><div class="row g49form"><input id="g49Name" type="text" maxlength="20" placeholder="Nombre del equipo"><div class="g49colors">${TEAM_COLORS49.map((c) => `<button class="g49c${c === this.color ? ' on' : ''}" data-act="color" data-c="${c}" style="background:${c}" title="Color"></button>`).join('')}</div>${this.btn('Crear', 'tcreate', {}, 'primary')}</div>`;
+    } else {
+      h += `<h3><i class="tdot" style="background:${T.color}"></i> ${escapeHtml(T.name)}</h3><div class="row">${this.btn('📦 Abrir cofre del equipo', 'tchest', {}, 'primary')}${this.btn('🚪 Salir del equipo', 'tleave', {}, 'danger')}</div><div class="g49list">`;
+      const leader = T.owner === net.id;
+      for (const m of T.members) {
+        h += `<div class="rp"><b>${escapeHtml(m.name)}</b>${m.name === T.ownerName ? '<span class="tag host">Líder</span>' : ''}<small>${m.id != null ? 'conectado' : 'no está en la sala'}</small>`;
+        if (leader && m.id != null && m.id !== net.id) h += this.btn('Expulsar', 'tkick', { id: m.id });
+        h += '</div>';
+      }
+      h += '</div><p class="g49info">Para invitar a alguien, usa «➕ Al equipo» en la pestaña Jugadores.</p>';
+    }
+    const others = net49.teams.filter((t) => !T || t.id !== T.id);
+    if (others.length) h += '<h3>Otros equipos de la sala</h3><div class="g49list">' + others.map((t) => `<div class="rp"><i class="tdot" style="background:${t.color}"></i><b>${escapeHtml(t.name)}</b><small>${t.members.length} miembro${t.members.length === 1 ? '' : 's'} · líder ${escapeHtml(t.ownerName)}</small></div>`).join('') + '</div>';
+    return h;
+  },
+  land() {
+    const p = game.player, x = Math.floor(p.pos.x), z = Math.floor(p.pos.z), here = net49.claimAt(x, z), mine = net49.claims.filter((c) => c.mine);
+    let h = `<p class="g49info">En un terreno protegido solo construyen su dueño, su equipo, los jugadores que él autorice y el anfitrión. Cada jugador puede proteger hasta 3. En un cofre abierto puedes ponerle 🔒 candado para que solo tú lo abras.</p>`;
+    h += `<p><b>Aquí (${x}, ${z}):</b> ${here ? `«${escapeHtml(here.name)}» ${here.mine ? '(tu terreno)' : `de ${escapeHtml(here.ownerName)}${here.can ? ' · puedes construir' : ' · protegido'}`}` : 'terreno libre'}</p>`;
+    if (!here) {
+      h += `<div class="row g49form"><input id="g49Claim" type="text" maxlength="24" placeholder="Nombre (opcional)"><select id="g49Size">${CLAIM_SIZES49.map((r) => `<option value="${r}"${r === this.size ? ' selected' : ''}>${r * 2 + 1}×${r * 2 + 1} bloques</option>`).join('')}</select>${this.btn('🏠 Proteger aquí', 'claim', {}, 'primary')}</div>`;
+    }
+    if (mine.length) {
+      h += '<h3>Tus terrenos</h3><div class="g49list">';
+      const R = (net.roster || { list: [] }).list.filter((q) => q.id !== net.id);
+      for (const c of mine) {
+        h += `<div class="rp"><b>${escapeHtml(c.name)}</b><small>${c.r * 2 + 1}×${c.r * 2 + 1} en (${c.x}, ${c.z})${c.friends.length ? ' · también construyen: ' + c.friends.map(escapeHtml).join(', ') : ''}</small>${this.btn('Quitar', 'unclaim', { id: c.id }, 'danger')}`;
+        const myTeam = net49.myTeam();
+        for (const q of R) {
+          if (myTeam && q.team === myTeam.id) continue;              // los del equipo ya pueden construir
+          const on = c.friends.includes(q.name); h += this.btn(on ? `✖ Quitar permiso a ${escapeHtml(q.name)}` : `✔ Dejar construir a ${escapeHtml(q.name)}`, 'friend', { id: c.id, who: q.id, on: on ? 0 : 1 });
+        }
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    const others = net49.claims.filter((c) => !c.mine);
+    if (others.length) h += '<h3>Terrenos de otros</h3><div class="g49list">' + others.map((c) => `<div class="rp"><b>${escapeHtml(c.name)}</b><small>de ${escapeHtml(c.ownerName)} · ${c.r * 2 + 1}×${c.r * 2 + 1} en (${c.x}, ${c.z})${c.can ? ' · puedes construir' : ''}</small>${net.isHost() ? this.btn('Quitar', 'unclaim', { id: c.id }, 'danger') : ''}</div>`).join('') + '</div>';
+    return h;
+  },
+  coop() {
+    const q = net49.coop, g = net49.gev;
+    const card = (x, extra) => `<div class="g49q"><b>${COOP_ICON49[x.k] || '★'} ${escapeHtml(x.title)}</b><p>${escapeHtml(x.goal)}</p><i><s style="width:${Math.round(100 * Math.min(1, x.prog / x.n))}%"></s></i><small>${x.prog}/${x.n} · recompensa para cada jugador que ayude: ${x.em} esmeraldas${x.xp ? ` y ${x.xp} de experiencia` : ''}${extra || ''}</small></div>`;
+    let h = '<h3>Misión cooperativa</h3>';
+    h += q ? card(q) : '<p class="g49info">La próxima misión cooperativa empieza en un minuto.</p>';
+    h += '<h3>Evento de grupo</h3>';
+    if (g) { const left = Math.max(0, g.left - Math.floor((performance.now() - net49.gevAt) / 1000)); h += card(g, ` · quedan ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`); }
+    else h += `<p class="g49info">Los eventos de grupo aparecen solos cada 15-25 minutos cuando hay al menos dos jugadores.${net.isHost() ? '' : ' El anfitrión puede empezar uno ya.'}</p>${net.isHost() ? this.btn('⚡ Empezar un evento ahora', 'event', {}, 'primary') : ''}`;
+    h += '<p class="g49info">El progreso se suma entre todos los jugadores de la sala y lo lleva el servidor: si te desconectas, lo que aportaste queda, y la recompensa te espera al volver.</p>';
+    return h;
+  },
+  click(b) {
+    const d = b.dataset, id = d.id != null ? +d.id : null;
+    switch (d.act) {
+      case 'trade': net.send({ type: 'trade', act: 'req', to: id }); break;
+      case 'tinv': net.send({ type: 'team', act: 'invite', id }); break;
+      case 'perm': net.send({ type: 'admin', act: d.v, id }); break;
+      case 'link': { const l = roomsUI.inviteLink(); navigator.clipboard?.writeText(l).then(() => hud.toast('Enlace de invitación copiado'), () => hud.toast(l, 6000)) ?? hud.toast(l, 6000); break; }
+      case 'online': net.send({ type: 'online' }); break;
+      case 'invite': net.send({ type: 'invite', to: id }); break;
+      case 'color': this.color = d.c; this.render(); return;
+      case 'tcreate': { const n = $('#g49Name').value.trim(); if (!n) { hud.toast('Ponle un nombre al equipo'); return; } net.send({ type: 'team', act: 'create', name: n, color: this.color }); break; }
+      case 'tchest': net49.openTeamChest(); break;
+      case 'tleave': net.send({ type: 'team', act: 'leave' }); break;
+      case 'tkick': net.send({ type: 'team', act: 'kick', id }); break;
+      case 'claim': { const p = game.player; this.size = +$('#g49Size').value; net.send({ type: 'claim', act: 'add', x: Math.floor(p.pos.x), z: Math.floor(p.pos.z), r: this.size, name: $('#g49Claim').value.trim() }); game.unlock('claim49'); break; }
+      case 'unclaim': net.send({ type: 'claim', act: 'del', id: d.id }); break;
+      case 'friend': net.send({ type: 'claim', act: 'friend', id: d.id, who: +d.who, on: d.on === '1' }); break;
+      case 'event': net.send({ type: 'admin', act: 'event' }); break;
+      default: return;
+    }
+    sfx.play('click');
+  },
+};
+
+/* ---------- Ventana de comercio ---------- */
+const trade49 = {
+  open: false,
+  show() { this.open = true; game.releaseInputs(); if (grp49.open) { grp49.open = false; } game.state = 'trade49'; if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); } showScreen('tradeScreen'); this.render(); },
+  hide() { if (!this.open) return; this.open = false; showScreen(null); if (game.state === 'trade49') { game.state = 'playing'; game.resume(); } },
+  render() {
+    const T = net49.trade; if (!this.open || !T) return;
+    $('#trdTitle').textContent = `Comercio con ${T.name}`;
+    const fill = (box, list, cls, click) => {
+      box.innerHTML = '';
+      for (let i = 0; i < 9; i++) { const el = slotEl(cls, i); paintSlot(el, list[i] || null); if (list[i]) el.title = `${itemName(list[i].id)} ×${list[i].count}`; if (click) el.onclick = (e) => { e.preventDefault(); e.stopPropagation(); click(i); }; box.append(el); }
+    };
+    fill($('#trdMine'), T.mine, 'trd', (i) => this.takeBack(i));
+    fill($('#trdTheirs'), T.theirs, 'trd');
+    $('#trdTheirLbl').textContent = `Oferta de ${T.name}`;
+    $('#trdMeSt').textContent = T.me ? '✔ Aceptaste' : 'Sin aceptar'; $('#trdMeSt').classList.toggle('ok', T.me);
+    $('#trdThemSt').textContent = T.them ? '✔ Aceptó' : 'Sin aceptar'; $('#trdThemSt').classList.toggle('ok', T.them);
+    $('#trdReady').textContent = T.me ? 'Quitar mi aceptación' : '✔ Aceptar el trato';
+    const inv = $('#trdInv'), p = game.player; inv.innerHTML = '';
+    for (let i = 0; i < 36; i++) {
+      const j = i < 27 ? i + 9 : i - 27, s = p.inv.slots[j], el = slotEl('trdinv', j); paintSlot(el, s);
+      if (s) { el.title = `${itemName(s.id)} ×${s.count} · clic: toda la pila · clic derecho: uno`; el.onclick = (e) => { e.preventDefault(); e.stopPropagation(); this.put(j, e.shiftKey ? 1 : s.count); }; el.oncontextmenu = (e) => { e.preventDefault(); e.stopPropagation(); this.put(j, 1); }; }
+      inv.append(el);
+    }
+  },
+  put(j, n) {
+    const T = net49.trade, p = game.player, s = p.inv.slots[j]; if (!T || !s) return;
+    n = Math.min(n, s.count);
+    const same = T.mine.find((o) => o && o.id === s.id && !o.ench && !s.ench && (o.dmg || 0) === (s.dmg || 0) && o.count + n <= maxStack(s.id));
+    if (!same && T.mine.filter(Boolean).length >= 9) { hud.toast('La mesa de comercio tiene 9 espacios'); return; }
+    if (same) same.count += n; else { const free = T.mine.findIndex((o) => !o); const it = { ...s, count: n }; if (free >= 0) T.mine[free] = it; else T.mine.push(it); }
+    s.count -= n; if (s.count <= 0) p.inv.slots[j] = null;
+    sfx.play('pop'); net49.sendOffer(); hud.update(); this.render();
+  },
+  takeBack(i) {
+    const T = net49.trade, s = T && T.mine[i]; if (!s) return;
+    const p = game.player, left = p.inv.add(s.id, s.count, s.dmg, s.ench);
+    if (left === s.count) { hud.toast('No te cabe en el inventario'); return; }
+    if (left) s.count = left; else T.mine[i] = null;
+    sfx.play('pop'); net49.sendOffer(); hud.update(); this.render();
+  },
+  ready() { const T = net49.trade; if (T) { net.send({ type: 'trade', act: 'ready', id: T.id, v: !T.me }); sfx.play('click'); } },
+  cancel() { const T = net49.trade; if (!T) { this.hide(); return; } net.send({ type: 'trade', act: 'cancel', id: T.id }); net49.abortTrade(); hud.toast('Cancelaste el trato'); },
+};
+
+/* ---------- Lista rápida de jugadores (mantener Tab) ---------- */
+const plList49 = {
+  open: false,
+  set(on) { if (on === this.open) return; this.open = on; $('#plList').style.display = on ? '' : 'none'; if (on) this.render(); },
+  render() {
+    const R = net.roster || { list: [] };
+    let h = `<b>${escapeHtml(net.room?.name || 'Sala')} · ${R.list.length}/${net.room?.max || '?'}</b>`;
+    for (const p of R.list) {
+      const pg = net49.pings.get(p.id), team = net49.teams.find((t) => t.id === p.team), lat = p.id === net.id ? net.ping : pg ? pg[0] : p.lat;
+      const bars = lat < 80 ? '▮▮▮▮' : lat < 160 ? '▮▮▮▯' : lat < 300 ? '▮▮▯▯' : '▮▯▯▯';
+      h += `<div><i class="tdot" style="background:${team ? team.color : '#777'}"></i><span>${escapeHtml(p.name)}${p.role === 'host' ? ' ★' : ''}</span><em>${team ? escapeHtml(team.name) : ''}</em><small>❤ ${p.id === net.id ? Math.ceil(game.player.health) : pg ? pg[1] : '?'}</small><small class="lat" title="${lat | 0} ms">${bars} ${lat | 0}</small></div>`;
+    }
+    for (const l of net49.lost.values()) h += `<div class="lost"><i class="tdot"></i><span>${escapeHtml(l.name)}</span><em>sin conexión</em></div>`;
+    $('#plList').innerHTML = h;
+  },
+};
+
+/* ---------- Enganches con la red ---------- */
+{
+  const _receive = NetClient.prototype.receive;
+  NetClient.prototype.receive = function (m) {
+    if (m.type === 'welcome') {
+      const feat = new Set(Array.isArray(m.feat) ? m.feat : []);
+      if (!(m.resume && this.reconnecting)) net49.reset();
+      net49.feat = feat; net49.invSig = ''; net49.latT = 4;
+      document.body.classList.toggle('net49', feat.size > 0);
+    }
+    if (m.type === 'deny' || (m.type === 'tile' && m.why)) net49.denyWhy = m.why || null;
+    if (net49.receive(m)) return;
+    return _receive.call(this, m);
+  };
+  const _tick = NetClient.prototype.tick;
+  NetClient.prototype.tick = function (dt) {
+    const now = performance.now(), real = Math.min(1, (now - (this.lastT49 || now)) / 1000); this.lastT49 = now;
+    _tick.call(this, dt); net49.tick(real);
+  };
+  const _cleanup = NetClient.prototype.cleanup;
+  NetClient.prototype.cleanup = function () { net49.reset(); net49.feat = new Set(); document.body.classList.remove('net49'); plList49.set(false); return _cleanup.call(this); };
+  // Salir a propósito: se guarda el inventario y se avisa (los demás no esperan su vuelta)
+  const _leave = NetClient.prototype.leave;
+  NetClient.prototype.leave = function () {
+    if (this.active && this.connected && !this.reconnecting) { net49.abortTrade(); net49.closeTeamChest(); net49.flushProg(); this.savePlayer(); this.send({ type: 'bye' }); }
+    return _leave.call(this);
+  };
+  const _start = NetClient.prototype.startReconnect;
+  NetClient.prototype.startReconnect = function () {
+    net49.abortTrade(); net49.closeTeamChest(true); net49.prompts = []; net49.renderPrompts();
+    return _start.call(this);
+  };
+  // Durante un trato, lo que está sobre la mesa se guarda como si siguiera en el inventario: si se corta todo, no se pierde
+  const _save = NetClient.prototype.savePlayer;
+  NetClient.prototype.savePlayer = function () {
+    const T = net49.trade;
+    if (!T || !T.mine.some(Boolean) || !this.active || !game.player) return _save.call(this);
+    const d = game.player.toJSON(), inv = d.inv.slice();
+    for (const s of T.mine) if (s) { const i = inv.findIndex((x) => !x); if (i >= 0) inv[i] = toStack49(s); }
+    d.inv = inv; this.send({ type: 'save', d });
+  };
+  const _add = NetClient.prototype.addRemote;
+  NetClient.prototype.addRemote = function (pid, name) { const r = _add.call(this, pid, name); net49.lost.delete(pid); net49.retag(r); return r; };
+  const _roster = NetClient.prototype.onRoster;
+  NetClient.prototype.onRoster = function (m) { const r = _roster.call(this, m); net49.retagAll(); grp49.render(); if (plList49.open) plList49.render(); return r; };
+  window.addEventListener('beforeunload', () => { if (net.active && net.connected) { net49.flushProg(); net.savePlayer(); net.send({ type: 'bye' }); } });
+  // al recibir «Reintentar ahora» en el aviso de conexión perdida
+  const rb = $('#netRecNow'); if (rb) rb.onclick = () => { if (!net.reconnecting) return; clearTimeout(net.recTimer); $('#netRecMsg').textContent = 'Reconectando…'; net.connect(net.url, { code: net.room?.code, resume: true, pass: net.roomPass }); };
+  // mensajes de rechazo más claros (terreno protegido o candado)
+  const _deny = denyToast;
+  denyToast = function () { const w = net49.denyWhy; net49.denyWhy = null; if (w === 'claim') net49.denyMsg('Ese lugar está protegido: no puedes cambiarlo'); else _deny(); };
+}
+
+/* ---------- Mascotas y jugadores remotos ---------- */
+{
+  const _set = RemoteMob.prototype.setState;
+  RemoteMob.prototype.setState = function (a) {
+    _set.call(this, a);
+    if ((a[7] & 4) && !this.pet49) { this.pet49 = true; net49.petTag(this, `${String(a[8] || this.spec.name).slice(0, 18)} · de ${net49.nameOf(this.owner)}`); }
+    if (this.pet49) this.sit49 = !!(a[7] & 8);
+  };
+  const _hurt = RemoteMob.prototype.hurt;
+  RemoteMob.prototype.hurt = function (dmg, from) {
+    if (this.pet49) { net49.denyMsg(`Es la mascota de ${net49.nameOf(this.owner)}`); return false; }
+    return _hurt.call(this, dmg, from);
+  };
+  const _phurt = RemotePlayer.prototype.hurt;
+  RemotePlayer.prototype.hurt = function (dmg, from) {
+    const a = net49.myTeam(), b = net49.teamOfPid(this.pid);
+    if (a && b && a.id === b.id) { net49.denyMsg('Es de tu equipo: no hay fuego amigo'); return false; }
+    return _phurt.call(this, dmg, from);
+  };
+}
+
+/* ---------- Construir: terrenos protegidos y candados (el servidor también lo comprueba) ---------- */
+{
+  const _break = game.breakBlock, _place = game.placeHeld, _interact = game.interact;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    if (byPlayer && net.active) { const why = net49.blockedAt(x, y, z); if (why) { net49.denyMsg(why); return; } }
+    const id = byPlayer ? world.get(x, y, z) : 0, r = _break.call(this, x, y, z, byPlayer);
+    if (id && BLOCKS[id] && /^Mena/.test(BLOCKS[id].name) && world.get(x, y, z) !== id) net49.addProg('mine');
+    return r;
+  };
+  game.placeHeld = function () {
+    const t = this.target, s = this.player.held();
+    if (net.active && t && s && (ITEMS[s.id]?.block || ITEMS[s.id]?.place)) {
+      const n = Array.isArray(t.normal) ? t.normal : [t.normal?.x || 0, t.normal?.y || 0, t.normal?.z || 0];
+      const why = net49.blockedAt(t.x + n[0], t.y + n[1], t.z + n[2]);
+      if (why) { net49.denyMsg(why); return false; }
+    }
+    return _place.call(this);
+  };
+  game.interact = function () {
+    const t = this.target;
+    if (t && !down('sneak')) {
+      const def = BLOCKS[t.id];
+      if (def && def.interact === 'tchest49') { net49.openTeamChest(); return true; }
+      if (net.active && def && def.interact) {
+        if (!FREE_INTERACT.has(def.interact) && !net.canBuild()) { denyToast(); return true; }
+        const why = !FREE_INTERACT.has(def.interact) && net49.blockedAt(t.x, t.y, t.z); if (why) { net49.denyMsg(why); return true; }
+      }
+      net49.lastT = `${t.x},${t.y},${t.z}`;
+    }
+    return _interact.call(this);
+  };
+  // progreso cooperativo a partir de las estadísticas de siempre
+  const _stat = game.stats.add;
+  game.stats.add = function (k, n = 1) { _stat.call(this, k, n); const kind = STAT_KIND49[k]; if (kind && net.active) net49.addProg(kind, n); };
+}
+
+/* ---------- Inventario: cofre de equipo y candados ---------- */
+{
+  const _bar = chestBar;
+  chestBar = function () {
+    const bar = _bar();
+    if (ui.tile && ui.tile.team49) { const s = document.createElement('span'); s.className = 'cbInfo'; s.textContent = '👥 Compartido con tu equipo'; bar.append(s); return bar; }
+    const k = net49.lastT;
+    if (net49.has('locks') && ui.tile && k && world.tiles.get(k) === ui.tile && BLOCKS[world.get(...k.split(',').map(Number))]?.interact === 'chest') {
+      const lk = net49.locks.get(k), b = document.createElement('button');
+      if (!lk) { b.textContent = '🔒 Candado'; b.title = 'Solo tú (y el anfitrión) podrán abrirlo y romperlo'; b.onclick = () => { const [x, y, z] = k.split(',').map(Number); net.send({ type: 'lock', act: 'set', x, y, z }); sfx.play('click'); game.unlock('lock49'); }; }
+      else if (lk[1] || net.isHost()) { b.textContent = '🔓 Quitar candado'; b.title = lk[1] ? 'Cualquiera podrá abrirlo' : `Candado de ${lk[0]}`; b.onclick = () => { const [x, y, z] = k.split(',').map(Number); net.send({ type: 'lock', act: 'del', x, y, z }); sfx.play('click'); }; }
+      else return bar;
+      bar.append(b);
+    }
+    return bar;
+  };
+  const _render = renderInventory;
+  renderInventory = function () { const r = _render(); if (ui.tile && ui.tile.team49) net49.syncTeamChest(false); return r; };
+  const _close = closeInventory;
+  closeInventory = function () { const team = ui.tile && ui.tile.team49; const r = _close(); if (team) net49.syncTeamChest(true); return r; };
+}
+
+/* ---------- Chat de equipo ---------- */
+{
+  const _submit = chatUI.submit;
+  chatUI.submit = function () {
+    const t = $('#chatInput').value.trim();
+    if (t && this.team49 && net49.myTeam() && t[0] !== '/') { net.send({ type: 'chat', text: t, team: true }); this.close(); return; }
+    return _submit.call(this);
+  };
+  const tb = $('#chatTeam');
+  if (tb) tb.onclick = () => {
+    if (!net49.myTeam()) { hud.toast('No estás en ningún equipo'); return; }
+    chatUI.team49 = !chatUI.team49; tb.classList.toggle('on', chatUI.team49); $('#chatInput').placeholder = chatUI.team49 ? 'Mensaje para tu equipo…' : 'Escribe un mensaje…'; $('#chatInput').focus();
+  };
+}
+
+/* ---------- Minimapa: compañeros, otros jugadores y terrenos ---------- */
+{
+  const _r = minimap.render;
+  minimap.render = function (player, wld) {
+    _r.call(this, player, wld);
+    if (!settings.minimap || !this.cv || !wld || !net.active) return;
+    const c = this.ctx, S = this.cv.width, half = S / 2, k = S / (this.R * 2);
+    for (const cl of net49.claims) {
+      const x0 = half + (cl.x - cl.r - player.pos.x) * k, z0 = half + (cl.z - cl.r - player.pos.z) * k, w = (cl.r * 2 + 1) * k;
+      if (x0 > S || z0 > S || x0 + w < 0 || z0 + w < 0) continue;
+      c.strokeStyle = cl.mine ? 'rgba(120,230,120,.9)' : cl.can ? 'rgba(120,180,255,.9)' : 'rgba(255,110,90,.9)'; c.lineWidth = 1.5; c.setLineDash([3, 2]); c.strokeRect(x0, z0, w, w); c.setLineDash([]);
+    }
+    for (const r of net.remote.values()) {
+      if (!r.t) continue;
+      const dx = (r.t.x - player.pos.x) * k, dz = (r.t.z - player.pos.z) * k, team = net49.teamOfPid(r.pid);
+      const cx = half + Math.max(-half + 4, Math.min(half - 4, dx)), cz = half + Math.max(-half + 4, Math.min(half - 4, dz));
+      c.beginPath(); c.arc(cx, cz, 3.2, 0, Math.PI * 2); c.fillStyle = r.lost49 ? '#999' : team ? team.color : '#5ad2ff'; c.fill(); c.lineWidth = 1; c.strokeStyle = '#000'; c.stroke();
+    }
+  };
+}
+
+/* ---------- Teclas, botones y logros ---------- */
+KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'chat') + 1, 0, ['group', 'Panel de grupo (multijugador)', 'KeyG'], ['playerList', 'Lista de jugadores (mantener)', 'Tab']);
+settings.keys.group ??= 'KeyG'; DEFAULT_KEYS.group = 'KeyG'; settings.keys.playerList ??= 'Tab'; DEFAULT_KEYS.playerList = 'Tab';
+{
+  const _ad = actionDown;
+  actionDown = function (a, ev) {
+    if (a === 'group') { if (grp49.open) grp49.hide(); else if (game.state === 'playing') grp49.show(); return; }
+    if (a === 'playerList') { if (ev && ev.preventDefault) ev.preventDefault(); if (game.state === 'playing' && net49.any()) plList49.set(true); return; }
+    return _ad(a, ev);
+  };
+  document.addEventListener('keyup', (e) => { if (e.code === settings.keys.playerList) plList49.set(false); });
+  window.addEventListener('blur', () => plList49.set(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.code === settings.keys.playerList && game.state === 'playing' && net49.any()) e.preventDefault();      // Tab no debe mover el foco
+    if (!grp49.open && !trade49.open) return;
+    const typing = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT';
+    if (e.code === 'Escape' || (!typing && grp49.open && e.code === settings.keys.group)) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (typing) { e.target.blur(); return; }
+      if (trade49.open) trade49.cancel(); else grp49.hide();
+    } else if (typing) e.stopPropagation();
+  }, true);
+  $('#grpClose').onclick = () => grp49.hide();
+  $('#grpScreen').addEventListener('click', (e) => {
+    const tab = e.target.closest('.stab'); if (tab) { grp49.tab = tab.dataset.gtab; if (grp49.tab === 'players' && net49.feat.has('invite')) net49.online = null; grp49.render(); sfx.play('click'); return; }
+    const y = e.target.closest('[data-yes]'), n = e.target.closest('[data-no]');
+    if (y) { net49.answer(y.dataset.yes, true); return; } if (n) { net49.answer(n.dataset.no, false); return; }
+    const b = e.target.closest('button[data-act]'); if (b) grp49.click(b);
+  });
+  $('#netPrompts').addEventListener('click', (e) => {
+    const y = e.target.closest('[data-yes]'), n = e.target.closest('[data-no]');
+    if (y) net49.answer(y.dataset.yes, true); else if (n) net49.answer(n.dataset.no, false);
+  });
+  $('#trdReady').onclick = () => trade49.ready();
+  $('#trdClose').onclick = () => trade49.cancel();
+  $('#grpTouch').onclick = () => { if (grp49.open) grp49.hide(); else if (game.state === 'playing') grp49.show(); };
+  $('#pGroup').onclick = () => { showScreen(null); game.state = 'playing'; grp49.show(); };
+  // (los logros se dan en el servidor de verdad: solo cuando el servidor confirma)
+  ACHIEVEMENTS.push(['group49', 'En compañía', 'Abre el panel de grupo en un servidor.'], ['trade49', 'Trato hecho', 'Cierra un comercio con otro jugador.'],
+    ['teamchest49', 'Bienes comunes', 'Abre el cofre de tu equipo.'], ['claim49', 'Escritura', 'Protege un terreno en un servidor.'],
+    ['lock49', 'Bajo llave', 'Ponle candado a un cofre en un servidor.'], ['coop49', 'Todos a una', 'Ayuda a completar una misión cooperativa.'],
+    ['gev49', 'Contra el reloj', 'Ayuda a completar un evento de grupo a tiempo.']);
+  shapeless(TEAM_CHEST, 1, [CHEST, I.EMERALD, I.GOLD_INGOT], 'Muebles');
+}
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)

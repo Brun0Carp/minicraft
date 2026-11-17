@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* ============================================================================
-   SERVIDOR MULTIJUGADOR DE MINICRAFT 3.6 — SALAS
+   SERVIDOR MULTIJUGADOR DE MINICRAFT 4.9 — SALAS
    ----------------------------------------------------------------------------
    Sin dependencias: solo hace falta Node.js 18 o superior.
 
@@ -20,6 +20,11 @@
        criaturas, los objetos del suelo, los jefes, el chat y los golpes.
      · Guarda cada sala en data/rooms/CÓDIGO.json (la sala INICIO en
        data/world.json) con el inventario de cada jugador.
+     · 4.9: equipos (con chat y cofre de equipo compartido, sin fuego amigo),
+       comercio entre jugadores, terrenos protegidos y cofres con candado,
+       permisos de construcción por jugador, misiones cooperativas y eventos
+       de grupo, invitaciones entre salas, latencia de cada jugador y un margen
+       de 20 s para reconectarse sin que la sala lo dé por ido.
 
    Opciones (como --opcion=valor o como variable de entorno en MAYÚSCULAS):
      port      8080             puerto (las plataformas de alojamiento usan PORT)
@@ -64,6 +69,20 @@ const MAX_MSG = 512 * 1024, SAVE_EVERY = 30000, UNLOAD_AFTER = 5 * 60000, OWNER_
 const WEATHERS = ['clear', 'rain', 'storm', 'fog'], BUILD = ['all', 'trusted', 'host'];
 const DEFAULT_CODE = 'INICIO', CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const DROP_LIFE = 300000, MAX_DROPS = 600;
+// 4.9
+const FEATURES = ['teams', 'tchest', 'trade', 'claims', 'locks', 'perm', 'coop', 'gev', 'invite', 'pings'];
+const TEAM_COLORS = ['#e05050', '#4a8ef0', '#4cc35a', '#e8b83a', '#a463e0', '#f08a3a', '#3ac3c8', '#e070b8'];
+const CLAIM_SIZES = [8, 16, 24], CLAIMS_PER_PLAYER = 3, TEAM_SLOTS = 27, GRACE = 20000;
+// Misiones cooperativas y eventos de grupo: [tipo, título, objetivo, cantidad base, segundos (eventos)]
+const COOP = [['mine', 'Minería en grupo', 'Piquen {n} minerales entre todos', 40], ['kill', 'Limpieza de monstruos', 'Derroten {n} monstruos entre todos', 25],
+  ['fish', 'Gran pesca', 'Pesquen {n} peces entre todos', 10], ['cook', 'Banquete', 'Cocinen {n} platos entre todos', 6], ['harvest', 'Cosecha comunal', 'Cosechen {n} cultivos entre todos', 40],
+  ['place', 'Obra conjunta', 'Coloquen {n} bloques entre todos', 250], ['explore', 'Exploradores', 'Descubran {n} lugares nuevos entre todos', 3], ['boss', 'Cazadores de jefes', 'Derroten {n} jefe entre todos', 1]];
+const GEV = [['kill', 'Cacería grupal', 'Derroten {n} monstruos antes de que acabe el tiempo', 12, 240], ['mine', 'Fiebre minera', 'Piquen {n} minerales antes de que acabe el tiempo', 25, 240],
+  ['fish', 'Pesca colectiva', 'Pesquen {n} peces antes de que acabe el tiempo', 6, 300], ['harvest', 'Cosecha relámpago', 'Cosechen {n} cultivos antes de que acabe el tiempo', 25, 240],
+  ['place', 'Construcción exprés', 'Coloquen {n} bloques antes de que acabe el tiempo', 150, 240]];
+const KINDS = new Set(COOP.map((c) => c[0]));
+const validStack = (s) => s == null || (Array.isArray(s) && s.length >= 2 && s.length <= 4 && isInt(s[0], 1, 65535) && isInt(s[1], 1, 999) && JSON.stringify(s).length <= 400);
+const sameStack = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 const log = (...a) => console.log(new Date().toTimeString().slice(0, 8), ...a);
 const roomsDir = path.join(cfg.data, 'rooms');
 
@@ -88,7 +107,13 @@ class Room {
   constructor(code, file) {
     this.code = code; this.file = file;
     this.W = { v: 2, gen: 5, seed: 0, mode: 'survival', time: 0.045, days: 0, weather: 'clear', weatherT: 600, tiles: {}, players: {}, bosses: {},
-      name: 'Sala', owner: null, trusted: [], banned: [], max: Math.min(8, cfg.max), pvp: true, cheats: true, build: 'all', priv: false, pass: '', created: Date.now() };
+      name: 'Sala', owner: null, trusted: [], banned: [], max: Math.min(8, cfg.max), pvp: true, cheats: true, build: 'all', priv: false, pass: '', created: Date.now(),
+      teams: {}, claims: [], locks: {}, perm: {}, coop: null, names: {} };
+    this.trades = new Map();        // comercios abiertos: id → { a, b, offer: {a, b}, ready: {a, b} }
+    this.teamInv = new Map();
+    this.tchestHold = new Map();    // equipo → jugador que tiene abierto el cofre de equipo       // invitaciones a equipos pendientes: clave del invitado → id del equipo
+    this.pendingLeave = new Map();  // jugadores que se desconectaron hace poco: clave → { t: temporizador, name }
+    this.gev = null; this.gevNext = Date.now() + (15 + Math.random() * 10) * 60000; this.coopT = 0; this.pingT = 0; this.coopDirty = false; this.coopNext = 0;
     this.edits = new Map();         // "cx,cz" → Map(índice local → id | meta << 8), igual que en el cliente
     this.drops = new Map();         // objetos en el suelo: id → { s: [id, cantidad, daño, encantamientos], p: [x, y, z], t: creado }
     this.activeBoss = new Map();    // jefes despiertos: plan → { owner: id del jugador que lo simula, k: tipo }
@@ -107,6 +132,12 @@ class Room {
         if (d.v >= 2) Object.assign(W, { name: String(d.name || W.name).slice(0, 32), owner: d.owner || null, trusted: Array.isArray(d.trusted) ? d.trusted : [],
           banned: Array.isArray(d.banned) ? d.banned : [], max: isInt(d.max, 1, 64) ? d.max : W.max, pvp: d.pvp !== false, cheats: d.cheats !== false,
           build: BUILD.includes(d.build) ? d.build : 'all', priv: !!d.priv, pass: String(d.pass || ''), created: d.created || Date.now() });
+        // 4.9
+        W.teams = d.teams && typeof d.teams === 'object' ? d.teams : {};
+        for (const t of Object.values(W.teams)) { t.members = Array.isArray(t.members) ? t.members : []; t.inv = Array.isArray(t.inv) ? t.inv.slice(0, TEAM_SLOTS) : []; }
+        W.claims = Array.isArray(d.claims) ? d.claims.filter((c) => c && Number.isFinite(c.x) && Number.isFinite(c.z) && CLAIM_SIZES.includes(c.r)).map((c) => ({ ...c, friends: Array.isArray(c.friends) ? c.friends : [] })) : [];
+        W.locks = d.locks && typeof d.locks === 'object' ? d.locks : {}; W.perm = d.perm && typeof d.perm === 'object' ? d.perm : {};
+        W.coop = d.coop && KINDS.has(d.coop.k) ? d.coop : null; W.names = d.names && typeof d.names === 'object' ? d.names : {};
         for (const k in d.edits || {}) {
           const m = new Map();
           for (const e of String(d.edits[k]).split(',')) { const [i, v] = e.split(':'); const ii = parseInt(i, 36), vv = parseInt(v, 36); if (Number.isFinite(ii) && Number.isFinite(vv)) m.set(ii, vv); }
@@ -154,16 +185,87 @@ class Room {
   }
   isHost(c) { return c.id === this.hostId; }
   role(c) { return this.isHost(c) ? 'host' : this.W.trusted.includes(c.key) ? 'trusted' : this.W.build === 'all' ? 'member' : 'visitor'; }
-  canBuild(c) { const b = this.W.build; return this.isHost(c) || b === 'all' || (b === 'trusted' && this.W.trusted.includes(c.key)); }
+  canBuild(c) {
+    const b = this.W.build; if (this.isHost(c)) return true;
+    const p = this.W.perm[c.key]; if (p === true || p === false) return p;           // permiso propio del jugador (4.9)
+    return b === 'all' || (b === 'trusted' && this.W.trusted.includes(c.key));
+  }
+  /* --- 4.9: equipos, terrenos y cofres con candado --- */
+  teamOf(key) { for (const [id, t] of Object.entries(this.W.teams)) if (t.members.includes(key)) return id; return null; }
+  sameTeam(a, b) { const t = this.teamOf(a.key); return !!t && t === this.teamOf(b.key); }
+  claimAt(x, z) { return this.W.claims.find((cl) => Math.abs(x - cl.x) <= cl.r && Math.abs(z - cl.z) <= cl.r) || null; }
+  claimAllows(c, cl) { if (!cl || this.isHost(c) || cl.owner === c.key || cl.friends.includes(c.key)) return true; const t = this.teamOf(cl.owner); return !!t && t === this.teamOf(c.key); }
+  // ¿Puede este jugador cambiar ese bloque? (terrenos protegidos y cofres con candado)
+  allowedAt(c, x, y, z) {
+    const lock = this.W.locks[`${x},${y},${z}`]; if (lock && lock !== c.key && !this.isHost(c)) return false;
+    return this.claimAllows(c, this.claimAt(x, z));
+  }
+  teamsMsg() {
+    const online = new Map([...this.clients.values()].map((c) => [c.key, c]));
+    return { type: 'teams', l: Object.entries(this.W.teams).map(([id, t]) => ({ id, name: t.name, color: t.color, owner: online.get(t.owner)?.id ?? null, ownerName: this.W.names[t.owner] || '?',
+      members: t.members.map((k) => ({ name: this.W.names[k] || '?', id: online.get(k)?.id ?? null })) })) };
+  }
+  sendClaims() {
+    const online = new Map([...this.clients.values()].map((c) => [c.key, c.id]));
+    for (const c of this.clients.values()) c.send({ type: 'claims', l: this.W.claims.map((cl) => ({ id: cl.id, name: cl.name, x: cl.x, z: cl.z, r: cl.r, owner: online.get(cl.owner) ?? null,
+      ownerName: this.W.names[cl.owner] || '?', friends: cl.friends.map((k) => this.W.names[k] || '?'), mine: cl.owner === c.key, can: this.claimAllows(c, cl) })) });
+  }
+  sendLocks() { const l = Object.entries(this.W.locks); for (const c of this.clients.values()) c.send({ type: 'locks', l: l.map(([k, o]) => [k, this.W.names[o] || '?', o === c.key ? 1 : 0]) }); }
+  coopMsg() { const q = this.W.coop; return { type: 'coop', q: q ? { id: q.id, k: q.k, title: q.title, goal: q.goal, n: q.n, prog: q.prog, em: q.em, xp: q.xp } : null }; }
+  gevMsg() { const g = this.gev; return { type: 'gev', g: g ? { id: g.id, k: g.k, title: g.title, goal: g.goal, n: g.n, prog: g.prog, left: Math.max(0, Math.round((g.end - Date.now()) / 1000)), em: g.em } : null }; }
+  newCoop() {
+    const [k, title, goal, base] = COOP[Math.floor(Math.random() * COOP.length)], n = Math.max(1, Math.round(base * (1 + 0.5 * Math.max(0, this.clients.size - 1))));
+    this.W.coop = { id: Date.now().toString(36), k, title, goal: goal.replace('{n}', n), n, prog: 0, contrib: {}, em: 5 + Math.round(n / base * 4), xp: 40 };
+    this.dirty = true; this.broadcast(this.coopMsg()); this.sys(`Nueva misión cooperativa: ${title} — ${this.W.coop.goal}`);
+  }
+  startGev() {
+    if (this.gev) return false;
+    const [k, title, goal, base, secs] = GEV[Math.floor(Math.random() * GEV.length)], n = Math.max(1, Math.round(base * (1 + 0.6 * Math.max(0, this.clients.size - 1))));
+    this.gev = { id: Date.now().toString(36), k, title, goal: goal.replace('{n}', n), n, prog: 0, contrib: {}, end: Date.now() + secs * 1000, em: 4 + Math.round(this.clients.size * 1.5), xp: 25 };
+    this.broadcast(this.gevMsg()); this.sys(`¡Evento de grupo! ${title}: ${this.gev.goal}`);
+    return true;
+  }
+  // Progreso de misiones y eventos que informan los jugadores
+  progress(c, k, n) {
+    for (const which of ['coop', 'gev']) {
+      const q = which === 'coop' ? this.W.coop : this.gev; if (!q || q.k !== k || q.prog >= q.n || n <= 0) continue;
+      q.prog = Math.min(q.n, q.prog + n); q.contrib[c.key] = (q.contrib[c.key] || 0) + n; this.coopDirty = true; if (which === 'coop') this.dirty = true;
+      if (q.prog >= q.n) this.finish(which, true);
+    }
+  }
+  finish(which, ok) {
+    const q = which === 'coop' ? this.W.coop : this.gev; if (!q) return;
+    const names = Object.keys(q.contrib).map((k) => this.W.names[k] || '?');
+    // la recompensa es para quien ayudó (aunque se haya ido, la cobra al volver: queda pendiente en su ficha)
+    for (const key of Object.keys(q.contrib)) { if (!ok) break; const pl = this.W.players[key] || (this.W.players[key] = {}); pl.rewards = [...(pl.rewards || []), { em: q.em, xp: q.xp || 30, title: q.title }].slice(-10); }
+    for (const c of this.clients.values()) c.send({ type: 'coopDone', which, ok, title: q.title, names, helped: !!q.contrib[c.key], prog: q.prog, n: q.n });
+    if (ok) this.sys(`${which === 'coop' ? 'Misión cooperativa' : 'Evento de grupo'} completado: ${q.title}. ¡Bien hecho, ${names.join(', ') || 'equipo'}!`);
+    else this.sys(`Se acabó el tiempo del evento «${q.title}» (${q.prog}/${q.n})`);
+    if (which === 'coop') { this.W.coop = null; this.dirty = true; this.coopNext = Date.now() + 60000; this.broadcast(this.coopMsg()); }
+    else { this.gev = null; this.gevNext = Date.now() + (15 + Math.random() * 10) * 60000; this.broadcast(this.gevMsg()); }
+    if (ok) for (const c of this.clients.values()) this.giveRewards(c);
+  }
+  giveRewards(c) {
+    const pl = this.W.players[c.key]; if (!pl || !pl.rewards || !pl.rewards.length) return;
+    c.send({ type: 'reward', l: pl.rewards }); pl.rewards = []; this.dirty = true;
+  }
+  cancelTrades(c, why) {
+    for (const [id, t] of this.trades) if (t.a === c.id || t.b === c.id) {
+      this.trades.delete(id);
+      for (const pid of [t.a, t.b]) { const o = this.clients.get(pid); if (o && o !== c) o.send({ type: 'trade', act: 'cancel', id, why }); }
+    }
+  }
   canCheat(c) { return this.W.cheats && (this.isHost(c) || this.W.trusted.includes(c.key)); }
   info() {
     const W = this.W;
     return { code: this.code, name: W.name, players: this.clients.size, max: W.max, mode: W.mode, pvp: W.pvp, cheats: W.cheats, build: W.build, priv: W.priv, locked: !!W.pass, def: this.isDefault };
   }
-  roster() { return { type: 'roster', host: this.hostId, owner: !!this.W.owner, list: [...this.clients.values()].map((c) => ({ id: c.id, name: c.name, role: this.role(c), own: c.key === this.W.owner })) }; }
+  roster() { return { type: 'roster', host: this.hostId, owner: !!this.W.owner, list: [...this.clients.values()].map((c) => ({ id: c.id, name: c.name, role: this.role(c), own: c.key === this.W.owner,
+    team: this.teamOf(c.key), build: this.canBuild(c), perm: this.W.perm[c.key] ?? null, lat: c.lat | 0 })) }; }
   sendRoom() {
     this.broadcast({ type: 'room', room: this.info() });
-    for (const c of this.clients.values()) c.send({ ...this.roster(), you: { host: this.isHost(c), build: this.canBuild(c), cheat: this.canCheat(c) } });
+    for (const c of this.clients.values()) c.send({ ...this.roster(), you: { host: this.isHost(c), build: this.canBuild(c), cheat: this.canCheat(c), team: this.teamOf(c.key) } });
+    this.broadcast(this.teamsMsg());
   }
   /* --- Entrar y salir --- */
   add(c, resume) {
@@ -171,21 +273,33 @@ class Room {
     while ([...this.clients.values()].some((o) => o.name.toLowerCase() === name.toLowerCase())) name = (base.slice(0, 13) + ' ' + n++);
     c.name = name; c.room = this;
     const W = this.W, saved = W.players[c.key];
+    W.names[c.key] = name;
+    const back = this.pendingLeave.get(c.key); if (back) { clearTimeout(back.t); this.pendingLeave.delete(c.key); resume = true; this.broadcast({ type: 'leave', id: back.id }); }
     c.send({ type: 'welcome', id: c.id, name, server: cfg.name, room: this.info(), resume: !!resume, seed: W.seed, gen: W.gen, mode: W.mode, pvp: W.pvp, dayLength: DAY_LENGTH,
       time: W.time, days: W.days, weather: W.weather, edits: this.packEdits(), tiles: W.tiles, players: this.playerList(c), you: saved ? saved.d : null,
-      drops: [...this.drops].map(([did, d]) => [did, d.s, d.p, Math.round((Date.now() - d.t) / 1000)]), bosses: Object.keys(W.bosses) });
+      drops: [...this.drops].map(([did, d]) => [did, d.s, d.p, Math.round((Date.now() - d.t) / 1000)]), bosses: Object.keys(W.bosses), feat: FEATURES });
     this.clients.set(c.id, c); this.emptySince = 0;
     this.broadcast({ type: 'join', id: c.id, name }, c);
     this.sys(resume ? `${name} se reconectó` : `${name} entró a la sala`, c);
     this.pickHost(); this.sendRoom();
+    this.sendClaims(); this.sendLocks(); c.send(this.coopMsg()); c.send(this.gevMsg()); this.giveRewards(c);
+    if (!W.coop && !this.coopNext) this.newCoop();
     log(`+ ${name} ${resume ? 'volvió a' : 'entró a'} ${this.code} desde ${c.ip} (${this.clients.size}/${W.max})`);
   }
   remove(c) {
     if (this.clients.get(c.id) !== c) return;
     this.clients.delete(c.id);
     for (const [plan, b] of this.activeBoss) if (b.owner === c.id) { this.activeBoss.delete(plan); this.broadcast({ type: 'bleft', plan: b.plan }); }
-    this.broadcast({ type: 'leave', id: c.id });
-    this.sys(`${c.name} salió de la sala`);
+    this.cancelTrades(c, `${c.name} salió de la sala`); this.teamInv.delete(c.key);
+    for (const [tid, id] of this.tchestHold) if (id === c.id) this.tchestHold.delete(tid);
+    // si se cortó la conexión (no se fue a propósito), se espera un poco antes de darlo por ido
+    // (los demás siguen viendo su personaje, marcado «sin conexión», hasta que vuelva o pase el margen)
+    if (c.kicked || c.byeSent || !this.clients.size) { this.broadcast({ type: 'leave', id: c.id }); this.sys(`${c.name} salió de la sala`); }
+    else {
+      const name = c.name, id = c.id, t = setTimeout(() => { this.pendingLeave.delete(c.key); this.broadcast({ type: 'leave', id }); this.sys(`${name} salió de la sala`); }, GRACE);
+      this.pendingLeave.set(c.key, { t, name, id }); this.broadcast({ type: 'lost', id, name, secs: GRACE / 1000 });
+      this.sys(`${c.name} perdió la conexión (tiene ${GRACE / 1000} s para volver)`);
+    }
     log(`- ${c.name} salió de ${this.code} (${this.clients.size}/${this.W.max})`);
     if (!this.clients.size) { this.emptySince = Date.now(); this.dirty = true; this.save(true); }
     this.pickHost(); this.sendRoom();
@@ -204,6 +318,12 @@ class Room {
       this.broadcast({ type: 'weather', w: W.weather });
     }
     if ((this.timeT += dt) >= 4) { this.timeT = 0; this.broadcast({ type: 'time', t: W.time, d: W.days }); }
+    // 4.9: latencias, misiones y eventos de grupo
+    if ((this.pingT += dt) >= 3) { this.pingT = 0; this.broadcast({ type: 'pings', l: [...this.clients.values()].map((c) => [c.id, c.lat | 0, c.state ? c.state.hp : 20]) }); }
+    if (this.coopDirty && (this.coopT += dt) >= 0.5) { this.coopT = 0; this.coopDirty = false; this.broadcast(this.coopMsg()); if (this.gev) this.broadcast(this.gevMsg()); }
+    if (!W.coop && this.coopNext && Date.now() > this.coopNext) { this.coopNext = 0; this.newCoop(); }
+    if (this.gev && Date.now() > this.gev.end) this.finish('gev', false);
+    if (!this.gev && this.clients.size >= 2 && Date.now() > this.gevNext) this.startGev();
   }
 }
 const roomFile = (code) => (code === DEFAULT_CODE ? path.join(cfg.data, 'world.json') : path.join(roomsDir, code + '.json'));
@@ -304,7 +424,7 @@ class Client {
     setTimeout(() => { try { this.socket.destroy(); } catch {} }, 1000);
     this.onClose();
   }
-  kick(reason) { this.send({ type: 'kicked', reason }); this.close(1008, reason.slice(0, 100)); }
+  kick(reason) { this.kicked = true; this.send({ type: 'kicked', reason }); this.close(1008, reason.slice(0, 100)); }
   onClose() {
     if (this.gone) return; this.gone = true; this.closed = true;
     if (this.id != null && clients.get(this.id) === this) clients.delete(this.id);
@@ -372,6 +492,8 @@ function handle(c, m) {
     case 'block': {
       if (!isInt(m.x, -3e7, 3e7) || !isInt(m.z, -3e7, 3e7) || !isInt(m.y, 0, WY - 1) || !isInt(m.id, 0, 2047)) return;
       if (!R.canBuild(c)) return c.send({ type: 'deny', x: m.x, y: m.y, z: m.z });     // el cliente deshace el cambio
+      if (!R.allowedAt(c, m.x, m.y, m.z)) return c.send({ type: 'deny', x: m.x, y: m.y, z: m.z, why: 'claim' });
+      { const lk = `${m.x},${m.y},${m.z}`; if (W.locks[lk] && m.id === 0) { delete W.locks[lk]; R.dirty = true; R.sendLocks(); } }       // al romper el cofre, el candado se va con él
       const meta = isInt(m.meta, 0, 255) ? m.meta : 0, key = (m.x >> 4) + ',' + (m.z >> 4), i = (m.x & 15) | ((m.z & 15) << 4) | (m.y << 8);
       let ed = R.edits.get(key); if (!ed) { ed = new Map(); R.edits.set(key, ed); }
       ed.set(i, m.id < 256 ? m.id | (meta << 8) : 65536 + m.id + (meta << 12)); R.dirty = true;      // igual que packBlock() del cliente
@@ -381,6 +503,7 @@ function handle(c, m) {
     case 'tile': {
       if (typeof m.key !== 'string' || !/^-?\d{1,9},\d{1,3},-?\d{1,9}$/.test(m.key)) return;
       if (!R.canBuild(c)) return c.send({ type: 'tile', key: m.key, d: W.tiles[m.key] ?? null });
+      { const [tx, ty, tz] = m.key.split(',').map(Number); if (!R.allowedAt(c, tx, ty, tz)) return c.send({ type: 'tile', key: m.key, d: W.tiles[m.key] ?? null, why: 'claim' }); }
       if (m.d == null) delete W.tiles[m.key];
       else { if (typeof m.d !== 'object' || JSON.stringify(m.d).length > 16384) return; W.tiles[m.key] = m.d; }
       R.dirty = true;
@@ -389,12 +512,17 @@ function handle(c, m) {
     }
     case 'save': {
       if (!m.d || typeof m.d !== 'object' || JSON.stringify(m.d).length > 200000) return;
-      W.players[c.key] = { name: c.name, t: Date.now(), d: m.d }; R.dirty = true;
+      W.players[c.key] = { ...(W.players[c.key] || {}), name: c.name, t: Date.now(), d: m.d }; R.dirty = true;
       break;
     }
     case 'chat': {
       const text = cleanText(m.text); if (!text) return;
       if (text[0] === '/') return chatCommand(c, text.slice(1));
+      if (m.team) {                                      // chat de equipo
+        const tid = R.teamOf(c.key); if (!tid) return c.send({ type: 'sys', text: 'No estás en ningún equipo' });
+        for (const o of R.clients.values()) if (R.teamOf(o.key) === tid) o.send({ type: 'chat', id: c.id, name: c.name, text, team: 1 });
+        return;
+      }
       log(`[${R.code}] <${c.name}> ${text}`);
       R.broadcast({ type: 'chat', id: c.id, name: c.name, text });
       break;
@@ -413,7 +541,7 @@ function handle(c, m) {
     }
     case 'ehit': case 'kill': case 'hit': { // mensajes dirigidos a un jugador concreto
       const to = R.clients.get(m.to); if (!to || to === c) return;
-      if (m.type === 'hit' && !W.pvp) return;
+      if (m.type === 'hit' && (!W.pvp || R.sameTeam(c, to))) return;      // sin fuego amigo entre compañeros de equipo
       if (m.type === 'hit') to.send({ type: 'hit', from: c.id, name: c.name, dmg: Math.max(0, Math.min(40, num(m.dmg, 1))), x: num(m.x), z: num(m.z) });
       else if (m.type === 'ehit') to.send({ type: 'ehit', from: c.id, nid: m.nid | 0, dmg: Math.max(0, Math.min(200, num(m.dmg, 1))), x: num(m.x), z: num(m.z) });
       else to.send({ type: 'kill', from: c.id, k: String(m.k).slice(0, 24), p: Array.isArray(m.p) ? m.p.slice(0, 3).map((v) => num(v)) : [0, 0, 0], fire: m.fire ? 1 : 0 });
@@ -463,6 +591,37 @@ function handle(c, m) {
       break;
     }
     case 'admin': return admin(c, m);
+    case 'lat': c.lat = Math.max(0, Math.min(9999, m.ms | 0)); break;
+    case 'bye': c.byeSent = true; break;
+    case 'prog': {                                       // misiones cooperativas y eventos (como mucho un aviso por tipo cada 0,8 s)
+      if (!KINDS.has(m.k)) return;
+      const now = Date.now(); c.progT = c.progT || {}; if (now - (c.progT[m.k] || 0) < 800) return; c.progT[m.k] = now;
+      R.progress(c, m.k, Math.max(0, Math.min(50, m.n | 0))); break;
+    }
+    case 'team': return teamMsg(c, m);
+    case 'tchest': return teamChest(c, m);
+    case 'trade': return tradeMsg(c, m);
+    case 'claim': return claimMsg(c, m);
+    case 'lock': {
+      if (!isInt(m.x, -3e7, 3e7) || !isInt(m.z, -3e7, 3e7) || !isInt(m.y, 0, WY - 1)) return;
+      const k = `${m.x},${m.y},${m.z}`;
+      if (m.act === 'set') { if (W.locks[k] || !R.canBuild(c) || !R.allowedAt(c, m.x, m.y, m.z)) return c.send({ type: 'sys', text: 'No puedes ponerle candado a ese cofre' }); W.locks[k] = c.key; }
+      else if (m.act === 'del') { if (W.locks[k] !== c.key && !R.isHost(c)) return; delete W.locks[k]; }
+      else return;
+      R.dirty = true; R.sendLocks(); break;
+    }
+    case 'online': {                                     // jugadores del servidor que no están en esta sala (para invitar)
+      const l = [...clients.values()].filter((o) => o.room !== R && o.baseName).slice(0, 40).map((o) => ({ id: o.id, name: o.name || o.baseName, where: o.room ? (o.room.W.priv ? 'en otra sala' : `en «${o.room.W.name}»`) : 'en la recepción' }));
+      c.send({ type: 'online', l }); break;
+    }
+    case 'invite': {
+      const to = clients.get(m.to); if (!to || to === c || to.room === R) return;
+      const now = Date.now(); c.invT = c.invT || {}; if (now - (c.invT[to.id] || 0) < 15000) return c.send({ type: 'sys', text: 'Ya le enviaste una invitación hace poco' });
+      c.invT[to.id] = now;
+      to.send({ type: 'invite', from: c.name || c.baseName, code: R.code, room: W.name, locked: !!W.pass, pass: W.pass && R.isHost(c) ? W.pass : '' });
+      c.send({ type: 'sys', text: `Invitación enviada a ${to.name || to.baseName}` });
+      break;
+    }
     case 'ping': c.send({ type: 'pong', t: m.t }); break;
   }
 }
@@ -511,6 +670,13 @@ function admin(c, m) {
       return;
     }
     case 'unban': W.banned = []; R.dirty = true; tell('Se levantaron todos los vetos de la sala'); return;
+    case 'allow': case 'deny': case 'resetperm': {       // permiso para construir de un jugador concreto (4.9)
+      if (!t || t === c) return;
+      if (m.act === 'resetperm') delete W.perm[t.key]; else W.perm[t.key] = m.act === 'allow';
+      R.dirty = true; R.sys(m.act === 'allow' ? `${t.name} puede construir` : m.act === 'deny' ? `${t.name} ya no puede construir` : `${t.name} vuelve al permiso general de la sala`); R.sendRoom();
+      return;
+    }
+    case 'event': if (!R.startGev()) tell('Ya hay un evento de grupo en marcha'); return;
     case 'delete': {
       if (R.isDefault || !isOwner) return tell('Solo el dueño puede borrar la sala');
       for (const o of [...R.clients.values()]) if (o !== c) o.kick('El anfitrión cerró la sala');
@@ -518,6 +684,143 @@ function admin(c, m) {
       return;
     }
   }
+}
+/* ---------- 4.9: equipos ---------- */
+function teamMsg(c, m) {
+  const R = c.room, W = R.W, tell = (text) => c.send({ type: 'sys', text }), mine = R.teamOf(c.key), T = mine && W.teams[mine];
+  switch (m.act) {
+    case 'create': {
+      if (mine) return tell('Ya estás en un equipo: sal de él para crear otro');
+      const name = cleanText(m.name).slice(0, 20); if (!name) return tell('Ponle un nombre al equipo');
+      if (Object.values(W.teams).some((t) => t.name.toLowerCase() === name.toLowerCase())) return tell('Ya hay un equipo con ese nombre');
+      if (Object.keys(W.teams).length >= 16) return tell('La sala ya tiene demasiados equipos');
+      const id = 't' + Date.now().toString(36), color = TEAM_COLORS.includes(m.color) ? m.color : TEAM_COLORS[Object.keys(W.teams).length % TEAM_COLORS.length];
+      W.teams[id] = { name, color, owner: c.key, members: [c.key], inv: [] }; R.dirty = true;
+      R.sys(`${c.name} fundó el equipo «${name}»`); break;
+    }
+    case 'invite': {
+      if (!T) return tell('No estás en ningún equipo');
+      const to = R.clients.get(m.id); if (!to || to === c) return;
+      if (R.teamOf(to.key)) return tell(`${to.name} ya está en un equipo`);
+      R.teamInv.set(to.key, mine); to.send({ type: 'teamInvite', team: mine, name: T.name, color: T.color, from: c.name }); tell(`Invitaste a ${to.name} al equipo «${T.name}»`);
+      return;
+    }
+    case 'accept': {
+      const tid = R.teamInv.get(c.key); if (!tid || tid !== m.team || !W.teams[tid]) return;
+      if (mine) return tell('Ya estás en un equipo');
+      R.teamInv.delete(c.key); W.teams[tid].members.push(c.key); R.dirty = true; R.sys(`${c.name} se unió al equipo «${W.teams[tid].name}»`); break;
+    }
+    case 'decline': {
+      const tid = R.teamInv.get(c.key); R.teamInv.delete(c.key);
+      const T2 = tid && W.teams[tid]; if (T2) for (const o of R.clients.values()) if (o.key === T2.owner) o.send({ type: 'sys', text: `${c.name} rechazó unirse a «${T2.name}»` });
+      return;
+    }
+    case 'leave': {
+      if (!T) return;
+      T.members = T.members.filter((k) => k !== c.key); if (R.tchestHold.get(mine) === c.id) R.tchestHold.delete(mine);
+      if (!T.members.length) {
+        // lo que quedaba en el cofre del equipo no se pierde: vuelve a quien lo deja último
+        const left = T.inv.filter(Boolean); if (left.length) c.send({ type: 'tchest', act: 'refund', inv: left });
+        delete W.teams[mine]; R.sys(`El equipo «${T.name}» se disolvió`);
+      }
+      else { if (T.owner === c.key) T.owner = T.members[0]; R.sys(`${c.name} dejó el equipo «${T.name}»`); }
+      R.dirty = true; break;
+    }
+    case 'kick': {
+      if (!T || T.owner !== c.key) return tell('Solo el líder del equipo puede expulsar');
+      const to = R.clients.get(m.id), key = to ? to.key : null; if (!key || key === c.key || !T.members.includes(key)) return;
+      T.members = T.members.filter((k) => k !== key); R.dirty = true; R.sys(`${to.name} ya no está en el equipo «${T.name}»`); break;
+    }
+    default: return;
+  }
+  R.sendRoom(); R.sendClaims();
+}
+// Cofre de equipo: lo comparten todos los miembros. Solo un jugador a la vez puede tenerlo
+// abierto (los demás ven quién lo está usando): así nadie duplica ni pierde objetos.
+function teamChest(c, m) {
+  const R = c.room, W = R.W, tid = R.teamOf(c.key);
+  if (!tid) return c.send({ type: 'tchest', act: 'none' });
+  const T = W.teams[tid], hold = R.tchestHold.get(tid), holder = hold != null ? R.clients.get(hold) : null;
+  if (m.act === 'open') {
+    if (holder && holder !== c) return c.send({ type: 'tchest', act: 'busy', name: holder.name });
+    R.tchestHold.set(tid, c.id);
+    return c.send({ type: 'tchest', act: 'all', inv: Array.from({ length: TEAM_SLOTS }, (_, i) => T.inv[i] ?? null), name: T.name });
+  }
+  if (holder !== c) return;
+  if (m.act === 'save' || m.act === 'close') {
+    if (Array.isArray(m.inv) && m.inv.length <= TEAM_SLOTS && m.inv.every(validStack)) { T.inv = m.inv.map((x) => x ?? null); R.dirty = true; }
+    if (m.act === 'close') R.tchestHold.delete(tid);
+  }
+}
+/* ---------- 4.9: comercio entre jugadores ----------
+   Cada jugador pone en la mesa hasta 9 pilas (salen de su inventario mientras dura el trato).
+   Cualquier cambio quita las dos confirmaciones; cuando los dos confirman, el servidor cierra
+   el trato y le dice a cada uno qué recibe. */
+function tradeMsg(c, m) {
+  const R = c.room, tell = (text) => c.send({ type: 'sys', text });
+  const near = (a, b) => a.state && b.state && Math.hypot(a.state.p[0] - b.state.p[0], a.state.p[2] - b.state.p[2]) <= 16;
+  const busy = (o) => [...R.trades.values()].some((t) => t.a === o.id || t.b === o.id);
+  switch (m.act) {
+    case 'req': {
+      const to = R.clients.get(m.to); if (!to || to === c) return;
+      if (!near(c, to)) return tell(`${to.name} está demasiado lejos para comerciar (acércate a menos de 16 bloques)`);
+      if (busy(c) || busy(to)) return tell('Uno de los dos ya está comerciando');
+      c.tradeReq = to.id; to.send({ type: 'trade', act: 'req', from: c.id, name: c.name }); tell(`Le propusiste un trato a ${to.name}`);
+      return;
+    }
+    case 'accept': {
+      const from = R.clients.get(m.from); if (!from || from.tradeReq !== c.id) return;
+      from.tradeReq = null;
+      if (!near(c, from)) return tell('Ya está demasiado lejos para comerciar');
+      if (busy(c) || busy(from)) return tell('Uno de los dos ya está comerciando');
+      const id = 'x' + Date.now().toString(36) + c.id;
+      R.trades.set(id, { a: from.id, b: c.id, offer: { a: [], b: [] }, ready: { a: false, b: false } });
+      from.send({ type: 'trade', act: 'open', id, with: c.id, name: c.name }); c.send({ type: 'trade', act: 'open', id, with: from.id, name: from.name });
+      return;
+    }
+    case 'decline': { const from = R.clients.get(m.from); if (from && from.tradeReq === c.id) { from.tradeReq = null; from.send({ type: 'trade', act: 'declined', name: c.name }); } return; }
+  }
+  const T = R.trades.get(m.id); if (!T || (T.a !== c.id && T.b !== c.id)) return;
+  const side = T.a === c.id ? 'a' : 'b', other = side === 'a' ? 'b' : 'a', partner = R.clients.get(T[other]);
+  const sendReady = () => { for (const o of [c, partner]) o?.send({ type: 'trade', act: 'ready', id: m.id, me: T.ready[o === c ? side : other], them: T.ready[o === c ? other : side] }); };
+  if (m.act === 'offer') {
+    if (!Array.isArray(m.items) || m.items.length > 9 || !m.items.every(validStack)) return;
+    T.offer[side] = m.items.map((s) => s ?? null); T.ready.a = T.ready.b = false;          // cualquier cambio obliga a confirmar de nuevo
+    partner?.send({ type: 'trade', act: 'offer', id: m.id, items: T.offer[side] });
+    sendReady();
+  } else if (m.act === 'ready') {
+    T.ready[side] = !!m.v; sendReady();
+    if (T.ready.a && T.ready.b) {
+      R.trades.delete(m.id);
+      const A = R.clients.get(T.a), B = R.clients.get(T.b);
+      A?.send({ type: 'trade', act: 'done', id: m.id, give: T.offer.b, gave: T.offer.a }); B?.send({ type: 'trade', act: 'done', id: m.id, give: T.offer.a, gave: T.offer.b });
+      log(`[${R.code}] Comercio entre ${A?.name} y ${B?.name}`);
+    }
+  } else if (m.act === 'cancel') {
+    R.trades.delete(m.id); partner?.send({ type: 'trade', act: 'cancel', id: m.id, why: `${c.name} canceló el trato` });
+  }
+}
+/* ---------- 4.9: terrenos protegidos ---------- */
+function claimMsg(c, m) {
+  const R = c.room, W = R.W, tell = (text) => c.send({ type: 'sys', text });
+  if (m.act === 'add') {
+    if (!isInt(m.x, -3e7, 3e7) || !isInt(m.z, -3e7, 3e7) || !CLAIM_SIZES.includes(m.r)) return;
+    if (!R.canBuild(c)) return tell('No tienes permiso para construir en esta sala');
+    if (W.claims.filter((cl) => cl.owner === c.key).length >= CLAIMS_PER_PLAYER) return tell(`Ya tienes ${CLAIMS_PER_PLAYER} terrenos. Quita uno para proteger otro.`);
+    const clash = W.claims.find((cl) => cl.owner !== c.key && Math.abs(cl.x - m.x) <= cl.r + m.r && Math.abs(cl.z - m.z) <= cl.r + m.r);
+    if (clash) return tell(`Se superpone con el terreno «${clash.name}» de ${W.names[clash.owner] || 'otro jugador'}`);
+    const cl = { id: 'c' + Date.now().toString(36), owner: c.key, name: cleanText(m.name).slice(0, 24) || `Terreno de ${c.name}`, x: m.x, z: m.z, r: m.r, friends: [] };
+    W.claims.push(cl); R.dirty = true; R.sys(`${c.name} protegió el terreno «${cl.name}» (${cl.r * 2 + 1}×${cl.r * 2 + 1})`);
+  } else if (m.act === 'del') {
+    const i = W.claims.findIndex((cl) => cl.id === m.id && (cl.owner === c.key || R.isHost(c))); if (i < 0) return;
+    const cl = W.claims.splice(i, 1)[0]; R.dirty = true; R.sys(`Se quitó la protección del terreno «${cl.name}»`);
+  } else if (m.act === 'friend') {
+    const cl = W.claims.find((x) => x.id === m.id && x.owner === c.key), to = R.clients.get(m.who); if (!cl || !to || to === c) return;
+    cl.friends = cl.friends.filter((k) => k !== to.key); if (m.on) cl.friends.push(to.key);
+    R.dirty = true; tell(m.on ? `${to.name} puede construir en «${cl.name}»` : `${to.name} ya no puede construir en «${cl.name}»`);
+    to.send({ type: 'sys', text: m.on ? `${c.name} te dio permiso para construir en su terreno «${cl.name}»` : `${c.name} te quitó el permiso de su terreno «${cl.name}»` });
+  } else return;
+  R.sendClaims();
 }
 function deleteRoom(R) {
   rooms.delete(R.code); index.delete(R.code);
@@ -548,7 +851,9 @@ function chatCommand(c, line) {
       if (!t) return tell('No hay nadie con ese nombre en la sala');
       return admin(c, { act: 'kick', id: t.id });
     }
-    case 'help': case 'ayuda': tell('Comandos de la sala: /list, /codigo, /semilla' + (W.cheats ? ', /tiempo, /clima (anfitrión y confianza)' : '') + ', /expulsar <nombre> (anfitrión)'); break;
+    case 'e': case 'equipo': { const text = cleanText(args.join(' ')); if (text) handle(c, { type: 'chat', text, team: true }); break; }
+    case 'evento': if (!R.isHost(c)) return tell('Solo el anfitrión puede empezar un evento de grupo'); if (!R.startGev()) tell('Ya hay un evento de grupo en marcha'); break;
+    case 'help': case 'ayuda': tell('Comandos de la sala: /list, /codigo, /semilla, /e <mensaje> (chat de equipo)' + (W.cheats ? ', /tiempo, /clima (anfitrión y confianza)' : '') + ', /expulsar <nombre>, /evento (anfitrión)'); break;
     default: tell(`Comando desconocido: /${cmd}. Escribe /help`);
   }
 }
