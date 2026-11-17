@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.7</title>
+<title>MiniCraft 4.8</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -323,6 +323,16 @@
   .armorSlot:not(:has(.ic[style*="url"]))::before { content: attr(data-hint); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .35; font-size: calc(var(--s) * .45); }
   #invLeft.withArmor { display: flex; align-items: center; justify-content: center; }
   .enchant { display: flex; gap: 10px; align-items: center; padding: 6px 0; }
+  /* --- 4.8: construcción --- */
+  .termCard { width: min(640px, 100%); text-align: left; display: flex; flex-direction: column; max-height: 96vh; }
+  .termBar { display: flex; gap: 6px; } .termBar input { flex: 1; min-width: 0; padding: 6px 8px; font: 14px var(--font); background: #1d1d22; color: #fff; border: 2px solid #000; }
+  .termBar .btn { width: auto; margin: 0; padding: 5px 12px; }
+  #termInfo { margin: 4px 0; font-size: 12.5px; color: #aab0bb; } .termHint { font-size: 11.5px; color: #8f96a3; margin: 4px 0; }
+  #termGrid { display: grid; grid-template-columns: repeat(auto-fill, var(--s)); gap: 2px; overflow-y: auto; min-height: calc(var(--s) * 2); flex: 1; align-content: start; padding: 2px; background: rgba(0,0,0,.25); }
+  #termGrid .slot { cursor: pointer; } .termEmpty { grid-column: 1 / -1; font-size: 13px; color: #aab0bb; padding: 8px; }
+  .elevCard { width: min(420px, 100%); text-align: left; display: flex; flex-direction: column; max-height: 96vh; }
+  #elevList { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; margin: 4px 0; } #elevList .btn { margin: 0; text-align: left; } #elevList .btn.on { background: #6b8e3d; }
+  @media (max-height: 520px) { .termCard, .elevCard { max-height: 98vh; padding: 6px 10px; } .termCard .cardHead, .elevCard .cardHead { margin: 0 0 2px; } .termCard .cardHead h2, .elevCard .cardHead h2 { font-size: 17px; } .termHint { display: none; } }
   /* --- 4.7: actividades --- */
   #fishGame { position: fixed; left: 50%; bottom: calc(118px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, 84vw); display: none; z-index: 6; pointer-events: none; text-align: center;
     background: rgba(0,0,0,.6); border: 2px solid #000; border-radius: 8px; padding: 6px 10px 5px; color: #fff; font: 13px var(--font); text-shadow: 1px 1px 0 #000; }
@@ -931,7 +941,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.7!</span>
+      <span class="ver">¡Versión 4.8!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -941,7 +951,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.7</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.8</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1118,6 +1128,24 @@
     <div class="stabs"><button class="stab on" data-chtab="skills">Habilidades</button><button class="stab" data-chtab="gear">Equipo</button><button class="stab" data-chtab="pets">Mascotas y monturas</button></div>
     <div id="charBody"></div>
     <button id="charClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
+<div id="termScreen" class="screen">
+  <div class="card termCard">
+    <div class="cardHead"><h2>🗄 Panel de almacén</h2></div>
+    <div class="termBar"><input id="termFind" type="search" placeholder="Buscar objeto…" autocomplete="off" spellcheck="false"><button id="termDeposit" class="btn">⬇ Guardar todo</button></div>
+    <p id="termInfo"></p>
+    <div id="termGrid"></div>
+    <p class="termHint">Toca un objeto para sacar una pila (Mayús+clic: todo). «Guardar todo» lleva lo de tu inventario (no la barra rápida) a los contenedores donde ya hay lo mismo.</p>
+    <button id="termClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
+<div id="elevScreen" class="screen">
+  <div class="card elevCard">
+    <div class="cardHead"><h2>🛗 Elevador</h2></div>
+    <p class="termHint">Elige piso. Pon un cartel junto a un elevador para darle nombre a ese piso.</p>
+    <div id="elevList"></div>
+    <button id="elevClose" class="btn primary">Cerrar</button>
   </div>
 </div>
 <div id="cookScreen" class="screen">
@@ -2782,6 +2810,160 @@ rebuildBlockTables();
       clear(T['dragon_' + s]); { const hg = 4 + s * 3; for (let y = 0; y < hg; y++) for (const x of [7, 8]) px(T['dragon_' + s], x, 15 - y, 70 + N(16), 150 + N(20), 70); for (let y = 0; y < hg - 3; y++) { px(T['dragon_' + s], 4, 13 - y, 70, 150, 70); px(T['dragon_' + s], 11, 12 - y, 70, 150, 70); }
         if (s >= 2) { const c = s === 3 ? [236, 60, 140] : [250, 240, 210]; for (const [x, y] of [[3, 15 - hg + 3], [10, 15 - hg + 2], [7, 15 - hg]]) { px(T['dragon_' + s], x, y, ...c); px(T['dragon_' + s], x + 1, y, ...c); px(T['dragon_' + s], x, y - 1, ...c); px(T['dragon_' + s], x + 1, y - 1, ...c); } } }
     }
+  };
+}
+
+/* ==========================================================================
+   §2g BLOQUES DE CONSTRUCCIÓN Y MECANISMOS (4.8)
+   --------------------------------------------------------------------------
+   Identificadores extendidos 1043-1078 (los mundos anteriores no cambian):
+   decoración, muebles, almacenamiento automático (tolva, cinta, dispensador,
+   detector, panel de almacén), puertas y trampillas de hierro y de cristal,
+   compuertas Y, biestable y reloj, lámparas de colores, tira de luz y trampas
+   de fuego y de hielo. La lógica está en §48 (p9zb_build48.js).
+   ========================================================================== */
+for (const n of ['white_bricks', 'black_tiles', 'carved_planks', 'mosaic', 'concrete', 'copper_tiles', 'framed_glass', 'dresser_front',
+  'hopper_side', 'hopper_top', 'terminal_front', 'conv_side', 'conv_0', 'conv_1', 'conv_2', 'conv_3', 'dispenser_front', 'detector_off', 'detector_on',
+  'iron_door_bottom', 'iron_door_top', 'glass_door_bottom', 'glass_door_top', 'iron_trapdoor', 'glass_trapdoor',
+  'and_off', 'and_on', 'toggle_off', 'toggle_on', 'clock_off', 'clock_on', 'light_strip', 'flame_trap', 'frost_trap']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+const WHITE_BRICKS = 1043, BLACK_TILES = 1044, CARVED_PLANKS = 1045, MOSAIC = 1046, CONCRETE_WHITE = 1047, CONCRETE_GRAY = 1048, CONCRETE_RED = 1049, COPPER_TILES = 1050, FRAMED_GLASS = 1051,
+  DRESSER = 1052, ARMCHAIR = 1053, COFFEE_TABLE = 1054, RUG_RED = 1055, RUG_BLUE = 1056, PLANTER = 1057,
+  HOPPER = 1058, STORAGE_TERMINAL = 1059, CONVEYOR = 1060, DISPENSER = 1061, ITEM_DETECTOR = 1062,
+  IRON_DOOR = 1063, GLASS_DOOR = 1064, IRON_TRAPDOOR = 1065, GLASS_TRAPDOOR = 1066,
+  AND_GATE = 1067, TOGGLE_GATE = 1068, CLOCK_BLOCK = 1069,
+  LAMP_RED_ON = 1070, LAMP_RED_OFF = 1071, LAMP_GREEN_ON = 1072, LAMP_GREEN_OFF = 1073, LAMP_BLUE_ON = 1074, LAMP_BLUE_OFF = 1075,
+  LIGHT_STRIP = 1076, FLAME_TRAP = 1077, FROST_TRAP = 1078;
+Object.assign(I, { IRON_DOOR_ITEM: 722, GLASS_DOOR_ITEM: 723 });
+// lámpara encendida → apagada (y al revés)
+const LAMP48 = { [LAMP_RED_ON]: LAMP_RED_OFF, [LAMP_GREEN_ON]: LAMP_GREEN_OFF, [LAMP_BLUE_ON]: LAMP_BLUE_OFF };
+for (const k in LAMP48) LAMP48[LAMP48[k]] = +k;
+
+{
+  const ST = { hardness: 1.8, tool: 'pickaxe', level: 0 };
+  defBlock(WHITE_BRICKS, 'Ladrillos blancos', 'Ladrillos claros para fachadas luminosas.', T.white_bricks, ST);
+  defBlock(BLACK_TILES, 'Baldosas negras', 'Baldosas pulidas y brillantes.', T.black_tiles, ST);
+  defBlock(CARVED_PLANKS, 'Madera tallada', 'Tablones con relieves decorativos.', T.carved_planks, { hardness: 2, tool: 'axe', sound: 'wood' });
+  defBlock(MOSAIC, 'Mosaico', 'Teselas de colores para suelos y murales.', T.mosaic, ST);
+  defBlock(CONCRETE_WHITE, 'Hormigón blanco', 'Liso y resistente.', T.concrete, { ...ST, tint: [1, 1, 1] });
+  defBlock(CONCRETE_GRAY, 'Hormigón gris', 'Liso y resistente.', T.concrete, { ...ST, tint: [0.55, 0.57, 0.6] });
+  defBlock(CONCRETE_RED, 'Hormigón rojo', 'Liso y resistente.', T.concrete, { ...ST, tint: [0.78, 0.26, 0.22] });
+  defBlock(COPPER_TILES, 'Baldosas de cobre', 'Cobre pulido en placas.', T.copper_tiles, { hardness: 3, tool: 'pickaxe', level: 0, sound: 'metal' });
+  defBlock(FRAMED_GLASS, 'Vidrio enmarcado', 'Ventanal con marco de madera.', T.framed_glass, { opaque: false, cullSelf: true, hardness: 0.4, sound: 'glass', drop: null });
+
+  // ---------- Muebles ----------
+  defBlock(DRESSER, 'Cajonera', 'Cajones para guardar 27 objetos.', { side: T.oak_planks, front: T.dresser_front, top: T.carved_planks }, { hardness: 2, tool: 'axe', sound: 'wood', oriented: true, interact: 'chest', tileTitle: 'Cajonera' });
+  const chair = [[1, 0, 1, 3, 3, 3], [13, 0, 1, 15, 3, 3], [1, 0, 13, 3, 3, 15], [13, 0, 13, 15, 3, 15], [1, 3, 1, 15, 8, 13], [1, 3, 12, 15, 16, 16], [0, 3, 1, 3, 12, 13], [13, 3, 1, 16, 12, 13]];
+  defBlock(ARMCHAIR, 'Butaca verde', 'Un sillón cómodo. Úsalo para sentarte.', T.wool, { shape: 'sofa', opaque: false, hardness: 1, sound: 'cloth', oriented: true, interact: 'sit', tint: [0.35, 0.62, 0.36],
+    boxes: (m, nb, mode) => (mode === 'collide' ? [px16([0, 0, 0, 16, 8, 16])] : B34(chair, m & 3)) });
+  defBlock(COFFEE_TABLE, 'Mesa baja', 'Mesa de salón.', { side: T.dark_planks, top: T.carved_planks }, { shape: 'rtable', opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood',
+    boxes: (m, nb, mode) => (mode !== 'render' ? [px16([0, 0, 0, 16, 8, 16])] : B34([[0, 6, 0, 16, 8, 16], [1, 0, 1, 3, 6, 3], [13, 0, 1, 15, 6, 3], [1, 0, 13, 3, 6, 15], [13, 0, 13, 15, 6, 15]])) });
+  defBlock(RUG_RED, 'Alfombra roja con borde', 'Cubre el suelo con estilo.', T.wool, { shape: 'carpet', opaque: false, hardness: 0.1, sound: 'cloth', support: true, tint: [0.75, 0.2, 0.2] });
+  defBlock(RUG_BLUE, 'Alfombra azul', 'Cubre el suelo con estilo.', T.wool, { shape: 'carpet', opaque: false, hardness: 0.1, sound: 'cloth', support: true, tint: [0.28, 0.42, 0.82] });
+  defBlock(PLANTER, 'Jardinera', 'Una jardinera con plantas.', T.pot, { shape: 'pot', opaque: false, hardness: 0.6, sound: 'stone',
+    boxes: (m, nb, mode) => (mode !== 'render' ? [px16([1, 0, 1, 15, 8, 15])] : B34([[1, 0, 1, 15, 8, 15], [2, 8, 2, 14, 14, 14]])), tileFn: (f, m, bi) => (bi === 1 ? T.moss : null) });
+
+  // ---------- Almacenamiento y automatización ----------
+  // Tolva: la salida (bits 0-2) es 0-3 hacia un lado o 4 hacia abajo
+  defBlock(HOPPER, 'Tolva', 'Recoge los objetos que caen encima y los del contenedor de arriba, y los pasa al contenedor hacia el que apunta. Con energía se detiene.', { side: T.hopper_side, top: T.hopper_top },
+    { shape: 'hopper', opaque: false, hardness: 3, tool: 'pickaxe', level: 0, sound: 'metal', mech: true, consumer: 'hopper', interact: 'hopper48',
+      boxes: (m, nb, mode) => {
+        if (mode === 'collide') return [px16([0, 10, 0, 16, 16, 16]), px16([4, 0, 4, 12, 10, 12])];
+        const d = m & 7, spout = d === 4 ? px16([6, 0, 6, 10, 4, 10]) : rot6(px16([6, 4, 0, 10, 8, 4]), d);
+        return [px16([0, 10, 0, 16, 16, 16]), px16([4, 4, 4, 12, 10, 12]), spout];
+      }, tileFn: (f, m, bi) => (bi === 0 && f === 3 ? T.hopper_top : T.hopper_side) });
+  defBlock(STORAGE_TERMINAL, 'Panel de almacén', 'Úsalo para ver y sacar lo que hay en todos los cofres, barriles y armarios a 8 bloques o menos, y para guardar de golpe.', { side: T.iron_block, front: T.terminal_front, top: T.iron_block },
+    { hardness: 3, tool: 'pickaxe', level: 0, sound: 'metal', oriented: true, interact: 'term48', light: 6 });
+  defBlock(CONVEYOR, 'Cinta transportadora', 'Mueve en la dirección de la flecha a quien esté encima: jugadores, criaturas y objetos. Con energía se detiene.', { side: T.conv_side, top: T.conv_0 },
+    { shape: 'conveyor', opaque: false, hardness: 2, tool: 'pickaxe', level: 0, sound: 'metal', mech: true, consumer: 'conveyor',
+      boxes: () => [px16([0, 0, 0, 16, 4, 16])], tileFn: (f, m) => (f === 3 ? T['conv_' + (m & 3)] : null) });
+  defBlock(DISPENSER, 'Dispensador', 'Con energía saca un objeto hacia delante: dispara flechas, planta semillas, abona cultivos, vierte agua o lanza el objeto.', { side: T.cobble, front: T.dispenser_front },
+    { hardness: 3, tool: 'pickaxe', level: 0, oriented: true, mech: true, consumer: 'dispenser', interact: 'disp48' });
+  defBlock(ITEM_DETECTOR, 'Detector de objetos', 'Da energía mientras algún contenedor pegado a él (cofre, barril, tolva…) tenga objetos.', { side: T.smooth_stone, top: T.detector_off },
+    { hardness: 2, tool: 'pickaxe', level: 0, sound: 'metal', mech: true, src: 'detector', tileFn: (f, m) => (f === 3 ? (m & 8 ? T.detector_on : T.detector_off) : null) });
+
+  // ---------- Puertas y trampillas ----------
+  defBlock(IRON_DOOR, 'Puerta de hierro', 'Solo se abre con energía (palancas, botones, placas o sensores).', T.iron_door_bottom,
+    { shape: 'door', opaque: false, hardness: 5, tool: 'pickaxe', level: 0, sound: 'metal', hidden: true, consumer: 'door', support: true, interact: 'irondoor48',
+      drop: (r, tool, m) => (m & 8 ? [] : [[I.IRON_DOOR_ITEM, 1]]), tileFn: (f, m) => (m & 8 ? T.iron_door_top : T.iron_door_bottom) });
+  defBlock(GLASS_DOOR, 'Puerta de cristal', 'Puerta de madera con cristal. Dos puertas juntas se abren a la vez.', T.glass_door_bottom,
+    { shape: 'door', opaque: false, hardness: 3, tool: 'axe', sound: 'wood', hidden: true, consumer: 'door', support: true, interact: 'door48',
+      drop: (r, tool, m) => (m & 8 ? [] : [[I.GLASS_DOOR_ITEM, 1]]), tileFn: (f, m) => (m & 8 ? T.glass_door_top : T.glass_door_bottom) });
+  defBlock(IRON_TRAPDOOR, 'Trampilla de hierro', 'Solo se abre con energía.', T.iron_trapdoor, { shape: 'trapdoor', opaque: false, hardness: 5, tool: 'pickaxe', level: 0, sound: 'metal', consumer: 'trapdoor', interact: 'irontrap48' });
+  defBlock(GLASS_TRAPDOOR, 'Trampilla de cristal', 'Trampilla transparente. Úsala para abrirla o ciérrala con energía.', T.glass_trapdoor, { shape: 'trapdoor', opaque: false, hardness: 2, tool: 'axe', sound: 'glass', consumer: 'trapdoor', interact: 'trap48' });
+
+  // ---------- Circuitos ----------
+  const gateBoxes = (m, nb, mode) => { const base = [[0, 0, 0, 16, 2, 16]]; if (mode === 'collide') return B34(base); return B34([...base, [7, 2, 1, 9, 5, 3], [1, 2, 7, 3, 5, 9], [13, 2, 7, 15, 5, 9]], m & 3); };
+  const MECH48 = { opaque: false, solid: true, mech: true, hardness: 0.3, support: true };
+  defBlock(AND_GATE, 'Compuerta Y', 'Circuito: da energía hacia delante solo si recibe energía por los DOS lados a la vez.', T.and_off,
+    { ...MECH48, shape: 'logic', boxes: gateBoxes, logicGate: 'and', tileFn: (f, m, bi) => (bi > 0 ? (m & 4 ? T.wire_on : T.wire_off) : f === 3 ? (m & 4 ? T.and_on : T.and_off) : T.smooth_stone) });
+  defBlock(TOGGLE_GATE, 'Biestable', 'Circuito: cada pulso de energía por detrás cambia su salida (encendida ↔ apagada). Ideal para controlar algo con un solo botón.', T.toggle_off,
+    { ...MECH48, shape: 'logic', boxes: (m, nb, mode) => (mode === 'collide' ? B34([[0, 0, 0, 16, 2, 16]]) : B34([[0, 0, 0, 16, 2, 16], [7, 2, 2, 9, 6, 4], [6, 2, 7, 10, 4, 11]], m & 3)), logicGate: 'toggle',
+      tileFn: (f, m, bi) => (bi > 0 ? (m & 4 ? T.wire_on : T.wire_off) : f === 3 ? (m & 4 ? T.toggle_on : T.toggle_off) : T.smooth_stone) });
+  defBlock(CLOCK_BLOCK, 'Reloj', 'Fuente de energía intermitente. Úsalo para cambiar el ritmo (0,5 a 4 s). Si recibe energía de otro lado, se detiene.', { side: T.smooth_stone, top: T.clock_off },
+    { opaque: false, solid: true, mech: true, shape: 'clock', boxes: () => [px16([0, 0, 0, 16, 6, 16])], hardness: 1, tool: 'pickaxe', level: 0, sound: 'metal', src: 'clock', interact: 'clock48',
+      tileFn: (f, m) => (f === 3 ? (m & 8 ? T.clock_on : T.clock_off) : null) });
+
+  // ---------- Iluminación ----------
+  for (const [on, off, n, c] of [[LAMP_RED_ON, LAMP_RED_OFF, 'roja', [1, 0.42, 0.38]], [LAMP_GREEN_ON, LAMP_GREEN_OFF, 'verde', [0.45, 1, 0.45]], [LAMP_BLUE_ON, LAMP_BLUE_OFF, 'azul', [0.45, 0.6, 1]]]) {
+    defBlock(on, `Lámpara ${n}`, 'Úsala para encenderla o apagarla, o contrólala con energía.', T.lamp_on, { hardness: 1, tool: 'pickaxe', light: 15, sound: 'glass', interact: 'lamp48', consumer: 'lamp48', tint: c });
+    defBlock(off, `Lámpara ${n} (apagada)`, 'Úsala para encenderla.', T.lamp_off, { hardness: 1, tool: 'pickaxe', sound: 'glass', interact: 'lamp48', consumer: 'lamp48', drop: on, hidden: true, tint: c.map((v) => v * 0.7 + 0.2) });
+  }
+  defBlock(LIGHT_STRIP, 'Tira de luz', 'Luz plana para suelos, techos y estantes.', T.light_strip, { shape: 'carpet', opaque: false, solid: false, hardness: 0.2, sound: 'glass', light: 13, support: true });
+
+  // ---------- Trampas ----------
+  defBlock(FLAME_TRAP, 'Trampa de fuego', 'Con energía lanza llamaradas hacia arriba que queman a quien esté encima.', { side: T.cobble, top: T.flame_trap }, { hardness: 3, tool: 'pickaxe', level: 0, mech: true, consumer: 'flame48' });
+  defBlock(FROST_TRAP, 'Trampa de hielo', 'Con energía congela a quien esté cerca: lo frena durante unos segundos.', { side: T.cobble, top: T.frost_trap }, { hardness: 3, tool: 'pickaxe', level: 0, mech: true, consumer: 'frost48' });
+}
+rebuildBlockTables();
+
+{
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { paint, rnd, bricks, planks, get, copy } = h, N = (v) => (rnd() - 0.5) * v;
+    bricks(T.white_bricks, 4, 8, [180, 176, 168], [236, 232, 224], 8);
+    paint(T.black_tiles, (x, y) => { const g = x % 8 === 0 || y % 8 === 0, s = (x + y) % 7 === 0 && (x % 8) > 1 ? 24 : 0, n = N(6); return g ? [70, 70, 76] : [26 + n + s, 26 + n + s, 30 + n + s]; });
+    planks(T.carved_planks, [176, 130, 82]);
+    paint(T.carved_planks, (x, y) => { const cx = (x % 8) - 3.5, cy = (y % 8) - 3.5, r = Math.hypot(cx, cy); return r > 2 && r < 3 ? [120, 82, 46] : null; });
+    paint(T.mosaic, (x, y) => { const g = x % 4 === 0 || y % 4 === 0; if (g) return [210, 200, 180]; const C = [[60, 120, 200], [220, 170, 60], [200, 70, 60], [80, 170, 120], [240, 240, 230]], c = C[Math.floor(hash2(x >> 2, y >> 2, 481) * C.length)], n = N(14); return [c[0] + n, c[1] + n, c[2] + n]; });
+    paint(T.concrete, (x, y) => { const n = N(8), v = (hash2(x >> 2, y >> 2, 482) - 0.5) * 8; return [222 + n + v, 222 + n + v, 222 + n + v]; });
+    paint(T.copper_tiles, (x, y) => { const g = x % 8 === 0 || y % 8 === 0, n = N(12), o = hash2(x, y, 483) > 0.9; return g ? [140, 74, 46] : o ? [90, 170, 140] : [210 + n, 120 + n * 0.8, 74 + n * 0.5]; });
+    paint(T.framed_glass, (x, y) => { const f = x < 2 || y < 2 || x > 13 || y > 13, m = x === 7 || x === 8 || y === 7 || y === 8; return f ? [120, 82, 46] : m ? [150, 104, 60] : (x + y) % 9 === 0 ? [235, 245, 255, 140] : [200, 225, 240, 70]; });
+    copy(T.dresser_front, T.oak_planks);
+    paint(T.dresser_front, (x, y) => { if (y % 5 === 0 || x === 0 || x === 15) return [110, 76, 40]; return (x === 7 || x === 8) && y % 5 === 2 ? [220, 190, 80] : null; });
+    paint(T.hopper_side, (x, y) => { const e = x === 0 || x === 15 || y === 0, n = N(10); return e ? [50, 50, 56] : [84 + n, 86 + n, 94 + n]; });
+    paint(T.hopper_top, (x, y) => { const r = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5)); return r > 6.5 ? [70, 70, 78] : r < 3 ? [24, 24, 28] : [100 - r * 6, 102 - r * 6, 110 - r * 6]; });
+    copy(T.terminal_front, T.iron_block);
+    paint(T.terminal_front, (x, y) => { if (x > 1 && x < 14 && y > 2 && y < 11) { const row = y % 2 === 0 && x > 2 && x < 13 && hash2(x, y, 484) > 0.35; return row ? [120, 255, 170] : [20, 40, 34]; } return y === 13 && x > 4 && x < 11 ? [250, 200, 60] : null; });
+    paint(T.conv_side, (x, y) => { const n = N(10); return y < 4 ? [40, 40, 44] : (x % 4 === 0 ? [60, 62, 70] : [110 + n, 112 + n, 120 + n]); });
+    for (let d = 0; d < 4; d++) paint(T['conv_' + d], (x, y) => {
+      // flecha que apunta en la dirección FACING_DIR[d] (0 = -z, arriba en la textura)
+      let u = x - 7.5, v = y - 7.5; for (let k = 0; k < d; k++) { const t = u; u = -v; v = t; }
+      const belt = (Math.floor(y / 2) + Math.floor(x / 2)) % 2 ? [52, 52, 56] : [44, 44, 48];
+      const arrow = (v < 0 && Math.abs(u) < -v * 0.9 + 1 && v > -6) || (v >= 0 && v < 5 && Math.abs(u) < 1.6);
+      return x === 0 || x === 15 ? [130, 130, 140] : arrow ? [250, 200, 60] : belt;
+    });
+    copy(T.dispenser_front, T.cobble);
+    paint(T.dispenser_front, (x, y) => { const r = Math.hypot(x - 7.5, y - 7.5); return r < 3 ? [20, 20, 22] : r < 4.2 ? [90, 90, 96] : null; });
+    const det = (t, on) => paint(t, (x, y) => { const r = Math.hypot(x - 7.5, y - 7.5), e = x === 0 || y === 0 || x === 15 || y === 15; return e ? [80, 80, 86] : r < 3.5 ? (on ? [255, 120, 60] : [120, 40, 30]) : [170 + N(10), 170, 176]; });
+    det(T.detector_off, false); det(T.detector_on, true);
+    const door = (t, top, glass) => paint(t, (x, y) => {
+      const frame = x < 2 || x > 13 || (top ? y < 2 : y > 13) || y === 7 || y === 8;
+      if (glass) return frame ? [150, 104, 60] : (top || y < 7) ? ((x + y) % 7 === 0 ? [235, 245, 255, 150] : [190, 220, 240, 80]) : [176, 124, 76];
+      const n = N(10); return frame ? [96, 98, 108] : (x % 5 === 2 && !top) ? [150, 152, 160] : (top && y > 2 && y < 6 && x > 3 && x < 12) ? [40, 44, 50] : [176 + n, 178 + n, 186 + n];
+    });
+    door(T.iron_door_bottom, false, false); door(T.iron_door_top, true, false); door(T.glass_door_bottom, false, true); door(T.glass_door_top, true, true);
+    paint(T.iron_trapdoor, (x, y) => { const e = x < 2 || y < 2 || x > 13 || y > 13, n = N(10); return e ? [96, 98, 108] : (x + y) % 6 === 0 ? [40, 44, 50, 0] : [176 + n, 178 + n, 186 + n]; });
+    paint(T.glass_trapdoor, (x, y) => { const e = x < 2 || y < 2 || x > 13 || y > 13 || x === 7 || y === 7; return e ? [150, 104, 60] : [190, 220, 240, 90]; });
+    const logicTop = (t, on, glyph) => paint(t, (x, y) => { const base = [168 + N(8), 168, 172]; return glyph(x, y) ? (on ? [255, 90, 60] : [90, 40, 30]) : base; });
+    const andG = (x, y) => (x > 3 && x < 12 && (y === 4 || y === 11)) || ((x === 4 || x === 11) && y > 3 && y < 12) || (y === 8 && x > 5 && x < 10);
+    const togG = (x, y) => Math.abs(Math.hypot(x - 7.5, y - 7.5) - 4.5) < 0.8 || (x === 7 && y > 2 && y < 9) || (x === 8 && y > 2 && y < 9);
+    logicTop(T.and_off, false, andG); logicTop(T.and_on, true, andG); logicTop(T.toggle_off, false, togG); logicTop(T.toggle_on, true, togG);
+    const clk = (t, on) => paint(t, (x, y) => { const r = Math.hypot(x - 7.5, y - 7.5); if (r > 7.2) return [90, 90, 96]; const hand = (x === 7 || x === 8) && y > 3 && y < 8 || (y === 7 || y === 8) && x > 7 && x < 12; return hand ? [30, 30, 34] : r > 6 ? (on ? [255, 120, 60] : [140, 60, 40]) : [236, 232, 220]; });
+    clk(T.clock_off, false); clk(T.clock_on, true);
+    paint(T.light_strip, (x, y) => (x % 4 === 1 || x % 4 === 2) && y > 1 && y < 14 ? [255, 252, 220] : [200, 200, 190]);
+    paint(T.flame_trap, (x, y) => { const g = x % 3 === 0 || y % 3 === 0, n = N(16); return g ? [50, 46, 44] : [150 + n, 60 + n * 0.5, 30]; });
+    paint(T.frost_trap, (x, y) => { const g = x % 3 === 0 || y % 3 === 0, n = N(16); return g ? [60, 70, 90] : [170 + n, 220 + n, 250]; });
   };
 }
 
@@ -12047,7 +12229,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -12058,7 +12240,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.7  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.8  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12083,7 +12265,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -14998,6 +15180,21 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.8', name: 'Construcción y mecanismos', date: 'noviembre de 2026', items: [
+    'Bloques de decoración nuevos: ladrillos blancos, baldosas negras, madera tallada, mosaico, hormigón blanco, gris y rojo, baldosas de cobre y vidrio enmarcado.',
+    'Muebles nuevos: cajonera (guarda 27 objetos), butaca (para sentarse), mesa baja, alfombras roja y azul y jardinera.',
+    'Tolva: recoge lo que cae encima y lo del contenedor de arriba, y lo pasa de uno en uno al contenedor al que apunta (cofres, barriles, armarios, cajoneras, hornos, comederos, dispensadores u otras tolvas). Colócala en el lateral de un bloque para que apunte hacia él; si no, apunta hacia abajo. Con energía se detiene.',
+    'Cinta transportadora: mueve hacia donde marca la flecha a jugadores, criaturas y objetos; combinada con tolvas, lleva las cosechas a un cofre. Con energía se detiene.',
+    'Dispensador: con cada pulso de energía dispara flechas, planta semillas en la tierra de cultivo, abona cultivos con polvo de hueso o abono, vierte o recoge agua con cubos, o lanza el objeto.',
+    'Detector de objetos: da energía mientras un contenedor pegado a él tenga algo. Sirve para avisos de cofre lleno o para encadenar máquinas.',
+    'Panel de almacén: muestra juntos los objetos de todos los cofres, barriles, armarios y cajoneras a 8 bloques o menos; tocas uno para sacarlo y «Guardar todo» lleva tu inventario a los contenedores donde ya hay lo mismo. Tiene buscador.',
+    'Puertas y trampillas: puerta y trampilla de hierro (solo se abren con energía), puerta y trampilla de cristal, y puertas dobles: dos puertas iguales juntas se abren a la vez.',
+    'Elevadores: úsalos para elegir piso en un menú. Pon un cartel junto a un elevador para ponerle nombre a ese piso.',
+    'Circuitos nuevos: compuerta Y (da energía si recibe por los dos lados), biestable (cada pulso cambia la salida: un botón que enciende y apaga) y reloj (energía intermitente cada 0,5 a 4 segundos; se detiene si recibe energía).',
+    'Iluminación: lámparas roja, verde y azul (a mano o con energía) y tira de luz plana para suelos y techos.',
+    'Trampas nuevas: trampa de fuego (llamaradas hacia arriba que queman) y trampa de hielo (frena a quien esté cerca), las dos con energía.',
+    '6 logros nuevos.',
+  ] },
   { v: '4.7', name: 'Actividades', date: 'noviembre de 2026', items: [
     'Pesca interactiva: fabrica una caña (palos e hilo), lánzala al agua y espera. Cuando pique, usa la caña enseguida y mantén Usar para que la zona verde siga al pez hasta llenar la barra. Si sueltas demasiado, se escapa.',
     'Cada agua tiene sus peces: salmón y pez de hielo en aguas frías, trucha en ríos y lagos, bagre en pantanos (sobre todo de noche), pez payaso y pez globo en mares templados. Con suerte sale el legendario pez dorado; a veces, basura o un Botín del pescador con tesoros. Llover ayuda a que piquen.',
@@ -15283,7 +15480,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.8', name: 'Construcción y mecanismos', items: ['Más bloques, muebles y mecanismos.'] },
   { v: '4.9', name: 'Multijugador', items: ['Equipos, comercio, cofres compartidos y protección de terrenos.'] },
   { v: '5.0', name: 'Expansión total', items: ['Interfaz, calidad gráfica y optimización final.'] },
 ];
@@ -20645,6 +20841,482 @@ ACHIEVEMENTS.push(['fish_first', 'Primera captura', 'Pesca tu primer pez con la 
   ['cook_first', 'A la mesa', 'Cocina tu primer plato en una olla.'], ['chef', 'Gran chef', 'Cocina cinco platos distintos.'], ['farm_world', 'Cultivos del mundo', 'Cosecha arroz, tomates, maíz, coles y pitahayas.'],
   ['compost', 'Nada se tira', 'Saca abono de un compostador.'], ['water_can', 'Riego a mano', 'Riega la tierra con una regadera.'], ['feeder', 'Granja automática', 'Haz que un comedero alimente a dos animales a la vez.'],
   ['expedition', 'Expedicionario', 'Completa una expedición.']);
+
+/* ==========================================================================
+   §48 CONSTRUCCIÓN Y MECANISMOS 4.8 — lógica
+   --------------------------------------------------------------------------
+   · Tolvas: recogen lo que cae encima y lo del contenedor de arriba y lo
+     pasan, de uno en uno, al contenedor al que apuntan (cofres, barriles,
+     armarios, hornos, comederos, dispensadores u otras tolvas).
+   · Cintas transportadoras, dispensadores y detectores de objetos para
+     automatizar granjas y almacenes.
+   · Panel de almacén: ve y saca lo de todos los contenedores cercanos y
+     guarda de golpe lo que ya tiene sitio.
+   · Puertas de hierro y de cristal, trampillas, puertas dobles que se abren
+     juntas y panel de pisos en los elevadores.
+   · Compuerta Y, biestable y reloj; lámparas de colores; trampas de fuego y
+     de hielo.
+   Igual que en la 3.4, el estado vive en los metadatos y en las entidades de
+   bloque, así que se guarda con el mundo y viaja por la red.
+   ========================================================================== */
+const CONTAINER48 = new Set([HOPPER, DISPENSER, FEEDER, FURNACE, FURNACE_LIT]);
+const isContainer48 = (id) => !!id && (CONTAINER48.has(id) || BLOCKS[id]?.interact === 'chest' || BLOCKS[id]?.interact === 'furnace');
+const DECO48 = [WHITE_BRICKS, BLACK_TILES, CARVED_PLANKS, MOSAIC, CONCRETE_WHITE, CONCRETE_GRAY, CONCRETE_RED, COPPER_TILES, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, RUG_BLUE, PLANTER, LIGHT_STRIP, LAMP_RED_ON, LAMP_GREEN_ON, LAMP_BLUE_ON];
+
+/* ---------- Objetos, iconos y recetas ---------- */
+{
+  const doorIcon = (top, bot) => () => { const c = document.createElement('canvas'); c.width = c.height = 16; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(tileCanvas(top), 0, 0, 16, 16, 4, 0, 8, 8); x.drawImage(tileCanvas(bot), 0, 0, 16, 16, 4, 8, 8, 8); return c; };
+  defItem(I.IRON_DOOR_ITEM, 'Puerta de hierro', BLOCKS[IRON_DOOR].desc, { place: IRON_DOOR }); ICON_OVERRIDE[I.IRON_DOOR_ITEM] = doorIcon(T.iron_door_top, T.iron_door_bottom);
+  defItem(I.GLASS_DOOR_ITEM, 'Puerta de cristal', BLOCKS[GLASS_DOOR].desc, { place: GLASS_DOOR }); ICON_OVERRIDE[I.GLASS_DOOR_ITEM] = doorIcon(T.glass_door_top, T.glass_door_bottom);
+  for (const id of [HOPPER, CONVEYOR, DISPENSER, ITEM_DETECTOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, FLAME_TRAP, FROST_TRAP, STORAGE_TERMINAL, I.IRON_DOOR_ITEM, IRON_TRAPDOOR]) if (ITEMS[id]) ITEMS[id].mech = true;
+  BLOCKS[AND_GATE].iconMeta = 1; BLOCKS[TOGGLE_GATE].iconMeta = 1; BLOCKS[ARMCHAIR].iconMeta = 2; BLOCKS[HOPPER].iconMeta = 4; BLOCKS[CONVEYOR].iconMeta = 0;
+  const C = 'Construcción', M = 'Mecanismos', F = 'Muebles', L = 'Iluminación';
+  shaped(WHITE_BRICKS, 4, ['pb', 'bp'], { p: PLASTER, b: BRICKS }, C);
+  shaped(BLACK_TILES, 4, ['bb', 'bb'], { b: POL_BASALT }, C);
+  shapeless(CARVED_PLANKS, 2, [OAK_PLANKS, OAK_PLANKS, STRIPPED_OAK], C);
+  shaped(MOSAIC, 4, ['ab', 'ba'], { a: TILES_BLUE, b: TERRACOTTA_ORANGE }, C);
+  shapeless(CONCRETE_WHITE, 4, [SAND, SAND, GRAVEL, GRAVEL, I.BONE_MEAL], C);
+  shapeless(CONCRETE_GRAY, 4, [CONCRETE_WHITE, CONCRETE_WHITE, CONCRETE_WHITE, CONCRETE_WHITE, I.COAL], C);
+  shapeless(CONCRETE_RED, 4, [CONCRETE_WHITE, CONCRETE_WHITE, CONCRETE_WHITE, CONCRETE_WHITE, I.BEETROOT], C);
+  shaped(COPPER_TILES, 4, ['cc', 'cc'], { c: COPPER_BLOCK }, C);
+  shapeless(FRAMED_GLASS, 2, [GLASS, GLASS, I.STICK], C);
+  shaped(DRESSER, 1, ['cpc', 'ppp'], { p: OAK_PLANKS, c: CHEST }, F);
+  shaped(ARMCHAIR, 1, ['w  ', 'www', 'p p'], { w: WOOL, p: OAK_PLANKS }, F);
+  shaped(COFFEE_TABLE, 1, ['ppp', 's s'], { p: DARK_PLANKS, s: I.STICK }, F);
+  shapeless(RUG_RED, 3, [RED_WOOL, RED_WOOL, WOOL], F);
+  shapeless(RUG_BLUE, 3, [WOOL, WOOL, BLUE_ORCHID], F);
+  shaped(PLANTER, 1, ['ddd', 'bbb'], { d: DIRT, b: BRICKS }, F);
+  shaped(HOPPER, 1, ['i i', 'ici', ' i '], { i: I.IRON_INGOT, c: CHEST }, M);
+  shaped(STORAGE_TERMINAL, 1, ['iii', 'igi', 'iwi'], { i: I.IRON_INGOT, g: GLOWSTONE, w: WIRE }, M);
+  shaped(CONVEYOR, 4, ['lll', 'iwi'], { l: I.LEATHER, i: I.IRON_INGOT, w: WIRE }, M);
+  shaped(DISPENSER, 1, ['cbc', 'cwc'], { c: COBBLE, b: I.BOW, w: WIRE }, M);
+  shaped(ITEM_DETECTOR, 1, ['g', 'w', 'c'], { g: I.GOLD_INGOT, w: WIRE, c: COBBLE }, M);
+  shaped(I.IRON_DOOR_ITEM, 1, ['ii', 'ii', 'ii'], { i: I.IRON_INGOT }, M);
+  shaped(I.GLASS_DOOR_ITEM, 1, ['gg', 'pp', 'pp'], { g: GLASS, p: OAK_PLANKS }, C);
+  shaped(IRON_TRAPDOOR, 1, ['ii', 'ii'], { i: I.IRON_INGOT }, M);
+  shaped(GLASS_TRAPDOOR, 2, ['gpg', 'pgp'], { g: GLASS, p: OAK_PLANKS }, C);
+  shaped(AND_GATE, 1, ['wtw', 'sws'], { w: WIRE, t: TORCH, s: [STONE, SMOOTH_STONE] }, M);
+  shaped(TOGGLE_GATE, 1, ['wlw', 'sss'], { w: WIRE, l: LEVER, s: [STONE, SMOOTH_STONE] }, M);
+  shaped(CLOCK_BLOCK, 1, [' w ', 'wgw', 'sss'], { w: WIRE, g: I.GOLD_INGOT, s: [STONE, SMOOTH_STONE] }, M);
+  shapeless(LAMP_RED_ON, 1, [LAMP_ON, RED_WOOL], L);
+  shapeless(LAMP_GREEN_ON, 1, [LAMP_ON, CACTUS], L);
+  shapeless(LAMP_BLUE_ON, 1, [LAMP_ON, BLUE_ORCHID], L);
+  shaped(LIGHT_STRIP, 3, ['pgp'], { p: GLASS_PANE, g: GLOWSTONE }, L);
+  shaped(FLAME_TRAP, 1, ['cmc', 'cwc'], { c: COBBLE, m: MAGMA, w: WIRE }, M);
+  shaped(FROST_TRAP, 1, ['cic', 'cwc'], { c: COBBLE, i: ICE, w: WIRE }, M);
+}
+
+/* ---------- Entidades de bloque: tolva y dispensador ---------- */
+function tile48(x, y, z, create = true) {
+  const k = `${x},${y},${z}`, id = world.get(x, y, z); let t = world.tiles.get(k);
+  if (t && t.inv) return t;
+  if (!create) return null;
+  if (id === HOPPER) t = { type: 'hopper', inv: new Inventory(5), title: 'Tolva' };
+  else if (id === DISPENSER) t = { type: 'dispenser', inv: new Inventory(9), title: 'Dispensador' };
+  else if (id === FEEDER) t = { type: 'feeder', inv: new Inventory(9), title: 'Comedero' };
+  else if (id === FURNACE || id === FURNACE_LIT || BLOCKS[id]?.interact === 'furnace') t = makeTile('furnace');
+  else if (BLOCKS[id]?.interact === 'chest') { t = makeTile('chest'); if (BLOCKS[id].tileTitle) t.title = BLOCKS[id].tileTitle; else if (id === BARREL) t.title = 'Barril'; }
+  else return null;
+  world.tiles.set(k, t); return t;
+}
+{
+  const _pack = packTile, _unpack = unpackTile;
+  packTile = function (t) {
+    if (t.type === 'hopper') return { t: 'h', s: t.inv.toJSON() };
+    if (t.type === 'dispenser') return { t: 'd', s: t.inv.toJSON() };
+    return _pack(t);
+  };
+  unpackTile = function (d, into) {
+    if (d && d.t === 'h') { const t = into && into.type === 'hopper' ? into : { type: 'hopper', inv: new Inventory(5), title: 'Tolva' }; t.inv.load(d.s); return t; }
+    if (d && d.t === 'd') { const t = into && into.type === 'dispenser' ? into : { type: 'dispenser', inv: new Inventory(9), title: 'Dispensador' }; t.inv.load(d.s); return t; }
+    return _unpack(d, into);
+  };
+}
+// mover un objeto de un contenedor a otro (respetando las ranuras del horno)
+function takeOne48(t) {
+  const sl = t.inv.slots;
+  if (t.type === 'furnace') { const o = sl[2]; if (!o) return null; o.count--; const r = { id: o.id, count: 1, dmg: o.dmg || 0, ench: o.ench }; if (!o.count) sl[2] = null; return r; }
+  for (let i = 0; i < sl.length; i++) { const s = sl[i]; if (s) { s.count--; const r = { id: s.id, count: 1, dmg: s.dmg || 0, ench: s.ench }; if (!s.count) sl[i] = null; return r; } }
+  return null;
+}
+function putOne48(t, s) {
+  if (t.type === 'furnace') {
+    const i = SMELT[s.id] ? 0 : ITEMS[s.id].fuel ? 1 : -1; if (i < 0) return false;
+    const cur = t.inv.slots[i]; if (!cur) { t.inv.slots[i] = { ...s, count: 1 }; return true; }
+    if (cur.id === s.id && !cur.ench && !s.ench && cur.count < maxStack(s.id)) { cur.count++; return true; }
+    return false;
+  }
+  return t.inv.add(s.id, 1, s.dmg || 0, s.ench) === 0;
+}
+function canPut48(t, s) {
+  if (t.type === 'furnace') { const i = SMELT[s.id] ? 0 : ITEMS[s.id].fuel ? 1 : -1; if (i < 0) return false; const cur = t.inv.slots[i]; return !cur || (cur.id === s.id && cur.count < maxStack(s.id)); }
+  const max = s.ench ? 1 : maxStack(s.id); return t.inv.slots.some((q) => !q || (q.id === s.id && !q.ench && !s.ench && q.count < max));
+}
+const hopperOut = (m) => (m & 7) === 4 ? [0, -1, 0] : DIR6[m & 7];
+
+/* ---------- Dispensador ---------- */
+function dispense48(x, y, z, meta) {
+  const t = tile48(x, y, z); const i = t.inv.slots.findIndex(Boolean); if (i < 0) { sfx.play('click', { pos: { x: x + 0.5, y: y + 0.5, z: z + 0.5 }, pitch: 1.6 }); return; }
+  const s = t.inv.slots[i], [dx, dz] = FACING_DIR[meta & 3], fx = x + dx, fz = z + dz, pos = { x: x + 0.5, y: y + 0.5, z: z + 0.5 };
+  const use = (n = 1) => { s.count -= n; if (s.count <= 0) t.inv.slots[i] = null; };
+  const it = ITEMS[s.id];
+  if (s.id === I.ARROW || s.id === I.FIRE_ARROW || s.id === I.POISON_ARROW || s.id === I.ICE_ARROW) {
+    if (B_SOLID[world.get(fx, y, fz)]) return;
+    const ar = new TrapArrow(x + 0.5 + dx * 0.7, y + 0.55, z + 0.5 + dz * 0.7, dx * 24, 1.2, dz * 24, 4, 'trap'); game.entities.add(ar); use(); sfx.play('bow', { pos }); return;
+  }
+  const front = world.get(fx, y, fz), below = world.get(fx, y - 1, fz);
+  if ((s.id === I.BONE_MEAL || s.id === I.FERTILIZER) && BLOCKS[front]?.crop && (world.getMeta(fx, y, fz) & 3) < 3) {
+    world.set(fx, y, fz, front, Math.min(3, (world.getMeta(fx, y, fz) & 3) + 1)); use(); game.particles.emit(fx + 0.5, y + 0.5, fz + 0.5, [0.5, 1, 0.4], 8, { gravity: -1, up: 1, speed: 1, life: 0.6, size: 0.08 }); sfx.play('pop', { pos }); return;
+  }
+  if (it.plant && !front && below === FARMLAND) { world.set(fx, y, fz, it.plant, 0); use(); sfx.play('place', { mat: 'grass', pos }); return; }
+  if (s.id === I.WATER_BUCKET && (!front || BLOCKS[front].replaceable)) { world.set(fx, y, fz, WATER, 0); t.inv.slots[i] = { id: I.BUCKET, count: 1, dmg: 0 }; sfx.play('splash', { pos }); return; }
+  if (s.id === I.BUCKET && B_WATERY[front] && front === WATER) { world.set(fx, y, fz, AIR, 0); t.inv.slots[i] = { id: I.WATER_BUCKET, count: 1, dmg: 0 }; sfx.play('splash', { pos }); return; }
+  // cualquier otra cosa: la lanza hacia delante
+  const one = { id: s.id, count: 1, dmg: s.dmg || 0, ench: s.ench }; use();
+  game.entities.dropItem(one, x + 0.5 + dx * 0.7, y + 0.4, z + 0.5 + dz * 0.7, new THREE.Vector3(dx * 4, 1.5, dz * 4));
+  sfx.play('pop', { pos, pitch: 0.8 });
+}
+
+/* ---------- Circuitos: compuerta Y, biestable, consumidores nuevos ---------- */
+{
+  const C = circuit, _gd = C.gateDesired.bind(C), _eg = C.evalGate.bind(C), _fire = C.fire.bind(C), _ec = C.evalConsumer.bind(C);
+  const back = (x, y, z, meta) => { const f = meta & 3; return C.emitsTo(x - FACING_DIR[f][0], y, z - FACING_DIR[f][1], x, y, z, false); };
+  C.gateDesired = function (x, y, z, id, meta) {
+    if (id === AND_GATE) { const f = meta & 3, l = FACING_DIR[(f + 3) % 4], r = FACING_DIR[(f + 1) % 4]; return this.emitsTo(x + l[0], y, z + l[1], x, y, z, false) && this.emitsTo(x + r[0], y, z + r[1], x, y, z, false); }
+    if (id === TOGGLE_GATE) { const inp = back(x, y, z, meta), mem = !!(meta & 8); return inp && !mem ? !(meta & 4) : !!(meta & 4); }
+    return _gd(x, y, z, id, meta);
+  };
+  C.evalGate = function (x, y, z, id, meta) {
+    if (id === TOGGLE_GATE && !back(x, y, z, meta) && (meta & 8)) { world.set(x, y, z, id, meta & ~8); return; }     // al soltar el pulso se rearma
+    return _eg(x, y, z, id, meta);
+  };
+  C.fire = function (tm) {
+    const { x, y, z } = tm, id = world.get(x, y, z);
+    if (tm.kind === 'gate' && id === TOGGLE_GATE) {
+      const meta = world.getMeta(x, y, z), inp = back(x, y, z, meta);
+      if (inp && !(meta & 8)) { const nm = (meta ^ 4) | 8; world.set(x, y, z, id, nm); const f = meta & 3; this.notify(x + FACING_DIR[f][0], y, z + FACING_DIR[f][1]); game.unlock('logic48'); }
+      else if (!inp && (meta & 8)) world.set(x, y, z, id, meta & ~8);
+      return;
+    }
+    if (tm.kind === 'gate' && id === AND_GATE && this.gateDesired(x, y, z, id, world.getMeta(x, y, z))) game.unlock('logic48');
+    return _fire(tm);
+  };
+  C.evalConsumer = function (x, y, z, id, meta) {
+    const d = BLOCKS[id], pos = { x: x + 0.5, y: y + 0.5, z: z + 0.5 };
+    switch (d.consumer) {
+      case 'lamp48': {
+        const P = this.poweredAt(x, y, z), mem = !!(meta & 16); if (P === mem) return;
+        const lit = !!d.light, want = P ? (lit ? id : LAMP48[id]) : (lit ? LAMP48[id] : id);
+        world.set(x, y, z, want, P ? 16 : 0); sfx.play('lamp', { pos }); return;
+      }
+      case 'dispenser': {
+        const P = this.poweredAt(x, y, z), mem = !!(meta & 16); if (P === mem) return;
+        world.set(x, y, z, id, P ? meta | 16 : meta & ~16);
+        if (P && ownsMech(pos.x, pos.y, pos.z)) { dispense48(x, y, z, meta); game.unlock('engineer'); }
+        return;
+      }
+      case 'flame48': case 'frost48': {
+        const P = this.poweredAt(x, y, z); if (P === !!(meta & 8)) return;
+        world.set(x, y, z, id, P ? meta | 8 : meta & ~8); if (P) sfx.play(d.consumer === 'flame48' ? 'fireball' : 'splash', { pos, pitch: 1.3 });
+        return;
+      }
+      case 'hopper': case 'conveyor': return;          // se consultan en cada paso (bloqueo con energía)
+    }
+    return _ec(x, y, z, id, meta);
+  };
+}
+
+/* ---------- Colocar y romper ---------- */
+{
+  const _place = game.placeHeld;
+  game.placeHeld = function () {
+    const p = this.player, s = p.held(), t = this.target;
+    if (!s || !t) return _place.call(this);
+    const it = ITEMS[s.id], bid = it && !it.plant && (it.place ?? it.block);
+    if (bid !== IRON_DOOR && bid !== GLASS_DOOR && bid !== HOPPER && bid !== CONVEYOR) {
+      const r = _place.call(this);
+      if (r && DECO48.includes(bid)) { p.deco48 = (p.deco48 || 0) + 1; if (p.deco48 >= 20) this.unlock('decorator'); }
+      return r;
+    }
+    let x = t.x + t.normal[0], y = t.y + t.normal[1], z = t.z + t.normal[2];
+    if (BLOCKS[t.id].replaceable && t.id !== WATER) { x = t.x; y = t.y; z = t.z; }
+    if (y < 1 || y >= WY - 1) return false;
+    const cur = world.get(x, y, z); if (cur && !BLOCKS[cur].replaceable) return false;
+    const pf = this.playerFacing(), below = world.get(x, y - 1, z), [nx, , nz] = t.normal;
+    if (bid === IRON_DOOR || bid === GLASS_DOOR) {
+      const above = world.get(x, y + 1, z);
+      if (!B_OPAQUE[below] || (above && !BLOCKS[above].replaceable) || y + 1 >= WY) return false;
+      if (boxHitsBody(x, y, z, p) || boxHitsBody(x, y + 1, z, p)) return false;
+      world.set(x, y, z, bid, pf); world.set(x, y + 1, z, bid, pf | 8);
+    } else {
+      if (boxHitsBody(x, y, z, p)) return false;
+      let meta = 0;
+      if (bid === HOPPER) { const wf = FACING_DIR.findIndex(([dx, dz]) => dx === -nx && dz === -nz); meta = t.normal[1] === 0 && wf >= 0 ? wf : 4; }
+      else meta = pf;                                  // cinta: avanza hacia donde miras
+      world.set(x, y, z, bid, meta);
+    }
+    const r = this.afterPlace(s, BLOCKS[bid], x, y, z);
+    circuit.notify(x, y, z);
+    return r;
+  };
+  const _break = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z), meta = world.getMeta(x, y, z);
+    const r = _break.call(this, x, y, z, byPlayer);
+    if ((id === IRON_DOOR || id === GLASS_DOOR) && world.get(x, y, z) !== id) {
+      if (meta & 8) { if (world.get(x, y - 1, z) === id) this.breakBlock(x, y - 1, z, byPlayer); }      // la mitad de abajo suelta la puerta
+      else if (world.get(x, y + 1, z) === id) world.set(x, y + 1, z, AIR, 0);
+    }
+    return r;
+  };
+}
+
+/* ---------- Usar: puertas (también dobles), trampillas, lámparas, reloj, tolva, dispensador, panel y elevador ---------- */
+function toggleDoor48(x, by, z, id, open) {
+  const m = world.getMeta(x, by, z), nm = open ? m | 4 : m & ~4;
+  world.set(x, by, z, id, nm); if (world.get(x, by + 1, z) === id) world.set(x, by + 1, z, id, nm | 8);
+}
+{
+  BLOCKS[ELEVATOR].interact = 'elev48';
+  BLOCKS[ELEVATOR].desc = 'Párate encima: salta para subir al siguiente elevador y agáchate para bajar. Úsalo para elegir piso.';
+  const _int = game.interact;
+  game.interact = function () {
+    const t = this.target; if (!t || down('sneak')) return _int.call(this);
+    const def = BLOCKS[t.id], pos = { x: t.x + 0.5, y: t.y + 0.5, z: t.z + 0.5 };
+    // puertas de madera y de cristal: se abren y, si hay otra igual al lado, se abre con ella
+    if (t.id === DOOR || t.id === GLASS_DOOR) {
+      const by = t.meta & 8 ? t.y - 1 : t.y, m = world.getMeta(t.x, by, t.z), open = !(m & 4);
+      toggleDoor48(t.x, by, t.z, t.id, open);
+      for (const [dx, dz] of FACING_DIR) { const ox = t.x + dx, oz = t.z + dz; if (world.get(ox, by, oz) === t.id && (world.getMeta(ox, by, oz) & 3) === (m & 3) && !(world.getMeta(ox, by, oz) & 8)) { toggleDoor48(ox, by, oz, t.id, open); this.unlock('double_door'); } }
+      sfx.play('door', { pos }); return true;
+    }
+    switch (def.interact) {
+      case 'irondoor48': case 'irontrap48': hud.toast('Se abre con energía: ponle una palanca, un botón o una placa de presión cerca'); return true;
+      case 'trap48': world.set(t.x, t.y, t.z, t.id, t.meta ^ 4); sfx.play('door', { pos }); return true;
+      case 'lamp48': world.set(t.x, t.y, t.z, LAMP48[t.id], 0); sfx.play('lamp', { pos }); return true;
+      case 'clock48': { const per = ((t.meta & 3) + 1) & 3; world.set(t.x, t.y, t.z, t.id, (t.meta & ~3) | per); sfx.play('click', { pos }); hud.toast(`Reloj: cada ${['0,5', '1', '2', '4'][per]} s`); return true; }
+      case 'hopper48': case 'disp48': { const tile = tile48(t.x, t.y, t.z); openInventory('chest', tile); return true; }
+      case 'term48': termScreen.show(t.x, t.y, t.z); return true;
+      case 'elev48': elevScreen.show(t.x, t.y, t.z); return true;
+    }
+    return _int.call(this);
+  };
+}
+
+/* ---------- Bucle: tolvas, cintas, relojes, detectores y trampas ---------- */
+const build48 = {
+  hopT: 0, slowT: 0, trapT: 0, frostT: 0,
+  update(dt) {
+    if (!world || !game.player || game.state === 'menu' || game.state === 'loading' || (game.state === 'paused' && !net.active)) return;
+    this.conveyors(dt);
+    const now = circuit.time;
+    const doHop = (this.hopT -= dt) <= 0, doSlow = (this.slowT -= dt) <= 0, doTrap = (this.trapT -= dt) <= 0, doFrost = (this.frostT -= dt) <= 0;
+    if (doHop) this.hopT = 0.4; if (doSlow) this.slowT = 0.5; if (doTrap) this.trapT = 0.25; if (doFrost) this.frostT = 0.5;
+    const p = game.player, pcx = Math.floor(p.pos.x) >> 4, pcz = Math.floor(p.pos.z) >> 4, C = circuit;
+    for (const ch of world.chunks.values()) {
+      if (!ch.mech || !ch.mech.size || Math.abs(ch.cx - pcx) > 4 || Math.abs(ch.cz - pcz) > 4) continue;
+      for (const i of ch.mech) {
+        const id = ch.blocks[i]; if (id < 1043 || id > 1078) continue;
+        const x = ch.cx * 16 + (i & 15), z = ch.cz * 16 + ((i >> 4) & 15), y = i >> 8, meta = ch.meta[i];
+        if (!ownsMech(x + 0.5, y + 0.5, z + 0.5)) continue;
+        if (id === CLOCK_BLOCK) {
+          const per = [0.5, 1, 2, 4][meta & 3], on = !C.poweredAt(x, y, z) && Math.floor(now / (per / 2)) % 2 === 0;
+          if (on !== !!(meta & 8)) { world.set(x, y, z, id, on ? meta | 8 : meta & ~8); C.notifySource(x, y, z, meta); }
+        } else if (id === ITEM_DETECTOR && doSlow) {
+          let on = false;
+          for (let f = 0; f < 6 && !on; f++) { const [dx, dy, dz] = DIR6[f], t = world.tiles.get(`${x + dx},${y + dy},${z + dz}`); if (t && t.inv && t.inv.slots.some(Boolean)) on = true; }
+          if (on !== !!(meta & 8)) { world.set(x, y, z, id, on ? meta | 8 : meta & ~8); C.notify(x, y, z); }
+        } else if (id === HOPPER && doHop) this.hopper(x, y, z, meta);
+        else if (id === FLAME_TRAP && (meta & 8) && doTrap) this.flame(x, y, z);
+        else if (id === FROST_TRAP && (meta & 8) && doFrost) this.frost(x, y, z);
+      }
+    }
+  },
+  hopper(x, y, z, meta) {
+    if (circuit.poweredAt(x, y, z)) return;
+    const t = tile48(x, y, z); if (!t) return;
+    // 1) objetos tirados encima
+    for (const e of game.entities.list) {
+      if (e.kind !== 'item' || e.dead || e.remote) continue;
+      if (e.pos.x < x - 0.05 || e.pos.x > x + 1.05 || e.pos.z < z - 0.05 || e.pos.z > z + 1.05 || e.pos.y < y - 0.1 || e.pos.y > y + 1.9) continue;
+      const s = e.stack, left = t.inv.add(s.id, s.count, s.dmg || 0, s.ench);
+      if (left < s.count) { if (left) s.count = left; else e.dead = true; break; }
+    }
+    // 2) del contenedor de arriba (una tolva de arriba ya empuja sola)
+    const up = world.get(x, y + 1, z);
+    if (up !== HOPPER && isContainer48(up)) {
+      const src = tile48(x, y + 1, z), peek = src && (src.type === 'furnace' ? src.inv.slots[2] : src.inv.slots.find(Boolean));
+      if (peek && canPut48(t, peek)) { const one = takeOne48(src); if (one) putOne48(t, one); }
+    }
+    // 3) al contenedor de salida
+    const [dx, dy, dz] = hopperOut(meta), tx = x + dx, ty = y + dy, tz = z + dz, to = world.get(tx, ty, tz);
+    if (!isContainer48(to)) return;
+    const dst = tile48(tx, ty, tz); if (!dst) return;
+    const i = t.inv.slots.findIndex((s) => s && canPut48(dst, s)); if (i < 0) return;
+    const s = t.inv.slots[i], one = { id: s.id, count: 1, dmg: s.dmg || 0, ench: s.ench };
+    if (putOne48(dst, one)) { s.count--; if (!s.count) t.inv.slots[i] = null; game.unlock('automation'); if (ui.tile === dst || ui.tile === t) renderInventory(); }
+  },
+  conveyors(dt) {
+    const SP = 2.4, p = game.player;
+    const on = (e) => { const x = Math.floor(e.pos.x), y = Math.floor(e.pos.y - 0.05), z = Math.floor(e.pos.z); if (world.get(x, y, z) !== CONVEYOR) return null; if (e.pos.y - y > 0.45) return null; return [x, y, z, world.getMeta(x, y, z)]; };
+    const push = (e, c, body) => {
+      if (circuit.poweredAt(c[0], c[1], c[2])) return;
+      const [dx, dz] = FACING_DIR[c[3] & 3];
+      if (body) moveBody(e, dx * SP * dt, 0, dz * SP * dt, true);
+      else { e.pos.x += dx * SP * dt; e.pos.z += dz * SP * dt;
+        // los objetos se centran en la cinta para no caerse por el borde
+        if (dx) e.pos.z += (c[2] + 0.5 - e.pos.z) * Math.min(1, dt * 4); else e.pos.x += (c[0] + 0.5 - e.pos.x) * Math.min(1, dt * 4); }
+    };
+    if (p && !p.dead && p.onGround && !p.flying && game.state === 'playing') { const c = on(p); if (c) push(p, c, true); }
+    for (const e of game.entities.list) {
+      if (e.dead || e.remote || (e.kind !== 'item' && e.kind !== 'mob') || e.ridden) continue;
+      if (Math.abs(e.pos.x - p.pos.x) > 48 || Math.abs(e.pos.z - p.pos.z) > 48) continue;
+      const c = on(e); if (c) push(e, c, e.kind === 'mob');
+    }
+  },
+  flame(x, y, z) {
+    const g = game, p = g.player;
+    for (let k = 0; k < 6; k++) g.particles.emit(x + 0.3 + Math.random() * 0.4, y + 1.05, z + 0.3 + Math.random() * 0.4, Math.random() < 0.5 ? [1, 0.5, 0.1] : [1, 0.8, 0.2], 1, { gravity: -6, up: 3, speed: 0.4, life: 0.5, size: 0.14 });
+    if (Math.random() < 0.3) sfx.play('fireball', { pos: { x: x + 0.5, y: y + 1, z: z + 0.5 }, vol: 0.25, pitch: 1.6 });
+    const inCol = (e) => e.pos.x > x - 0.3 && e.pos.x < x + 1.3 && e.pos.z > z - 0.3 && e.pos.z < z + 1.3 && e.pos.y >= y + 0.5 && e.pos.y < y + 3.5;
+    if (!p.dead && g.mode === 'survival' && inCol(p) && (this.pBurn = (this.pBurn || 0) + 0.25) >= 0.5) { this.pBurn = 0; p.damage(2, 'Te quemó una trampa de fuego', null, 'contact'); }
+    for (const e of g.entities.list) if (e.kind === 'mob' && !e.dead && !e.deathT && !e.remote && inCol(e) && !e.spec.fireproof) { e.burnT = Math.max(e.burnT || 0, 3); if (e.invuln <= 0) { e.hurt(2, null); if (e.spec.hostile) g.unlock('trapper'); } }
+  },
+  frost(x, y, z) {
+    const g = game, p = g.player, c = { x: x + 0.5, y: y + 1, z: z + 0.5 };
+    for (let k = 0; k < 8; k++) { const a = Math.random() * 6.283, r = Math.random() * 2.4; g.particles.emit(c.x + Math.cos(a) * r, c.y + Math.random() * 1.5, c.z + Math.sin(a) * r, [0.75, 0.9, 1], 1, { gravity: 0.5, up: 0.2, speed: 0.2, life: 0.8, size: 0.09 }); }
+    const near = (e) => Math.hypot(e.pos.x - c.x, e.pos.z - c.z) < 2.6 && e.pos.y > y - 1 && e.pos.y < y + 3.5;
+    if (!p.dead && g.mode === 'survival' && near(p)) g.applyEffect('slow', 1, 3);
+    for (const e of g.entities.list) if (e.kind === 'mob' && !e.dead && !e.deathT && !e.remote && near(e)) { e.slowT = Math.max(e.slowT || 0, 2.5); if (e.spec.hostile) g.unlock('trapper'); }
+  },
+};
+
+/* ---------- Panel de almacén ---------- */
+const termScreen = {
+  open: false, at: null, q: '',
+  containers() {
+    const [x, y, z] = this.at, out = [];
+    for (const [k, t] of world.tiles) {
+      if (!t.inv || t.type !== 'chest') continue;
+      const [a, b, c] = k.split(',').map(Number);
+      if (Math.abs(a - x) <= 8 && Math.abs(b - y) <= 8 && Math.abs(c - z) <= 8 && isContainer48(world.get(a, b, c))) out.push(t);
+    }
+    // contenedores aún sin abrir (sin entidad de bloque): se crean vacíos
+    for (let a = x - 8; a <= x + 8; a++) for (let b = Math.max(1, y - 8); b <= Math.min(WY - 1, y + 8); b++) for (let c = z - 8; c <= z + 8; c++) {
+      const id = world.get(a, b, c); if (id && BLOCKS[id].interact === 'chest' && !world.tiles.has(`${a},${b},${c}`)) { const t = tile48(a, b, c); if (t) out.push(t); }
+    }
+    return out;
+  },
+  show(x, y, z) {
+    this.at = [x, y, z]; this.open = true; this.q = '';
+    game.releaseInputs(); game.state = 'term';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('termScreen'); $('#termFind').value = ''; this.render();
+  },
+  hide() { this.open = false; showScreen(null); game.state = 'playing'; game.resume(); },
+  totals(list) {
+    const m = new Map();
+    for (const t of list) for (const s of t.inv.slots) if (s) { const k = s.ench ? s.id + ':e' : s.id; const e = m.get(k) || { id: s.id, n: 0, ench: !!s.ench }; e.n += s.count; m.set(k, e); }
+    return [...m.values()].sort((a, b) => itemName(a.id).localeCompare(itemName(b.id)));
+  },
+  render() {
+    if (!this.open) return;
+    const list = this.containers(), tot = this.totals(list), q = normText(this.q || '');
+    const used = list.reduce((a, t) => a + t.inv.slots.filter(Boolean).length, 0), cap = list.reduce((a, t) => a + t.inv.slots.length, 0);
+    $('#termInfo').textContent = `${list.length} ${list.length === 1 ? 'contenedor' : 'contenedores'} · ${used}/${cap} huecos ocupados`;
+    const grid = $('#termGrid'); grid.innerHTML = '';
+    const shown = tot.filter((e) => !q || normText(itemName(e.id)).includes(q));
+    if (!shown.length) grid.innerHTML = `<p class="termEmpty">${tot.length ? 'Nada coincide con la búsqueda.' : 'Los contenedores cercanos están vacíos (o no hay ninguno a 8 bloques).'}</p>`;
+    for (const e of shown) {
+      const el = slotEl('term', 0); paintSlot(el, { id: e.id, count: Math.min(e.n, 999) }); el.title = `${itemName(e.id)} · ${e.n}${e.ench ? ' (encantado)' : ''}`;
+      el.onclick = (ev) => { ev.preventDefault(); ev.stopPropagation(); this.take(e.id, e.ench, ev.shiftKey ? 9999 : maxStack(e.id)); };
+      grid.append(el);
+    }
+    if (list.length >= 3) game.unlock('storage48');
+  },
+  take(id, ench, want) {
+    const p = game.player; let got = 0;
+    for (const t of this.containers()) {
+      for (let i = 0; i < t.inv.slots.length && got < want; i++) {
+        const s = t.inv.slots[i]; if (!s || s.id !== id || !!s.ench !== ench) continue;
+        const n = Math.min(s.count, want - got), left = p.inv.add(s.id, n, s.dmg || 0, s.ench), moved = n - left;
+        s.count -= moved; got += moved; if (s.count <= 0) t.inv.slots[i] = null;
+        if (left) { want = got; break; }
+      }
+      if (got >= want) break;
+    }
+    if (got) { p.discover(id); sfx.play('pop'); hud.update(); } else hud.toast('No te cabe en el inventario');
+    this.render();
+  },
+  // Guardar todo: lo del inventario (no la barra rápida) va a los contenedores que ya tienen lo mismo
+  deposit() {
+    const p = game.player, list = this.containers(); let n = 0;
+    for (let i = 9; i < 36; i++) {
+      const s = p.inv.slots[i]; if (!s || s.ench) continue;
+      for (const t of list) {
+        if (!t.inv.slots.some((q) => q && q.id === s.id)) continue;
+        const left = t.inv.add(s.id, s.count, s.dmg || 0); n += s.count - left; s.count = left;
+        if (!left) { p.inv.slots[i] = null; break; }
+      }
+    }
+    sfx.play(n ? 'chime' : 'click'); hud.toast(n ? `Guardados ${n} objetos en su sitio` : 'Nada que guardar: solo se guarda lo que ya hay en algún contenedor', 2200); hud.update(); this.render();
+  },
+};
+
+/* ---------- Panel de pisos del elevador ---------- */
+const elevScreen = {
+  open: false,
+  floors(x, z) {
+    const out = [];
+    for (let y = 1; y < WY - 2; y++) if (world.get(x, y, z) === ELEVATOR && !B_SOLID[world.get(x, y + 1, z)] && !B_SOLID[world.get(x, y + 2, z)]) out.push(y);
+    return out;
+  },
+  name(x, y, z, i) {
+    for (const [dx, dy, dz] of [[1, 1, 0], [-1, 1, 0], [0, 1, 1], [0, 1, -1], [1, 2, 0], [-1, 2, 0], [0, 2, 1], [0, 2, -1], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]]) {
+      const t = world.tiles.get(`${x + dx},${y + dy},${z + dz}`); if (t && t.type === 'sign' && t.text && t.text.trim()) return t.text.split('\n')[0].slice(0, 22);
+    }
+    return `Piso ${i + 1}`;
+  },
+  show(x, y, z) {
+    const fl = this.floors(x, z);
+    if (fl.length < 2) { hud.toast('Pon otro elevador en la misma columna (arriba o abajo) para viajar entre pisos', 2600); return; }
+    this.at = [x, y, z]; this.open = true;
+    game.releaseInputs(); game.state = 'elev';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('elevScreen');
+    const box = $('#elevList'); box.innerHTML = '';
+    [...fl].reverse().forEach((fy) => {
+      const i = fl.indexOf(fy), b = document.createElement('button'); b.className = 'btn' + (fy === y ? ' on' : '');
+      b.textContent = `${fy === y ? '● ' : ''}${this.name(x, fy, z, i)} · altura ${fy + 1}`;
+      b.onclick = () => { this.go(x, fy, z); };
+      box.append(b);
+    });
+  },
+  go(x, fy, z) {
+    const p = game.player; this.hide();
+    if (fy === this.at[1]) return;
+    p.pos.set(x + 0.5, fy + 1.001, z + 0.5); p.vel.set(0, 0, 0); p.fallStart = null; p.onGround = true;
+    build34.lastElev = [x, fy, z, performance.now() / 1000];
+    sfx.play('elevator', { pitch: fy > this.at[1] ? 1.2 : 0.8 }); game.particles.emit(x + 0.5, fy + 1.2, z + 0.5, [0.6, 0.85, 1], 12, { gravity: -1, up: 1 });
+    game.unlock('elevator');
+  },
+  hide() { this.open = false; showScreen(null); game.state = 'playing'; game.resume(); },
+};
+{
+  $('#termClose').onclick = () => termScreen.hide();
+  $('#termDeposit').onclick = () => termScreen.deposit();
+  $('#termFind').oninput = (e) => { termScreen.q = e.target.value; termScreen.render(); };
+  $('#elevClose').onclick = () => elevScreen.hide();
+  document.addEventListener('keydown', (e) => {
+    if (!termScreen.open && !elevScreen.open) return;
+    const typing = e.target.tagName === 'INPUT';
+    if (e.code === 'Escape' || (!typing && e.code === settings.keys.inventory)) { e.preventDefault(); e.stopImmediatePropagation(); if (termScreen.open) termScreen.hide(); else elevScreen.hide(); }
+    else if (typing) e.stopPropagation();
+  }, true);
+}
+ACHIEVEMENTS.push(['automation', 'Cadena de montaje', 'Haz que una tolva pase un objeto a otro contenedor.'], ['storage48', 'Almacén ordenado', 'Usa un panel de almacén con tres contenedores o más cerca.'],
+  ['logic48', 'Lógica pura', 'Activa una compuerta Y o un biestable.'], ['trapper', 'Trampero', 'Atrapa a un monstruo con una trampa de fuego o de hielo.'],
+  ['double_door', 'Gran entrada', 'Abre una puerta doble.'], ['decorator', 'Decorador', 'Coloca 20 bloques o muebles de decoración nuevos.']);
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
