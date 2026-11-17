@@ -90,3 +90,5 @@ Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pa
 
 
 **4.4:** actualiza `server.js`. Acepta los bloques nuevos (identificadores a partir de 1024); con un servidor anterior esos bloques no se pueden colocar. Las salas **nuevas** se crean con `gen: 4` (el relieve de la 4.2 más las zonas de la 4.4); las existentes conservan su mundo. El formato de los datos guardados no cambia para los bloques anteriores.
+
+**4.6:** actualiza `server.js`. Las salas **nuevas** se crean con `gen: 5` (el mundo de la 4.4 más las arenas de los tres jefes nuevos); las existentes conservan su mundo. No cambia el protocolo ni el formato de los datos.

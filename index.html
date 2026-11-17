@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.5</title>
+<title>MiniCraft 4.6</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -323,6 +323,16 @@
   .armorSlot:not(:has(.ic[style*="url"]))::before { content: attr(data-hint); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .35; font-size: calc(var(--s) * .45); }
   #invLeft.withArmor { display: flex; align-items: center; justify-content: center; }
   .enchant { display: flex; gap: 10px; align-items: center; padding: 6px 0; }
+  /* --- 4.6: combate --- */
+  body.touch #bossBar { top: calc(62px + env(safe-area-inset-top)); width: min(420px, 58vw); }
+  #bossSt { display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: 9px; font-size: 12.5px; color: #fff; text-shadow: 1px 1px 0 #000; background: rgba(0,0,0,.45); min-height: 0; }
+  #bossSt:empty { display: none; } #bossSt.warn { background: rgba(170,40,20,.8); animation: bossWarn .45s ease-in-out infinite alternate; } #bossSt.vuln { background: rgba(40,140,60,.85); }
+  #bossSt.shield { background: rgba(30,120,110,.85); } #bossSt.guard { background: rgba(70,80,110,.8); }
+  @keyframes bossWarn { from { transform: scale(1); } to { transform: scale(1.06); } }
+  #hurtDir { position: fixed; left: 50%; top: 50%; width: min(56vh, 56vw); height: min(56vh, 56vw); transform: translate(-50%, -50%) rotate(var(--a, 0rad)); pointer-events: none; z-index: 4; opacity: 0; }
+  #hurtDir i { position: absolute; left: 50%; top: 0; width: 34%; height: 9%; transform: translateX(-50%); border-radius: 50% 50% 0 0 / 100% 100% 0 0; border-top: 6px solid rgba(255,40,30,.9); filter: drop-shadow(0 0 6px rgba(255,0,0,.7)); }
+  #hurtDir.on { animation: hurtDir .9s ease-out forwards; }
+  @keyframes hurtDir { 0% { opacity: 1; } 60% { opacity: .85; } 100% { opacity: 0; } }
   /* --- 4.5: personaje --- */
   .accCol { display: flex; flex-direction: column; margin-left: 8px; align-items: center; }
   .accCol .packSlot { margin-top: 6px; }
@@ -842,7 +852,8 @@
   <div id="debug"></div>
   <div id="hudClock"></div>
   <div id="toast"></div>
-  <div id="bossBar"><b></b><em></em><u><s></s></u></div>
+  <div id="bossBar"><b></b><em></em><u><s></s></u><span id="bossSt"></span></div>
+  <div id="hurtDir"><i></i></div>
   <div id="compass"><div></div></div>
   <div id="chatLog"></div>
   <div id="chatBar"><div id="chatHint"></div><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatSend" class="btn small">Enviar</button></div>
@@ -897,7 +908,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.5!</span>
+      <span class="ver">¡Versión 4.6!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -907,7 +918,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -5780,16 +5791,24 @@ class Mob extends Entity {
     if (s.hostile && !s.boss && survival && dist < 20) {
       this.ai.losT -= dt;
       if (this.ai.losT <= 0) { this.ai.losT = 0.5; this.ai.los = hasLineOfSight(this.pos.x, this.pos.y + s.h * 0.85, this.pos.z, p.pos.x, p.pos.y + EYE_H, p.pos.z); }
-      if (this.ai.los || dist < 6) {
+      if ((this.ai.los || dist < 6 || this.ai.alertT > 0) && !(this.ai.giveUp > 0)) {
         wantDir = Math.atan2(dx, dz);
         if (s.ranged) {
           speed = dist > 11 ? s.speed : dist < 6 ? -s.speed * 0.7 : 0;
           if (this.ai.los && this.ai.shootCd <= 0 && dist < 16) { this.ai.shootCd = 2 + Math.random(); game.entities.shootArrow(this, p); }
         } else {
           speed = s.speed * (this.inWater ? 0.8 : 1);
-          if (dist < 1.5 && Math.abs(p.pos.y - this.pos.y) < 1.5 && this.ai.attackCd <= 0) {
-            this.ai.attackCd = 1; p.damage(s.melee, 'Te mató un ' + s.name.toLowerCase(), this.pos);
-            this.model.arms.forEach((a) => (a.rotation.x = -2.2));
+          // 4.6: el golpe se prepara un instante (brazos arriba) y solo acierta si sigues a su alcance
+          const reach = this.hw + 0.95, ady = Math.abs(p.pos.y - this.pos.y);
+          if (this.ai.wind > 0) {
+            speed *= 0.35; this.ai.wind -= dt;
+            if (this.ai.wind <= 0) {
+              if (dist < reach + 0.65 && ady < 1.8 && s.melee) { p.damage(s.melee, 'Te mató un ' + s.name.toLowerCase(), this.pos); if (this.onMeleeHit) this.onMeleeHit(p); }
+              else if (this.onMeleeMiss) this.onMeleeMiss(p);
+              this.model.arms.forEach((a) => (a.rotation.x = -0.4));
+            }
+          } else if (dist < reach + 0.25 && ady < 1.5 && this.ai.attackCd <= 0 && s.melee) {
+            this.ai.attackCd = 1; this.ai.wind = this.ai.windMax = s.windup ?? 0.3;
           }
         }
       } else this.wander(dt);
@@ -5802,6 +5821,7 @@ class Mob extends Entity {
       if (Math.random() < dt * 1.5) this.ai.dir = Math.atan2(-dx, -dz) + (Math.random() - 0.5) * 1.5;
       wantDir = this.ai.dir; speed = s.speed * 2.2;
     } else this.wander(dt);
+    if (s.hostile && speed > 0 && this.steer) [wantDir, speed] = this.steer(dt, wantDir, speed, dist, dx, dz);
     if (!speed && this.ai.moving) { wantDir = this.ai.dir; speed = s.speed; }
     // girar suavemente hacia la dirección deseada
     let dy = ((wantDir - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
@@ -7696,7 +7716,7 @@ MOBS.goldstag = {
    Aquí: biomas nuevos, detalles naturales del terreno (rocas, troncos caídos,
    charcas, agujas de hielo, geodas…) y estructuras abandonadas y secretos.
    ========================================================================== */
-const WORLD_GEN = 4;       // generador de los mundos nuevos (3 = relieve de la 4.2; 4 = el mismo relieve más las zonas de la 4.4)
+const WORLD_GEN = 5;       // generador de los mundos nuevos (3 = relieve de la 4.2; 4 = el mismo relieve más las zonas de la 4.4; 5 = además las arenas de los jefes de la 4.6)
 
 // ---------- Biomas nuevos (se añaden al final: los identificadores guardados no cambian) ----------
 {
@@ -8563,6 +8583,594 @@ const SKILL_XP = { mined: 1, placed: 0.25, crafted: 1, harvested: 1, kills: 2, h
 const MODS = { dmg: 0, def: 0, regen: 0, crit: 0, critCh: 0, killHeal: 0, speed: 0, air: 0, fall: 0, disc: 0, hunger: 0, ride: 0, mine: 0, toolSave: 0, ore: 0, sense: 0, veiner: 0,
   reach: 0, blockSave: 0, dismantle: 0, rep: 0, refill: 0, potion: 0, badFx: 0, food: 0, xp: 0, lastStand: 0, jump: 0, swim: 0, breathe: 0 };
 const ORE_BLOCKS = new Set([COPPER_ORE, COAL_ORE, IRON_ORE, GOLD_ORE, DIAMOND_ORE, EMERALD_ORE, INFERNITE_ORE, VOIDITE_ORE, AERITE_ORE]);
+
+/* ==========================================================================
+   §43 COMBATE Y JEFES 4.6 — datos: enemigos de zona, jefes nuevos, arenas
+   y recompensas
+   --------------------------------------------------------------------------
+   · Enemigos exclusivos de zona: esqueleto acorazado (catacumbas y cripta
+     del liche), caballero espectral (castillo y salón del trono), limo
+     mutante (laboratorio) y escarabajo dorado (templo antiguo).
+   · Jefes: el Liche (cripta), el Rey caído (salón del trono) y el Roc de la
+     tormenta (pico de la tormenta). Cada uno con tres fases, ataques con
+     aviso (círculos, brillo, posturas) y momentos en los que es vulnerable.
+   · Las arenas aparecen en los mundos nuevos (generador 5). Los mundos ya
+     creados conservan exactamente su terreno.
+   · La lógica de la IA mejorada y de los efectos de golpe está en §44
+     (p9z_combat46.js).
+   ========================================================================== */
+Object.assign(I, { SOUL_STAFF: 582, PHYLACTERY: 583, KING_GREATSWORD: 584, KING_CROWN: 585, ROC_FEATHER: 586, GALE_FAN: 587 });
+
+/* ---------- Recompensas exclusivas de los jefes ---------- */
+defItem(I.SOUL_STAFF, 'Báculo de almas', 'Del Liche. Habilidad: lanza tres almas que persiguen a los enemigos cercanos.', { stack: 1, rarity: 4,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 5, dur: 1200 }, ability: { id: 'souls', name: 'Almas errantes', cd: 6 } });
+defItem(I.PHYLACTERY, 'Filacteria del liche', 'Accesorio del Liche: recuperas vida poco a poco y ganas un 10 % más de experiencia.', { stack: 1, rarity: 4, acc: { regen: 0.08, xp: 0.1 } });
+defItem(I.KING_GREATSWORD, 'Espadón del rey caído', 'Del Rey caído. Lento pero devastador. Habilidad: grito de guerra que aturde y aparta a los enemigos y te da fuerza.', { stack: 1, rarity: 5,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1.5, dmg: 12, dur: 2000, fast: 1.55 }, ability: { id: 'warcry', name: 'Grito de guerra', cd: 16 } });
+defItem(I.KING_CROWN, 'Corona del rey caído', 'Accesorio del Rey caído: −8 % de daño recibido, +8 % de daño y más reputación en las aldeas.', { stack: 1, rarity: 4, acc: { def: 0.08, dmg: 0.08, rep: 0.25 } });
+defItem(I.ROC_FEATHER, 'Pluma del roc', 'Accesorio del Roc de la tormenta: saltas más alto, corres más y caes despacio sin hacerte daño.', { stack: 1, rarity: 4, acc: { jump: 0.2, speed: 0.06 }, charm: 'feather' });
+defItem(I.GALE_FAN, 'Abanico del vendaval', 'Del Roc de la tormenta. Habilidad: una ráfaga de viento que daña y lanza lejos a los enemigos de delante.', { stack: 1, rarity: 4,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 6, dur: 1200 }, ability: { id: 'gale', name: 'Ráfaga', cd: 7 } });
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  Object.assign(ICON_OVERRIDE, {
+    [I.SOUL_STAFF]: P((p) => { p.line([[2.5, 14.5], [11, 6]], 1.6, [70, 60, 80]); p.disk(12, 4.5, 3, (x, y) => (x + y < 16 ? [150, 255, 200] : [60, 190, 140])); p.disk(12, 4.5, 1.2, [235, 255, 245]); p.line([[9, 7.5], [8, 5], [10, 3]], 0.8, [210, 210, 190]); }),
+    [I.PHYLACTERY]: P((p) => { p.poly([[8, 1], [12, 5], [12, 11], [8, 15], [4, 11], [4, 5]], (x, y) => (x < 8 ? [90, 230, 170] : [40, 150, 110])); p.poly([[8, 4], [10, 7], [8, 12], [6, 7]], [200, 255, 230]); p.line([[4, 5], [12, 5]], 0.8, [180, 160, 110]); p.line([[4, 11], [12, 11]], 0.8, [180, 160, 110]); }),
+    [I.KING_GREATSWORD]: P((p) => { p.line([[1.5, 14.5], [4, 12]], 2, [60, 40, 30]); p.line([[0.5, 10], [6, 15.5]], 1.6, [230, 190, 70]); p.line([[4.5, 11.5], [15, 1]], 2.8, (x, y) => ((x + y) % 4 === 0 ? [240, 240, 250] : [150, 156, 176])); p.set(14, 1, [255, 255, 255]); }),
+    [I.KING_CROWN]: P((p) => { const G = [240, 200, 70], D = [190, 140, 40]; p.poly([[2, 13], [14, 13], [14, 6], [11, 9], [8, 3], [5, 9], [2, 6]], (x, y) => (y > 10 ? D : G)); p.set(8, 6, [220, 50, 60]); p.set(4, 11, [80, 140, 255]); p.set(12, 11, [80, 140, 255]); p.set(8, 11, [80, 220, 120]); }),
+    [I.ROC_FEATHER]: P((p) => { p.line([[3, 14], [12, 2]], 0.9, [90, 90, 120]); p.poly([[4, 12], [6, 6], [12, 1], [13, 4], [9, 10]], (x, y) => ((x + y) % 3 === 0 ? [255, 250, 200] : [120, 190, 255])); p.line([[7, 8], [11, 4]], 0.6, [255, 230, 90]); }),
+    [I.GALE_FAN]: P((p) => { for (let a = 0; a < 6; a++) { const t = -0.2 + a * 0.32; p.line([[3, 13], [3 + Math.cos(t) * 11, 13 - Math.sin(t) * 11 - 0.5]], 1.4, a % 2 ? [200, 235, 255] : [120, 190, 240]); } p.disk(3.5, 12.5, 1.6, [230, 190, 70]); }),
+  });
+}
+
+/* ---------- Enemigos exclusivos de zona ---------- */
+{
+  const hum = (m, o) => MOB_MODELS.humanoid(m, o);
+  const BN = rgb(226, 222, 206), BD = rgb(180, 176, 160), IR = rgb(120, 126, 136), ID = rgb(84, 88, 98), K = rgb(16, 14, 18);
+  Object.assign(MOBS, {
+    bonearmor: { name: 'Esqueleto acorazado', hp: 30, w: 0.66, h: 2.0, speed: 2.1, xp: 10, sound: 'skeleton', hostile: true, melee: 5, guard: 0.7, windup: 0.45,
+      drops: [[I.BONE, 1, 3], [I.IRON_INGOT, 0, 1], [I.ARROW, 0, 3]],
+      model: (m) => { const mdl = hum(m, { limb: 2.4, thin: true, skin: BN, arm: BN, shirt: IR, pants: BD, eye: K, shoe: ID,
+        headExtra: [[8.6, 3, 8.6, 0, 7.4, 0, IR], [1, 3, 8.8, 0, 9.4, 0, ID], [2.2, 1.2, 0.3, -2, 3.6, 4.15, K], [2.2, 1.2, 0.3, 2, 3.6, 4.15, K]],
+        bodyExtra: [[8.6, 6, 4.6, 0, 2.5, 0, IR], [8.8, 1, 4.8, 0, -0.8, 0, ID], [3, 3, 4.8, -4.6, 5.6, 0, ID], [3, 3, 4.8, 4.6, 5.6, 0, ID]] });
+        part(mdl.arms[0], m, -1.6, -7, 1, [[1.2, 10, 8, 0, 0, 0, (f) => (f === 0 || f === 1 ? IR : rgb(150, 40, 40))], [1.4, 2, 2, -0.4, 0, 0, rgb(230, 200, 80)]]);
+        part(mdl.arms[1], m, 0, -10, 1.5, [[1, 1, 3, 0, 0, 0, rgb(80, 60, 40)], [0.8, 0.8, 9, 0, 0, 6, rgb(200, 204, 214)]]);
+        return mdl; } },
+    specter: { name: 'Caballero espectral', hp: 26, w: 0.7, h: 2.0, speed: 2.6, xp: 10, sound: 'guardian', hostile: true, melee: 6, charges: true, noKnock: true, windup: 0.4,
+      drops: [[I.ARCANE_DUST, 0, 2], [I.GOLD_INGOT, 0, 1]],
+      model: (m) => { m.transparent = true; m.opacity = 0.66; m.depthWrite = false;
+        const G1 = rgb(150, 210, 230), G2 = rgb(100, 160, 190), E = rgb(220, 255, 255);
+        const mdl = hum(m, { limb: 4, skin: G2, arm: G1, shirt: G1, pants: G2, eye: E, shoe: G2,
+          headExtra: [[8.8, 9, 8.8, 0, 4.2, 0, G1], [6, 1, 0.3, 0, 4.4, 4.5, E], [1, 4, 1, 0, 10, 0, rgb(230, 120, 120)]],
+          bodyExtra: [[8.8, 7, 4.8, 0, 2.6, 0, G1], [10, 3, 4.6, 0, 6, 0, G2], [9, 4, 1, 0, -4, -2.6, rgb(120, 60, 120)]] });
+        part(mdl.arms[1], m, 0, -10, 1.5, [[1.4, 1.4, 3, 0, 0, 0, rgb(70, 90, 110)], [3, 1, 1, 0, 0, 1.6, G2], [1, 1.6, 12, 0, 0, 8, E]]);
+        return mdl; } },
+    mutant: { name: 'Limo mutante', hp: 22, w: 1.0, h: 1.0, speed: 1.9, xp: 8, sound: 'pop', hostile: true, melee: 4, leaps: true, splits: true, hitFx: 'poison', windup: 0.25,
+      drops: [[I.ARCANE_DUST, 0, 1], [GLOWSTONE, 0, 1]],
+      model: (m) => { const root = new THREE.Group(), S1 = rgb(120, 230, 90), S2 = rgb(80, 180, 70), C = rgb(220, 250, 120), K2 = rgb(20, 60, 20);
+        const body = part(root, m, 0, 8, 0, [[16, 15, 16, 0, 0, 0, (f) => (f === 2 ? S1 : S2)], [6, 6, 6, 0, -1, 0, C], [2.4, 2.4, 0.3, -3.4, 2.4, 8.1, K2], [2.4, 2.4, 0.3, 3.4, 2.4, 8.1, K2], [6, 1.4, 0.3, 0, -2.8, 8.1, K2]]);
+        return { root, body, head: body, legs: [], arms: [] }; } },
+    scarab: { name: 'Escarabajo dorado', hp: 7, w: 0.62, h: 0.45, speed: 3.7, xp: 3, sound: 'skeleton', hostile: true, melee: 2, leaps: true, windup: 0.2,
+      drops: [[I.GOLD_INGOT, 0, 1]],
+      model: (m) => { const root = new THREE.Group(), G = rgb(230, 180, 50), GD = rgb(170, 120, 30), GR = rgb(70, 160, 110), K2 = rgb(30, 24, 18);
+        const body = part(root, m, 0, 3.5, 0, [[8, 4, 10, 0, 0, -0.5, (f) => (f === 2 ? G : GD)], [0.4, 4.2, 10.2, 0, 0, -0.5, K2], [4, 2, 2, -2, 2.2, -2, GR], [4, 2, 2, 2, 2.2, -2, GR]]);
+        const head = part(root, m, 0, 3.5, 4.5, [[5, 3, 3, 0, 0, 1.5, GD], [1, 1, 0.3, -1.5, 0.6, 3.1, rgb(255, 60, 40)], [1, 1, 0.3, 1.5, 0.6, 3.1, rgb(255, 60, 40)], [1, 1, 3, -1.8, -0.6, 4, K2], [1, 1, 3, 1.8, -0.6, 4, K2]]);
+        const legs = []; for (const sx of [-1, 1]) for (const z of [2.5, 0, -2.5]) legs.push(part(root, m, sx * 4, 2.5, z, [[4, 1, 1, sx * 2, -1, 0, K2]]));
+        return { root, body, head, legs, arms: [] }; } },
+    // Filacteria: cristal inmóvil que mantiene la barrera del Liche
+    __phylactery: { name: 'Filacteria', hp: 16, w: 0.8, h: 1.6, speed: 0, xp: 0, sound: 'pop', special: true, ai: 'still', drops: [],
+      model: (m) => { const root = new THREE.Group(), C1 = rgb(110, 255, 190), C2 = rgb(40, 170, 120), S = rgb(90, 84, 96);
+        const body = part(root, m, 0, 2, 0, [[10, 4, 10, 0, 0, 0, S], [7, 2, 7, 0, 3, 0, S]]);
+        const head = part(root, m, 0, 14, 0, [[6, 16, 6, 0, 0, 0, (f) => (f % 2 ? C1 : C2)], [3, 22, 3, 0, 0, 0, rgb(210, 255, 235)]]);
+        return { root, body, head, legs: [], arms: [] }; } },
+  });
+}
+
+/* ---------- Jefes nuevos ---------- */
+function lichModel(mat) {
+  const R1 = rgb(60, 40, 90), R2 = rgb(40, 26, 64), BN = rgb(230, 226, 210), G = rgb(120, 255, 190), GO = rgb(220, 180, 70);
+  const mdl = MOB_MODELS.humanoid(mat, { limb: 3, skin: BN, arm: R1, shirt: R1, pants: R2, eye: G, sleeve: R2,
+    headExtra: [[8.6, 3, 8.6, 0, 8.4, 0, R2], [1.2, 4, 1.2, -3, 11, 0, GO], [1.2, 5, 1.2, 0, 11.5, -1, GO], [1.2, 4, 1.2, 3, 11, 0, GO], [3, 1.2, 0.3, 0, 1.2, 4.15, rgb(60, 60, 60)]],
+    bodyBoxes: [[9, 12, 5, 0, 0, 0, R1], [11, 13, 6, 0, -10, 0, R2], [9.4, 2, 5.4, 0, 5.2, 0, GO], [3, 6, 0.5, 0, -2, 2.8, rgb(90, 60, 140)]], legExtra: [] });
+  mdl.legs.forEach((l) => (l.visible = false));
+  part(mdl.arms[1], mat, 0, -10, 1.5, [[1.2, 30, 1.2, 0, 4, 0, rgb(70, 56, 80)], [4, 4, 4, 0, 20, 0, G], [2, 2, 2, 0, 20, 0, rgb(230, 255, 245)]]);
+  mdl.root.scale.setScalar(1.3);
+  mdl.boss = true; mdl.humanoid = true;
+  return mdl;
+}
+function kingModel(mat) {
+  const A1 = rgb(70, 72, 84), A2 = rgb(48, 50, 60), GO = rgb(230, 190, 70), RD = rgb(150, 30, 40), E = rgb(255, 120, 60);
+  const mdl = MOB_MODELS.humanoid(mat, { limb: 4.4, skin: A1, arm: A1, shirt: A1, pants: A2, eye: E, shoe: A2, sleeve: A2,
+    headExtra: [[9, 9, 9, 0, 4, 0, A2], [6, 1, 0.4, 0, 4.2, 4.6, E], [9.4, 2, 9.4, 0, 8.8, 0, GO], [1.4, 2, 1.4, -3.6, 10.6, 0, GO], [1.4, 2.6, 1.4, 0, 11, -3.6, GO], [1.4, 2, 1.4, 3.6, 10.6, 0, GO], [1.4, 2.6, 1.4, 0, 11, 3.6, GO]],
+    bodyExtra: [[10, 10, 6, 0, 1, 0, A1], [12, 3, 6.4, 0, 6, 0, A2], [9, 12, 1, 0, -4, -3.6, RD], [2, 2, 6.6, 0, -2, 0, GO]] });
+  part(mdl.arms[1], mat, 0, -11, 2, [[2, 2, 5, 0, 0, 0, rgb(60, 40, 30)], [6, 1.4, 1.4, 0, 0, 2.6, GO], [1.6, 3, 26, 0, 0, 16, (f) => (f === 2 ? rgb(230, 232, 240) : rgb(150, 156, 176))]]);
+  part(mdl.arms[0], mat, -2.4, -6, 1, [[1.4, 13, 10, 0, 0, 0, (f) => (f === 0 || f === 1 ? A2 : RD)], [1.6, 3, 3, -0.4, 0, 0, GO]]);
+  mdl.root.scale.setScalar(1.45);
+  mdl.boss = true;
+  return mdl;
+}
+function rocModel(mat) {
+  const root = new THREE.Group(), B1 = rgb(70, 90, 130), B2 = rgb(48, 62, 96), W = rgb(230, 236, 250), Y = rgb(250, 200, 60), K = rgb(20, 20, 30), E = rgb(120, 230, 255);
+  const body = part(root, mat, 0, 16, 0, [[14, 12, 22, 0, 0, 0, (f) => (f === 2 ? B1 : B2)], [12, 8, 10, 0, -3, 6, W]]);
+  const head = part(root, mat, 0, 22, 10, [[9, 9, 10, 0, 2, 4, B1], [4, 3, 6, 0, 0, 11, Y], [4, 2, 3, 0, -2, 9.5, rgb(210, 160, 40)], [1.6, 1.6, 0.4, -3.6, 4, 7, E], [1.6, 1.6, 0.4, 3.6, 4, 7, E], [2, 6, 2, 0, 8, 0, W], [1.6, 5, 1.6, 0, 8, -3, E]]);
+  const wing = (s) => part(root, mat, s * 7, 20, 2, [[22, 2, 14, s * 11, 0, 0, B2], [16, 1.6, 10, s * 28, 0, -2, B1], [8, 1.2, 8, s * 40, 0, -4, W], [20, 0.6, 3, s * 22, -0.4, -7.5, E]]);
+  const arms = [wing(-1), wing(1)];
+  const legs = [-1, 1].map((s) => part(root, mat, s * 3.5, 10, 2, [[3, 8, 3, 0, -3, 0, Y], [5, 1.4, 6, 0, -7.4, 1.5, K]]));
+  const tail = part(root, mat, 0, 17, -11, [[12, 2, 10, 0, 0, -5, W], [10, 1.4, 6, 0, 0, -11, E]]);
+  root.scale.setScalar(1.7);
+  return { root, body, head, legs, arms, tail, boss: true, roc: true };
+}
+Object.assign(MOBS, {
+  lich: { name: 'El Liche', hp: 380, w: 1.1, h: 3.2, speed: 4, xp: 320, sound: 'guardian', hostile: true, boss: true, melee: 5,
+    sub: 'Señor de la cripta, que no muere mientras arda su filacteria', model: lichModel,
+    drops: [[I.SOUL_STAFF, 1, 1], [I.PHYLACTERY, 1, 1], [I.SKILL_TOME, 1, 2], [I.DIAMOND, 3, 6], [I.EMERALD, 8, 14], [I.ARCANE_DUST, 3, 6]] },
+  fallenking: { name: 'El Rey caído', hp: 420, w: 1.3, h: 3.6, speed: 2.6, xp: 340, sound: 'golem', hostile: true, boss: true, melee: 7,
+    sub: 'Aún defiende un trono que ya no existe', model: kingModel,
+    drops: [[I.KING_GREATSWORD, 1, 1], [I.KING_CROWN, 1, 1], [I.SKILL_TOME, 1, 2], [GOLD_BLOCK, 1, 3], [I.EMERALD, 10, 16], [I.DIAMOND, 2, 5]] },
+  stormroc: { name: 'El Roc de la tormenta', hp: 360, w: 2.4, h: 2.2, speed: 8, xp: 330, sound: 'raider', hostile: true, boss: true, melee: 6,
+    sub: 'El ave que trae los rayos a la cumbre', model: rocModel,
+    drops: [[I.ROC_FEATHER, 1, 1], [I.GALE_FAN, 1, 1], [I.SKILL_TOME, 1, 2], [I.FEATHER, 6, 12], [I.AERITE, 4, 8], [I.DIAMOND, 2, 5], [I.STORM_ESSENCE, 1, 3]] },
+});
+
+/* ---------- Proyectiles nuevos: almas, plumas y relámpagos ---------- */
+class Bolt46 extends DimBolt {
+  constructor(kind, x, y, z, vel, opts) {
+    super('fire', x, y, z, vel, opts); this.bolt = kind; this.home = opts.home || 0;
+    const C = { soul: [[120, 255, 190], [40, 170, 120]], feather: [[240, 246, 255], [120, 190, 255]] }[kind];
+    this.mesh.geometry = kind === 'feather' ? cbox(0.18, 0.18, 0.7, 0, 0, 0, (f) => rgb(...C[f % 2])) : cbox(0.45, 0.45, 0.45, 0, 0, 0, (f) => rgb(...C[f % 2]));
+    this.col = C[0].map((v) => v / 255); this.mesh.scale.setScalar(1);
+  }
+  update(dt, g) {
+    if (this.home && this.life < 2.5) {        // las almas giran poco a poco hacia el jugador (se pueden esquivar)
+      const p = g.player, sp = this.vel.length(), to = new THREE.Vector3(p.pos.x - this.pos.x, p.pos.y + 0.9 - this.pos.y, p.pos.z - this.pos.z).normalize().multiplyScalar(sp);
+      this.vel.lerp(to, Math.min(1, dt * this.home)).setLength(sp);
+    }
+    super.update(dt, g);
+    if (this.bolt === 'feather') { this.mesh.rotation.set(0, Math.atan2(this.vel.x, this.vel.z), 0); }
+  }
+  explode(g) {
+    if (this.dead) return; this.dead = true;
+    const p = g.player, d = Math.hypot(p.pos.x - this.pos.x, p.pos.y + 0.9 - this.pos.y, p.pos.z - this.pos.z);
+    if (d < this.radius) p.damage(Math.ceil(this.dmg * (1 - d / this.radius * 0.5)), this.msg, this.pos);
+    g.particles.emit(this.pos.x, this.pos.y, this.pos.z, this.col, 12, { speed: 4, up: 3, life: 0.6, size: 0.12 });
+    sfx.play(this.bolt === 'soul' ? 'laser' : 'hit', { pos: this.pos, pitch: this.bolt === 'soul' ? 1.7 : 1.3 });
+  }
+}
+function shoot46(src, kind, tx, ty, tz, speed, opts) {
+  const sx = src.pos.x, sy = src.pos.y + src.h * 0.65, sz = src.pos.z, d = Math.hypot(tx - sx, ty - sy, tz - sz) || 1;
+  const b = new Bolt46(kind, sx + (tx - sx) / d * (src.hw + 0.6), sy, sz + (tz - sz) / d * (src.hw + 0.6), new THREE.Vector3((tx - sx) / d * speed, (ty - sy) / d * speed, (tz - sz) / d * speed), opts);
+  game.entities.add(b); return b;
+}
+
+/* ---------- Base de los jefes nuevos ----------
+   · Fases por porcentaje de vida (BOSS_PHASES) con onPhase(n) al cambiar.
+   · Estados con nombre: el HUD los muestra (status()) para que se sepa qué
+     va a hacer y cuándo es vulnerable.
+   · Esbirros: desaparecen si el jefe se retira y mueren con él.
+   · Áreas marcadas: círculos en el suelo que avisan antes del golpe. */
+class Boss46 extends Boss {
+  constructor(type, arena) {
+    super(type, arena); this.minions = []; this.marks = []; this.vulnT = 0; this.shielded = false; this.guarding = false; this.t46 = 0;
+  }
+  phaseName() { const n = BOSS_PHASE_NAMES[this.type] || []; return `Fase ${this.phase} · ${n[this.phase - 1] || ''}`; }
+  dmgMul(from) { return this.vulnT > 0 ? 1.5 : 1; }
+  hurt(dmg, from) {
+    if (this.state === 'intro' || this.deathT) return false;
+    if (this.shielded) {
+      if (this.invuln <= 0) { this.invuln = 0.3; dmgText.add(this.pos.x, this.pos.y + this.h + 0.6, this.pos.z, 'Escudo', 'fx'); sfx.play('hit', { pos: this.pos, pitch: 2 });
+        game.particles.emit(this.pos.x, this.pos.y + this.h * 0.6, this.pos.z, [0.5, 1, 0.8], 10, { speed: 3, life: 0.4, size: 0.1 }); }
+      return false;
+    }
+    let mul = this.dmgMul(from);
+    if (this.guarding && from && mul <= 1) {                 // en guardia: los golpes de frente se bloquean casi del todo
+      const a = Math.atan2(from.x - this.pos.x, from.z - this.pos.z), dy = Math.abs(((a - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+      if (dy < 1.15) { mul = 0.3; dmgText.add(this.pos.x, this.pos.y + this.h + 0.6, this.pos.z, '¡Bloqueado!', 'fx'); sfx.play('hit', { pos: this.pos, pitch: 1.9 });
+        game.particles.emit(this.pos.x + Math.sin(this.yaw) * 1.2, this.pos.y + 1.6, this.pos.z + Math.cos(this.yaw) * 1.2, [1, 0.9, 0.5], 8, { speed: 3, up: 2, life: 0.35, size: 0.08 }); }
+    }
+    const vx = this.vel.x, vy = this.vel.y, vz = this.vel.z;
+    const r = Mob.prototype.hurt.call(this, dmg * mul, from);
+    if (r) {
+      this.ai.panic = 0; this.vel.set(vx, vy, vz);           // los jefes no salen despedidos
+      const f = this.hp / this.spec.hp, th = BOSS_PHASES[this.type] || [0.6, 0.25], np = f > th[0] ? 1 : f > th[1] ? 2 : 3;
+      if (np > this.phase && !this.deathT) { this.phase = np; hud.toast(`${this.spec.name}: ${this.phaseName()}`, 2500); sfx.play('roar', { pos: this.pos }); this.onPhase(np); }
+    }
+    return r;
+  }
+  onPhase() {}
+  update(dt, g) {
+    this.t46 += dt; if (this.vulnT > 0) this.vulnT -= dt;
+    const wasDying = !!this.deathT, r = super.update(dt, g);
+    if (this.dead || (this.deathT && !wasDying)) this.cleanup(!!this.deathT);
+    this.drawMarks(dt, g);
+    return r;
+  }
+  cleanup(died) {
+    for (const m of this.minions) if (!m.dead && !m.deathT) { if (died && m.type !== '__phylactery') { m.lastHit = 'player'; m.hp = 0; m.deathT = 0.01; } else m.dead = true; }
+    this.minions = []; this.marks = []; this.shielded = false;
+  }
+  summon(type, n, r = 7, y = 0.2) {
+    const A = this.arena;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 6.283 + Math.random() * 0.6, m = game.entities.spawnMob(type, A.x + Math.cos(a) * r, A.y + y, A.z + Math.sin(a) * r);
+      if (!m) continue;
+      m.persistent = false; m.bossMinion = true; this.minions.push(m);
+      game.particles.emit(m.pos.x, m.pos.y + 1, m.pos.z, [0.6, 0.6, 0.7], 14, { speed: 3, up: 3, life: 0.6, size: 0.14 });
+    }
+  }
+  // Marca un círculo en el suelo que estalla tras t segundos (si el jugador sigue dentro, recibe el golpe)
+  mark(x, z, r, t, hit, col = [1, 0.3, 0.2]) {
+    const y = this.groundY(x, z);
+    this.marks.push({ x, y, z, r, t, t0: t, hit, col });
+  }
+  groundY(x, z) {
+    const A = this.arena, fx = Math.floor(x), fz = Math.floor(z);
+    for (let y = Math.floor(A.y) + 4; y > A.y - 6; y--) if (B_SOLID[world.get(fx, y - 1, fz)] && !B_SOLID[world.get(fx, y, fz)]) return y;
+    return A.y;
+  }
+  drawMarks(dt, g) {
+    if (!this.marks.length) return;
+    const p = g.player;
+    for (const m of this.marks) {
+      m.t -= dt;
+      const k = 1 - m.t / m.t0, n = Math.ceil(dt * (40 + 60 * k));
+      for (let i = 0; i < n; i++) { const a = Math.random() * 6.283; g.particles.emit(m.x + Math.cos(a) * m.r, m.y + 0.12, m.z + Math.sin(a) * m.r, m.col, 1, { gravity: 0, up: 0.3 + k, speed: 0, life: 0.35, size: 0.13 }); }
+      if (Math.random() < dt * 10 * k) g.particles.emit(m.x + (Math.random() - 0.5) * m.r, m.y + 0.1, m.z + (Math.random() - 0.5) * m.r, m.col, 1, { gravity: 0, up: 0.2, speed: 0, life: 0.3, size: 0.1 });
+      if (m.t <= 0) {
+        const inside = Math.hypot(p.pos.x - m.x, p.pos.z - m.z) < m.r + p.hw && p.pos.y > m.y - 1.5 && p.pos.y < m.y + 3;
+        m.hit(inside, m);
+      }
+    }
+    this.marks = this.marks.filter((m) => m.t > 0);
+  }
+  status() {
+    if (this.state === 'intro') return ['', ''];
+    if (this.shielded) return [this.shieldText ? this.shieldText() : 'Escudo: invulnerable', 'shield'];
+    if (this.vulnT > 0) return [`Vulnerable · recibe +50 % (${Math.ceil(this.vulnT)} s)`, 'vuln'];
+    const t = STATUS46[this.type]?.[this.state] || '';
+    return [t, this.telegraph || t.startsWith('⚠') ? 'warn' : this.guarding ? 'guard' : ''];
+  }
+}
+// Qué se ve en la barra en cada estado (para jefes nuevos y antiguos)
+const STATUS46 = {
+  guardian: { charge: '⚠ Carga el rayo: ponte detrás de algo', dashWarn: '⚠ Va a embestir: apártate', dash: 'Embestida' },
+  golem: { punch: 'Puñetazo', slam: '⚠ Golpe sísmico: ¡salta!', throw: '⚠ Lanza una roca' },
+  dragon: { fireWarn: '⚠ Va a escupir fuego', diveWarn: '⚠ Va a caer en picado: sal del círculo', dive: 'En picado', land: 'Aterriza', perch: 'En tierra: recibe +50 %' },
+  emberlord: { swing: 'Golpe de ceniza', volley: '⚠ Prepara una ráfaga de fuego', erupt: '⚠ ¡Erupción! Sal de los círculos' },
+  voidherald: {},
+  lich: { cast: '⚠ Conjura almas', spikes: '⚠ Huesos bajo tus pies: sal de los círculos', blink: 'Se desvanece' },
+  fallenking: { chase: 'En guardia: atácalo por la espalda o tras sus ataques', combo: '⚠ Combo de espada', chargeWarn: '⚠ Va a cargar: apártate', charge: 'Carga', stunned: 'Aturdido contra el muro: recibe +50 %',
+    slamWarn: '⚠ Onda de choque: ¡salta!', recover: 'Agotado: es tu momento' },
+  stormroc: { featherWarn: '⚠ Prepara una lluvia de plumas', diveWarn: '⚠ Va a caer en picado: sal del círculo', dive: 'En picado', grounded: 'En el suelo: recibe +50 %', gustWarn: '⚠ Bate las alas: ráfaga de viento' },
+};
+const BOSS_PHASE_NAMES = {
+  guardian: ['Rayo abisal', 'Embestida', 'Furia del abismo'], golem: ['Golpe sísmico', 'Lluvia de rocas', 'Enfurecido'], dragon: ['Vuelo de fuego', 'Aliento en tierra', 'Ira del dragón'],
+  emberlord: ['Puños de ceniza', 'Erupción', 'Tormenta de brasas'], voidherald: ['Lluvia de esquirlas', 'Paso entre mundos', 'Colapso'],
+  lich: ['Llamas del alma', 'Barrera de huesos', 'Tormenta de almas'], fallenking: ['Esgrima real', 'Guardia espectral', 'Furia del rey'], stormroc: ['Vendaval', 'Tormenta eléctrica', 'Ojo del huracán'],
+};
+
+/* ---------- El Liche ---------- */
+class Lich extends Boss46 {
+  constructor(type, arena) { super(type, arena); this.pos.y += 0.4; this.anchor = [arena.x, arena.z]; this.state = 'intro'; }
+  shieldText() { const n = this.minions.filter((m) => m.type === '__phylactery' && !m.dead && !m.deathT).length; return `Barrera de huesos: rompe las filacterias (${n} restantes)`; }
+  onPhase(n) {
+    if (n === 2) {
+      this.shielded = true; this.state = 'float'; this.marks = [];
+      this.summon('__phylactery', 3, 7.5, 0.05); this.summon('skeleton', 2, 5);
+      hud.toast('¡El Liche se protege! Rompe las tres filacterias verdes', 3500); sfx.play('laserCharge', { pos: this.pos, pitch: 0.6 });
+    } else if (n === 3) { this.summon('bonearmor', 2, 6); }
+  }
+  aiDragon(dt, g, p) {
+    const A = this.arena, ph = this.phase, cd = this.cd, m = this.model;
+    this.face(p, 5, dt);
+    // barrera: se rompe al destruir todas las filacterias
+    if (this.shielded && !this.minions.some((e) => e.type === '__phylactery' && !e.dead && !e.deathT)) {
+      this.shielded = false; this.vulnT = 7; this.state = 'float'; this.telegraph = 0;
+      hud.toast('¡La barrera se ha roto! El Liche está aturdido', 3000); sfx.play('break', { mat: 'glass', pos: this.pos }); g.shake = Math.max(g.shake, 0.3);
+    }
+    const hover = this.vulnT > 0 ? 0.1 : 1.1 + Math.sin(this.t46 * 1.6) * 0.3;
+    this.flyTo(this.anchor[0], A.y + hover, this.anchor[1], this.vulnT > 0 ? 2 : this.spec.speed, dt, false);
+    m.arms[0].rotation.x *= 0.9; m.arms[1].rotation.x += (-0.6 - m.arms[1].rotation.x) * Math.min(1, dt * 4);
+    if (this.vulnT > 0) { m.head.rotation.x = 0.5; return; }
+    m.head.rotation.x *= 0.9;
+    const st = this.state;
+    if (st === 'idle' || st === 'float') {
+      this.state = 'float';
+      if ((cd.blink ?? 6) <= 0) {
+        cd.blink = [0, 9, 7, 5.5][ph];
+        const spots = [[6, 6], [-6, 6], [6, -6], [-6, -6], [0, 0]].map(([x, z]) => [A.x + x, A.z + z]).filter(([x, z]) => Math.hypot(x - this.anchor[0], z - this.anchor[1]) > 2);
+        const [x, z] = spots[Math.floor(Math.random() * spots.length)];
+        for (let k = 0; k < 20; k++) g.particles.emit(this.pos.x, this.pos.y + Math.random() * this.h, this.pos.z, [0.5, 1, 0.75], 1, { speed: 3, up: 1, life: 0.5, size: 0.14 });
+        this.anchor = [x, z]; this.pos.set(x, A.y + 1.1, z); this.vel.set(0, 0, 0); sfx.play('laser', { pos: this.pos, pitch: 0.6 });
+      } else if ((cd.volley ?? 2) <= 0) { this.state = 'cast'; this.st = ph === 3 ? 0.7 : 0.9; this.telegraph = 1; sfx.play('laserCharge', { pos: this.pos, pitch: 1.3 }); }
+      else if ((cd.spikes ?? 4) <= 0 && !this.shielded) {
+        this.state = 'spikes'; this.st = 0.6; cd.spikes = [0, 7, 6.5, 4.5][ph];
+        const n = ph === 3 ? 5 : 3;
+        const hit = (inside) => {
+          if (inside) { p.damage(7, 'Te atravesaron los huesos del Liche', null); p.vel.y = 8; }
+        };
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * 6.283, r = i === 0 ? 0 : 2.2 + Math.random() * 3.5, x = p.pos.x + Math.cos(a) * r, z = p.pos.z + Math.sin(a) * r;
+          this.mark(x, z, 1.5, 1.4, (inside, mk) => { hit(inside); for (let k = 0; k < 12; k++) g.particles.emit(mk.x + (Math.random() - 0.5) * 2, mk.y, mk.z + (Math.random() - 0.5) * 2, [0.92, 0.9, 0.82], 1, { speed: 1.5, up: 9, life: 0.7, size: 0.16 }); sfx.play('break', { mat: 'stone', pos: { x: mk.x, y: mk.y, z: mk.z } }); }, [0.5, 1, 0.7]);
+        }
+        sfx.play('roar', { pos: this.pos, pitch: 1.4 });
+      }
+    } else if (st === 'cast') {
+      this.st -= dt; m.arms[0].rotation.x = m.arms[1].rotation.x = -2.6;
+      if (Math.random() < dt * 30) g.particles.emit(this.pos.x, this.pos.y + this.h + 0.3, this.pos.z, [0.5, 1, 0.75], 1, { gravity: -1, speed: 1, life: 0.5, size: 0.12 });
+      if (this.st <= 0) {
+        this.telegraph = 0; this.state = 'float';
+        const n = this.shielded ? 2 : ph === 3 ? 5 : 3, tx = p.pos.x + p.vel.x * 0.3, tz = p.pos.z + p.vel.z * 0.3;
+        for (let i = 0; i < n; i++) {
+          const off = (i - (n - 1) / 2) * 0.28, a = Math.atan2(tx - this.pos.x, tz - this.pos.z) + off, d = Math.hypot(tx - this.pos.x, tz - this.pos.z);
+          shoot46(this, 'soul', this.pos.x + Math.sin(a) * d, p.pos.y + 0.9, this.pos.z + Math.cos(a) * d, ph === 3 ? 11 : 9, { dmg: 5, radius: 1.8, home: 0.9, msg: 'Te consumieron las almas del Liche' });
+        }
+        cd.volley = this.shielded ? 3.5 : [0, 4.2, 3.8, 2.6][ph]; sfx.play('fireball', { pos: this.pos, pitch: 1.6 });
+      }
+    } else if (st === 'spikes') { this.st -= dt; m.arms[0].rotation.x = -1.5; if (this.st <= 0) this.state = 'float'; }
+    // tocarlo hace daño
+    if (p.pos.distanceTo(this.pos) < 1.8 && (cd.touch ?? 0) <= 0) { cd.touch = 1; p.damage(4, 'Te tocó el Liche', this.pos); }
+  }
+  syncBoss(dt, p) {
+    super.syncBoss(dt, p);
+    if (this.shielded) { this.mat.color.g += 0.4; this.mat.color.b += 0.2; }
+    if (this.shielded && Math.random() < dt * 16) { const a = Math.random() * 6.283; game.particles.emit(this.pos.x + Math.cos(a) * 1.6, this.pos.y + Math.random() * this.h, this.pos.z + Math.sin(a) * 1.6, [0.5, 1, 0.75], 1, { gravity: 0, speed: 0.3, life: 0.5, size: 0.1 }); }
+  }
+}
+
+/* ---------- El Rey caído ---------- */
+class FallenKing extends Boss46 {
+  onPhase(n) {
+    if (n === 2) { this.summon('specter', 2, 6); hud.toast('El Rey caído llama a su guardia espectral', 2500); }
+    if (n === 3) { this.summon('specter', 1, 6); }
+  }
+  aiDragon(dt, g, p) {
+    const ph = this.phase, cd = this.cd, m = this.model, dx = p.pos.x - this.pos.x, dz = p.pos.z - this.pos.z, d = Math.hypot(dx, dz);
+    let move = 0; const st = this.state;
+    this.guarding = st === 'chase' || st === 'idle';
+    const sword = m.arms[1];
+    if (st === 'idle' || st === 'chase') {
+      this.state = 'chase'; this.face(p, 3.5, dt);
+      if (d > 2.6) move = [0, 2.6, 2.9, 3.3][ph];
+      sword.rotation.x += (-0.5 - sword.rotation.x) * Math.min(1, dt * 6); m.arms[0].rotation.x += (-1.2 - m.arms[0].rotation.x) * Math.min(1, dt * 6);
+      if (d < 3.6 && Math.abs(p.pos.y - this.pos.y) < 2.5 && (cd.combo ?? 1) <= 0) { this.state = 'combo'; this.hits = ph === 3 ? 4 : 3; this.swingT = ph === 3 ? 0.42 : 0.55; this.st = this.swingT; this.telegraph = 1; }
+      else if (d > 7 && (cd.charge ?? 3) <= 0) { this.state = 'chargeWarn'; this.st = 0.9; this.telegraph = 1; sfx.play('roar', { pos: this.pos, pitch: 0.8 }); }
+      else if (ph === 3 && (cd.swords ?? 2) <= 0) {
+        cd.swords = 7;
+        for (let i = 0; i < 5; i++) {
+          const a = Math.random() * 6.283, r = i === 0 ? 0 : 2 + Math.random() * 4;
+          this.mark(p.pos.x + Math.cos(a) * r, p.pos.z + Math.sin(a) * r, 1.4, 1.3 + i * 0.12, (inside, mk) => {
+            if (inside) p.damage(8, 'Te alcanzó una espada del cielo', null);
+            for (let k = 0; k < 14; k++) g.particles.emit(mk.x, mk.y + k * 0.5, mk.z, [0.85, 0.88, 1], 1, { gravity: 0, speed: 0.3, life: 0.35, size: 0.18 });
+            sfx.play('slam', { pos: { x: mk.x, y: mk.y, z: mk.z }, pitch: 1.4 });
+          }, [0.8, 0.85, 1]);
+        }
+        sfx.play('roar', { pos: this.pos, pitch: 1.1 });
+      }
+    } else if (st === 'combo') {
+      this.st -= dt; this.face(p, 2.2, dt);
+      const k = 1 - this.st / this.swingT;
+      sword.rotation.x = -0.4 - 2.4 * Math.min(1, k * 1.4); sword.rotation.z = 0.6 * k;
+      if (this.st <= 0) {
+        // tajo en abanico delante del rey
+        const a = Math.atan2(dx, dz), off = Math.abs(((a - this.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+        if (d < 4.3 && off < 1 && Math.abs(p.pos.y - this.pos.y) < 2.6) { p.damage(7, 'Te alcanzó el espadón del Rey caído', this.pos); }
+        for (let i = -3; i <= 3; i++) { const b = this.yaw + i * 0.25; g.particles.emit(this.pos.x + Math.sin(b) * 3, this.pos.y + 1.4, this.pos.z + Math.cos(b) * 3, [0.9, 0.92, 1], 2, { gravity: 0, speed: 0.6, life: 0.25, size: 0.12 }); }
+        sfx.play('swing', { pos: this.pos, pitch: 0.7 }); sword.rotation.z = 0;
+        this.vel.x += Math.sin(this.yaw) * 4; this.vel.z += Math.cos(this.yaw) * 4;          // avanza con cada tajo
+        if (--this.hits > 0) { this.st = this.swingT * 0.85; }
+        else { this.telegraph = 0; cd.combo = 2.2; if (ph >= 2) { this.state = 'slamWarn'; this.st = 0.9; this.telegraph = 1; } else { this.state = 'recover'; this.st = 1.4; this.vulnT = 1.4; } }
+      }
+    } else if (st === 'slamWarn') {
+      this.st -= dt; sword.rotation.x = -3;
+      if (Math.random() < dt * 60) { const a = Math.random() * 6.283; g.particles.emit(this.pos.x + Math.cos(a) * 5.2, this.pos.y + 0.12, this.pos.z + Math.sin(a) * 5.2, [1, 0.4, 0.2], 1, { gravity: 0, up: 0.5, speed: 0, life: 0.4, size: 0.15 }); }
+      if (this.st <= 0) {
+        this.telegraph = 0; sword.rotation.x = 0.6;
+        if (d < 5.6 && p.onGround && Math.abs(p.pos.y - this.pos.y) < 1.6) { p.damage(6, 'La onda de choque del Rey caído te derribó', this.pos); p.vel.y = 8; }
+        for (let k = 0; k < 40; k++) { const a = k / 40 * 6.28; g.particles.emit(this.pos.x + Math.cos(a) * 2.5, this.pos.y + 0.2, this.pos.z + Math.sin(a) * 2.5, [0.6, 0.55, 0.5], 1, { speed: 7, up: 2, life: 0.6, size: 0.16 }); }
+        sfx.play('slam', { pos: this.pos }); g.shake = Math.max(g.shake, 0.45); this.state = 'recover'; this.st = 1.6; this.vulnT = 1.6;
+      }
+    } else if (st === 'recover') { this.st -= dt; sword.rotation.x += (0.5 - sword.rotation.x) * Math.min(1, dt * 4); if (this.st <= 0) this.state = 'chase'; }
+    else if (st === 'chargeWarn') {
+      this.st -= dt; this.face(p, 6, dt); sword.rotation.x = -1.6; m.arms[0].rotation.x = -1.6;
+      if (Math.random() < dt * 20) g.particles.emit(this.pos.x, this.pos.y + 0.2, this.pos.z, [0.6, 0.55, 0.5], 1, { speed: 2, up: 1.5, life: 0.4, size: 0.12 });
+      if (this.st <= 0) { this.telegraph = 0; this.state = 'charge'; this.st = 1.3; this.dash = [Math.sin(this.yaw), Math.cos(this.yaw)]; sfx.play('swing', { pos: this.pos, pitch: 0.5 }); }
+    } else if (st === 'charge') {
+      this.st -= dt; move = 0;
+      this.vel.x = this.dash[0] * 13; this.vel.z = this.dash[1] * 13;
+      if (Math.random() < dt * 30) g.particles.emit(this.pos.x, this.pos.y + 0.1, this.pos.z, [0.6, 0.55, 0.5], 1, { speed: 1.5, up: 1, life: 0.4, size: 0.14 });
+      if (d < this.hw + 1.1 && (cd.ram ?? 0) <= 0 && Math.abs(p.pos.y - this.pos.y) < 2.5) { cd.ram = 1; p.damage(9, 'Te arrolló el Rey caído', this.pos); p.vel.x += this.dash[0] * 9; p.vel.z += this.dash[1] * 9; p.vel.y = 6; this.st = Math.min(this.st, 0.15); }
+      if (this.hitH && this.st < 1.2) {                  // se estrella contra un muro: queda aturdido
+        this.state = 'stunned'; this.st = 2.4; this.vulnT = 2.4; this.vel.x = -this.dash[0] * 3; this.vel.z = -this.dash[1] * 3; g.shake = Math.max(g.shake, 0.4); sfx.play('slam', { pos: this.pos, pitch: 0.8 });
+        hud.toast('¡Se ha estrellado! Ataca ahora', 1500);
+      } else if (this.st <= 0) { this.state = 'recover'; this.st = 0.8; cd.charge = [0, 7, 6, 5][ph]; }
+      this.physics(dt); this.walk += 13 * dt * 0.6; return;
+    } else if (st === 'stunned') {
+      this.st -= dt; sword.rotation.x = 0.8; m.head.rotation.x = 0.4;
+      if (Math.random() < dt * 8) g.particles.emit(this.pos.x, this.pos.y + this.h + 0.2, this.pos.z, [1, 0.9, 0.3], 1, { gravity: 0, speed: 0.8, life: 0.4, size: 0.1 });
+      if (this.st <= 0) { this.state = 'chase'; m.head.rotation.x = 0; cd.charge = [0, 7, 6, 5][ph]; }
+    }
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), k = Math.min(1, 8 * dt);
+    this.vel.x += (fx * move - this.vel.x) * k; this.vel.z += (fz * move - this.vel.z) * k;
+    if (this.hitH && this.onGround && move) this.vel.y = JUMP_SPEED;
+    this.physics(dt);
+    this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 2.2;
+  }
+  syncBoss(dt, p) {
+    super.syncBoss(dt, p);
+    const m = this.model, sw = Math.sin(this.walk) * 0.5 * Math.min(1, Math.hypot(this.vel.x, this.vel.z) / 2);
+    m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw;
+    if (this.phase === 3) { this.mat.color.r += 0.2; }
+  }
+}
+
+/* ---------- El Roc de la tormenta ---------- */
+class StormRoc extends Boss46 {
+  constructor(type, arena) { super(type, arena); this.pos.y += 9; this.ang = Math.random() * 6.283; }
+  onPhase(n) {
+    if (n === 3) { this.summon('harpy', 2, 8, 6); hud.toast('El cielo se oscurece: llegan las arpías', 2500); }
+  }
+  aiDragon(dt, g, p) {
+    const A = this.arena, ph = this.phase, cd = this.cd, R = 11, st = this.state;
+    const strike = () => {
+      const n = ph === 3 ? 5 : 3;
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * 6.283, r = i === 0 ? 0 : 2.5 + Math.random() * 4;
+        this.mark(p.pos.x + Math.cos(a) * r, p.pos.z + Math.sin(a) * r, 1.6, 1.3 + i * 0.1, (inside, mk) => {
+          if (inside) p.damage(8, 'Te alcanzó un rayo del Roc', null);
+          for (let k = 0; k < 16; k++) g.particles.emit(mk.x + (Math.random() - 0.5) * 0.4, mk.y + k * 0.8, mk.z + (Math.random() - 0.5) * 0.4, [1, 1, 0.6], 1, { gravity: 0, speed: 0.4, life: 0.3, size: 0.2 });
+          sfx.play('thunder', { vol: 0.5 }); g.env.flash = Math.max(g.env.flash || 0, 0.35);
+        }, [1, 0.95, 0.4]);
+      }
+    };
+    if (st === 'idle' || st === 'circle') {
+      this.state = 'circle'; this.ang += dt * (ph === 3 ? 0.42 : 0.32);
+      this.flyTo(A.x + Math.cos(this.ang) * R, A.y + 9 + Math.sin(this.ang * 2) * 1.5, A.z + Math.sin(this.ang) * R, this.spec.speed, dt, false);
+      this.yaw = Math.atan2(this.vel.x, this.vel.z);
+      if ((cd.feathers ?? 2.5) <= 0) { this.state = 'featherWarn'; this.st = 0.8; this.telegraph = 1; sfx.play('roar', { pos: this.pos, pitch: 1.5 }); }
+      else if ((cd.dive ?? 7) <= 0) { this.state = 'diveWarn'; this.st = 1.5; this.markP = [p.pos.x, this.groundY(p.pos.x, p.pos.z), p.pos.z]; this.mark(this.markP[0], this.markP[2], 3, 1.5, () => {}, [1, 0.3, 0.2]); sfx.play('roar', { pos: this.pos, pitch: 0.8 }); }
+      else if (ph >= 2 && (cd.strike ?? 3) <= 0) { cd.strike = ph === 3 ? 4.5 : 6.5; strike(); }
+    } else if (st === 'featherWarn') {
+      this.st -= dt; this.flyTo(this.pos.x, this.pos.y, this.pos.z, 1, dt, false); this.face(p, 6, dt);
+      if (this.st <= 0) {
+        this.telegraph = 0; this.state = 'circle'; cd.feathers = [0, 4, 3.6, 2.8][ph];
+        const n = ph === 3 ? 7 : 5, base = Math.atan2(p.pos.x - this.pos.x, p.pos.z - this.pos.z), d = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
+        for (let i = 0; i < n; i++) { const a = base + (i - (n - 1) / 2) * 0.16; shoot46(this, 'feather', this.pos.x + Math.sin(a) * d, p.pos.y + 0.6, this.pos.z + Math.cos(a) * d, 15, { dmg: 4, radius: 1.4, msg: 'Te atravesó una pluma del Roc' }); }
+        sfx.play('swing', { pos: this.pos, pitch: 1.4 });
+      }
+    } else if (st === 'diveWarn') {
+      this.st -= dt; const [mx, my, mz] = this.markP;
+      this.flyTo(mx, my + 13, mz, 9, dt, false); this.face({ pos: { x: mx, z: mz } }, 4, dt);
+      if (this.st <= 0) { this.state = 'dive'; this.st = 1.8; }
+    } else if (st === 'dive') {
+      this.st -= dt; const [mx, my, mz] = this.markP;
+      const d = this.flyTo(mx, my + 0.3, mz, 24, dt, false); this.yaw = Math.atan2(this.vel.x, this.vel.z);
+      if (d < 1.5 || this.st <= 0 || this.pos.y < my + 0.4) {
+        if (Math.hypot(p.pos.x - mx, p.pos.z - mz) < 3.3 && Math.abs(p.pos.y - my) < 3) { p.damage(9, 'El Roc te arrolló en picado', this.pos); p.vel.y = 7; }
+        for (let k = 0; k < 30; k++) g.particles.emit(mx, my + 0.3, mz, [0.7, 0.75, 0.85], 1, { speed: 8, up: 4, life: 0.8, size: 0.18 });
+        sfx.play('slam', { pos: this.pos }); g.shake = Math.max(g.shake, 0.5);
+        this.pos.y = my; this.vel.set(0, 0, 0); this.state = 'grounded'; this.st = ph === 1 ? 2.6 : 3.4; this.vulnT = this.st; cd.dive = [0, 9, 8.5, 7][ph]; cd.gust = 1.2;
+      }
+    } else if (st === 'grounded') {
+      this.st -= dt; this.vel.set(0, 0, 0); this.face(p, 2, dt);
+      if (ph === 3 && (cd.gust ?? 0) <= 0) { this.state = 'gustWarn'; this.st2 = 0.7; this.telegraph = 1; }
+      if (this.st <= 0) { this.state = 'circle'; this.vulnT = 0; }
+    } else if (st === 'gustWarn') {
+      this.st -= dt; this.st2 -= dt; this.vel.set(0, 0, 0);
+      if (this.st2 <= 0) {           // ráfaga: aleja al jugador (en tierra firme, sin tirarlo de la arena)
+        this.telegraph = 0; cd.gust = 99; this.state = this.st > 0 ? 'grounded' : 'circle';
+        const dx = p.pos.x - this.pos.x, dz = p.pos.z - this.pos.z, dd = Math.hypot(dx, dz) || 1;
+        if (dd < 9) { p.vel.x += dx / dd * 11; p.vel.z += dz / dd * 11; p.vel.y = 5; p.damage(2, 'El viento del Roc te derribó', this.pos); }
+        for (let k = 0; k < 30; k++) { const a = k / 30 * 6.283; g.particles.emit(this.pos.x + Math.cos(a), this.pos.y + 1, this.pos.z + Math.sin(a), [0.85, 0.95, 1], 1, { speed: 9, up: 1, gravity: 0, life: 0.5, size: 0.14 }); }
+        sfx.play('swing', { pos: this.pos, pitch: 0.4 });
+      }
+    }
+    if ((st === 'dive' || st === 'grounded') && p.pos.distanceTo(this.pos) < 2.6 && (cd.touch ?? 0) <= 0) { cd.touch = 1; p.damage(4, 'Te picoteó el Roc', this.pos); }
+    const gy = world.heightAt(Math.floor(this.pos.x), Math.floor(this.pos.z)); if (this.pos.y < gy) this.pos.y = gy;
+  }
+  syncBoss(dt, p) {
+    super.syncBoss(dt, p);
+    const m = this.model, t = this.t46, ground = this.state === 'grounded' || this.state === 'gustWarn';
+    const flap = ground ? (this.state === 'gustWarn' ? Math.sin(t * 20) * 0.8 : -0.9) : Math.sin(t * (this.state === 'dive' ? 2 : 4.5)) * 0.55;
+    m.arms[0].rotation.z = flap; m.arms[1].rotation.z = -flap;
+    m.legs.forEach((l) => (l.rotation.x = ground ? 0 : 0.9));
+    m.head.rotation.x = this.telegraph ? -0.3 : 0;
+    this.mesh.rotation.x = this.state === 'dive' ? 0.45 : 0;
+    if (this.phase >= 2 && Math.random() < dt * 6) game.particles.emit(this.pos.x + (Math.random() - 0.5) * 6, this.pos.y + 1.4, this.pos.z + (Math.random() - 0.5) * 6, [0.7, 0.95, 1], 1, { gravity: 0, speed: 0.5, life: 0.25, size: 0.1 });
+  }
+}
+Object.assign(BOSS_CLASSES, { lich: Lich, fallenking: FallenKing, stormroc: StormRoc });
+
+/* ---------- Arenas (generador 5) ---------- */
+function buildLichCrypt(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h, y0 = Math.max(8, H - 17), R = 10;
+  box44(plan, cx - R, y0, cz - R, cx + R, y0 + 8, cz + R, dungMix, rnd);
+  for (let x = -R + 1; x < R; x++) for (let z = -R + 1; z < R; z++) if ((x + z) % 4 === 0 && Math.abs(x) < R - 1) plan.set(cx + x, y0, cz + z, CHISELED_BRICKS);
+  // pilares con farolillos y telarañas
+  for (const [px, pz] of [[6, 6], [-6, 6], [6, -6], [-6, -6]]) {
+    for (let y = 1; y <= 7; y++) plan.set(cx + px, y0 + y, cz + pz, y === 4 ? CHISELED_BRICKS : DUNGEON_BRICKS);
+    plan.set(cx + px + Math.sign(px), y0 + 5, cz + pz, LANTERN, 1); plan.set(cx + px - Math.sign(px), y0 + 7, cz + pz - Math.sign(pz), COBWEB);
+  }
+  for (const [x, z] of [[-9, -9], [9, -9], [-9, 3], [8, 9], [-3, -9]]) plan.set(cx + x, y0 + 1, cz + z, COBWEB);
+  plan.set(cx, y0 + 7, cz, LANTERN, 1);
+  for (let x = -8; x <= 8; x += 4) for (let z = -8; z <= 8; z += 4) if (Math.abs(x) + Math.abs(z) > 0) plan.set(cx + x, y0 + 8, cz + z, GLOWSTONE);
+  // altar del liche
+  for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) plan.set(cx + x, y0, cz + z - 6, RUNE_BLOCK);
+  // pozo de entrada con escalera (al sur) y mausoleo en la superficie
+  const ex = cx, ez = cz + 8;
+  for (let y = y0 + 1; y <= H + 3; y++) plan.set(ex, y, ez - 1, DUNGEON_BRICKS);
+  for (let y = y0 + 1; y <= H; y++) plan.set(ex, y, ez, LADDER, 2);
+  for (let y = y0 + 8; y < H; y++) for (const [dx, dz] of [[-1, 0], [1, 0], [0, 1], [-1, 1], [1, 1], [-1, -1], [1, -1]]) plan.set(ex + dx, y, ez + dz, DUNGEON_BRICKS);
+  for (let x = -2; x <= 2; x++) for (let z = -2; z <= 2; z++) {
+    const edge = Math.abs(x) === 2 || Math.abs(z) === 2, g = gen.column(ex + x, ez + z).h;
+    for (let y = Math.min(g, H); y < H; y++) if (!(x === 0 && (z === 0))) plan.set(ex + x, y, ez + z, z === -1 && x === 0 ? DUNGEON_BRICKS : MOSSY_COBBLE);
+    if (!(x === 0 && z === 0)) plan.set(ex + x, H, ez + z, x === 0 && z === -1 ? DUNGEON_BRICKS : MOSSY_COBBLE);
+    for (let y = 1; y <= 3; y++) plan.set(ex + x, H + y, ez + z, edge ? (z === 2 && x === 0 && y <= 2 ? AIR : dungMix(rnd)) : (x === 0 && z === -1 ? DUNGEON_BRICKS : AIR));
+    plan.set(ex + x, H + 4, ez + z, Math.abs(x) + Math.abs(z) > 3 ? AIR : DUNGEON_BRICKS);
+  }
+  plan.set(ex, H + 3, ez + 1, LANTERN, 1);
+  plan.chest(cx + 8, y0 + 1, cz - 8, 'catacomb', 0);
+  plan.mobs.push(['bonearmor', cx - 7.5, y0 + 1, cz + 7.5], ['bonearmor', cx + 7.5, y0 + 1, cz + 7.5]);
+  plan.boss = { type: 'lich', x: cx + 0.5, y: y0 + 1, z: cz + 0.5, r: 7, name: 'El Liche' };
+  plan.poi = { type: 'lichcrypt', name: 'Cripta del Liche', x: ex, z: ez, y: y0, underground: false };
+}
+function buildThrone(plan, cx, cz, rnd, gen) {
+  const H = gen.column(cx, cz).h, R = 13;
+  const floor = (x, z) => (rnd() < 0.15 ? CRACKED_BRICKS : rnd() < 0.15 ? MOSSY_BRICKS : STONE_BRICKS);
+  for (let x = -R; x <= R; x++) for (let z = -R; z <= R; z++) {
+    const g = gen.column(cx + x, cz + z).h, edge = Math.abs(x) === R || Math.abs(z) === R;
+    for (let y = Math.min(g, H) - 1; y < H; y++) plan.set(cx + x, y, cz + z, STONE);
+    plan.set(cx + x, H, cz + z, edge ? STONE_BRICKS : floor(x, z));
+    for (let y = H + 1; y <= H + 14; y++) plan.set(cx + x, y, cz + z, AIR);
+    if (edge) {
+      const gate = z === R && Math.abs(x) <= 1, top = gate ? 0 : 4 + (rnd() < 0.5 ? 1 : 0) - (rnd() < 0.2 ? 2 : 0) + ((x + z) % 2 === 0 ? 1 : 0);
+      for (let y = 1; y <= top; y++) plan.set(cx + x, H + y, cz + z, dungMix(rnd));
+      if (gate) for (let y = 4; y <= 5; y++) plan.set(cx + x, H + y, cz + z, STONE_BRICKS);
+    }
+  }
+  // alfombra roja hasta el trono
+  for (let z = -9; z <= R - 1; z++) plan.set(cx, H + 1, cz + z, RED_CARPET);
+  // columnas con farolillos a los lados
+  for (const sx of [-1, 1]) for (const z of [-7, -1, 5]) { for (let y = 1; y <= 6; y++) plan.set(cx + sx * 7, H + y, cz + z, STONE_COLUMN); plan.set(cx + sx * 7, H + 7, cz + z, CHISELED_BRICKS); plan.set(cx + sx * 6, H + 6, cz + z, LANTERN, 1); }
+  // estrado y trono
+  for (let x = -3; x <= 3; x++) for (let z = -12; z <= -10; z++) { plan.set(cx + x, H + 1, cz + z, CHISELED_BRICKS); if (Math.abs(x) <= 1 && z <= -11) plan.set(cx + x, H + 2, cz + z, GOLD_BLOCK); }
+  for (let y = 3; y <= 5; y++) plan.set(cx, H + y, cz - 12, GOLD_BLOCK); plan.set(cx - 1, H + 3, cz - 12, GOLD_BLOCK); plan.set(cx + 1, H + 3, cz - 12, GOLD_BLOCK);
+  plan.set(cx, H + 3, cz - 11, CHAIR, 0);
+  plan.chest(cx - 3, H + 2, cz - 11, 'castle', 0); plan.chest(cx + 3, H + 2, cz - 11, 'castle', 0);
+  plan.mobs.push(['specter', cx - 9.5, H + 1, cz + 8.5], ['specter', cx + 9.5, H + 1, cz + 8.5]);
+  plan.boss = { type: 'fallenking', x: cx + 0.5, y: H + 1, z: cz - 5.5, r: 10, name: 'El Rey caído' };
+  plan.poi = { type: 'throne', name: 'Salón del trono', x: cx, z: cz };
+}
+function buildStormSpire(plan, cx, cz, rnd, gen) {
+  let hs = []; for (let a = 0; a < 12; a++) hs.push(gen.column(cx + Math.round(Math.cos(a * 0.524) * 9), cz + Math.round(Math.sin(a * 0.524) * 9)).h);
+  hs.push(gen.column(cx, cz).h); hs.sort((a, b) => a - b);
+  const Y = hs[Math.floor(hs.length / 2)], R = 12;
+  for (let x = -R - 1; x <= R + 1; x++) for (let z = -R - 1; z <= R + 1; z++) {
+    const d = Math.hypot(x, z); if (d > R + 0.5) continue;
+    const g = gen.column(cx + x, cz + z).h;
+    for (let y = Math.min(g, Y) - 2; y < Y; y++) plan.set(cx + x, y, cz + z, y > Y - 3 ? SKY_STONE : STONE);
+    const ring = Math.abs(d - 7) < 0.5 || Math.abs(d - 3) < 0.5;
+    plan.set(cx + x, Y, cz + z, d > R - 0.5 ? SKY_BRICKS : ring ? RUNE_BLOCK : (Math.floor(d) + Math.floor(Math.atan2(z, x) * 3)) % 3 === 0 ? SKY_BRICKS : SKY_STONE);
+    for (let y = Y + 1; y <= Y + 22; y++) plan.set(cx + x, y, cz + z, AIR);
+    if (d > R - 0.5 && (Math.round(Math.atan2(z, x) * 8) % 2 === 0)) plan.set(cx + x, Y + 1, cz + z, SKY_BRICKS);
+  }
+  // seis pararrayos
+  for (let k = 0; k < 6; k++) {
+    const a = k / 6 * 6.283 + 0.26, px = cx + Math.round(Math.cos(a) * 10), pz = cz + Math.round(Math.sin(a) * 10);
+    for (let y = 1; y <= 6; y++) plan.set(px, Y + y, pz, y < 6 ? SKY_BRICKS : AERITE_BLOCK);
+    plan.set(px, Y + 7, pz, COPPER_BLOCK);
+  }
+  plan.chest(cx + 2, Y + 1, cz + 10, 'sky', 0);
+  plan.mobs.push(['harpy', cx + 6.5, Y + 6, cz - 6.5], ['harpy', cx - 6.5, Y + 7, cz + 6.5]);
+  plan.boss = { type: 'stormroc', x: cx + 0.5, y: Y + 1, z: cz + 0.5, r: 12, name: 'El Roc de la tormenta' };
+  plan.poi = { type: 'stormspire', name: 'Pico de la tormenta', x: cx, z: cz };
+}
+STRUCTS.push(
+  { type: 'lichcrypt', minGen: 5, region: 420, chance: 0.55, salt: 61, rad: 14, land: true, build: (p, x, z, b, r, g) => buildLichCrypt(p, x, z, r, g) },
+  { type: 'throne', minGen: 5, region: 440, chance: 0.55, salt: 62, rad: 16, biomes: [B_.PLAINS, B_.MEADOW, B_.HIGHLANDS, B_.TAIGA, B_.TUNDRA, B_.FOREST, B_.SAVANNA, B_.BIRCH, B_.DARK_FOREST], flat: 4, build: (p, x, z, b, r, g) => buildThrone(p, x, z, r, g) },
+  { type: 'stormspire', minGen: 5, region: 440, chance: 0.6, salt: 63, rad: 15, biomes: [B_.MOUNTAINS, B_.HIGHLANDS, B_.SNOWY, B_.TUNDRA], build: (p, x, z, b, r, g) => buildStormSpire(p, x, z, r, g) },
+);
+Object.assign(POI_ICON_42, { lichcrypt: '💀', throne: '👑', stormspire: '⚡' });
+Object.assign(POI_NAMES_42, { lichcrypt: 'Cripta del Liche', throne: 'Salón del trono', stormspire: 'Pico de la tormenta' });
 
 /* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
@@ -11197,7 +11805,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -11222,7 +11830,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -11877,7 +12485,7 @@ Object.assign(game, {
           st.sp = 1;
           for (const n of plan.npcs) this.entities.add(new Villager(n.home[0] + 0.5, n.home[1] + 0.1, n.home[2] + 0.5, { prof: n.prof, home: n.home, work: n.work, planId: id }));
           for (const [type, q] of plan.animals) { const m = this.entities.spawnMob(type, q[0] + 0.5, q[1] + 0.1, q[2] + 0.5); m.persistent = true; m.planId = id; }
-          for (const [type, x, y, z] of plan.mobs) { const m = this.entities.spawnMob(type, x, y + 0.1, z); m.persistent = true; m.planId = id; }
+          for (const [type, x, y, z] of zoneMobs46(plan)) { const m = this.entities.spawnMob(type, x, y + 0.1, z); if (!m) continue; m.persistent = true; m.planId = id; }
         }
       }
       // 2) descubrimiento del punto de interés
@@ -13981,7 +14589,7 @@ const EGGS = {};
   let id = 600;
   // Los huevos se numeran por orden. Las criaturas añadidas desde la 4.3 van siempre al final para que
   // los huevos ya guardados en inventarios y cofres no cambien de criatura. (Las nuevas: añadir aquí al final.)
-  const LATE_MOBS = ['mule', 'harpy', 'sentinel', 'automaton', 'griffin'];
+  const LATE_MOBS = ['mule', 'harpy', 'sentinel', 'automaton', 'griffin', 'bonearmor', 'specter', 'mutant', 'scarab'];
   const mobOrder = [...Object.entries(MOBS).filter(([t]) => !LATE_MOBS.includes(t)), ...LATE_MOBS.filter((t) => MOBS[t]).map((t) => [t, MOBS[t]])];
   for (const [type, s] of mobOrder) {
     if (s.boss || type.startsWith('__') || type === 'villager' || !s.model) continue;
@@ -14133,6 +14741,23 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.6', name: 'Combate y jefes', date: 'noviembre de 2026', items: [
+    'Enemigos más listos: preparan el golpe un instante antes de darlo (levantan los brazos), así que si te apartas a tiempo lo esquivas. Rodean los obstáculos cuando se atascan, no se tiran por precipicios ni a la lava y, si no hay manera de llegar a ti, se rinden un rato.',
+    'Cuando atacas a un enemigo, los de alrededor se enteran y vienen a por ti aunque no te vean.',
+    'Cada criatura pelea a su manera: los zombis, momias, ahogados y calcinados se abalanzan; los esqueletos, saqueadores y chamanes se mueven de lado y apuntan adonde vas; los osos cargan; el bruto golpea el suelo (salta para esquivar la onda); las arañas trepan paredes; el autómata se cubre de frente; las momias dan hambre.',
+    'Golpes con más impacto: parada breve al acertar, chispas en la dirección del golpe, el enemigo se aplasta un instante y suelta una nube al morir. Un indicador rojo en la pantalla te muestra de dónde viene el daño que recibes.',
+    'Puntería: las criaturas pequeñas (murciélagos, peces, conejos…) tienen una caja de impacto mínima y son más fáciles de acertar; la de las criaturas de élite ya crece con su tamaño.',
+    'Enemigos exclusivos de zona: esqueleto acorazado (catacumbas y cámaras secretas; se cubre con el escudo, atácalo por detrás o mientras ataca), caballero espectral (castillo; carga contra ti y no retrocede al golpearlo), limo mutante (laboratorio; envenena y se divide en dos al morir) y escarabajo dorado (templo antiguo; en grupos). También aparecen en tus mundos, en las zonas que aún no hayas visitado.',
+    'Tres jefes nuevos con su propia arena, tres fases, ataques con aviso y momentos en los que son vulnerables:',
+    'El Liche, en la Cripta del Liche: almas que te persiguen, huesos que brotan del suelo en círculos marcados y teletransporte. En la fase 2 se protege con una barrera: rompe las tres filacterias y quedará aturdido. Suelta el Báculo de almas y la Filacteria del liche.',
+    'El Rey caído, en el Salón del trono: combo de tres tajos, cargas, onda de choque y espadas que caen del cielo. Se cubre de frente: atácalo por la espalda, después de sus combos o cuando se estrella contra un muro. Suelta el Espadón del rey caído y la Corona del rey caído.',
+    'El Roc de la tormenta, en el Pico de la tormenta: lluvia de plumas, picados (después se queda en el suelo, vulnerable), rayos en círculos marcados y ráfagas de viento. Suelta la Pluma del roc y el Abanico del vendaval.',
+    'Recompensas: Báculo de almas (lanza tres almas que persiguen a los enemigos), Espadón del rey caído (lento pero devastador; su grito de guerra aturde y te da fuerza), Abanico del vendaval (ráfaga que lanza lejos a los enemigos), y tres accesorios: Filacteria (regeneración y experiencia), Corona (defensa, daño y reputación) y Pluma del roc (salto, velocidad y caída lenta). Cada jefe también da Tomos de sabiduría.',
+    'Las arenas de los jefes nuevos aparecen en los mundos que crees a partir de ahora; tus mundos anteriores conservan su terreno. Se marcan en el mapa al descubrirlas y la enciclopedia explica cada fase.',
+    'Barra de los jefes más clara: debajo de la vida se ve qué está preparando (en rojo, con aviso), si está protegido o cuándo es vulnerable y recibe más daño (en verde). En multijugador, quien no simula al jefe también ve sus fases y su estado.',
+    'Corrección: varios jefes nunca llegaban a usar algunos ataques (las bolas de fuego, el picado y el aterrizaje del Dragón, el golpe sísmico del Gólem, las ráfagas y erupciones del Señor de las brasas y el teletransporte y el colapso del Heraldo del vacío). Ahora usan todos sus ataques, como estaba pensado.',
+    '4 logros nuevos. En pantalla táctil, la barra del jefe ya no queda debajo de los botones de arriba.',
+  ] },
   { v: '4.5', name: 'Personaje', date: 'noviembre de 2026', items: [
     'Árbol de habilidades con cinco ramas (Guerrero, Explorador, Minero, Constructor y Alquimista) y 25 habilidades con varios rangos. Se abre con la tecla H, con el botón 🌟 del inventario o desde la pausa.',
     'Experiencia de habilidad: se gana jugando (minar, fabricar, cultivar, combatir, comerciar, descubrir lugares, domar, cumplir misiones…). Cada nivel da un punto, hasta el nivel 40. Las habilidades de cada rama se desbloquean de arriba abajo al gastar puntos en ella, y no alcanza para todo: elige tu estilo. Reiniciar el árbol cuesta 5 esmeraldas.',
@@ -14387,7 +15012,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.6', name: 'Combate y jefes', items: ['Enemigos más listos y ataques especiales.', 'Jefes nuevos con sus arenas.'] },
   { v: '4.7', name: 'Actividades', items: ['Pesca, cocina, cría y cultivos por bioma.', 'Misiones secundarias y expediciones.'] },
   { v: '4.8', name: 'Construcción y mecanismos', items: ['Más bloques, muebles y mecanismos.'] },
   { v: '4.9', name: 'Multijugador', items: ['Equipos, comercio, cofres compartidos y protección de terrenos.'] },
@@ -18788,6 +19412,423 @@ ACHIEVEMENTS.push(['skill_first', 'Aprendiz', 'Aprende tu primera habilidad.'], 
   ['set_bonus', 'De punta en blanco', 'Activa la bonificación de un conjunto de armadura.'], ['backpack', 'Con la casa a cuestas', 'Equipa una mochila.'],
   ['pet_first', 'Amigo fiel', 'Doma a un compañero.'], ['pet_three', 'Arca de Noé', 'Ten a la vez tres tipos distintos de compañero.'], ['pet_name', 'Ya es de la familia', 'Ponle nombre a un compañero.'],
   ['griffin_fly', 'Jinete del cielo', 'Despega a lomos de un grifo.']);
+
+/* ==========================================================================
+   §44 COMBATE Y JEFES 4.6 — lógica
+   --------------------------------------------------------------------------
+   · IA: los golpes cuerpo a cuerpo se preparan (se ven venir y se pueden
+     esquivar), los enemigos rodean obstáculos cuando se atascan, no se
+     tiran por precipicios ni a la lava, avisan a sus compañeros cuando les
+     atacas y cada criatura tiene su forma de pelear: los zombis se abalanzan,
+     los esqueletos se mueven de lado y apuntan adonde vas, los osos y los
+     caballeros espectrales cargan, el bruto golpea el suelo, las arañas
+     trepan, los acorazados se cubren con el escudo y el limo se divide.
+   · Golpes: impactos con parada breve, chispas en la dirección del golpe,
+     aplastamiento del modelo, nube al morir e indicador de la dirección del
+     daño que recibes.
+   · Puntería: las criaturas pequeñas tienen una caja de impacto mínima y la
+     de las de élite crece con su tamaño.
+   · Jefes: barra con el estado (qué prepara, si está protegido, si es
+     vulnerable) y fases con nombre también en multijugador.
+   ========================================================================== */
+
+/* ---------- Comportamientos por criatura ---------- */
+Object.assign(MOBS.zombie, { lunge: true }); Object.assign(MOBS.husk, { lunge: true, hitFx: 'hunger' }); Object.assign(MOBS.drowned, { lunge: true });
+Object.assign(MOBS.spider, { climbs: true }); Object.assign(MOBS.bear, { charges: true, windup: 0.4 }); Object.assign(MOBS.brute, { slam: true, windup: 0.55 });
+Object.assign(MOBS.automaton, { guard: 0.6, windup: 0.5 }); Object.assign(MOBS.scorched, { lunge: true }); Object.assign(MOBS.voidling, { windup: 0.35 });
+for (const t of ['skeleton', 'stray', 'raider', 'shaman']) if (MOBS[t]) MOBS[t].strafes = true;
+
+/* Pasos del combate de una criatura: cosas que pasan cada fotograma además de su IA de base */
+const mob46 = {
+  hitCol(e) {
+    const t = e.type;
+    if (t === 'skeleton' || t === 'stray' || t === 'bonearmor') return [0.95, 0.94, 0.88];
+    if (t === 'mutant') return [0.5, 1, 0.4];
+    if (t === 'specter' || t === 'wraith') return [0.6, 0.95, 1];
+    if (t === 'automaton') return [1, 0.75, 0.3];
+    return [1, 0.92, 0.6];
+  },
+  // ¿el golpe viene de delante? (para escudos)
+  frontal(e, from) {
+    const a = Math.atan2(from.x - e.pos.x, from.z - e.pos.z);
+    return Math.abs(((a - e.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI) < 1.1;
+  },
+  // ¿hay suelo en el camino del salto? (no se lanzan a un precipicio ni a la lava)
+  safeLeap(e, p) {
+    for (const k of [0.35, 0.7, 1]) {
+      const x = Math.floor(e.pos.x + (p.pos.x - e.pos.x) * k), z = Math.floor(e.pos.z + (p.pos.z - e.pos.z) * k), y = Math.floor(e.pos.y);
+      let ok = false; for (let d = 1; d <= 3; d++) { const id = world.get(x, y - d, z); if (id === LAVA) break; if (B_SOLID[id]) { ok = true; break; } }
+      if (!ok) return false;
+    }
+    return true;
+  },
+  // carga: aviso (se agacha y bufa) → embestida en línea recta
+  charge(e, dt, g, p, d) {
+    const ai = e.ai, s = e.spec;
+    if (ai.chg === 'warn') {
+      ai.chgT -= dt; e.vel.x *= 0.8; e.vel.z *= 0.8;
+      e.yaw += clamp(((Math.atan2(p.pos.x - e.pos.x, p.pos.z - e.pos.z) - e.yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI, -5 * dt, 5 * dt);
+      if (Math.random() < dt * 20) g.particles.emit(e.pos.x, e.pos.y + 0.1, e.pos.z, [0.6, 0.55, 0.5], 1, { speed: 2, up: 1.2, life: 0.4, size: 0.1 });
+      if (e.model.head) e.model.head.rotation.x = 0.35;
+      if (ai.chgT <= 0) { ai.chg = 'run'; ai.chgT = 0.75; ai.chgDir = [Math.sin(e.yaw), Math.cos(e.yaw)]; sfx.play('swing', { pos: e.pos, pitch: 0.6 }); }
+    } else {
+      ai.chgT -= dt; e.vel.x = ai.chgDir[0] * 10; e.vel.z = ai.chgDir[1] * 10;
+      if (d < e.hw + 1.1 && Math.abs(p.pos.y - e.pos.y) < 1.8 && !ai.chgHit) { ai.chgHit = true; p.damage((s.melee || 4) + 2, `Te embistió un ${s.name.toLowerCase()}`, e.pos); p.vel.x += ai.chgDir[0] * 8; p.vel.z += ai.chgDir[1] * 8; p.vel.y = 5; ai.chgT = Math.min(ai.chgT, 0.1); }
+      if (e.hitH || ai.chgT <= 0) { ai.chg = null; ai.chgCd = 5 + Math.random() * 3; ai.chgHit = false; ai.attackCd = 0.8; if (e.hitH) { e.stunT = Math.max(e.stunT || 0, 0.8); } }
+    }
+    e.physics(dt); e.walk += Math.hypot(e.vel.x, e.vel.z) * dt * 4; e.syncMesh(dt, null);
+  },
+  // golpe al suelo del bruto: anillo de aviso y onda que hay que saltar
+  slam(e, dt, g, p, d) {
+    const ai = e.ai;
+    ai.slamT -= dt; e.vel.x *= 0.7; e.vel.z *= 0.7;
+    if (Math.random() < dt * 50) { const a = Math.random() * 6.283; g.particles.emit(e.pos.x + Math.cos(a) * 2.8, e.pos.y + 0.12, e.pos.z + Math.sin(a) * 2.8, [1, 0.4, 0.2], 1, { gravity: 0, up: 0.4, speed: 0, life: 0.35, size: 0.13 }); }
+    e.physics(dt); e.syncMesh(dt, null);
+    e.model.arms.forEach((a) => (a.rotation.x = -3));
+    if (ai.slamT <= 0) {
+      ai.slam = false; ai.slamCd = 6 + Math.random() * 3; ai.attackCd = 1;
+      if (d < 3.1 && p.onGround && Math.abs(p.pos.y - e.pos.y) < 1.4) { p.damage(e.spec.melee || 6, `Te derribó el golpe de un ${e.spec.name.toLowerCase()}`, e.pos); p.vel.y = 7; }
+      for (let k = 0; k < 24; k++) { const a = k / 24 * 6.283; g.particles.emit(e.pos.x + Math.cos(a) * 1.4, e.pos.y + 0.2, e.pos.z + Math.sin(a) * 1.4, [0.55, 0.5, 0.45], 1, { speed: 5, up: 2, life: 0.5, size: 0.14 }); }
+      sfx.play('slam', { pos: e.pos, pitch: 1.2 }); g.shake = Math.max(g.shake, d < 6 ? 0.25 : 0);
+      e.model.arms.forEach((a) => (a.rotation.x = 0.4));
+    }
+  },
+};
+
+// Dirección de marcha: rodear obstáculos, no caer por precipicios ni meterse en lava
+Mob.prototype.steer = function (dt, dir, speed, dist, dx, dz) {
+  const ai = this.ai, p = game.player;
+  // detectar atasco: en 0,8 s no se ha acercado al jugador → rodea el obstáculo por un lado (siempre el mismo
+  // mientras siga atascado, y cada vez durante más tiempo); si no hay manera y no te ve, se rinde un rato
+  ai.stT = (ai.stT || 0) + dt;
+  if (ai.stT > 0.8) {
+    const prog = (ai.lastD ?? dist + 1) - dist;
+    if (ai.detT > 0) { /* ya está rodeando */ }
+    else if (prog < 0.25 && dist > this.hw + 1.4) {
+      ai.stuck = (ai.stuck || 0) + 1;
+      if (!ai.detSide) {
+        const side = (s) => { const a = Math.atan2(dx, dz) + s * 1.5708, x = Math.floor(this.pos.x + Math.sin(a) * 1.2), z = Math.floor(this.pos.z + Math.cos(a) * 1.2), y = Math.floor(this.pos.y);
+          return !B_SOLID[world.get(x, y, z)] && !B_SOLID[world.get(x, y + 1, z)] ? 1 : !B_SOLID[world.get(x, y + 1, z)] && !B_SOLID[world.get(x, y + 2, z)] ? 0.5 : 0; };
+        const l = side(1), r = side(-1); ai.detSide = l === r ? (Math.random() < 0.5 ? 1 : -1) : l > r ? 1 : -1;
+      }
+      ai.detT = Math.min(3, 0.8 + 0.5 * ai.stuck); ai.detDir = Math.atan2(dx, dz) + ai.detSide * 1.45;
+      if (ai.stuck >= 7 && !ai.los) { ai.giveUp = 5; ai.stuck = 0; ai.alertT = 0; ai.detSide = 0; }
+    } else if (prog >= 0.5) { ai.stuck = 0; ai.detSide = 0; }
+    ai.stT = 0; ai.lastD = dist;
+  }
+  if (ai.detT > 0) { ai.detT -= dt; if (ai.detT <= 0) ai.detT = 0; dir = ai.detDir; }
+  // mirar el suelo delante: precipicio (más de 4 bloques) o lava → frena, salvo que el jugador esté abajo
+  if (this.onGround) {
+    const fx = Math.floor(this.pos.x + Math.sin(dir) * (this.hw + 0.6)), fz = Math.floor(this.pos.z + Math.cos(dir) * (this.hw + 0.6)), fy = Math.floor(this.pos.y);
+    let drop = 0; while (drop < 5 && !B_SOLID[world.get(fx, fy - 1 - drop, fz)]) drop++;
+    const lava = (world.get(fx, fy - 1, fz) === LAVA || world.get(fx, fy, fz) === LAVA) && !this.spec.fireproof;
+    if (lava || (drop >= 4 && p.pos.y > this.pos.y - drop + 1 && !this.spec.swims)) speed = 0;
+  }
+  return [dir, speed];
+};
+
+/* ---------- Mob.update: comportamientos especiales, parada de golpe y trepar ---------- */
+{
+  const _upd = Mob.prototype.update;
+  Mob.prototype.update = function (dt, g) {
+    const ai = this.ai, s = this.spec, p = g.player;
+    if (ai.alertT > 0) ai.alertT -= dt;
+    if (ai.giveUp > 0) ai.giveUp -= dt;
+    // parada de golpe: la criatura se congela un instante al recibir un impacto fuerte
+    if (this.hitStop > 0 && !this.deathT) { this.hitStop -= dt; this.invuln -= dt; this.hurtT -= dt; this.syncMesh(dt, null); this.squash(dt); return; }
+    const fight = s.hostile && !s.boss && !s.ai && !this.deathT && !this.tamed && !this.ridden && g.mode === 'survival' && !p.dead && !(this.stunT > 0) && !this.remote;
+    const d = Math.hypot(p.pos.x - this.pos.x, p.pos.z - this.pos.z);
+    if (fight && ai.chg) { this.invuln -= dt; this.hurtT -= dt; mob46.charge(this, dt, g, p, d); this.squash(dt); return; }
+    if (fight && ai.slam) { this.invuln -= dt; this.hurtT -= dt; mob46.slam(this, dt, g, p, d); this.squash(dt); return; }
+    const r = _upd.call(this, dt, g);
+    if (this.dead || this.deathT) { this.squash(dt); return r; }
+    if (fight) {
+      const near = ai.los || d < 6 || ai.alertT > 0, dy = p.pos.y - this.pos.y;
+      // abalanzarse (zombis): un salto corto hacia ti
+      if (s.lunge && near && this.onGround && d > 2.3 && d < 4.6 && Math.abs(dy) < 1.5 && (ai.lungeCd = (ai.lungeCd ?? 2 + Math.random() * 3) - dt) <= 0 && mob46.safeLeap(this, p)) {
+        ai.lungeCd = 4 + Math.random() * 3; this.vel.x = (p.pos.x - this.pos.x) / d * 7; this.vel.z = (p.pos.z - this.pos.z) / d * 7; this.vel.y = 5.2;
+      }
+      // cargar (osos y caballeros espectrales)
+      if (s.charges && near && this.onGround && d > 4.5 && d < 12 && Math.abs(dy) < 2 && ai.los && (ai.chgCd = (ai.chgCd ?? 2 + Math.random() * 2) - dt) <= 0 && mob46.safeLeap(this, p)) {
+        ai.chg = 'warn'; ai.chgT = 0.65; sfx.play(s.sound, { pos: this.pos, pitch: 0.6 });
+      }
+      // golpe al suelo (bruto)
+      if (s.slam && near && d < 2.6 && Math.abs(dy) < 1.5 && !(ai.wind > 0) && (ai.slamCd = (ai.slamCd ?? 3) - dt) <= 0) { ai.slam = true; ai.slamT = 0.85; sfx.play('roar', { pos: this.pos, pitch: 1.3 }); }
+      // trepar paredes (arañas)
+      if (s.climbs && this.hitH && near && dy > -0.5) this.vel.y = Math.max(this.vel.y, 3.2);
+      // a distancia: moverse de lado mientras apuntan
+      if (s.strafes && ai.los && d > 4 && d < 13) {
+        if ((ai.strT = (ai.strT ?? 0) - dt) <= 0) { ai.strT = 1.2 + Math.random() * 2; ai.strS = Math.random() < 0.5 ? -1 : 1; }
+        const a = Math.atan2(p.pos.x - this.pos.x, p.pos.z - this.pos.z) + ai.strS * 1.5708, sp = s.speed * 0.75;
+        const nx = Math.floor(this.pos.x + Math.sin(a) * 0.9), nz = Math.floor(this.pos.z + Math.cos(a) * 0.9);
+        if (this.onGround && B_SOLID[world.get(nx, Math.floor(this.pos.y) - 1, nz)]) moveBody(this, Math.sin(a) * sp * dt, 0, Math.cos(a) * sp * dt, false);
+        else ai.strS = -ai.strS;
+      }
+      // brazos arriba mientras prepara el golpe
+      if (ai.wind > 0 && this.model.arms.length) { const k = 1 - ai.wind / (ai.windMax || 0.3); this.model.arms.forEach((a) => (a.rotation.x = -1.4 - 1.5 * k)); }
+      if (ai.wind > 0 && s.windup >= 0.4 && Math.random() < dt * 12) g.particles.emit(this.pos.x, this.pos.y + this.h + 0.2, this.pos.z, [1, 0.35, 0.25], 1, { gravity: 0, up: 0.6, speed: 0.4, life: 0.3, size: 0.09 });
+      if (ai.wind > 0 && !this.model.arms.length && this.model.body) this.model.body.scale.y = 1 - 0.25 * (1 - ai.wind / (ai.windMax || 0.3));
+    }
+    this.squash(dt);
+    return r;
+  };
+  // aplastamiento breve al recibir un golpe
+  Mob.prototype.squash = function (dt) {
+    if (!(this.sqT > 0)) return;
+    this.sqT -= dt; const k = Math.max(0, this.sqT / 0.16), s0 = this.baseScale ?? (this.baseScale = this.mesh.scale.y);
+    this.mesh.scale.set(s0 * (1 + 0.14 * k), s0 * (1 - 0.18 * k), s0 * (1 + 0.14 * k));
+    if (this.sqT <= 0) this.mesh.scale.setScalar(s0);
+  };
+  // la filacteria: no se mueve, gira y brilla
+  Mob.prototype.stillAI = function (dt, g) {
+    this.vel.x = 0; this.vel.z = 0; this.physics(dt);
+    this.model.head.rotation.y += dt * 1.6; this.model.head.position.y = 14 * P16 + Math.sin(performance.now() / 400) * 0.08;
+    if (Math.random() < dt * 6) g.particles.emit(this.pos.x, this.pos.y + 1.6, this.pos.z, [0.5, 1, 0.75], 1, { gravity: -1, up: 1, speed: 0.4, life: 0.6, size: 0.1 });
+    this.syncMesh(dt, null);
+  };
+  // golpe acertado o fallado
+  Mob.prototype.onMeleeHit = function (p) {
+    const fx = this.spec.hitFx;
+    if (fx === 'poison') game.applyEffect('poison', 1, 4);
+    else if (fx === 'hunger') game.applyEffect('hunger', 1, 8);
+  };
+  Mob.prototype.onMeleeMiss = function () { if (Math.random() < 0.6) sfx.play('swing', { pos: this.pos, pitch: 1.3, vol: 0.5 }); };
+}
+
+/* ---------- Recibir golpes: escudos, aviso al grupo, sin retroceso, impacto ---------- */
+{
+  const _hurt = Mob.prototype.hurt;
+  Mob.prototype.hurt = function (dmg, from) {
+    const s = this.spec, byPlayer = this.lastHit === 'player';
+    // escudo: de frente y sin estar atacando, el golpe casi no entra
+    if (s.guard && from && !this.deathT && this.invuln <= 0 && !(this.ai.wind > 0) && !(this.stunT > 0) && mob46.frontal(this, from)) {
+      dmg *= 1 - s.guard;
+      dmgText.add(this.pos.x, this.pos.y + this.h + 0.5, this.pos.z, '¡Bloqueado!', 'fx'); sfx.play('hit', { pos: this.pos, pitch: 1.9 });
+      game.particles.emit(this.pos.x + Math.sin(this.yaw) * 0.6, this.pos.y + 1.1, this.pos.z + Math.cos(this.yaw) * 0.6, [1, 0.9, 0.5], 6, { speed: 3, up: 2, life: 0.3, size: 0.07 });
+    }
+    const vx = this.vel.x, vy = this.vel.y, vz = this.vel.z;
+    const r = _hurt.call(this, dmg, from);
+    if (!r) return r;
+    if (s.noKnock) this.vel.set(vx, vy, vz);
+    if (this.ai.chg === 'warn') this.ai.chg = null;                 // le interrumpes la carga
+    if (s.hostile && byPlayer && !s.boss) {
+      // avisa a los suyos: vienen aunque no te vean
+      this.ai.alertT = 8; this.ai.giveUp = 0;
+      for (const e of game.entities.list) if (e !== this && e.kind === 'mob' && e.spec.hostile && !e.spec.boss && !e.tamed && !e.deathT && e.pos.distanceTo(this.pos) < 14) { e.ai.alertT = Math.max(e.ai.alertT || 0, 6); e.ai.giveUp = 0; }
+    }
+    if (from) {
+      // impacto: parada breve, chispas hacia atrás y aplastamiento
+      const dx = this.pos.x - from.x, dz = this.pos.z - from.z, l = Math.hypot(dx, dz) || 1, col = mob46.hitCol(this);
+      if (byPlayer && !this.isBoss && !this.deathT) this.hitStop = dmg >= 7 ? 0.09 : 0.05;
+      this.sqT = 0.16;
+      for (let i = 0; i < 6; i++) { game.particles.emit(this.pos.x - dx / l * this.hw, this.pos.y + this.h * 0.6, this.pos.z - dz / l * this.hw, col, 1, { speed: 2.5, up: 1.5, life: 0.35, size: 0.08 }); const q = game.particles.list[game.particles.list.length - 1]; if (q) { q.vx = dx / l * (3 + Math.random() * 3) + (Math.random() - 0.5) * 2; q.vz = dz / l * (3 + Math.random() * 3) + (Math.random() - 0.5) * 2; } }
+    }
+    if (this.deathT) {               // nube al morir
+      game.particles.emit(this.pos.x, this.pos.y + this.h * 0.5, this.pos.z, [0.85, 0.85, 0.85], 14, { speed: 2, up: 1.5, gravity: -0.5, life: 0.8, size: 0.16 });
+    }
+    return r;
+  };
+  // Al morir, el limo mutante se divide en dos pequeños
+  const _death = EntityManager.prototype.onMobDeath;
+  EntityManager.prototype.onMobDeath = function (m) {
+    const r = _death.call(this, m);
+    if (m.spec.splits && !m.mini && !m.remote && !m._split && game.mode === 'survival') {
+      m._split = true;
+      for (let i = 0; i < 2; i++) {
+        const c = this.spawnMob(m.type, m.pos.x + (i ? 0.4 : -0.4), m.pos.y + 0.3, m.pos.z + (i ? -0.3 : 0.3)); if (!c) continue;
+        c.mini = true; c.spec = { ...c.spec, name: 'Limo mutante pequeño', hp: 7, melee: 2, xp: 2, drops: [], splits: false }; c.hp = 7; c.mesh.scale.setScalar(0.5); c.hw *= 0.5; c.h *= 0.5;
+        c.vel.set((i ? 1 : -1) * 3, 5, 0); c.persistent = m.persistent; c.planId = m.planId;
+      }
+    }
+    if (['bonearmor', 'specter', 'mutant', 'scarab'].includes(m.type) && m.lastHit === 'player') {
+      const C = codex.data(); if (['bonearmor', 'specter', 'mutant', 'scarab'].every((t) => (C.kills[t] || 0) > 0 || t === m.type)) game.unlock('zone_hunter');
+    }
+    return r;
+  };
+  // los esbirros de un jefe no se guardan (la pelea se reinicia entera si sales)
+  const _json = Mob.prototype.toJSON;
+  Mob.prototype.toJSON = function () { return this.bossMinion || this.type === '__phylactery' ? null : _json.call(this); };
+  // Cajas de impacto: mínimo para las criaturas pequeñas; las de élite crecen de verdad
+  const _hit = Entity.prototype.hitTest;
+  Mob.prototype.hitTest = function (o, d, max) {
+    if (this.hw >= 0.32 && this.h >= 0.6) return _hit.call(this, o, d, max);
+    const hw = Math.max(0.32, this.hw), h = Math.max(0.6, this.h), x = this.pos.x, y = this.pos.y - (h - this.h) / 2, z = this.pos.z;
+    const r = rayBox(o.x, o.y, o.z, d.x, d.y, d.z, [x - hw, y, z - hw, x + hw, y + h, z + hw]);
+    return r && r[0] <= max ? r[0] : null;
+  };
+  const _spawn = EntityManager.prototype.spawnMob;
+  EntityManager.prototype.spawnMob = function (type, x, y, z) {
+    const m = _spawn.call(this, type, x, y, z);
+    if (m && m.elite && !m._eliteBox) { m._eliteBox = true; m.hw *= 1.25; }
+    return m;
+  };
+  // Los esqueletos apuntan adonde vas, no adonde estabas
+  const _shoot = EntityManager.prototype.shootArrow;
+  EntityManager.prototype.shootArrow = function (mob, target) {
+    if (target === game.player && target.vel) {
+      const d = Math.hypot(target.pos.x - mob.pos.x, target.pos.z - mob.pos.z), t = d / 18 * 0.85;
+      return _shoot.call(this, mob, { pos: { x: target.pos.x + target.vel.x * t, y: target.pos.y, z: target.pos.z + target.vel.z * t } });
+    }
+    return _shoot.call(this, mob, target);
+  };
+}
+
+/* ---------- Enemigos exclusivos de zona: aparecen con los guardianes de cada lugar ---------- */
+function zoneMobs46(plan) {
+  const out = [];
+  let sk = 0, au = 0;
+  for (const m of plan.mobs) {
+    const [t, x, y, z] = m;
+    if (plan.type === 'catacomb' && t === 'skeleton') out.push([sk++ % 2 ? 'bonearmor' : 'skeleton', x, y, z]);
+    else if (plan.type === 'crypt' && t === 'skeleton') out.push([sk++ === 0 ? 'bonearmor' : 'skeleton', x, y, z]);
+    else if (plan.type === 'castle' && t === 'skeleton') out.push([sk++ === 0 ? 'skeleton' : 'specter', x, y, z]);
+    else if (plan.type === 'atemple' && t === 'skeleton') { out.push(['scarab', x, y, z], ['scarab', x + 0.7, y, z + 0.4], ['scarab', x - 0.5, y, z - 0.6]); }
+    else if (plan.type === 'lab' && t === 'automaton') { out.push(au++ === 0 ? ['mutant', x, y, z] : m); }
+    else out.push(m);
+  }
+  if (plan.type === 'lab' && plan.mobs.length) { const [, x, y, z] = plan.mobs[plan.mobs.length - 1]; out.push(['mutant', x - 2, y, z + 1]); }
+  return out;
+}
+{
+  const ZONE_HAB = { bonearmor: ['Catacumbas', 'Cámara secreta', 'Cripta del Liche'], specter: ['Castillo en ruinas', 'Salón del trono'], mutant: ['Laboratorio misterioso'], scarab: ['Templo antiguo'],
+    lich: ['Cripta del Liche (mundos nuevos)'], fallenking: ['Salón del trono (mundos nuevos)'], stormroc: ['Pico de la tormenta, en montañas y tierras altas (mundos nuevos)'] };
+  const _hab = codex.habitat;
+  codex.habitat = function (type) { return [..._hab.call(this, type), ...(ZONE_HAB[type] || [])]; };
+  Object.assign(BOSS_LORE, {
+    lich: { where: 'Cripta del Liche: un mausoleo con un pozo que baja a la sala del jefe.', phases: ['Llamas del alma: almas que te persiguen, huesos que salen del suelo y teletransporte entre los pilares.', 'Barrera de huesos: rompe las tres filacterias para dejarlo aturdido.', 'Tormenta de almas: más almas y más huesos, y llama a esqueletos acorazados.'] },
+    fallenking: { where: 'Salón del trono: un patio amurallado con el trono al fondo.', phases: ['Esgrima real: combo de tres tajos y cargas. Se cubre de frente: atácalo por la espalda o después de sus ataques. Si choca contra un muro, queda aturdido.', 'Guardia espectral: llama a caballeros espectrales y remata el combo con una onda de choque (salta).', 'Furia del rey: combos más rápidos y espadas que caen del cielo en círculos marcados.'] },
+    stormroc: { where: 'Pico de la tormenta: una plataforma con pararrayos en las cumbres.', phases: ['Vendaval: lluvia de plumas y picados. Tras un picado se queda en el suelo: es tu momento.', 'Tormenta eléctrica: rayos en círculos marcados.', 'Ojo del huracán: llama a las arpías y, en el suelo, bate las alas para apartarte.'] },
+  });
+}
+
+/* ---------- Jefes: tiempos iniciales de cada ataque ----------
+   Corrección: los ataques que empezaban con un tiempo de espera (bolas de fuego,
+   picado y aterrizaje del dragón, golpe sísmico del gólem, ráfagas y erupciones
+   del Señor de las brasas, teletransporte y colapso del Heraldo) nunca llegaban a
+   usarse porque ese tiempo no se descontaba. Ahora cada jefe empieza con sus
+   tiempos y los usa todos. */
+const BOSS_CD0 = {
+  dragon: { fire: 2, perch: 6, dive: 12 }, golem: { slam: 4 }, emberlord: { volley: 2, erupt: 3 }, voidherald: { burst: 2, blink: 1, nova: 3 },
+  lich: { blink: 6, volley: 2, spikes: 4 }, fallenking: { combo: 1, charge: 3, swords: 2 }, stormroc: { feathers: 2.5, dive: 7, strike: 3 },
+};
+{
+  const _bu = Boss.prototype.update;
+  Boss.prototype.update = function (dt, g) {
+    if (!this._cd0) { this._cd0 = true; for (const [k, v] of Object.entries(BOSS_CD0[this.type] || {})) if (this.cd[k] == null) this.cd[k] = v; }
+    return _bu.call(this, dt, g);
+  };
+}
+/* ---------- Jefes: nombre de fase y estado en la barra (también los de otros jugadores) ---------- */
+Object.assign(BOSS_PHASES, { lich: [0.6, 0.25], fallenking: [0.6, 0.25], stormroc: [0.6, 0.25] });
+{
+  const _pn = Boss.prototype.phaseName;
+  Boss.prototype.phaseName = function () {
+    const n = BOSS_PHASE_NAMES[this.type]; if (!n) return _pn.call(this);
+    return `Fase ${this.phase} · ${n[this.phase - 1]}`;
+  };
+  if (!Boss.prototype.status) Boss.prototype.status = function () {
+    if (this.state === 'intro') return ['', ''];
+    const t = STATUS46[this.type]?.[this.state] || '';
+    return [t, this.telegraph || t.startsWith('⚠') ? 'warn' : this.state === 'perch' ? 'vuln' : ''];
+  };
+  const _bf = bossFx.update;
+  bossFx.update = function (dt) {
+    _bf.call(this, dt);
+    const b = game.boss, el = $('#bossSt'); if (!el) return;
+    if (!b || b.dead) { if (el.textContent) { el.textContent = ''; el.className = ''; } return; }
+    const [t, cls] = b.status();
+    if (el.textContent !== t) el.textContent = t;
+    const c = t ? cls || 'info' : '';
+    if (el.className !== c) el.className = c;
+    if ((b.hp / b.spec.hp) <= 0.25 && !b.remote && b.phase === 3) $('#bossBar').classList.add('rage');
+  };
+}
+
+/* ---------- Indicador de la dirección del daño ---------- */
+{
+  const P = Player.prototype, _dmg = P.damage;
+  P.damage = function (n, cause, from, kind) {
+    const h0 = this.health, r = _dmg.call(this, n, cause, from, kind);
+    if (from && this === game.player && this.health < h0 && game.mode === 'survival') {
+      const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+      const a = Math.atan2(from.x - this.pos.x, from.z - this.pos.z) - Math.atan2(dir.x, dir.z);
+      const el = $('#hurtDir'); if (el) { el.style.setProperty('--a', (-a) + 'rad'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
+    }
+    return r;
+  };
+}
+
+/* ---------- Habilidades de las armas de los jefes ---------- */
+class SoulMissile extends Entity {
+  constructor(x, y, z, target, n) {
+    super('proj', x, y, z, 0.15, 0.3); this.target = target; this.life = 0; this.n = n;
+    const a = n * 2.1; this.vel.set(Math.cos(a) * 4, 3, Math.sin(a) * 4);
+    this.mesh = new THREE.Mesh(cbox(0.3, 0.3, 0.3, 0, 0, 0, (f) => (f % 2 ? rgb(120, 255, 190) : rgb(220, 255, 240))), new THREE.MeshBasicMaterial({ vertexColors: true, fog: false }));
+  }
+  update(dt, g) {
+    this.life += dt;
+    let t = this.target;
+    if (!t || t.dead || t.deathT) {
+      t = this.target = g.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !e.tamed && !(e instanceof Villager) && !e.isPlayer && (e.spec.hostile || e.isBoss) && e.pos.distanceTo(this.pos) < 16)
+        .sort((a, b) => a.pos.distanceTo(this.pos) - b.pos.distanceTo(this.pos))[0] || null;
+    }
+    if (t) {
+      const to = new THREE.Vector3(t.pos.x - this.pos.x, t.pos.y + t.h * 0.6 - this.pos.y, t.pos.z - this.pos.z), d = to.length();
+      this.vel.lerp(to.normalize().multiplyScalar(14), Math.min(1, dt * 4));
+      if (d < Math.max(0.8, t.hw + 0.4)) {
+        t.lastHit = 'player'; if (!t.hurt(6, g.player.pos)) { this.vel.multiplyScalar(-0.5); this.vel.y += 3; return void this.mesh.position.copy(this.pos); }   // invulnerable un instante: da la vuelta y vuelve
+        g.particles.emit(this.pos.x, this.pos.y, this.pos.z, [0.5, 1, 0.75], 12, { speed: 3, up: 2, life: 0.5, size: 0.12 }); sfx.play('laser', { pos: this.pos, pitch: 2 });
+        this.dead = true; return;
+      }
+    } else this.vel.y -= 4 * dt;
+    this.pos.addScaledVector(this.vel, dt); this.mesh.position.copy(this.pos); this.mesh.rotation.y += dt * 6;
+    if (Math.random() < 0.7) g.particles.emit(this.pos.x, this.pos.y, this.pos.z, [0.5, 1, 0.75], 1, { gravity: 0, speed: 0.2, life: 0.35, size: 0.08 });
+    if (this.life > 4 || B_SOLID[world.get(Math.floor(this.pos.x), Math.floor(this.pos.y), Math.floor(this.pos.z))]) this.dead = true;
+  }
+  toJSON() { return null; }
+}
+{
+  const _ability = useAbility;
+  useAbility = function (stack) {
+    const ab = ITEMS[stack.id].ability; if (!['souls', 'warcry', 'gale'].includes(ab.id)) return _ability(stack);
+    const p = game.player, now = performance.now() / 1000, left = (abilityCd.get(stack.id) || 0) - now;
+    if (left > 0) { if (!useAbility.warn || now - useAbility.warn > 0.8) { useAbility.warn = now; hud.toast(`${ab.name}: lista en ${Math.ceil(left)} s`, 900); } return true; }
+    const foes = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !(e instanceof Villager) && !e.isPlayer && !e.tamed && (e.spec.hostile || e.isBoss));
+    if (ab.id === 'souls') {
+      if (!foes.some((e) => e.pos.distanceTo(p.pos) < 16)) { hud.toast('No hay enemigos cerca'); return true; }
+      const near = foes.filter((e) => e.pos.distanceTo(p.pos) < 16).sort((a, b) => a.pos.distanceTo(p.pos) - b.pos.distanceTo(p.pos));
+      for (let i = 0; i < 3; i++) game.entities.add(new SoulMissile(p.pos.x, p.pos.y + 1.4, p.pos.z, near[i % near.length], i));
+      sfx.play('laserCharge', { pitch: 1.6 });
+    } else if (ab.id === 'warcry') {
+      let n = 0;
+      for (const e of foes) {
+        const d = e.pos.distanceTo(p.pos); if (d > 6.5) continue;
+        n++; e.lastHit = 'player'; e.hurt(e.isBoss ? 5 : 3, p.pos);
+        if (!e.isBoss) { e.stunT = Math.max(e.stunT || 0, 2.2); const l = Math.hypot(e.pos.x - p.pos.x, e.pos.z - p.pos.z) || 1; e.vel.x += (e.pos.x - p.pos.x) / l * 7; e.vel.z += (e.pos.z - p.pos.z) / l * 7; e.vel.y = 5; }
+      }
+      game.applyEffect('strength', 1, 10);
+      for (let k = 0; k < 36; k++) { const a = k / 36 * 6.283; game.particles.emit(p.pos.x + Math.cos(a), p.pos.y + 1, p.pos.z + Math.sin(a), [1, 0.85, 0.4], 1, { speed: 8, up: 1, gravity: 0, life: 0.5, size: 0.14 }); }
+      sfx.play('roar', { pitch: 1.1 }); game.shake = Math.max(game.shake, 0.3);
+      if (n) hud.toast(`¡Grito de guerra! ${n} ${n === 1 ? 'enemigo aturdido' : 'enemigos aturdidos'}`, 1400);
+    } else {
+      const dir = new THREE.Vector3(); camera.getWorldDirection(dir); dir.y = 0; dir.normalize();
+      for (const e of foes) {
+        const to = new THREE.Vector3(e.pos.x - p.pos.x, 0, e.pos.z - p.pos.z), d = to.length(); if (d > 8.5 || d < 0.01) continue;
+        if (to.normalize().dot(dir) < 0.55 || Math.abs(e.pos.y - p.pos.y) > 4) continue;
+        e.lastHit = 'player'; e.hurt(5, p.pos);
+        if (!e.isBoss) { e.vel.x = to.x * 14; e.vel.z = to.z * 14; e.vel.y = 6.5; }
+      }
+      for (let k = 0; k < 40; k++) { const a = Math.atan2(dir.x, dir.z) + (Math.random() - 0.5) * 1.1, sp = 8 + Math.random() * 6; game.particles.emit(p.pos.x + dir.x, p.pos.y + 1.2, p.pos.z + dir.z, [0.85, 0.95, 1], 1, { gravity: 0, speed: 0, up: 0, life: 0.55, size: 0.12 }); const q = game.particles.list[game.particles.list.length - 1]; if (q) { q.vx = Math.sin(a) * sp; q.vz = Math.cos(a) * sp; q.vy = (Math.random() - 0.3) * 2; } }
+      sfx.play('swing', { pitch: 0.5 });
+    }
+    abilityCd.set(stack.id, now + ab.cd); game.wearTool(2); game.swing = 1;
+    return true;
+  };
+}
+
+/* ---------- Logros ---------- */
+ACHIEVEMENTS.push(['boss_lich', 'Sin filacteria', 'Derrota al Liche.'], ['boss_fallenking', 'El último rey', 'Derrota al Rey caído.'], ['boss_stormroc', 'Cazador de tormentas', 'Derrota al Roc de la tormenta.'],
+  ['zone_hunter', 'Cazador de zonas', 'Derrota a un esqueleto acorazado, un caballero espectral, un limo mutante y un escarabajo dorado.']);
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
