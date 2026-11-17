@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.6</title>
+<title>MiniCraft 4.7</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -323,6 +323,28 @@
   .armorSlot:not(:has(.ic[style*="url"]))::before { content: attr(data-hint); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .35; font-size: calc(var(--s) * .45); }
   #invLeft.withArmor { display: flex; align-items: center; justify-content: center; }
   .enchant { display: flex; gap: 10px; align-items: center; padding: 6px 0; }
+  /* --- 4.7: actividades --- */
+  #fishGame { position: fixed; left: 50%; bottom: calc(118px + env(safe-area-inset-bottom)); transform: translateX(-50%); width: min(440px, 84vw); display: none; z-index: 6; pointer-events: none; text-align: center;
+    background: rgba(0,0,0,.6); border: 2px solid #000; border-radius: 8px; padding: 6px 10px 5px; color: #fff; font: 13px var(--font); text-shadow: 1px 1px 0 #000; }
+  body.fishing #fishGame { display: block; } #fishGame b { font-size: 14px; } #fishGame small { display: block; margin-top: 3px; color: #cfd6e0; font-size: 11.5px; }
+  .fgBar { position: relative; height: 26px; margin-top: 4px; background: linear-gradient(#1d4a7a, #12365c); border: 2px solid #000; border-radius: 4px; overflow: hidden; }
+  .fgZone { position: absolute; top: 0; bottom: 0; background: rgba(110,230,110,.45); border-left: 2px solid #9df08a; border-right: 2px solid #9df08a; }
+  #fishGame.in .fgZone { background: rgba(140,255,140,.7); }
+  .fgFish { position: absolute; top: 1px; font-style: normal; font-size: 19px; transform: translateX(-50%); }
+  .fgProg { height: 8px; margin-top: 4px; background: #222; border: 1px solid #000; } .fgProg s { display: block; height: 100%; background: linear-gradient(90deg, #f0b040, #7be06a); text-decoration: none; }
+  .cookCard { width: min(620px, 100%); text-align: left; display: flex; flex-direction: column; max-height: 96vh; }
+  #cookTop p { margin: 2px 0 6px; font-size: 13px; } #cookTop p.ok { color: #ffcf7a; } #cookTop p.bad { color: #ff9a8a; }
+  .cookBusy { font-size: 13px; margin-bottom: 6px; } .cookBusy u { display: block; height: 8px; margin-top: 3px; background: #222; border: 1px solid #000; } .cookBusy s { display: block; height: 100%; background: #f0b040; text-decoration: none; }
+  .cookDone { display: flex; align-items: center; gap: 8px; padding: 5px 8px; margin-bottom: 6px; background: rgba(123,224,106,.18); border: 1px solid #7be06a; border-radius: 6px; font-size: 13.5px; }
+  .cookDone i, .dIcon, .dIng i { display: inline-block; width: 28px; height: 28px; background-size: contain; image-rendering: pixelated; flex: none; } .cookDone span { flex: 1; } .cookDone .btn { width: auto; margin: 0; padding: 5px 12px; }
+  #cookList { overflow-y: auto; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 5px; }
+  .dish { display: flex; align-items: center; gap: 8px; padding: 6px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 6px; }
+  .dish.off { opacity: .62; } .dish > div:nth-child(2) { flex: 1; min-width: 0; } .dish b { font-size: 14px; } .dish b em { font-style: normal; font-size: 11px; color: #ffd84a; margin-left: 4px; }
+  .dish small { display: block; color: #aab0bb; font-size: 11.5px; margin-top: 2px; } .dIcon { width: 34px; height: 34px; }
+  .dIng { display: flex; flex-wrap: wrap; gap: 3px 9px; font-size: 12px; margin-top: 2px; } .dIng span { display: inline-flex; align-items: center; gap: 2px; } .dIng i { width: 18px; height: 18px; }
+  .dIng .ok { color: #9df08a; } .dIng .no { color: #ff9a8a; }
+  .dBtns { display: flex; flex-direction: column; gap: 3px; } .dBtns .btn { width: auto; margin: 0; padding: 5px 10px; font-size: 13px; }
+  @media (max-height: 520px) { .cookCard { max-height: 98vh; padding: 6px 10px; } .cookCard .cardHead { margin: 0 0 2px; } .cookCard .cardHead h2 { font-size: 17px; } #fishGame { bottom: calc(94px + env(safe-area-inset-bottom)); width: min(400px, 60vw); padding: 3px 8px; } #fishGame small { display: none; } .fgBar { height: 20px; margin-top: 2px; } .fgFish { font-size: 15px; } }
   /* --- 4.6: combate --- */
   body.touch #bossBar { top: calc(62px + env(safe-area-inset-top)); width: min(420px, 58vw); }
   #bossSt { display: inline-block; margin-top: 4px; padding: 1px 8px; border-radius: 9px; font-size: 12.5px; color: #fff; text-shadow: 1px 1px 0 #000; background: rgba(0,0,0,.45); min-height: 0; }
@@ -849,6 +871,7 @@
   <div id="abilityCd"><i></i></div>
   <div id="gStam" title="Resistencia del grifo"><b>🪽</b><div><i></i></div></div>
   <div id="senseChip"></div>
+  <div id="fishGame"><b>🎣 ¡Recoge el sedal!</b><div class="fgBar"><i class="fgZone"></i><i class="fgFish">🐟</i></div><div class="fgProg"><s></s></div><small>Mantén Usar para mover la zona verde y que el pez no se salga de ella</small></div>
   <div id="debug"></div>
   <div id="hudClock"></div>
   <div id="toast"></div>
@@ -908,7 +931,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.6!</span>
+      <span class="ver">¡Versión 4.7!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -918,7 +941,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.7</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1095,6 +1118,14 @@
     <div class="stabs"><button class="stab on" data-chtab="skills">Habilidades</button><button class="stab" data-chtab="gear">Equipo</button><button class="stab" data-chtab="pets">Mascotas y monturas</button></div>
     <div id="charBody"></div>
     <button id="charClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
+<div id="cookScreen" class="screen">
+  <div class="card cookCard">
+    <div class="cardHead"><h2>🍲 Olla</h2></div>
+    <div id="cookTop"></div>
+    <div id="cookList"></div>
+    <button id="cookClose" class="btn primary">Cerrar</button>
   </div>
 </div>
 <div id="petScreen" class="screen">
@@ -2670,6 +2701,87 @@ rebuildBlockTables();
       return edge ? [34, 32, 44] : R[y][x] === '#' ? [110, 240, 230] : base;
     });
     rune(T.rune_block, true); rune(T.rune_block_top, false);
+  };
+}
+
+/* ==========================================================================
+   §2f BLOQUES DE LAS ACTIVIDADES (4.7)
+   --------------------------------------------------------------------------
+   Olla, compostador, comedero y cinco cultivos nuevos (arroz, tomate, maíz,
+   col y pitahaya). Identificadores extendidos 1035-1042: los mundos y partidas
+   anteriores no cambian.
+   ========================================================================== */
+for (const n of ['pot_side', 'pot_top', 'composter_side', 'composter_top', 'feeder_side', 'feeder_top',
+  'rice_0', 'rice_1', 'rice_2', 'rice_3', 'tomato_0', 'tomato_1', 'tomato_2', 'tomato_3', 'corn_0', 'corn_1', 'corn_2', 'corn_3',
+  'cabbage_0', 'cabbage_1', 'cabbage_2', 'cabbage_3', 'dragon_0', 'dragon_1', 'dragon_2', 'dragon_3']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+const COOKING_POT = 1035, COMPOSTER = 1036, FEEDER = 1037, RICE_CROP = 1038, TOMATO_CROP = 1039, CORN_CROP = 1040, CABBAGE_CROP = 1041, DRAGONFRUIT_CROP = 1042;
+Object.assign(I, { FISHING_ROD: 588, SALMON: 589, TROUT: 590, CATFISH: 591, ICEFISH: 592, GOLDFISH: 593, OLD_BOOT: 594, FISHER_TREASURE: 595,
+  RICE: 596, TOMATO_SEEDS: 597, TOMATO: 598, CORN: 599, CABBAGE_SEEDS: 700, CABBAGE: 701, DRAGONFRUIT: 702,
+  HERBS: 703, MANGO: 704, CHERRIES: 705, SEASHELL: 706, WATERING_CAN: 707, FERTILIZER: 708, EXPEDITION_MAP: 709,
+  DISH_FISH_STEW: 710, DISH_PAELLA: 711, DISH_SALAD: 712, DISH_CORN_SOUP: 713, DISH_CHERRY_PIE: 714, DISH_TROPICAL: 715, DISH_SKEWER: 716,
+  DISH_GOLDEN_FISH: 717, DISH_HERB_TEA: 718, DISH_SEA_BROTH: 719, DISH_RICE_BOWL: 720, DISH_CABBAGE_ROLLS: 721 });
+
+defBlock(COOKING_POT, 'Olla', 'Ponla sobre una hoguera, una cocina, un horno o magma y úsala para cocinar platos con recetas.', { side: T.pot_side, top: T.pot_top, bottom: T.pot_side },
+  { shape: 'box', box: [2, 0, 2, 14, 11, 14], opaque: false, hardness: 2, tool: 'pickaxe', level: 0, sound: 'metal', interact: 'pot' });
+defBlock(COMPOSTER, 'Compostador', 'Echa restos de plantas y comida: cuando se llena, da abono para los cultivos.', { side: T.composter_side, top: T.composter_top, bottom: T.composter_side },
+  { shape: 'box', box: [1, 0, 1, 15, 15, 15], opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood', interact: 'compost' });
+defBlock(FEEDER, 'Comedero', 'Llénalo de comida: los animales de alrededor comen solos y crían.', { side: T.feeder_side, top: T.feeder_top, bottom: T.feeder_side },
+  { shape: 'box', box: [0, 0, 2, 16, 8, 14], opaque: false, hardness: 1.5, tool: 'axe', sound: 'wood', interact: 'feeder' });
+{
+  const CROP47 = { shape: 'crop', opaque: false, solid: false, hardness: 0, sound: 'grass', support: true, crop: true, hidden: true };
+  const st = (p) => [T[p + '_0'], T[p + '_1'], T[p + '_2'], T[p + '_3']];
+  defBlock(RICE_CROP, 'Arroz', 'Cultivo de arroz: solo crece en tierra húmeda (junto al agua o regada).', T.rice_0, { ...CROP47, stages: st('rice'), seed: I.RICE,
+    drop: cropDrop((r) => [[I.RICE, 2 + Math.floor(r() * 3)]], () => [[I.RICE, 1]]) });
+  defBlock(TOMATO_CROP, 'Tomatera', 'Cultivo de tomates.', T.tomato_0, { ...CROP47, stages: st('tomato'), seed: I.TOMATO_SEEDS,
+    drop: cropDrop((r) => [[I.TOMATO, 1 + Math.floor(r() * 3)], [I.TOMATO_SEEDS, 1 + Math.floor(r() * 2)]], () => [[I.TOMATO_SEEDS, 1]]) });
+  defBlock(CORN_CROP, 'Maíz', 'Cultivo de maíz.', T.corn_0, { ...CROP47, stages: st('corn'), seed: I.CORN,
+    drop: cropDrop((r) => [[I.CORN, 2 + Math.floor(r() * 2)]], () => [[I.CORN, 1]]) });
+  defBlock(CABBAGE_CROP, 'Col', 'Cultivo de coles: resiste el frío.', T.cabbage_0, { ...CROP47, stages: st('cabbage'), seed: I.CABBAGE_SEEDS,
+    drop: cropDrop((r) => [[I.CABBAGE, 1], [I.CABBAGE_SEEDS, 1 + Math.floor(r() * 2)]], () => [[I.CABBAGE_SEEDS, 1]]) });
+  defBlock(DRAGONFRUIT_CROP, 'Pitahaya', 'Cactus frutal: se planta directamente en la arena.', T.dragon_0, { ...CROP47, stages: st('dragon'), seed: I.DRAGONFRUIT,
+    drop: cropDrop((r) => [[I.DRAGONFRUIT, 1 + Math.floor(r() * 2)]], () => [[I.DRAGONFRUIT, 1]]) });
+}
+rebuildBlockTables();
+
+{
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { paint, rnd, clear, px } = h, N = (v) => (rnd() - 0.5) * v;
+    // olla de hierro con asas
+    paint(T.pot_side, (x, y) => { const band = y === 2 || y === 3, n = N(10); if (y < 5) return null; return y === 5 ? [40, 40, 44] : band ? [70, 70, 76] : [58 + n + (x % 4 === 0 ? 8 : 0), 60 + n, 66 + n]; });
+    paint(T.pot_side, (x, y) => (y >= 5 ? null : (y >= 2 && (x < 2 || x > 13)) ? [44, 44, 48] : [0, 0, 0, 0]));
+    paint(T.pot_top, (x, y) => { const r = Math.hypot(x - 7.5, y - 7.5); return r > 7.5 ? [0, 0, 0, 0] : r > 6 ? [52, 52, 58] : [150 + N(20), 110 + N(18), 60 + N(10)]; });
+    // compostador de tablas
+    paint(T.composter_side, (x, y) => { const n = N(12), slat = y % 4 === 0; return x === 0 || x === 15 ? [96, 66, 36] : slat ? [92, 62, 34] : [150 + n, 108 + n, 62 + n]; });
+    paint(T.composter_top, (x, y) => { const edge = x < 2 || y < 2 || x > 13 || y > 13, n = N(26); return edge ? [120, 84, 46] : [70 + n, 56 + n * 0.8, 34 + n * 0.5]; });
+    // comedero
+    paint(T.feeder_side, (x, y) => { if (y < 8) return [0, 0, 0, 0]; const n = N(10); return y === 8 ? [110, 76, 40] : [150 + n, 108 + n, 64 + n]; });
+    paint(T.feeder_top, (x, y) => { const edge = y < 2 || y > 13 || x < 1 || x > 14, n = N(20); return edge ? [120, 84, 46] : [214 + n, 186 + n, 90 + n * 0.5]; });
+    // cultivos
+    const stalks = (t, s, col, opt = {}) => {
+      clear(t); const hgt = (opt.h || 3) + s * (opt.g || 3);
+      for (let k = 0; k < (opt.n || 6); k++) {
+        const x0 = 1 + k * Math.floor(14 / (opt.n || 6)) + (k % 2), lean = (rnd() - 0.5) * 0.35;
+        for (let y = 0; y < hgt - (k % 3); y++) { const n = N(26); px(t, clamp(Math.round(x0 + lean * y), 0, 15), 15 - y, col[0] + n, col[1] + n, col[2] + n * 0.5); }
+      }
+    };
+    for (let s = 0; s < 4; s++) {
+      // arroz: tallos finos que se doblan con espigas claras
+      stalks(T['rice_' + s], s, [80, 170, 70], { n: 8, h: 2, g: 3 });
+      if (s === 3) for (let k = 0; k < 8; k++) { const x = 1 + k * 2; for (let y = 3; y < 6; y++) px(T.rice_3, clamp(x + (y > 4 ? 1 : 0), 0, 15), y, 226, 214, 150); }
+      // tomatera: mata con frutos rojos
+      stalks(T['tomato_' + s], s, [60, 140, 50], { n: 5, h: 3, g: 3 });
+      if (s >= 2) for (const [x, y] of [[3, 8], [8, 6], [12, 9], [5, 11], [10, 12]]) { const c = s === 3 ? [220, 40, 30] : [120, 170, 60]; px(T['tomato_' + s], x, y, ...c); px(T['tomato_' + s], x + 1, y, ...c); px(T['tomato_' + s], x, y + 1, ...c); px(T['tomato_' + s], x + 1, y + 1, c[0] * 0.8, c[1] * 0.8, c[2]); }
+      // maíz: cañas altas con mazorcas
+      stalks(T['corn_' + s], s, [90, 160, 60], { n: 4, h: 4, g: 4 });
+      if (s === 3) for (const x of [3, 10]) for (let y = 6; y < 11; y++) { px(T.corn_3, x, y, 240, 200, 60); px(T.corn_3, x + 1, y, 220, 180, 40); }
+      // col: hojas anchas que se cierran
+      clear(T['cabbage_' + s]); { const R = 2 + s * 1.6; for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const d = Math.hypot((x - 7.5) / R, (y - 15 + R * 0.9) / (R * 0.9)); if (d < 1) { const n = N(20), v = d < 0.5 && s >= 2 ? 30 : 0; px(T['cabbage_' + s], x, y, 110 + n + v, 180 + n + v, 90 + n); } } }
+      // pitahaya: cactus con flores y frutos rosas
+      clear(T['dragon_' + s]); { const hg = 4 + s * 3; for (let y = 0; y < hg; y++) for (const x of [7, 8]) px(T['dragon_' + s], x, 15 - y, 70 + N(16), 150 + N(20), 70); for (let y = 0; y < hg - 3; y++) { px(T['dragon_' + s], 4, 13 - y, 70, 150, 70); px(T['dragon_' + s], 11, 12 - y, 70, 150, 70); }
+        if (s >= 2) { const c = s === 3 ? [236, 60, 140] : [250, 240, 210]; for (const [x, y] of [[3, 15 - hg + 3], [10, 15 - hg + 2], [7, 15 - hg]]) { px(T['dragon_' + s], x, y, ...c); px(T['dragon_' + s], x + 1, y, ...c); px(T['dragon_' + s], x, y - 1, ...c); px(T['dragon_' + s], x + 1, y - 1, ...c); } } }
+    }
   };
 }
 
@@ -9173,6 +9285,147 @@ Object.assign(POI_ICON_42, { lichcrypt: '💀', throne: '👑', stormspire: '⚡
 Object.assign(POI_NAMES_42, { lichcrypt: 'Cripta del Liche', throne: 'Salón del trono', stormspire: 'Pico de la tormenta' });
 
 /* ==========================================================================
+   §45 ACTIVIDADES 4.7 — datos: pesca, cultivos, recolección, cocina,
+   cría, expediciones
+   --------------------------------------------------------------------------
+   La lógica (pesca interactiva, crecimiento por bioma, olla, comedero,
+   compostador, expediciones, misiones y eventos) está en §46
+   (p9za_life47.js).
+   ========================================================================== */
+const FISH_ANY = [I.RAW_FISH, I.SALMON, I.TROUT, I.CATFISH, I.ICEFISH, I.CLOWNFISH];
+const MEAT_ANY = [I.BEEF, I.COOKED_BEEF, I.PORK, I.COOKED_PORK, I.MUTTON, I.COOKED_MUTTON, I.CHICKEN, I.COOKED_CHICKEN, I.RABBIT, I.COOKED_RABBIT, I.VENISON, I.COOKED_VENISON, I.DUCK, I.COOKED_DUCK];
+
+/* ---------- Pesca ---------- */
+defItem(I.FISHING_ROD, 'Caña de pescar', 'Úsala apuntando al agua para lanzar el anzuelo. Cuando pique, vuelve a usarla y mantén Usar para recoger el sedal sin que el pez se escape.', { stack: 1,
+  tool: { type: 'rod', tier: 'wood', level: 0, speed: 1, dmg: 1, dur: 128 } });
+defItem(I.SALMON, 'Salmón', 'Pez de ríos y mares fríos. Cocínalo o úsalo en recetas de la olla.', { food: { hunger: 3, sat: 1.2 } });
+defItem(I.TROUT, 'Trucha', 'Pez de río. Cocínalo o úsalo en recetas de la olla.', { food: { hunger: 3, sat: 1.2 } });
+defItem(I.CATFISH, 'Bagre', 'Pez de pantano que pica sobre todo de noche.', { food: { hunger: 3, sat: 1.2 } });
+defItem(I.ICEFISH, 'Pez de hielo', 'Solo vive en aguas heladas.', { food: { hunger: 2, sat: 1.2 } });
+defItem(I.GOLDFISH, 'Pez dorado', 'Legendario y escurridizo. Ingrediente del plato más nutritivo; los aldeanos pagan muy bien por él.', { rarity: 4 });
+defItem(I.OLD_BOOT, 'Bota vieja', 'Alguien la perdió hace mucho. Al menos tiene cuero.', {});
+defItem(I.FISHER_TREASURE, 'Botín del pescador', 'Un saquito empapado que salió del agua. Úsalo para abrirlo.', { rarity: 2 });
+Object.assign(SMELT, { [I.SALMON]: [I.COOKED_FISH, 0.35], [I.TROUT]: [I.COOKED_FISH, 0.35], [I.CATFISH]: [I.COOKED_FISH, 0.35], [I.ICEFISH]: [I.COOKED_FISH, 0.35], [I.OLD_BOOT]: [I.LEATHER, 0.1] });
+shaped(I.FISHING_ROD, 1, ['  s', ' st', 's t'], { s: I.STICK, t: I.STRING }, 'Actividades');
+// Qué se pesca en cada tipo de agua: [objeto, peso, dificultad (0-1,6)]
+const FISH_TABLE = {
+  ocean: [[I.RAW_FISH, 50, 0.6], [I.SALMON, 18, 0.9], [I.CLOWNFISH, 10, 0.7], [I.PUFFERFISH, 10, 1.2]],
+  warm: [[I.RAW_FISH, 30, 0.6], [I.CLOWNFISH, 30, 0.7], [I.PUFFERFISH, 16, 1.2], [I.SALMON, 6, 0.9]],
+  cold: [[I.ICEFISH, 40, 1.1], [I.SALMON, 40, 0.9], [I.RAW_FISH, 10, 0.6]],
+  river: [[I.TROUT, 45, 0.8], [I.SALMON, 25, 0.9], [I.RAW_FISH, 25, 0.6]],
+  swamp: [[I.CATFISH, 45, 1], [I.RAW_FISH, 30, 0.6], [I.TROUT, 10, 0.8]],
+};
+const FISH_JUNK = [[I.OLD_BOOT, 1], [I.STICK, 2], [I.LEATHER, 1], [I.BONE, 2], [I.STRING, 2], [I.DRIED_KELP, 2]];
+const FISH_TREASURE = [[I.EMERALD, 2, 6, 6], [I.GOLD_INGOT, 1, 3, 4], [I.DIAMOND, 1, 1, 2], [I.SADDLE, 1, 1, 2], [I.ABYSS_PEARL, 1, 1, 1], [I.GOLDEN_APPLE, 1, 1, 2],
+  [I.SKILL_TOME, 1, 1, 1], [I.RICE, 3, 6, 2], [I.TOMATO_SEEDS, 2, 4, 2], [I.CABBAGE_SEEDS, 2, 4, 2], [I.EXPEDITION_MAP, 1, 1, 1]];
+
+/* ---------- Cultivos nuevos y recolección ---------- */
+defItem(I.RICE, 'Arroz', 'Plántalo en tierra de cultivo húmeda. Ingrediente de la paella, el cuenco de arroz y los rollitos de col.', { plant: RICE_CROP });
+defItem(I.TOMATO_SEEDS, 'Semillas de tomate', 'Plántalas en tierra de cultivo. Crecen mejor en llanuras, sabanas y praderas.', { plant: TOMATO_CROP });
+defItem(I.TOMATO, 'Tomate', 'Fresco y jugoso. Ingrediente de muchas recetas.', { food: { hunger: 3, sat: 2.4 } });
+defItem(I.CORN, 'Mazorca', 'Plántala en tierra de cultivo o cómela. Crece mejor en llanuras y sabanas.', { plant: CORN_CROP, food: { hunger: 2, sat: 1.2 } });
+defItem(I.CABBAGE_SEEDS, 'Semillas de col', 'Plántalas en tierra de cultivo. La col resiste el frío: crece mejor en taigas, tundras y nieve.', { plant: CABBAGE_CROP });
+defItem(I.CABBAGE, 'Col', 'Hojas crujientes. Ingrediente de ensaladas y rollitos.', { food: { hunger: 3, sat: 3 } });
+defItem(I.DRAGONFRUIT, 'Pitahaya', 'Fruta del desierto. Plántala directamente en la arena o cómela.', { plantOn: [SAND, RED_SAND], food: { hunger: 4, sat: 4 } });
+defItem(I.HERBS, 'Hierbas aromáticas', 'Se encuentran entre la hierba alta de praderas y bosques. Condimento de la olla.', {});
+defItem(I.MANGO, 'Mango', 'Cae a veces de las hojas de la jungla.', { food: { hunger: 4, sat: 4.8 } });
+defItem(I.CHERRIES, 'Cerezas', 'Caen a veces de las hojas de los cerezos.', { food: { hunger: 2, sat: 1.2 } });
+defItem(I.SEASHELL, 'Concha marina', 'A veces aparece al cavar la arena de las playas. Ingrediente del caldo marinero; los aldeanos la coleccionan.', {});
+defItem(I.WATERING_CAN, 'Regadera', 'Úsala sobre la tierra de cultivo para regarla un buen rato aunque no haya agua cerca.', { stack: 1 });
+defItem(I.FERTILIZER, 'Abono', 'Úsalo sobre la tierra de cultivo: lo que plantes crecerá el doble de rápido y dará más cosecha. Sobre un cultivo, lo hace crecer al momento.', { stack: 64 });
+shaped(I.WATERING_CAN, 1, ['i  ', 'ibi', ' i '], { i: I.IRON_INGOT, b: I.BUCKET }, 'Actividades');
+shapeless(I.FERTILIZER, 2, [I.BONE_MEAL, I.ROTTEN_FLESH, DIRT], 'Actividades');
+// Dónde crece mejor cada cultivo (×1,8), dónde le cuesta (×0,35) y el resto (×0,7)
+const CROP_BIOMES = {
+  [RICE_CROP]: { good: [BIOME.SWAMP, BIOME.JUNGLE, BIOME.RIVER], bad: [BIOME.SNOWY, BIOME.TUNDRA, BIOME.DESERT, BIOME.DUNES], wet: true },
+  [TOMATO_CROP]: { good: [BIOME.PLAINS, BIOME.SAVANNA, BIOME.MEADOW, BIOME.FOREST], bad: [BIOME.SNOWY, BIOME.TUNDRA] },
+  [CORN_CROP]: { good: [BIOME.PLAINS, BIOME.SAVANNA, BIOME.MEADOW], bad: [BIOME.SNOWY, BIOME.TUNDRA, BIOME.SWAMP] },
+  [CABBAGE_CROP]: { good: [BIOME.TAIGA, BIOME.SNOWY, BIOME.TUNDRA, BIOME.HIGHLANDS, BIOME.MOUNTAINS], bad: [BIOME.DESERT, BIOME.DUNES, BIOME.JUNGLE] },
+  [DRAGONFRUIT_CROP]: { good: [BIOME.DESERT, BIOME.DUNES, BIOME.BADLANDS], bad: [BIOME.SNOWY, BIOME.TUNDRA, BIOME.TAIGA, BIOME.SWAMP], sand: true },
+};
+// Recolección por bioma al romper bloques: [bloques, biomas (null = todos), objeto, probabilidad]
+const FORAGE = [
+  [[TALL_GRASS], [BIOME.SWAMP, BIOME.JUNGLE], I.RICE, 0.1], [[TALL_GRASS], [BIOME.PLAINS, BIOME.SAVANNA, BIOME.MEADOW], I.TOMATO_SEEDS, 0.06],
+  [[TALL_GRASS], [BIOME.PLAINS, BIOME.SAVANNA], I.CORN, 0.05], [[TALL_GRASS], [BIOME.TAIGA, BIOME.SNOWY, BIOME.TUNDRA, BIOME.HIGHLANDS], I.CABBAGE_SEEDS, 0.08],
+  [[TALL_GRASS], [BIOME.MEADOW, BIOME.FOREST, BIOME.PLAINS, BIOME.BIRCH, BIOME.HIGHLANDS, BIOME.CHERRY], I.HERBS, 0.08],
+  [[CACTUS], null, I.DRAGONFRUIT, 0.2], [[SAND], [BIOME.BEACH, BIOME.ISLAND], I.SEASHELL, 0.06],
+];
+{
+  const leaves = BLOCKS.filter((b) => b && /^Hojas/.test(b.name)).map((b) => b.id);
+  FORAGE.push([leaves, [BIOME.JUNGLE], I.MANGO, 0.05], [leaves, [BIOME.CHERRY], I.CHERRIES, 0.07]);
+}
+
+/* ---------- Cocina: platos de la olla ----------
+   Ingredientes: [objeto o lista de objetos aceptados, cantidad] */
+const DISHES = [
+  [I.DISH_FISH_STEW, 'Guiso de pescado', [[FISH_ANY, 1], [I.POTATO, 1], [I.CARROT, 1]], { hunger: 14, sat: 16, effects: [['regen', 1, 20]] }],
+  [I.DISH_PAELLA, 'Paella', [[I.RICE, 2], [I.TOMATO, 1], [[...FISH_ANY, I.CHICKEN, I.COOKED_CHICKEN], 1]], { hunger: 16, sat: 18, effects: [['strength', 1, 90]] }],
+  [I.DISH_SALAD, 'Ensalada fresca', [[I.CABBAGE, 1], [I.TOMATO, 1], [I.CARROT, 1]], { hunger: 10, sat: 12, effects: [['speed', 1, 120]] }],
+  [I.DISH_CORN_SOUP, 'Sopa de maíz', [[I.CORN, 2], [I.POTATO, 1], [I.HERBS, 1]], { hunger: 12, sat: 14, effects: [['resist', 1, 90]] }],
+  [I.DISH_CHERRY_PIE, 'Tarta de cerezas', [[I.CHERRIES, 3], [I.WHEAT, 2]], { hunger: 12, sat: 14, effects: [['regen', 1, 30]] }],
+  [I.DISH_TROPICAL, 'Batido tropical', [[I.MANGO, 1], [I.DRAGONFRUIT, 1]], { hunger: 8, sat: 10, effects: [['speed', 1, 90], ['night', 1, 120]] }],
+  [I.DISH_SKEWER, 'Brocheta del cazador', [[MEAT_ANY, 2], [I.TOMATO, 1], [I.HERBS, 1]], { hunger: 16, sat: 18, effects: [['strength', 1, 120]] }],
+  [I.DISH_GOLDEN_FISH, 'Pez dorado glaseado', [[I.GOLDFISH, 1], [I.HERBS, 1], [I.GOLDEN_CARROT, 1]], { hunger: 20, sat: 20, effects: [['regen', 2, 30], ['resist', 1, 180], ['strength', 1, 180]] }],
+  [I.DISH_HERB_TEA, 'Infusión de hierbas', [[I.HERBS, 2], [I.WATER_BOTTLE, 1]], { hunger: 2, sat: 2, effects: [['cure', 1, 0], ['regen', 1, 12]] }],
+  [I.DISH_SEA_BROTH, 'Caldo marinero', [[I.SEASHELL, 1], [FISH_ANY, 1], [I.POTATO, 1]], { hunger: 12, sat: 14, effects: [['water', 1, 180]] }],
+  [I.DISH_RICE_BOWL, 'Cuenco de arroz', [[I.RICE, 2], [I.CABBAGE, 1]], { hunger: 10, sat: 12, effects: [['resist', 1, 60]] }],
+  [I.DISH_CABBAGE_ROLLS, 'Rollitos de col', [[I.CABBAGE, 1], [I.RICE, 1], [MEAT_ANY, 1]], { hunger: 14, sat: 16, effects: [['resist', 1, 120]] }],
+];
+{
+  const EFN = { regen: 'regeneración', strength: 'fuerza', speed: 'velocidad', night: 'visión nocturna', resist: 'resistencia', water: 'respiración acuática' };
+  for (const [id, name, ing, food] of DISHES) {
+    const fx = food.effects.filter((e) => e[0] !== 'cure').map(([e, l, d]) => `${EFN[e]}${l > 1 ? ' II' : ''} (${d} s)`);
+    defItem(id, name, `Plato de la olla. Sacia mucho${fx.length ? ' y da ' + fx.join(', ') : ''}${food.effects.some((e) => e[0] === 'cure') ? '; además quita los efectos dañinos' : ''}.`, { stack: 16, food, dish: true, rarity: id === I.DISH_GOLDEN_FISH ? 3 : 1 });
+  }
+}
+shaped(COOKING_POT, 1, ['i i', 'iii'], { i: I.IRON_INGOT }, 'Actividades');
+shaped(COMPOSTER, 1, ['p p', 'p p', 'ppp'], { p: OAK_PLANKS }, 'Actividades');
+shaped(FEEDER, 1, ['pwp', 'ppp'], { p: OAK_PLANKS, w: I.WHEAT }, 'Actividades');
+
+/* ---------- Expediciones ---------- */
+defItem(I.EXPEDITION_MAP, 'Mapa de expedición', 'Úsalo para recibir una expedición a un lugar lejano que aún no conoces. Llega hasta él para cobrar la recompensa; cuanto más lejos, mejor.', { stack: 4, rarity: 2 });
+shapeless(I.EXPEDITION_MAP, 1, [I.COMPASS, I.LEATHER, I.FEATHER], 'Actividades');
+const EXP_LOOT = [[I.DIAMOND, 1, 3, 4], [I.GOLDEN_APPLE, 1, 2, 4], [I.SKILL_TOME, 1, 1, 2], [I.FISHER_TREASURE, 1, 2, 3], [I.GOLDFISH, 1, 1, 1], [I.RICE, 4, 8, 2], [I.TOMATO_SEEDS, 3, 6, 2],
+  [I.CABBAGE_SEEDS, 3, 6, 2], [I.CORN, 3, 6, 2], [I.DRAGONFRUIT, 2, 4, 2], [I.FERTILIZER, 4, 10, 3], [I.AERITE, 2, 5, 2], [I.SADDLE, 1, 1, 2]];
+
+/* ---------- Comercio: semillas, pescado y platos ---------- */
+TRADES.farmer.push([[I.EMERALD, 1], [I.TOMATO_SEEDS, 4], 8], [[I.EMERALD, 1], [I.CABBAGE_SEEDS, 4], 8], [[I.TOMATO, 10], [I.EMERALD, 1], 10], [[I.CORN, 12], [I.EMERALD, 1], 10], [[I.EMERALD, 2], [COMPOSTER, 1], 2]);
+TRADES.merchant.push([[I.EMERALD, 3], [I.FISHING_ROD, 1], 2], [[I.SALMON, 6], [I.EMERALD, 1], 10], [[I.GOLDFISH, 1], [I.EMERALD, 12], 2], [[I.SEASHELL, 4], [I.EMERALD, 1], 8], [[I.DISH_PAELLA, 1], [I.EMERALD, 2], 6]);
+TRADES.explorer.push([[I.EMERALD, 6], [I.EXPEDITION_MAP, 1], 2], [[I.EMERALD, 2], [I.RICE, 6], 6]);
+
+/* ---------- Iconos ---------- */
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const fish = (c1, c2, stripe, eye = [20, 20, 20]) => P((p) => { p.poly([[2, 8], [6, 4], [11, 5], [13, 8], [11, 11], [6, 12]], (x, y) => (stripe && (x === 6 || x === 9) ? stripe : y < 8 ? c1 : c2)); p.poly([[12, 8], [15, 4], [15, 12]], c2); p.set(4, 7, eye); });
+  const bowl = (c1, c2, extra) => P((p) => { p.poly([[1, 8], [15, 8], [13, 13], [3, 13]], (x, y) => (y < 10 ? [170, 120, 70] : [130, 88, 50])); p.poly([[2, 6], [14, 6], [14, 8], [2, 8]], (x, y) => ((x * 7 + y * 3) % 5 === 0 ? c2 : c1)); if (extra) extra(p); p.line([[1, 8], [15, 8]], 0.8, [110, 74, 40]); });
+  const fruit = (c1, c2, leaf = [70, 160, 60]) => P((p) => { p.disk(8, 9, 5, (x, y) => (x + y < 16 ? c1 : c2)); p.set(6, 6, [255, 255, 255]); p.line([[8, 4], [10, 1.5]], 1, leaf); });
+  const seeds = (c) => P((p) => { for (let k = 0; k < 9; k++) { const x = 3 + ((k * 37) % 10), y = 4 + ((k * 53) % 9); p.set(x, y, c); p.set(x + 1, y, c.map((v) => v * 0.8)); } });
+  Object.assign(ICON_OVERRIDE, {
+    [I.FISHING_ROD]: P((p) => { p.line([[2, 14], [13, 2]], 1.4, HANDLE); p.line([[13, 2], [14, 10]], 0.6, [230, 230, 230]); p.disk(14, 11, 1.2, [220, 40, 40]); p.line([[3, 13], [5, 11]], 1.6, [60, 60, 60]); }),
+    [I.SALMON]: fish([240, 130, 110], [200, 90, 80]), [I.TROUT]: fish([150, 170, 120], [110, 130, 90], [220, 120, 150]), [I.CATFISH]: fish([110, 100, 80], [80, 70, 56]),
+    [I.ICEFISH]: fish([210, 240, 255], [150, 200, 240]), [I.GOLDFISH]: fish([255, 220, 60], [230, 170, 30], [255, 250, 200], [140, 40, 20]),
+    [I.OLD_BOOT]: P((p) => { p.poly([[4, 2], [9, 2], [9, 10], [14, 11], [14, 14], [3, 14]], (x, y) => ((x + y) % 4 === 0 ? [90, 60, 36] : [120, 80, 48])); p.line([[3, 13], [14, 13]], 1, [50, 36, 24]); }),
+    [I.FISHER_TREASURE]: P((p) => { p.disk(8, 10, 5, (x, y) => (x + y < 17 ? [170, 140, 90] : [130, 104, 64])); p.poly([[5, 4], [11, 4], [10, 6], [6, 6]], [130, 104, 64]); p.line([[5, 5], [11, 5]], 1, [210, 180, 60]); p.set(8, 10, [80, 220, 120]); }),
+    [I.RICE]: seeds([240, 236, 220]), [I.TOMATO_SEEDS]: seeds([230, 210, 140]), [I.CABBAGE_SEEDS]: seeds([110, 90, 70]),
+    [I.TOMATO]: fruit([230, 50, 40], [180, 30, 30]), [I.CABBAGE]: fruit([140, 200, 110], [90, 160, 80], [200, 240, 180]), [I.MANGO]: fruit([250, 180, 40], [230, 110, 40]),
+    [I.DRAGONFRUIT]: P((p) => { p.disk(8, 9, 5, (x, y) => (x + y < 16 ? [240, 70, 150] : [200, 40, 120])); for (const [x, y] of [[5, 6], [10, 7], [6, 12], [11, 11]]) p.line([[x, y], [x + 1.5, y - 1.5]], 0.8, [120, 200, 90]); }),
+    [I.CORN]: P((p) => { p.poly([[6, 2], [10, 2], [11, 12], [8, 15], [5, 12]], (x, y) => ((x + y) % 2 ? [250, 210, 60] : [220, 170, 40])); p.poly([[3, 8], [6, 6], [7, 15], [4, 14]], [110, 170, 70]); p.poly([[13, 8], [10, 6], [9, 15], [12, 14]], [90, 150, 60]); }),
+    [I.CHERRIES]: P((p) => { p.line([[8, 2], [5, 9]], 0.8, [90, 120, 50]); p.line([[8, 2], [11, 9]], 0.8, [90, 120, 50]); p.disk(5, 11, 2.6, [200, 20, 40]); p.disk(11, 11, 2.6, [180, 16, 36]); p.set(4, 10, [255, 200, 200]); }),
+    [I.HERBS]: P((p) => { for (const [x, c] of [[5, [80, 170, 70]], [8, [60, 140, 60]], [11, [100, 190, 90]]]) { p.line([[x, 15], [x + 1, 5]], 0.9, c); p.disk(x + 1, 6, 2, c); } p.line([[4, 13], [12, 13]], 1, [180, 140, 90]); }),
+    [I.SEASHELL]: P((p) => { p.poly([[8, 2], [14, 12], [2, 12]], (x, y) => ((x % 3 === 0) ? [230, 180, 160] : [250, 220, 200])); p.poly([[6, 12], [10, 12], [9, 14], [7, 14]], [220, 170, 150]); }),
+    [I.WATERING_CAN]: P((p) => { p.poly([[3, 6], [11, 6], [11, 14], [3, 14]], (x, y) => (x < 6 ? [150, 160, 170] : [110, 120, 130])); p.line([[11, 9], [15, 5]], 1.4, [120, 130, 140]); p.line([[4, 5], [9, 3], [11, 6]], 1, [90, 100, 110]); p.set(15, 7, [90, 160, 255]); p.set(14, 8, [90, 160, 255]); }),
+    [I.FERTILIZER]: P((p) => { p.poly([[3, 5], [13, 5], [12, 14], [4, 14]], (x, y) => ((x + y) % 3 === 0 ? [80, 60, 36] : [110, 84, 50])); p.line([[3, 5], [13, 5]], 1, [150, 120, 70]); p.disk(8, 9, 1.4, [120, 200, 80]); }),
+    [I.EXPEDITION_MAP]: P((p) => { p.poly([[2, 3], [14, 3], [14, 13], [2, 13]], (x, y) => ((x + y) % 7 === 0 ? [200, 180, 130] : [232, 214, 170])); p.line([[4, 11], [7, 7], [10, 9], [12, 5]], 0.8, [180, 40, 40]); p.set(12, 5, [200, 30, 30]); p.set(4, 5, [70, 110, 160]); }),
+    [I.DISH_FISH_STEW]: bowl([200, 140, 80], [240, 200, 150]), [I.DISH_PAELLA]: bowl([240, 190, 60], [230, 60, 40]), [I.DISH_SALAD]: bowl([120, 200, 90], [230, 50, 40]),
+    [I.DISH_CORN_SOUP]: bowl([250, 210, 80], [230, 180, 50]), [I.DISH_TROPICAL]: bowl([250, 170, 60], [240, 80, 150]), [I.DISH_HERB_TEA]: bowl([150, 190, 90], [200, 230, 150]),
+    [I.DISH_SEA_BROTH]: bowl([180, 200, 210], [240, 200, 180]), [I.DISH_RICE_BOWL]: bowl([245, 242, 230], [140, 200, 110]), [I.DISH_CABBAGE_ROLLS]: bowl([140, 200, 110], [200, 160, 110]),
+    [I.DISH_CHERRY_PIE]: P((p) => { p.poly([[1, 9], [15, 9], [14, 13], [2, 13]], [200, 150, 90]); p.poly([[2, 6], [14, 6], [15, 9], [1, 9]], (x, y) => ((x + y) % 3 === 0 ? [240, 200, 140] : [200, 30, 50])); }),
+    [I.DISH_SKEWER]: P((p) => { p.line([[2, 14], [14, 2]], 0.8, [190, 160, 110]); for (const [k, c] of [[0, [150, 70, 50]], [1, [220, 50, 40]], [2, [150, 70, 50]], [3, [90, 170, 70]]]) p.disk(5 + k * 2.4, 11 - k * 2.4, 1.8, c); }),
+    [I.DISH_GOLDEN_FISH]: P((p) => { p.poly([[1, 11], [15, 11], [13, 14], [3, 14]], [230, 230, 236]); p.poly([[3, 9], [7, 6], [11, 7], [13, 9], [11, 11], [7, 11]], (x, y) => (y < 9 ? [255, 230, 80] : [240, 180, 40])); p.set(5, 8, [140, 40, 20]); p.set(9, 7, [255, 255, 220]); }),
+  });
+}
+
+/* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
    --------------------------------------------------------------------------
    Reloj interno t ∈ [0,1): 0 amanecer, 0,25 mediodía, 0,5 atardecer, 0,75
@@ -11794,7 +12047,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -11805,7 +12058,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.7  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -11830,7 +12083,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -14224,11 +14477,13 @@ const MAIN_QUESTS = [
 ];
 // Plantillas de misiones secundarias por oficio. type: gather | hunt | explore | build | talk
 const QUEST_POOL = {
-  farmer: [['gather', [I.WHEAT], 16, 32, 'trigo'], ['gather', [I.CARROT], 10, 20, 'zanahorias'], ['gather', [I.POTATO], 10, 20, 'patatas'], ['gather', [I.BREAD], 6, 12, 'panes'], ['talk']],
+  farmer: [['gather', [I.WHEAT], 16, 32, 'trigo'], ['gather', [I.CARROT], 10, 20, 'zanahorias'], ['gather', [I.POTATO], 10, 20, 'patatas'], ['gather', [I.BREAD], 6, 12, 'panes'], ['talk'],
+    ['gather', [I.TOMATO], 8, 16, 'tomates'], ['gather', [I.CORN], 8, 16, 'mazorcas'], ['gather', [I.CABBAGE], 4, 8, 'coles'], ['cook', null, 2, 4]],
   smith: [['gather', [I.IRON_INGOT], 6, 12, 'lingotes de hierro'], ['gather', [I.COAL], 16, 32, 'carbón'], ['gather', [I.GOLD_INGOT], 3, 6, 'lingotes de oro'], ['hunt', 'zombie', 4, 8], ['hunt', 'skeleton', 3, 6]],
-  merchant: [['gather', [I.LEATHER], 5, 10, 'cuero'], ['gather', [WOOL, RED_WOOL], 6, 12, 'lana'], ['gather', [I.STRING], 6, 12, 'hilo'], ['explore'], ['talk']],
+  merchant: [['gather', [I.LEATHER], 5, 10, 'cuero'], ['gather', [WOOL, RED_WOOL], 6, 12, 'lana'], ['gather', [I.STRING], 6, 12, 'hilo'], ['explore'], ['talk'],
+    ['fish', null, 3, 6], ['gather', [I.SALMON, I.TROUT], 3, 6, 'salmones o truchas'], ['gather', [I.SEASHELL], 2, 4, 'conchas marinas'], ['cook', null, 2, 3]],
   builder: [['build', [COBBLE], 24, 48, 'piedra labrada'], ['build', PLANKS_ANY, 24, 48, 'tablones'], ['build', [GLASS], 8, 16, 'vidrio'], ['build', [TORCH, LANTERN], 6, 10, 'antorchas o faroles'], ['gather', LOG_ANY, 16, 32, 'troncos']],
-  explorer: [['explore'], ['explore'], ['biome'], ['hunt', 'spider', 3, 6], ['gather', [I.FEATHER], 6, 12, 'plumas']],
+  explorer: [['explore'], ['explore'], ['biome'], ['hunt', 'spider', 3, 6], ['gather', [I.FEATHER], 6, 12, 'plumas'], ['fish', null, 2, 5], ['gather', [I.HERBS], 4, 8, 'hierbas aromáticas']],
   guard: [['hunt', 'hostile', 6, 12], ['hunt', 'zombie', 5, 10], ['hunt', 'spider', 4, 8], ['hunt', 'brute', 1, 1], ['hunt', 'shaman', 1, 2]],
 };
 const HUNT_NAMES = { hostile: 'monstruos', zombie: 'zombis', skeleton: 'esqueletos', spider: 'arañas', brute: 'brutos', shaman: 'chamanes' };
@@ -14244,6 +14499,8 @@ function makeSideQuest(v) {
     const n = t[2] != null ? t[2] + Math.floor(rnd() * (t[3] - t[2] + 1)) : 1;
     if (t[0] === 'gather') Object.assign(q, { items: t[1], n, title: `Encargo: ${t[4]}`, goal: `Trae ${n} ${t[4]} a ${v.vname}` });
     else if (t[0] === 'hunt') Object.assign(q, { mob: t[1], n, title: `Cacería: ${HUNT_NAMES[t[1]]}`, goal: `Derrota ${n} ${n === 1 ? (MOBS[t[1]]?.name || 'monstruo').toLowerCase() : HUNT_NAMES[t[1]]}` });
+    else if (t[0] === 'fish') Object.assign(q, { n, title: `Pesca para ${v.vname}`, goal: `Pesca ${n} peces con una caña` });
+    else if (t[0] === 'cook') Object.assign(q, { n, title: `Banquete en ${villageName(v.planId)}`, goal: `Cocina ${n} platos en una olla` });
     else if (t[0] === 'build') Object.assign(q, { blocks: t[1], n, title: `Obras en ${villageName(v.planId)}`, goal: `Coloca ${n} bloques de ${t[4]} en la aldea` });
     else if (t[0] === 'talk') {
       const others = game.entities.list.filter((e) => e instanceof Villager && e !== v && e.planId === v.planId && !e.deathT);
@@ -14272,7 +14529,7 @@ function makeSideQuest(v) {
       if (!best) continue;
       Object.assign(q, { biome: best.b, px: best.x, pz: best.z, title: `Tierras lejanas: ${BIOMES[best.b].name}`, goal: `Visita el bioma ${BIOMES[best.b].name} (marcado en tu mapa)` });
     }
-    const diff = { gather: 1, hunt: 1.3, explore: 1.6, biome: 1.4, build: 1.1, talk: 0.5 }[q.type] || 1;
+    const diff = { gather: 1, hunt: 1.3, explore: 1.6, biome: 1.4, build: 1.1, talk: 0.5, fish: 1.2, cook: 1.3 }[q.type] || 1;
     q.reward = { em: Math.max(1, Math.round((2 + rnd() * 4) * diff)), xp: Math.round((6 + rnd() * 10) * diff), rep: q.type === 'talk' ? 3 : 6, items: rnd() < 0.25 * diff ? [BONUS_LOOT[Math.floor(rnd() * BONUS_LOOT.length)]] : [] };
     return q;
   }
@@ -14741,6 +14998,20 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.7', name: 'Actividades', date: 'noviembre de 2026', items: [
+    'Pesca interactiva: fabrica una caña (palos e hilo), lánzala al agua y espera. Cuando pique, usa la caña enseguida y mantén Usar para que la zona verde siga al pez hasta llenar la barra. Si sueltas demasiado, se escapa.',
+    'Cada agua tiene sus peces: salmón y pez de hielo en aguas frías, trucha en ríos y lagos, bagre en pantanos (sobre todo de noche), pez payaso y pez globo en mares templados. Con suerte sale el legendario pez dorado; a veces, basura o un Botín del pescador con tesoros. Llover ayuda a que piquen.',
+    'Cinco cultivos nuevos, cada uno con sus biomas: arroz (pantanos y junglas; solo crece en tierra húmeda), tomate y maíz (llanuras y sabanas), col (taigas, tundras y nieve) y pitahaya (desiertos; se planta directamente en la arena). En su bioma crecen casi el doble de rápido; en climas que no les van, mucho más despacio.',
+    'Las semillas nuevas aparecen al cortar hierba alta en sus biomas, al romper cactus (pitahaya) y en las tiendas de los aldeanos.',
+    'Agricultura mejorada: la regadera humedece la tierra de alrededor durante un buen rato; el abono hace que la tierra dé el doble de rápido y una pieza más en cada cosecha, y sobre un cultivo lo hace crecer al momento; el compostador convierte restos de plantas, semillas y comida en abono.',
+    'Recolección: hierbas aromáticas en praderas y bosques, mangos en las hojas de la jungla, cerezas en los cerezos y conchas marinas en la arena de las playas.',
+    'Cocina con recetas: la olla, sobre una hoguera, una cocina, un horno encendido o magma, prepara 12 platos (guiso de pescado, paella, ensalada, sopa de maíz, tarta de cerezas, batido tropical, brocheta, pez dorado glaseado, infusión de hierbas, caldo marinero, cuenco de arroz y rollitos de col). Sacian mucho y dan efectos: fuerza, regeneración, velocidad, resistencia, visión nocturna o respiración acuática; la infusión quita los efectos dañinos.',
+    'Cría: el comedero, lleno de comida, alimenta solo a los animales adultos de alrededor para que críen (hasta un límite por corral).',
+    'Expediciones: el mapa de expedición (brújula, cuero y pluma, o en las tiendas) te encarga llegar a un lugar lejano que aún no conoces. Se marca en el mapa y en el registro de misiones, y al llegar cobras esmeraldas, experiencia y un objeto especial; cuanto más lejos, mejor.',
+    'Misiones secundarias nuevas de los aldeanos: pescar, cocinar platos y traer tomates, mazorcas, coles, salmones, conchas o hierbas.',
+    'Tres eventos nuevos: Banco de peces (pican mucho más y salen más tesoros), Cosecha abundante (los cultivos crecen cuatro veces más rápido) y Mercader de semillas (semillas exóticas, abono y útiles).',
+    'Todo cuenta para la progresión: pescar, cocinar, recolectar y completar expediciones da experiencia de habilidad. Los platos y el pescado se venden bien a los aldeanos. 10 logros nuevos.',
+  ] },
   { v: '4.6', name: 'Combate y jefes', date: 'noviembre de 2026', items: [
     'Enemigos más listos: preparan el golpe un instante antes de darlo (levantan los brazos), así que si te apartas a tiempo lo esquivas. Rodean los obstáculos cuando se atascan, no se tiran por precipicios ni a la lava y, si no hay manera de llegar a ti, se rinden un rato.',
     'Cuando atacas a un enemigo, los de alrededor se enteran y vienen a por ti aunque no te vean.',
@@ -15012,7 +15283,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.7', name: 'Actividades', items: ['Pesca, cocina, cría y cultivos por bioma.', 'Misiones secundarias y expediciones.'] },
   { v: '4.8', name: 'Construcción y mecanismos', items: ['Más bloques, muebles y mecanismos.'] },
   { v: '4.9', name: 'Multijugador', items: ['Equipos, comercio, cofres compartidos y protección de terrenos.'] },
   { v: '5.0', name: 'Expansión total', items: ['Interfaz, calidad gráfica y optimización final.'] },
@@ -19829,6 +20099,552 @@ class SoulMissile extends Entity {
 /* ---------- Logros ---------- */
 ACHIEVEMENTS.push(['boss_lich', 'Sin filacteria', 'Derrota al Liche.'], ['boss_fallenking', 'El último rey', 'Derrota al Rey caído.'], ['boss_stormroc', 'Cazador de tormentas', 'Derrota al Roc de la tormenta.'],
   ['zone_hunter', 'Cazador de zonas', 'Derrota a un esqueleto acorazado, un caballero espectral, un limo mutante y un escarabajo dorado.']);
+
+/* ==========================================================================
+   §46 ACTIVIDADES 4.7 — lógica
+   --------------------------------------------------------------------------
+   · Pesca interactiva: lanzar, esperar a que pique, engancharlo a tiempo y
+     recoger el sedal manteniendo Usar para que la zona verde siga al pez.
+     Lo que sale depende del agua (mar, mar templado, aguas frías, río o
+     pantano), de la hora, de la lluvia y de la suerte.
+   · Agricultura: cada cultivo nuevo crece mejor en sus biomas; la regadera
+     humedece la tierra, el abono acelera el crecimiento y da más cosecha y el
+     compostador convierte restos en abono.
+   · Cocina: la olla, sobre una fuente de calor, prepara platos con recetas.
+   · Cría: el comedero alimenta solo a los animales de alrededor.
+   · Recolección por bioma, expediciones, misiones nuevas y tres eventos.
+   ========================================================================== */
+const HEAT47 = new Set([CAMPFIRE, STOVE, FURNACE_LIT, MAGMA, LAVA]);
+const NEW_CROPS = [RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP];
+Object.assign(SKILL_XP, { fished: 4, cooked: 3, foraged: 1, expeditions: 25 });
+
+/* ---------- Pesca ---------- */
+class Bobber extends Entity {
+  constructor(x, y, z, vel) {
+    super('proj', x, y, z, 0.12, 0.25); this.vel.copy(vel); this.inWater = false; this.landed = false; this.dip = 0; this.t = 0;
+    this.mesh = new THREE.Mesh(cbox(0.2, 0.24, 0.2, 0, 0, 0, (f) => (f === 2 ? rgb(230, 40, 40) : f === 3 ? rgb(240, 240, 240) : rgb(210, 50, 50))), new THREE.MeshBasicMaterial({ vertexColors: true }));
+  }
+  update(dt, g) {
+    this.t += dt;
+    const x = Math.floor(this.pos.x), z = Math.floor(this.pos.z), y = Math.floor(this.pos.y), id = world.get(x, y, z);
+    if (B_WATERY[id]) {
+      // flota: sube hasta la superficie
+      let top = y; while (B_WATERY[world.get(x, top + 1, z)] && top < y + 6) top++;
+      const want = top + 0.88 - this.dip;
+      this.vel.x *= 0.85; this.vel.z *= 0.85; this.vel.y = (want - this.pos.y) * 6;
+      if (!this.inWater) { this.inWater = true; sfx.play('splash', { pos: this.pos, vol: 0.4 }); g.particles.emit(this.pos.x, top + 1, this.pos.z, [0.75, 0.85, 1], 8, { speed: 1.5, up: 2, life: 0.5, size: 0.07 }); }
+      this.waterTop = top;
+    } else if (!this.landed) {
+      this.vel.y -= 14 * dt;
+      if (B_SOLID[world.get(Math.floor(this.pos.x + this.vel.x * dt), Math.floor(this.pos.y + this.vel.y * dt), Math.floor(this.pos.z + this.vel.z * dt))]) { this.landed = true; this.vel.set(0, 0, 0); }
+    }
+    if (!this.landed) this.pos.addScaledVector(this.vel, dt);
+    this.mesh.position.copy(this.pos); this.mesh.rotation.y += dt;
+    if (this.t > 60 || this.pos.y < -5) this.dead = true;
+  }
+  toJSON() { return null; }
+}
+const fishing = {
+  bob: null, state: null, t: 0, lastHeld: 0, hinted: false, game: null, line: null,
+  rodHeld() { const s = game.player?.held(); return s && s.id === I.FISHING_ROD; },
+  // tipo de agua donde está el anzuelo
+  water(x, z) {
+    const b = world.gen.column(Math.floor(x), Math.floor(z)).b;
+    if ([BIOME.SNOWY, BIOME.TUNDRA, BIOME.TAIGA].includes(b) || world.get(Math.floor(x), this.bob.waterTop ?? 0, Math.floor(z)) === ICE) return 'cold';
+    if (b === BIOME.SWAMP) return 'swamp';
+    if (b === BIOME.OCEAN || b === BIOME.BEACH) { const t = world.gen.column(Math.floor(x), Math.floor(z)).temp ?? 0.5; return t > 0.62 ? 'warm' : 'ocean'; }
+    if ([BIOME.JUNGLE, BIOME.ISLAND].includes(b)) return 'warm';
+    return 'river';
+  },
+  depth() { const x = Math.floor(this.bob.pos.x), z = Math.floor(this.bob.pos.z); let d = 0; for (let y = this.bob.waterTop; d < 8 && B_WATERY[world.get(x, y, z)]; y--) d++; return d; },
+  frenzy() { return events.cur && events.cur.id === 'fishfrenzy'; },
+  // qué pica: tesoro, basura, pez dorado o un pez de la tabla de esa agua
+  roll() {
+    const env = game.env, night = env.isNight(), rain = env.rainAmt > 0.3, deep = this.depth() >= 4, fr = this.frenzy();
+    let r = Math.random();
+    const pTreasure = 0.035 + (deep ? 0.025 : 0) + (fr ? 0.04 : 0), pGold = 0.01 + (night ? 0.008 : 0) + (rain ? 0.008 : 0) + (fr ? 0.025 : 0), pJunk = fr ? 0.04 : 0.09;
+    if ((r -= pTreasure) < 0) return { id: I.FISHER_TREASURE, diff: 0.8, kind: 'treasure' };
+    if ((r -= pGold) < 0) return { id: I.GOLDFISH, diff: 1.55, kind: 'gold' };
+    if ((r -= pJunk) < 0) { const j = FISH_JUNK[Math.floor(Math.random() * FISH_JUNK.length)]; return { id: j[0], n: j[1] > 1 ? 1 + Math.floor(Math.random() * j[1]) : 1, diff: 0.3, kind: 'junk' }; }
+    const tab = FISH_TABLE[this.wtype].map(([id, w, d]) => [id, w * (night && id === I.CATFISH ? 2 : 1), d]);
+    let tot = tab.reduce((a, t) => a + t[1], 0), k = Math.random() * tot;
+    for (const [id, w, d] of tab) if ((k -= w) < 0) return { id, diff: d, kind: 'fish' };
+    return { id: tab[0][0], diff: tab[0][2], kind: 'fish' };
+  },
+  waitTime() { const env = game.env; let t = 5 + Math.random() * 10; if (env.rainAmt > 0.3) t *= 0.7; if (this.frenzy()) t *= 0.35; return t; },
+  // Usar con la caña en la mano (solo cuenta cada pulsación nueva)
+  use() {
+    const now = performance.now();
+    if (now - this.lastHeld < 140) return true;
+    this.lastHeld = now;
+    const p = game.player;
+    if (!this.state) {
+      const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+      const o = camera.position.clone().addScaledVector(dir, 0.6);
+      this.bob = new Bobber(o.x, o.y, o.z, dir.clone().multiplyScalar(11).add(new THREE.Vector3(0, 3, 0)));
+      game.entities.add(this.bob); this.state = 'cast'; this.t = 0;
+      sfx.play('swing', { pitch: 0.8 }); game.swing = 1;
+      if (!this.hinted) { this.hinted = true; hud.toast(IS_TOUCH ? 'Espera a que pique y toca Usar enseguida' : 'Espera a que pique y pulsa Usar enseguida', 2600); }
+      return true;
+    }
+    if (this.state === 'bite') { this.startReel(); return true; }
+    if (this.state === 'reel') return true;
+    this.stop(); sfx.play('swing', { pitch: 1.4, vol: 0.5 }); return true;          // recoger sin nada
+  },
+  startReel() {
+    const c = this.catch;
+    this.state = 'reel';
+    this.game = { fish: 0.5, fishT: 0.5, fishV: 0, zone: 0.36, zv: 0, w: clamp(0.34 - c.diff * 0.07, 0.2, 0.32), prog: 0.3, diff: c.diff, t: 0 };
+    document.body.classList.add('fishing'); sfx.play('pop', { pitch: 0.7 });
+  },
+  stop() {
+    if (this.bob) this.bob.dead = true;
+    this.bob = null; this.state = null; this.game = null;
+    document.body.classList.remove('fishing');
+    if (this.line) this.line.visible = false;
+  },
+  land(c) {
+    const p = game.player, s = { id: c.id, count: c.n || 1 };
+    const left = p.inv.add(s.id, s.count); if (left) game.entities.dropItem({ id: s.id, count: left }, p.pos.x, p.pos.y + 1, p.pos.z);
+    p.discover(s.id); sfx.play('pop'); hud.update();
+    game.particles.emit(this.bob.pos.x, this.bob.pos.y + 0.3, this.bob.pos.z, [0.75, 0.85, 1], 14, { speed: 2.5, up: 3, life: 0.6, size: 0.08 });
+    hud.toast(`🎣 ${c.kind === 'junk' ? 'Has sacado' : c.kind === 'treasure' ? '¡Un tesoro!' : '¡Has pescado'} ${itemName(s.id)}${s.count > 1 ? ' ×' + s.count : ''}${c.kind === 'fish' || c.kind === 'gold' ? '!' : ''}`, 2200);
+    if (c.kind !== 'junk') {
+      game.stats.add('fished'); p.addXp(c.kind === 'gold' ? 12 : c.kind === 'treasure' ? 6 : 2 + Math.round(c.diff * 2));
+      game.unlock('fish_first'); if (c.kind === 'gold') game.unlock('fish_gold');
+      const kinds = (p.fishKinds ||= []); if (c.kind === 'fish' && !kinds.includes(s.id)) { kinds.push(s.id); if (kinds.length >= 6) game.unlock('fish_all'); }
+      for (const q of questState(p).active) if (q.type === 'fish' && c.kind !== 'treasure') { q.prog++; questUI.dirty = true; }
+      if (this.frenzy()) { const ev = events.cur; ev.d.caught = (ev.d.caught || 0) + 1; if (ev.d.caught >= 4) events.end(true, '¡Buena pesca!'); }
+    }
+    game.wearTool(1);
+  },
+  update(dt) {
+    if (input.secondary) this.lastHeld = performance.now();
+    if (!this.state) return;
+    const p = game.player;
+    if (!p || p.dead || !this.rodHeld() || !this.bob || this.bob.dead || this.bob.pos.distanceTo(p.pos) > 30 || (game.state !== 'playing' && this.state !== 'reel')) { this.stop(); return; }
+    this.drawLine();
+    const b = this.bob;
+    if (this.state === 'cast') { if (b.inWater) { this.state = 'wait'; this.t = this.waitTime(); this.wtype = this.water(b.pos.x, b.pos.z); } return; }
+    if (this.state === 'wait') {
+      this.t -= dt; b.dip = 0;
+      if (Math.random() < dt * 0.8) game.particles.emit(b.pos.x + (Math.random() - 0.5) * 2, b.waterTop + 1, b.pos.z + (Math.random() - 0.5) * 2, [0.8, 0.9, 1], 1, { gravity: 0, up: 0.3, speed: 0.2, life: 0.6, size: 0.06 });
+      if (this.t <= 0) {
+        this.state = 'bite'; this.t = 1.25; this.catch = this.roll(); b.dip = 0.3;
+        sfx.play('splash', { pos: b.pos }); game.particles.emit(b.pos.x, b.waterTop + 1, b.pos.z, [0.75, 0.85, 1], 16, { speed: 2, up: 3, life: 0.5, size: 0.08 });
+        hud.toast('🎣 ¡Pica! ¡Usa la caña!', 1100);
+      }
+      return;
+    }
+    if (this.state === 'bite') {
+      this.t -= dt; b.dip = 0.25 + Math.sin(performance.now() / 50) * 0.08;
+      if (this.t <= 0) { hud.toast('Se escapó… espera a que vuelva a picar', 1500); this.state = 'wait'; this.t = this.waitTime(); b.dip = 0; }
+      return;
+    }
+    // --- recoger el sedal: mantener Usar sube la zona verde, soltarlo la deja caer ---
+    const G = this.game; G.t += dt; b.dip = 0.15 + Math.sin(G.t * 9) * 0.1;
+    if ((G.fishT -= dt * (0.45 + G.diff * 0.55)) <= 0) { G.fishT = 0.6 + Math.random() * 1.1; G.goal = clamp(G.fish + (Math.random() - 0.5) * (0.45 + G.diff * 0.75), 0.03, 0.97); }
+    const want = G.goal ?? 0.5;
+    G.fishV += ((want - G.fish) * (1.2 + G.diff * 1.6) - G.fishV) * Math.min(1, dt * 3);
+    G.fish = clamp(G.fish + G.fishV * dt + (Math.random() - 0.5) * G.diff * 0.015, 0, 1);
+    G.zv += (input.secondary ? 2.2 : -2) * dt; G.zv *= Math.exp(-dt * 1.6);
+    G.zone += G.zv * dt; if (G.zone < 0) { G.zone = 0; G.zv = Math.max(0, G.zv) * 0.3; } if (G.zone > 1 - G.w) { G.zone = 1 - G.w; G.zv = Math.min(0, G.zv) * 0.3; }
+    const inside = G.fish >= G.zone && G.fish <= G.zone + G.w;
+    G.prog = clamp(G.prog + (inside ? 0.25 : -0.13 * (0.6 + G.diff * 0.6)) * dt, 0, 1);
+    this.renderGame(inside);
+    if (G.prog >= 1) { this.land(this.catch); this.stop(); }
+    else if (G.prog <= 0) { hud.toast('¡Se escapó!', 1300); game.wearTool(1); this.stop(); }
+  },
+  renderGame(inside) {
+    const G = this.game, el = $('#fishGame'); if (!el) return;
+    el.querySelector('.fgZone').style.cssText = `left:${G.zone * 100}%;width:${G.w * 100}%`;
+    el.querySelector('.fgFish').style.left = `${G.fish * 100}%`;
+    el.querySelector('.fgProg s').style.width = `${G.prog * 100}%`;
+    el.classList.toggle('in', inside);
+  },
+  drawLine() {
+    if (!this.line) {
+      this.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xdddddd }));
+      this.line.frustumCulled = false; scene.add(this.line);
+    }
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir);
+    const right = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+    const tip = camera.position.clone().addScaledVector(dir, 0.9).addScaledVector(right, 0.32).add(new THREE.Vector3(0, 0.05, 0));
+    const pos = this.line.geometry.attributes.position; pos.setXYZ(0, tip.x, tip.y, tip.z); pos.setXYZ(1, this.bob.pos.x, this.bob.pos.y + 0.1, this.bob.pos.z); pos.needsUpdate = true;
+    this.line.visible = true;
+  },
+};
+
+/* ---------- Agricultura: crecimiento por bioma, regadera y abono ---------- */
+{
+  game.farmTick = function () {
+    const p = this.player, R = settings.renderDistance, pcx = Math.floor(p.pos.x) >> 4, pcz = Math.floor(p.pos.z) >> 4;
+    this.farmN = (this.farmN || 0) + 1;
+    const boost = events.cur && events.cur.id === 'harvest' ? 4 : 1;
+    for (const ch of world.chunks.values()) {
+      if (Math.abs(ch.cx - pcx) > R || Math.abs(ch.cz - pcz) > R) continue;
+      // humedad (bit 0), abono (bit 1) y riego (bit 2) de la tierra de cultivo, cada 4 s
+      if (this.farmN % 4 === 0) for (const i of ch.farmland) {
+        if (ch.blocks[i] !== FARMLAND) { ch.farmland.delete(i); continue; }
+        const x = ch.cx * 16 + (i & 15), y = i >> 8, z = ch.cz * 16 + ((i >> 4) & 15), m = ch.meta[i];
+        let watered = m & 4; if (watered && !isWetSpot(x, y, z) && Math.random() < 1 / 150) watered = 0;     // lo regado se seca poco a poco
+        const wet = isWetSpot(x, y, z) || watered ? 1 : 0, nm = wet | (m & 2) | watered;
+        if (nm !== m) world.set(x, y, z, FARMLAND, nm);
+      }
+      let cb = ch.b47; if (cb == null) cb = ch.b47 = world.gen.column(ch.cx * 16 + 8, ch.cz * 16 + 8).b;
+      for (const i of ch.crops) {
+        const id = ch.blocks[i]; if (!BLOCKS[id].crop) { ch.crops.delete(i); continue; }
+        const stage = ch.meta[i] & 3; if (stage >= 3) continue;
+        const below = ch.blocks[i - 256], bm = ch.meta[i - 256], wet = below === FARMLAND && (bm & 1), C = CROP_BIOMES[id];
+        let chance = wet ? 1 / 20 : 1 / 55;
+        if (C) {
+          if (C.wet && !wet) continue;                                                     // el arroz no crece en seco
+          if (C.sand) chance = below === SAND || below === RED_SAND ? 1 / 30 : 1 / 80;
+          chance *= C.good.includes(cb) ? 1.8 : C.bad.includes(cb) ? 0.35 : 0.7;
+        }
+        if (below === FARMLAND && (bm & 2)) chance *= 2;
+        chance *= boost;
+        if (Math.random() < chance) world.set(ch.cx * 16 + (i & 15), i >> 8, ch.cz * 16 + ((i >> 4) & 15), id, stage + 1);
+        else if (boost > 1 && Math.random() < 0.02) game.particles.emit(ch.cx * 16 + (i & 15) + 0.5, (i >> 8) + 0.6, ch.cz * 16 + ((i >> 4) & 15) + 0.5, [0.6, 1, 0.4], 2, { gravity: -1, up: 1, speed: 0.3, life: 0.7, size: 0.07 });
+      }
+    }
+  };
+}
+
+/* ---------- Usar objetos: caña, regadera, abono, pitahaya, mapa y botín ---------- */
+{
+  const _use = game.useItem;
+  game.useItem = function () {
+    const p = this.player, s = p.held(), t = this.target, surv = this.mode === 'survival';
+    const take = () => { if (surv) { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; } hud.update(); };
+    if (s && s.id === I.FISHING_ROD) { if (fishing.use()) { this.useCd = 0.25; return true; } }
+    if (s && s.id === I.WATERING_CAN && t) {
+      const fy = t.id === FARMLAND ? t.y : BLOCKS[t.id]?.crop && world.get(t.x, t.y - 1, t.z) === FARMLAND ? t.y - 1 : null;
+      if (fy == null) return false;
+      let n = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) if (world.get(t.x + dx, fy, t.z + dz) === FARMLAND) { world.set(t.x + dx, fy, t.z + dz, FARMLAND, world.getMeta(t.x + dx, fy, t.z + dz) | 5); n++;
+        for (let k = 0; k < 3; k++) this.particles.emit(t.x + dx + Math.random(), fy + 1.4, t.z + dz + Math.random(), [0.4, 0.6, 1], 1, { gravity: 6, up: 0, speed: 0.3, life: 0.4, size: 0.07 }); }
+      sfx.play('splash', { vol: 0.4 }); this.swing = 1; this.useCd = 0.4; if (n) this.unlock('water_can'); return true;
+    }
+    if (s && s.id === I.FERTILIZER && t) {
+      if (BLOCKS[t.id]?.crop && (t.meta & 3) < 3) { world.set(t.x, t.y, t.z, t.id, Math.min(3, (t.meta & 3) + 1)); take(); this.particles.emit(t.x + 0.5, t.y + 0.5, t.z + 0.5, [0.5, 1, 0.4], 10, { gravity: -1, up: 1, speed: 1, life: 0.7, size: 0.08 }); sfx.play('pop'); this.swing = 1; return true; }
+      if (t.id === FARMLAND && !(t.meta & 2)) { world.set(t.x, t.y, t.z, FARMLAND, t.meta | 2); take(); this.particles.emit(t.x + 0.5, t.y + 1.1, t.z + 0.5, [0.45, 0.32, 0.2], 10, { gravity: 2, up: 1, speed: 1, life: 0.6, size: 0.08 }); sfx.play('place', { mat: 'dirt' }); this.swing = 1; hud.toast('Tierra abonada: crecerá el doble de rápido y dará más', 1600); return true; }
+      if (t.id === FARMLAND) { hud.toast('Esta tierra ya está abonada'); return true; }
+    }
+    if (s && ITEMS[s.id].plantOn && t && ITEMS[s.id].plantOn.includes(t.id) && t.normal[1] === 1 && !world.get(t.x, t.y + 1, t.z)) {
+      world.set(t.x, t.y + 1, t.z, DRAGONFRUIT_CROP, 0); take(); sfx.play('place', { mat: 'grass' }); this.swing = 1; this.stats.add('placed'); return true;
+    }
+    if (s && s.id === I.FISHER_TREASURE) {
+      take();
+      const n = 1 + (Math.random() < 0.35 ? 1 : 0);
+      for (let k = 0; k < n; k++) { const pick = weighted46(FISH_TREASURE); const c = pick[1] + Math.floor(Math.random() * (pick[2] - pick[1] + 1)), left = p.inv.add(pick[0], c); if (left) this.entities.dropItem({ id: pick[0], count: left }, p.pos.x, p.pos.y + 1, p.pos.z); p.discover(pick[0]); hud.toast(`🎁 ${itemName(pick[0])}${c > 1 ? ' ×' + c : ''}`, 1800); }
+      sfx.play('chime'); this.useCd = 0.5; hud.update(); return true;
+    }
+    if (s && s.id === I.EXPEDITION_MAP) { if (startExpedition()) take(); this.useCd = 0.6; return true; }
+    return _use.call(this);
+  };
+  // el arroz avisa si se planta en seco
+  const _place = game.placeHeld;
+  game.placeHeld = function () {
+    const s = this.player.held(), t = this.target, r = _place.call(this);
+    if (r && s && s.id === I.RICE && t && t.id === FARMLAND && !(t.meta & 1)) hud.toast('El arroz solo crece en tierra húmeda: riégala o pon agua cerca', 2400);
+    return r;
+  };
+  // efecto especial de la infusión: quita los efectos dañinos
+  const _eff = game.applyEffect;
+  game.applyEffect = function (eff, lvl, dur) {
+    if (eff === 'cure') { const p = this.player; for (const k of [...p.effects.keys()]) if (BAD_EFFECTS.has(k)) p.effects.delete(k); return true; }
+    return _eff.call(this, eff, lvl, dur);
+  };
+}
+function weighted46(list) { const tot = list.reduce((a, t) => a + t[3], 0); let k = Math.random() * tot; for (const t of list) if ((k -= t[3]) < 0) return t; return list[0]; }
+
+/* ---------- Romper bloques: recolección por bioma, cosecha abonada y eventos ---------- */
+{
+  const _break = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z), meta = world.getMeta(x, y, z), def = BLOCKS[id], surv = this.mode === 'survival';
+    const ripe = def && def.crop && (meta & 3) >= 3, below = world.get(x, y - 1, z), bm = world.getMeta(x, y - 1, z);
+    const r = _break.call(this, x, y, z, byPlayer);
+    if (!id || world.get(x, y, z) === id || !byPlayer || !surv) return r;
+    const p = this.player;
+    // cosecha en tierra abonada: una pieza más (y a veces se gasta el abono)
+    if (ripe && below === FARMLAND && (bm & 2)) {
+      const first = typeof def.drop === 'function' ? def.drop(Math.random, null, 3)[0] : null;
+      if (first) this.entities.dropItem({ id: first[0], count: 1 }, x + 0.5, y + 0.3, z + 0.5);
+      if (Math.random() < 0.2) world.set(x, y - 1, z, FARMLAND, bm & ~2);
+    }
+    if (ripe && NEW_CROPS.includes(id)) { const got = (p.crops47 ||= []); if (!got.includes(id)) { got.push(id); if (got.length >= NEW_CROPS.length) this.unlock('farm_world'); } }
+    if (ripe && events.cur && events.cur.id === 'harvest') { const ev = events.cur; ev.d.n = (ev.d.n || 0) + 1; if (ev.d.n >= 12) events.end(true, '¡Gran cosecha!'); }
+    // recolección: semillas, hierbas, frutas y conchas según el bioma
+    let b = null;
+    for (const [blocks, biomes, item, chance] of FORAGE) {
+      if (!blocks.includes(id) || Math.random() >= chance) continue;
+      if (biomes) { if (b == null) b = world.gen.column(x, z).b; if (!biomes.includes(b)) continue; }
+      this.entities.dropItem({ id: item, count: 1 }, x + 0.5, y + 0.4, z + 0.5);
+      this.stats.add('foraged'); break;
+    }
+    return r;
+  };
+}
+
+/* ---------- Olla, compostador y comedero ---------- */
+const potUI = { open: false, key: null };
+function potTile(x, y, z) {
+  const k = `${x},${y},${z}`; let t = world.tiles.get(k);
+  if (!t || t.type !== 'pot') { t = { type: 'pot', inv: new Inventory(1), dish: 0, n: 0, t: 0 }; world.tiles.set(k, t); }
+  return t;
+}
+function potHeat(x, y, z) { return HEAT47.has(world.get(x, y - 1, z)); }
+const dishOf = (id) => DISHES.find((d) => d[0] === id);
+function dishHave(ing) {
+  const p = game.player, ok = [];
+  for (const [what, n] of ing) { const ids = Array.isArray(what) ? what : [what]; ok.push(Math.min(n, countAny(p.inv, ids))); }
+  return ok;
+}
+function dishMax(ing) {
+  if (game.mode === 'creative') return 4;
+  const p = game.player; let m = 4;
+  for (const [what, n] of ing) { const ids = Array.isArray(what) ? what : [what]; m = Math.min(m, Math.floor(countAny(p.inv, ids) / n)); }
+  return m;
+}
+function cookDish(id, times) {
+  const [, name, ing] = dishOf(id), [x, y, z] = potUI.key.split(',').map(Number), tile = potTile(x, y, z), p = game.player;
+  if (tile.n > 0) { hud.toast('La olla ya está cocinando'); return false; }
+  if (tile.inv.slots[0] && tile.inv.slots[0].id !== id) { hud.toast('Recoge primero lo que hay en la olla'); return false; }
+  if (!potHeat(x, y, z)) { hud.toast('La olla necesita calor debajo: una hoguera, una cocina, un horno encendido o magma', 3000); return false; }
+  times = Math.min(times, dishMax(ing)); if (times <= 0) { hud.toast('Te faltan ingredientes'); return false; }
+  if (game.mode === 'survival') for (const [what, n] of ing) removeAny(p.inv, Array.isArray(what) ? what : [what], n * times);
+  if (ing.some(([w]) => w === I.WATER_BOTTLE) && game.mode === 'survival') { const left = p.inv.add(I.BOTTLE, times); if (left) game.entities.dropItem({ id: I.BOTTLE, count: left }, p.pos.x, p.pos.y + 1, p.pos.z); }
+  tile.dish = id; tile.n = times; tile.t = 5 + times * 3; tile.t0 = tile.t;
+  sfx.play('splash', { vol: 0.5, pitch: 1.3 }); hud.update(); net.active && net.scanTiles && net.scanTiles();
+  return true;
+}
+function collectPot(tile) {
+  const s = tile.inv.slots[0]; if (!s) return false;
+  const p = game.player, left = p.inv.add(s.id, s.count); if (left) game.entities.dropItem({ id: s.id, count: left }, p.pos.x, p.pos.y + 1, p.pos.z);
+  p.discover(s.id); tile.inv.slots[0] = null;
+  game.stats.add('cooked', s.count); game.unlock('cook_first');
+  const known = (p.dishes47 ||= []); if (!known.includes(s.id)) { known.push(s.id); if (known.length >= 5) game.unlock('chef'); }
+  for (const q of questState(p).active) if (q.type === 'cook') { q.prog += s.count; questUI.dirty = true; }
+  sfx.play('pop'); hud.toast(`🍲 ${itemName(s.id)}${s.count > 1 ? ' ×' + s.count : ''}`, 1600); hud.update();
+  return true;
+}
+const potScreen = {
+  show(x, y, z) {
+    potUI.key = `${x},${y},${z}`; potUI.open = true;
+    game.releaseInputs(); game.state = 'pot';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('cookScreen'); this.render();
+  },
+  hide() { potUI.open = false; showScreen(null); game.state = 'playing'; game.resume(); },
+  render() {
+    if (!potUI.open) return;
+    const [x, y, z] = potUI.key.split(',').map(Number), tile = potTile(x, y, z), heat = potHeat(x, y, z);
+    let top = `<p class="${heat ? 'ok' : 'bad'}">${heat ? '🔥 Hay calor debajo: lista para cocinar' : '❄ Sin calor: pon la olla sobre una hoguera, una cocina, un horno encendido o magma'}</p>`;
+    if (tile.n > 0) top += `<div class="cookBusy">Cocinando ${tile.n}× ${escapeHtml(itemName(tile.dish))}… <u><s style="width:${(1 - tile.t / (tile.t0 || 1)) * 100}%"></s></u></div>`;
+    const out = tile.inv.slots[0];
+    if (out) top += `<div class="cookDone"><i style="background-image:url(${ICON[out.id] || ''})"></i><span>${out.count}× ${escapeHtml(itemName(out.id))} listo</span><button class="btn" id="cookTake">Recoger</button></div>`;
+    $('#cookTop').innerHTML = top;
+    const known = game.player.dishes47 || [];
+    $('#cookList').innerHTML = DISHES.map(([id, name, ing, food]) => {
+      const have = dishHave(ing), max = dishMax(ing);
+      const ings = ing.map(([what, n], k) => { const ids = Array.isArray(what) ? what : [what], first = ids[0], label = Array.isArray(what) && what.length > 1 ? (what === FISH_ANY ? 'cualquier pescado' : what === MEAT_ANY ? 'cualquier carne' : itemName(first) + ' u otro') : itemName(first);
+        return `<span class="${have[k] >= n || game.mode === 'creative' ? 'ok' : 'no'}"><i style="background-image:url(${ICON[first] || ''})"></i>${n > 1 ? n + '× ' : ''}${escapeHtml(label)}</span>`; }).join('');
+      return `<div class="dish${max > 0 ? '' : ' off'}"><i class="dIcon" style="background-image:url(${ICON[id] || ''})"></i><div><b>${escapeHtml(name)}${known.includes(id) ? '' : ' <em>nuevo</em>'}</b><div class="dIng">${ings}</div><small>${escapeHtml(ITEMS[id].desc.replace('Plato de la olla. ', ''))}</small></div>
+        <div class="dBtns"><button class="btn" data-cook="${id}" data-n="1"${max > 0 && !tile.n ? '' : ' disabled'}>Cocinar</button>${max > 1 ? `<button class="btn" data-cook="${id}" data-n="${max}"${tile.n ? ' disabled' : ''}>×${max}</button>` : ''}</div></div>`;
+    }).join('');
+    $$('#cookList [data-cook]').forEach((b) => (b.onclick = () => { if (cookDish(+b.dataset.cook, +b.dataset.n)) this.render(); }));
+    const tk = $('#cookTake'); if (tk) tk.onclick = () => { collectPot(tile); this.render(); };
+  },
+};
+const COMPOSTABLE = (id) => { const it = ITEMS[id]; if (!it || it.dish) return 0; if (it.food || it.plant || it.plantOn) return it.food && it.food.hunger >= 4 ? 0.85 : 0.6;
+  if (id === I.HERBS || id === I.WHEAT || id === I.BONE_MEAL || id === I.DRIED_KELP) return 0.6; const b = it.block && BLOCKS[it.block]; return b && (/^Hojas|^Brote|^Retoño/.test(b.name) || b.shape === 'cross') ? 0.4 : 0; };
+{
+  const _int = game.interact;
+  game.interact = function () {
+    const t = this.target, def = t && BLOCKS[t.id], p = this.player;
+    if (!def || !['pot', 'compost', 'feeder'].includes(def.interact) || down('sneak')) return _int.call(this);
+    const k = `${t.x},${t.y},${t.z}`;
+    if (def.interact === 'pot') { potTile(t.x, t.y, t.z); potScreen.show(t.x, t.y, t.z); return true; }
+    if (def.interact === 'feeder') {
+      let tile = world.tiles.get(k); if (!tile || tile.type !== 'feeder') { tile = { type: 'feeder', inv: new Inventory(9) }; world.tiles.set(k, tile); }
+      tile.title = 'Comedero'; openInventory('chest', tile); return true;
+    }
+    // compostador
+    let tile = world.tiles.get(k); if (!tile || tile.type !== 'compost') { tile = { type: 'compost', lvl: 0 }; world.tiles.set(k, tile); }
+    const pos = { x: t.x + 0.5, y: t.y + 1, z: t.z + 0.5 };
+    if (tile.lvl >= 7) {
+      tile.lvl = 0; this.entities.dropItem({ id: I.FERTILIZER, count: 2 + (Math.random() < 0.4 ? 1 : 0) }, pos.x, pos.y, pos.z); sfx.play('pop'); this.unlock('compost');
+      this.particles.emit(pos.x, pos.y, pos.z, [0.45, 0.32, 0.2], 14, { speed: 2, up: 2, life: 0.6, size: 0.1 }); hud.toast('Has sacado abono del compostador', 1500); return true;
+    }
+    const s = p.held(), c = s ? COMPOSTABLE(s.id) : 0;
+    if (!c) { hud.toast(`Compostador: ${tile.lvl}/7. Echa restos de plantas, semillas o comida (no platos)`, 2200); return true; }
+    if (this.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; }
+    if (Math.random() < c) { tile.lvl++; this.particles.emit(pos.x, pos.y - 0.1, pos.z, [0.4, 0.8, 0.3], 6, { speed: 1, up: 1, life: 0.5, size: 0.08 }); }
+    sfx.play('place', { mat: 'grass' }); hud.toast(tile.lvl >= 7 ? '¡El compostador está lleno! Úsalo para sacar el abono' : `Compostador: ${tile.lvl}/7`, 1200); hud.update();
+    return true;
+  };
+  // guardado de las entidades de bloque nuevas
+  const _pack = packTile, _unpack = unpackTile;
+  packTile = function (t) {
+    if (t.type === 'pot') return { t: 'k', s: t.inv.toJSON(), d: t.dish, n: t.n, c: +(t.t || 0).toFixed(1), c0: +(t.t0 || 0).toFixed(1) };
+    if (t.type === 'compost') return { t: 'o', l: t.lvl | 0 };
+    if (t.type === 'feeder') return { t: 'e', s: t.inv.toJSON() };
+    return _pack(t);
+  };
+  unpackTile = function (d, into) {
+    if (d && d.t === 'k') { const t = into && into.type === 'pot' ? into : { type: 'pot', inv: new Inventory(1) }; t.inv.load(d.s); t.dish = ITEMS[d.d] ? d.d : 0; t.n = clamp(d.n | 0, 0, 4); t.t = +d.c || 0; t.t0 = +d.c0 || t.t; return t; }
+    if (d && d.t === 'o') { const t = into && into.type === 'compost' ? into : { type: 'compost' }; t.lvl = clamp(d.l | 0, 0, 7); return t; }
+    if (d && d.t === 'e') { const t = into && into.type === 'feeder' ? into : { type: 'feeder', inv: new Inventory(9) }; t.inv.load(d.s); t.title = 'Comedero'; return t; }
+    return _unpack(d, into);
+  };
+  // romper una olla que cocinaba: lo que había dentro sale igual
+  const _break = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const tile = world.tiles.get(`${x},${y},${z}`), pot = tile && tile.type === 'pot' && tile.n > 0 ? { id: tile.dish, count: tile.n } : null;
+    const r = _break.call(this, x, y, z, byPlayer);
+    if (pot && world.get(x, y, z) !== COOKING_POT) this.entities.dropItem(pot, x + 0.5, y + 0.5, z + 0.5);
+    return r;
+  };
+}
+// Cada 0,25 s: ollas que cocinan, comederos que alimentan, eventos y expediciones
+const life47 = {
+  t: 0, feedT: 0, expT: 0,
+  update(dt) {
+    fishing.update(dt);
+    if (!game.player || !world || game.state === 'menu' || game.state === 'loading') return;
+    if ((this.t -= dt) > 0) return;
+    const step = 0.25 - this.t; this.t = 0.25;
+    const p = game.player;
+    for (const [k, t] of world.tiles) {
+      if (t.type !== 'pot' || !(t.n > 0)) continue;
+      const [x, y, z] = k.split(',').map(Number); if (!world.isLoaded(x, z) || !potHeat(x, y, z)) continue;
+      t.t -= step;
+      const near = Math.hypot(p.pos.x - x, p.pos.z - z) < 24;
+      if (near && Math.random() < 0.6) game.particles.emit(x + 0.5 + (Math.random() - 0.5) * 0.4, y + 0.8, z + 0.5 + (Math.random() - 0.5) * 0.4, [0.9, 0.9, 0.9], 1, { gravity: -1.5, up: 0.8, speed: 0.2, life: 0.9, size: 0.1 });
+      if (t.t <= 0) {
+        const cur = t.inv.slots[0];
+        t.inv.slots[0] = cur && cur.id === t.dish ? { ...cur, count: cur.count + t.n } : { id: t.dish, count: t.n, dmg: 0 };
+        t.n = 0; t.t = 0; if (near) { sfx.play('chime', { pos: { x, y, z } }); hud.toast(`🍲 ¡${itemName(t.dish)} listo en la olla!`, 1800); }
+      }
+    }
+    if (potUI.open) potScreen.render();
+    if ((this.feedT -= step) <= 0) { this.feedT = 6; this.feed(); }
+    if ((this.expT -= step) <= 0) { this.expT = 1; this.expeditions(); }
+  },
+  // comederos: los animales adultos de alrededor comen solos y entran en celo
+  feed() {
+    if (game.mode !== 'survival' && game.mode !== 'creative') return;
+    const p = game.player;
+    for (const [k, t] of world.tiles) {
+      if (t.type !== 'feeder' || !t.inv.slots.some(Boolean)) continue;
+      const [x, y, z] = k.split(',').map(Number); if (Math.hypot(p.pos.x - x, p.pos.z - z) > 64 || !world.isLoaded(x, z)) continue;
+      const near = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !e.remote && BREED_FOOD[e.type] && Math.hypot(e.pos.x - x - 0.5, e.pos.z - z - 0.5) < 7);
+      let fed = 0;
+      for (const e of near) {
+        if (fed >= 4 || e.age < 0 || e.love > 0 || e.loveCd > 0 || e.tamed && !BREED_FOOD[e.type]) continue;
+        const crowd = near.filter((o) => o.type === e.type).length; if (crowd >= 16) continue;          // corral lleno: no crían más
+        const i = t.inv.slots.findIndex((s) => s && BREED_FOOD[e.type].includes(s.id)); if (i < 0) continue;
+        const s = t.inv.slots[i]; s.count--; if (s.count <= 0) t.inv.slots[i] = null;
+        e.love = 30; fed++;
+        game.particles.emit(e.pos.x, e.pos.y + e.h + 0.2, e.pos.z, [1, 0.3, 0.4], 6, { gravity: -1, up: 1, speed: 0.4, life: 0.8, size: 0.09 });
+      }
+      if (fed >= 2) game.unlock('feeder');
+    }
+  },
+  expeditions() {
+    const p = game.player, Q = questState(p);
+    for (const q of [...Q.active]) if (q.exp && p.pois.has(q.poi)) { completeQuest(q); game.stats.add('expeditions'); game.unlock('expedition'); sfx.play('fanfare'); }
+  },
+};
+function startExpedition() {
+  const p = game.player, Q = questState(p);
+  const cur = Q.active.find((q) => q.exp); if (cur) { hud.toast(`Ya tienes una expedición en curso: ${cur.title}`, 2600); return false; }
+  if (dimOf(p.pos.x, p.pos.z) !== 0) { hud.toast('El mapa no sirve en esta dimensión'); return false; }
+  const cands = [];
+  for (const S of STRUCTS) {
+    if (S.type === 'village' || S.dim) continue;
+    const r = Math.ceil(1500 / S.region), gx0 = Math.floor(p.pos.x / S.region), gz0 = Math.floor(p.pos.z / S.region);
+    for (let gx = gx0 - r; gx <= gx0 + r; gx++) for (let gz = gz0 - r; gz <= gz0 + r; gz++) {
+      const c = world.gen.structCandidate(S, gx, gz); if (!c || p.pois.has(c.id)) continue;
+      const d = Math.hypot(c.x - p.pos.x, c.z - p.pos.z); if (d < 250 || d > 1500) continue;
+      cands.push({ d, c, S });
+    }
+  }
+  if (!cands.length) { hud.toast('El mapa no muestra ningún lugar desconocido por aquí. Prueba en otra zona', 2600); return false; }
+  cands.sort((a, b) => Math.abs(a.d - 650) - Math.abs(b.d - 650));
+  const pick = cands[Math.floor(Math.random() * Math.min(5, cands.length))], name = POI_NAMES[pick.S.type] || POI_NAMES_42[pick.S.type] || 'un lugar perdido', d = Math.round(pick.d);
+  const loot = weighted46(EXP_LOOT), n = loot[1] + Math.floor(Math.random() * (loot[2] - loot[1] + 1));
+  const q = { id: 'exp:' + Date.now(), kind: 'side', type: 'explore', exp: true, giver: 'Mapa de expedición', gprof: 'explorer', village: null, prog: 0, status: 'active', day: game.env.days,
+    poi: pick.c.id, px: pick.c.x, pz: pick.c.z, title: `Expedición: ${name}`, goal: `Llega a ${name} (a unos ${d} bloques; marcado en tu mapa)`,
+    reward: { em: 4 + Math.round(d / 90), xp: 20 + Math.round(d / 20), items: [[loot[0], n]] } };
+  Q.active.push(q); Q.track = q.id; questUI.dirty = true;
+  notify('🧭 Nueva expedición', `${name} · a ${d} bloques`, 'poi'); sfx.play('chime');
+  return true;
+}
+
+/* ---------- Eventos nuevos ---------- */
+function nearWater47(p) {
+  const x0 = Math.floor(p.pos.x), z0 = Math.floor(p.pos.z);
+  for (let r = 2; r <= 22; r += 4) for (let a = 0; a < 6.28; a += 0.6) { const x = Math.floor(x0 + Math.cos(a) * r), z = Math.floor(z0 + Math.sin(a) * r); if (!world.isLoaded(x, z)) continue; const y = world.heightAt(x, z); if (B_WATERY[world.get(x, y - 1, z)] || B_WATERY[world.get(x, y, z)]) return [x, y, z]; }
+  return null;
+}
+const SEED_POOL = [[[I.EMERALD, 1], [I.RICE, 6], 4], [[I.EMERALD, 1], [I.TOMATO_SEEDS, 5], 4], [[I.EMERALD, 1], [I.CORN, 5], 4], [[I.EMERALD, 1], [I.CABBAGE_SEEDS, 5], 4], [[I.EMERALD, 2], [I.DRAGONFRUIT, 3], 3],
+  [[I.EMERALD, 1], [I.FERTILIZER, 4], 6], [[I.EMERALD, 3], [I.WATERING_CAN, 1], 1], [[I.EMERALD, 2], [I.FISHING_ROD, 1], 2], [[I.EMERALD, 2], [I.HERBS, 4], 4], [[I.EMERALD, 3], [COOKING_POT, 1], 1], [[I.EMERALD, 5], [I.EXPEDITION_MAP, 1], 1]];
+Object.assign(EVENTS, {
+  fishfrenzy: { name: 'Banco de peces', icon: '🐟', when: 'any', chance: 0.25, dur: 200, color: '#5ac8ff', desc: 'Un gran banco de peces pasa cerca. Pican mucho más rápido y salen más tesoros. ¡Pesca cuatro!' },
+  harvest: { name: 'Cosecha abundante', icon: '🌾', when: 'day', chance: 0.22, dur: 240, color: '#9be05a', desc: 'Un día perfecto: los cultivos crecen cuatro veces más rápido. Cosecha doce cultivos maduros.' },
+  seedtrader: { name: 'Mercader de semillas', icon: '🌱', when: 'day', chance: 0.22, dur: 240, color: '#7bd36a', desc: 'Una mercader vende semillas exóticas, abono y útiles de pesca y cocina.' },
+});
+EVENT_IDS.push('fishfrenzy', 'harvest', 'seedtrader');
+Object.assign(events.H, {
+  fishfrenzy: {
+    start(ev) { const w = nearWater47(game.player); if (!w) return false; ev.d = { caught: 0, w }; },
+    tick(ev, dt) { const [x, y, z] = ev.d.w; if (Math.random() < dt * 6) game.particles.emit(x + (Math.random() - 0.5) * 8, y + 0.9, z + (Math.random() - 0.5) * 8, [0.7, 0.9, 1], 2, { gravity: -0.5, up: 1, speed: 0.4, life: 0.7, size: 0.08 }); },
+    info(ev) { return `Peces: ${ev.d.caught || 0}/4 · quedan ${leftText(ev)}`; },
+    reward(ev) { this.give({ id: I.EMERALD, count: 3 }); this.give({ id: I.FISHER_TREASURE, count: 1 }); },
+    timeoutMsg: 'El banco de peces se alejó',
+  },
+  harvest: {
+    start(ev) {
+      let n = 0; const p = game.player, pcx = Math.floor(p.pos.x) >> 4, pcz = Math.floor(p.pos.z) >> 4;
+      for (const ch of world.chunks.values()) if (Math.abs(ch.cx - pcx) <= 3 && Math.abs(ch.cz - pcz) <= 3) n += ch.crops.size;
+      if (n < 4) return false; ev.d = { n: 0 };
+    },
+    tick() {},
+    info(ev) { return `Cosechados: ${ev.d.n || 0}/12 · quedan ${leftText(ev)}`; },
+    reward(ev) { this.give({ id: I.FERTILIZER, count: 6 }); this.give({ id: I.EMERALD, count: 2 }); },
+    timeoutMsg: 'Terminó el día de la cosecha',
+  },
+  seedtrader: {
+    start(ev) {
+      const pt = ringPoint(game.player, 9, 16); if (!pt) return false;
+      const t = spawnVisitor('trader', pt[0], pt[1], pt[2], ev, { pool: SEED_POOL, n: 7, name: 'Mercader de semillas' });
+      ev.d = { who: [t], boss: t }; hud.toast('🌱 Una mercader de semillas anda cerca', 3000);
+    },
+    tick(ev) { if (ev.d.boss.dead || ev.d.boss.deathT) return this.end(false, 'La mercader ya no está'); if (ev.d.boss.pos.distanceTo(game.player.pos) > 90) return this.end(false, 'Dejaste atrás a la mercader'); },
+    info(ev) { return `Se marcha en ${leftText(ev)} · a ${Math.round(ev.d.boss.pos.distanceTo(game.player.pos))} bloques`; },
+    timeoutMsg: 'La mercader siguió su camino',
+    stop(ev) { visitorsGone(ev); },
+  },
+});
+TRADER_POOL.push([[I.EMERALD, 2], [I.EXPEDITION_MAP, 1], 1], [[I.EMERALD, 2], [I.RICE, 8], 3], [[I.EMERALD, 2], [I.DRAGONFRUIT, 3], 3]);
+
+/* ---------- Teclas, pantallas y logros ---------- */
+{
+  $('#cookClose').onclick = () => potScreen.hide();
+  document.addEventListener('keydown', (e) => {
+    if (!potUI.open) return;
+    if (e.code === 'Escape' || e.code === settings.keys.inventory) { e.preventDefault(); e.stopImmediatePropagation(); potScreen.hide(); }
+  }, true);
+  // al morir o salir al menú, se suelta la caña
+  const _die = game.die; game.die = function (c) { fishing.stop(); return _die.call(this, c); };
+}
+ACHIEVEMENTS.push(['fish_first', 'Primera captura', 'Pesca tu primer pez con la caña.'], ['fish_gold', 'Leyenda del lago', 'Pesca un pez dorado.'], ['fish_all', 'Ictiólogo', 'Pesca seis tipos de pez distintos.'],
+  ['cook_first', 'A la mesa', 'Cocina tu primer plato en una olla.'], ['chef', 'Gran chef', 'Cocina cinco platos distintos.'], ['farm_world', 'Cultivos del mundo', 'Cosecha arroz, tomates, maíz, coles y pitahayas.'],
+  ['compost', 'Nada se tira', 'Saca abono de un compostador.'], ['water_can', 'Riego a mano', 'Riega la tierra con una regadera.'], ['feeder', 'Granja automática', 'Haz que un comedero alimente a dos animales a la vez.'],
+  ['expedition', 'Expedicionario', 'Completa una expedición.']);
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
