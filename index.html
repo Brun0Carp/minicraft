@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>MiniCraft 4.4</title>
+<title>MiniCraft 4.5</title>
 <!--
   ============================================================================
   MINICRAFT 3.0 «Mundo vivo y aventuras» — supervivencia voxel en un único HTML
@@ -168,6 +168,7 @@
   .invHeader span { flex: 1; font-size: 17px; font-weight: 600; }
   .invHeader button { font-size: 14px; padding: 4px 8px; background: #8b8b8b; color: #fff; border: 2px solid #000; box-shadow: inset 2px 2px 0 #bbb, inset -2px -2px 0 #555; cursor: pointer; }
   .invHeader button.on, #splitBtn.on { background: #6b8e3d; }
+  #charBtn, #pChar { position: relative; } #charBtn[data-pts]::after, #pChar[data-pts]::after { content: attr(data-pts); position: absolute; top: -7px; right: -7px; min-width: 17px; height: 17px; padding: 0 3px; box-sizing: border-box; border-radius: 9px; background: #f0b040; color: #1d1d1d; font: 700 11.5px/17px var(--font); text-align: center; border: 1px solid #000; }
   .grid9 { display: grid; grid-template-columns: repeat(9, var(--s)); }
   #invHot { margin-top: 4px; }
   .crafting { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 0; }
@@ -322,6 +323,47 @@
   .armorSlot:not(:has(.ic[style*="url"]))::before { content: attr(data-hint); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: .35; font-size: calc(var(--s) * .45); }
   #invLeft.withArmor { display: flex; align-items: center; justify-content: center; }
   .enchant { display: flex; gap: 10px; align-items: center; padding: 6px 0; }
+  /* --- 4.5: personaje --- */
+  .accCol { display: flex; flex-direction: column; margin-left: 8px; align-items: center; }
+  .accCol .packSlot { margin-top: 6px; }
+  .accCol .ibtn { margin-top: 3px; height: auto; min-width: 0; padding: 2px 0; font-size: clamp(9px, calc(var(--s) * .3), 11.5px); width: var(--s); }
+  .charCard { height: min(92vh, 720px); display: flex; flex-direction: column; }
+  #charBody { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 8px; text-align: left; }
+  .skHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .skHead b { font-size: 16px; } .skHead .skPts { color: #ffe14d; font-weight: 600; }
+  .skBar { flex: 1; min-width: 120px; height: 12px; background: #15161a; border: 2px solid #000; border-radius: 3px; position: relative; overflow: hidden; }
+  .skBar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(180deg, #ffe98a, #e0a020); }
+  .skBar span { position: absolute; inset: 0; font-size: 10px; line-height: 9px; text-align: center; color: #fff; text-shadow: 0 1px 1px #000; }
+  .skTree { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .skBranch { background: rgba(0,0,0,.32); border: 2px solid #0b0b0b; border-radius: 5px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+  .skBranch h3 { margin: 0 0 2px; font-size: 14.5px; text-align: center; } .skBranch h3 small { display: block; font-weight: 400; font-size: 11.5px; color: #aab0bb; }
+  .skill { text-align: left; padding: 6px 7px; background: #2a2c33; color: #e8e8ee; border: 2px solid #000; border-radius: 4px; cursor: pointer; font: 13px var(--font); position: relative; }
+  .skill b { display: block; font-size: 13.5px; padding-right: 26px; } .skill em { display: block; font-style: normal; font-size: 11.5px; color: #b9bcc6; line-height: 1.25; margin-top: 2px; }
+  .skill .pips { position: absolute; right: 6px; top: 6px; font-size: 9px; letter-spacing: 1px; color: #555; } .skill .pips u { text-decoration: none; color: var(--bc, #ffe14d); }
+  .skill.can { border-color: var(--bc, #ffe14d); box-shadow: 0 0 0 1px var(--bc, #ffe14d) inset; } .skill.can:hover { background: #353842; }
+  .skill.lock { opacity: .5; cursor: default; } .skill.max { background: #1f3324; cursor: default; } .skill.has:not(.max):not(.can) { cursor: default; }
+  .skNote { color: #aab0bb; font-size: 12.5px; margin: 8px 2px 0; }
+  .gearGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+  .gearBox { background: rgba(0,0,0,.32); border: 2px solid #0b0b0b; border-radius: 5px; padding: 8px; font-size: 13.5px; }
+  .gearBox h3 { margin: 0 0 4px; font-size: 14.5px; } .gearBox p { margin: 2px 0; color: #c9ccd4; } .gearBox p.on { color: #9df08a; } .gearBox p.off { color: #777; }
+  .petRow { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(0,0,0,.32); border: 2px solid #0b0b0b; border-radius: 5px; margin-bottom: 5px; font-size: 13.5px; }
+  .petRow span { flex: 1; } .petRow small { display: block; color: #aab0bb; } .petRow .btn { width: auto; margin: 0; padding: 5px 10px; font-size: 13px; }
+  .petCard { width: min(420px, 100%); text-align: left; display: flex; flex-direction: column; max-height: 96vh; }
+  #petBody { flex: 1; min-height: 0; overflow-y: auto; margin-bottom: 8px; }
+  #petBody p { margin: 4px 0; font-size: 14px; } #petBody input { width: 100%; padding: 6px 8px; font: 15px var(--font); background: #15161a; color: #fff; border: 2px solid #000; margin-bottom: 6px; }
+  .petMeter { height: 10px; background: #15161a; border: 2px solid #000; border-radius: 3px; overflow: hidden; margin: 2px 0 6px; } .petMeter i { display: block; height: 100%; }
+  .petBtns { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .petBtns .btn { flex: 1 1 45%; margin: 0; padding: 7px 8px; font-size: 13.5px; }
+  #gStam { position: fixed; left: 50%; bottom: calc(118px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: none; align-items: center; gap: 5px; z-index: 5; pointer-events: none; }
+  #gStam div { width: 120px; height: 7px; background: rgba(0,0,0,.55); border: 1px solid #000; } #gStam i { display: block; height: 100%; background: #7fd6ff; } #gStam.low i { background: #ff7a5a; } #gStam b { font-size: 14px; }
+  body.gmount #gStam { display: flex; }
+  body.gmount.touch .flyBtns { display: flex; } body.gmount:not(.creative) .flyBtns [data-act=fly] { display: none; }
+  #senseChip { position: fixed; left: 50%; top: calc(50% + 34px); transform: translateX(-50%); display: none; padding: 2px 8px; font: 12.5px var(--font); color: #ffe9a8; background: rgba(0,0,0,.5); border-radius: 3px; z-index: 5; pointer-events: none; white-space: nowrap; }
+  @media (max-width: 760px) { .skTree { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 420px) { .skTree { grid-template-columns: 1fr; } }
+  @media (max-height: 520px) { #charScreen { padding: 4px; } .charCard { height: 98vh; padding: 6px 10px; } .charCard .cardHead { margin: 0 0 2px; } .charCard .cardHead h2 { font-size: 17px; }
+    .charCard .stabs { margin-bottom: 4px; } .charCard .stab { padding: 4px 6px; font-size: 13px; } .skTree { grid-template-columns: repeat(5, minmax(150px, 1fr)); overflow-x: auto; }
+    #gStam { bottom: calc(70px + env(safe-area-inset-bottom)); } .petCard { max-height: 98vh; padding: 6px 12px; width: min(560px, 100%); } .petCard .cardHead { margin: 0 0 2px; } .petCard .cardHead h2 { font-size: 17px; } #petBody p { font-size: 13px; margin: 2px 0; }
+    .skHead { margin-bottom: 4px; } .skHead .btn { padding: 3px 8px !important; } }
   #enchOffers { display: flex; flex-direction: column; gap: 4px; min-width: calc(var(--s) * 5.5); }
   .offer { text-align: left; padding: 5px 8px; background: #3b2a54; color: #e8d8ff; border: 2px solid #000; cursor: pointer; font-family: var(--font); }
   .offer span { display: block; font-size: 13px; } .offer em { font-size: 11px; font-style: normal; color: #b8e86a; } .offer.off { opacity: .45; } .offer:not(.off):hover { background: #5a3f80; }
@@ -380,7 +422,7 @@
   .topBtns { position: fixed; top: calc(8px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); z-index: 6; display: flex; gap: 8px; pointer-events: auto; }
   .topBtns .tbtn { width: 46px; height: 46px; border-radius: 10px; font-size: 18px; }
   .flyBtns { position: fixed; left: calc(24px + env(safe-area-inset-left)); bottom: calc(256px + env(safe-area-inset-bottom)); z-index: 6; display: none; gap: 8px; pointer-events: auto; }
-  body.creative .flyBtns { display: flex; }
+  body.creative .flyBtns, body.gmount .flyBtns { display: flex; } body.gmount:not(.creative) .flyBtns [data-act=fly] { display: none; }
   .flyBtns .tbtn { width: 56px; height: 50px; }
   @media (orientation: landscape) and (max-height: 520px) {
     #joy { bottom: calc(24px + env(safe-area-inset-bottom)); }
@@ -795,6 +837,8 @@
 <div id="hud">
   <div id="crosshair"></div>
   <div id="abilityCd"><i></i></div>
+  <div id="gStam" title="Resistencia del grifo"><b>🪽</b><div><i></i></div></div>
+  <div id="senseChip"></div>
   <div id="debug"></div>
   <div id="hudClock"></div>
   <div id="toast"></div>
@@ -853,7 +897,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="MINICRAFT">MINICRAFT</h1>
-      <span class="ver">¡Versión 4.4!</span>
+      <span class="ver">¡Versión 4.5!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -863,7 +907,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>MiniCraft 4.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>MiniCraft 4.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1034,6 +1078,21 @@
     <button id="codexClose" class="btn primary">Cerrar</button>
   </div>
 </div>
+<div id="charScreen" class="screen">
+  <div class="card wideCard charCard">
+    <div class="cardHead"><h2>🌟 Personaje</h2></div>
+    <div class="stabs"><button class="stab on" data-chtab="skills">Habilidades</button><button class="stab" data-chtab="gear">Equipo</button><button class="stab" data-chtab="pets">Mascotas y monturas</button></div>
+    <div id="charBody"></div>
+    <button id="charClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
+<div id="petScreen" class="screen">
+  <div class="card petCard">
+    <div class="cardHead"><h2 id="petTitle">Mascota</h2></div>
+    <div id="petBody"></div>
+    <button id="petClose" class="btn primary">Cerrar</button>
+  </div>
+</div>
 <div id="pauseScreen" class="screen">
   <div class="card">
     <h2>Juego en pausa</h2>
@@ -1041,7 +1100,7 @@
     <button id="pResume" class="btn primary">Volver al juego</button>
     <div class="row"><button id="pMap" class="btn">🗺 Mapa</button><button id="pAch" class="btn">🏆 Logros</button></div>
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
-    <button id="pCodex" class="btn">📖 Enciclopedia</button>
+    <div class="row"><button id="pCodex" class="btn">📖 Enciclopedia</button><button id="pChar" class="btn">🌟 Personaje</button></div>
     <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
     <button id="pFull" class="btn fsOnly">⛶ Pantalla completa</button>
     <button id="pSettings" class="btn">Ajustes</button>
@@ -1082,7 +1141,7 @@
       <div id="bookDetail"></div>
     </div>
     <div class="invMainCol">
-      <div class="invHeader"><span id="invTitle">Inventario</span><button id="bookToggle" title="Guía de crafteos">📖 Guía</button><button id="invClose">✕</button></div>
+      <div class="invHeader"><span id="invTitle">Inventario</span><button id="charBtn" title="Personaje: habilidades, equipo y mascotas">🌟</button><button id="bookToggle" title="Guía de crafteos">📖 Guía</button><button id="invClose">✕</button></div>
       <div id="invLeft"></div>
       <div id="invMain" class="grid9"></div>
       <div id="invHot" class="grid9"></div>
@@ -6071,7 +6130,7 @@ class EntityManager {
       if (!o || !Array.isArray(o.p) || o.p.some((v) => !Number.isFinite(v))) continue;
       if (o.k === 'item') { if (ITEMS[o.s?.[0]]) { const e = new ItemDrop({ id: o.s[0], count: o.s[1], dmg: o.s[2], ...(o.s[3] ? { ench: o.s[3] } : {}) }, ...o.p); e.pickupDelay = 0; this.add(e); } }
       else if (o.k === 'villager') { const v = new Villager(...o.p, { prof: o.prof, home: o.home, work: o.work, planId: o.pl, name: o.n, uses: o.u, rd: o.rd }); v.hp = o.hp ?? 20; v.vinv = Array.isArray(o.vi) ? o.vi : null; v.giftDay = o.gd; v.questDay = o.qd; if (v.loadExtra) v.loadExtra(o); this.add(v); }
-      else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; if (o.tm) { m.tamed = true; m.saddled = !!o.sd; m.sitting = !!o.st; } m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.age < 0) m.mesh.scale.setScalar(0.55); }
+      else if (MOBS[o.k] && !MOBS[o.k].boss) { const m = this.spawnMob(o.k, ...o.p); m.hp = o.hp ?? m.hp; m.age = o.a || 0; m.persistent = !!o.pe; if (o.tm) { m.tamed = true; m.saddled = !!o.sd; m.sitting = !!o.st; } m.loveCd = o.lc || 0; m.planId = o.pl || null; if (m.loadExtra) m.loadExtra(o); if (m.age < 0) m.mesh.scale.setScalar(0.55); }
     }
   }
 }
@@ -8300,6 +8359,212 @@ Object.assign(POI_ICON_42, { catacomb: '⚰', atemple: '🛕', castle: '🏯', l
 Object.assign(POI_NAMES_42, { catacomb: 'Catacumbas', atemple: 'Templo antiguo', castle: 'Castillo en ruinas', lab: 'Laboratorio misterioso', crypt: 'Cámara secreta', skyisle: 'Islas flotantes', seacity: 'Ciudad sumergida' });
 
 /* ==========================================================================
+   §41 PERSONAJE 4.5 — datos: equipo, accesorios, mochilas, armas legendarias,
+   objetos de mascota, monturas y árbol de habilidades
+   --------------------------------------------------------------------------
+   La lógica (bonificaciones, pantalla de personaje, mascotas y vuelo) está
+   en §42 (p9y_char45.js).
+   ========================================================================== */
+Object.assign(I, {
+  AERITE_HELMET: 556, AERITE_CHEST: 557, AERITE_LEGS: 558, AERITE_BOOTS: 559,
+  ABYSS_HELMET: 560, ABYSS_CHEST: 561, ABYSS_LEGS: 562, ABYSS_BOOTS: 563,
+  AERITE_PICK: 564, AERITE_SWORD: 565, AERITE_AXE: 566,
+  RING_POWER: 567, RING_LIFE: 568, MINER_PENDANT: 569, SWIFT_ANKLET: 570, LUCKY_CLOVER: 571,
+  BACKPACK: 572, BACKPACK_LARGE: 573, EXPLORER_PACK: 574,
+  STORM_BLADE: 575, FROST_LANCE: 576, BLOOD_DAGGER: 577, TITAN_PICK: 578,
+  PET_WHISTLE: 579, PET_TREAT: 580, SKILL_TOME: 581,
+});
+
+/* ---------- Armaduras nuevas y bonificación de conjunto ---------- */
+ARMOR_STATS.aerite = { name: 'aerita', pts: [3, 7, 5, 3], dur: 26, color: [120, 205, 250] };
+ARMOR_STATS.abyss = { name: 'abisal', pts: [3, 7, 6, 3], dur: 30, color: [40, 140, 140] };
+{
+  const ids = { aerite: [I.AERITE_HELMET, I.AERITE_CHEST, I.AERITE_LEGS, I.AERITE_BOOTS], abyss: [I.ABYSS_HELMET, I.ABYSS_CHEST, I.ABYSS_LEGS, I.ABYSS_BOOTS] };
+  const names = { aerite: ['Casco de aerita', 'Peto de aerita', 'Grebas de aerita', 'Botas de aerita'], abyss: ['Yelmo abisal', 'Coraza abisal', 'Grebas abisales', 'Botas abisales'] };
+  for (const mat of ['aerite', 'abyss']) ARMOR_SLOTS.forEach((slot, i) => {
+    const a = ARMOR_STATS[mat];
+    defItem(ids[mat][i], names[mat][i], (mat === 'aerite' ? 'Ligera como el viento.' : 'Forjada con perlas del fondo del mar.') + ' El conjunto completo da una bonificación.',
+      { stack: 1, rarity: 3, armor: { mat, slot, idx: i, pts: a.pts[i], dur: a.dur * DUR_MUL[i] } });
+  });
+  const A = I.AERITE;
+  shaped(I.AERITE_HELMET, 1, ['aaa', 'a a'], { a: A }, 'Personaje');
+  shaped(I.AERITE_CHEST, 1, ['a a', 'aaa', 'aaa'], { a: A }, 'Personaje');
+  shaped(I.AERITE_LEGS, 1, ['aaa', 'a a', 'a a'], { a: A }, 'Personaje');
+  shaped(I.AERITE_BOOTS, 1, ['a a', 'a a'], { a: A }, 'Personaje');
+  ARMOR_SLOTS.forEach((slot, i) => shapeless(ids.abyss[i], 1, [armorId('iron', slot), I.ABYSS_PEARL, SEA_LANTERN], 'Personaje'));
+}
+// mods: ver char45.recalc (§42). Cada clave se suma a las del resto del equipo y de las habilidades.
+const SET_BONUS = {
+  leather: { name: 'Viajero', desc: 'El hambre baja un 15 % más despacio', mods: { hunger: 0.15 } },
+  iron: { name: 'Baluarte', desc: '−10 % de daño recibido', mods: { def: 0.10 } },
+  gold: { name: 'Fortuna', desc: '+25 % de experiencia', mods: { xp: 0.25 } },
+  diamond: { name: 'Coloso', desc: '−15 % de daño recibido y +10 % de daño cuerpo a cuerpo', mods: { def: 0.15, dmg: 0.10 } },
+  aerite: { name: 'Céfiro', desc: '+12 % de velocidad, saltas más alto y −60 % de daño por caída', mods: { speed: 0.12, jump: 0.16, fall: 0.6 } },
+  abyss: { name: 'Abisal', desc: 'Respiras bajo el agua y nadas un 60 % más rápido', mods: { breathe: 1, swim: 0.6 } },
+};
+
+/* ---------- Herramientas de aerita ---------- */
+defItem(I.AERITE_PICK, 'Pico de aerita', 'Ligero y muy rápido. Extrae lo mismo que uno de diamante.', { stack: 1, rarity: 3, tool: { type: 'pickaxe', tier: 'special', level: 3, speed: 9.5, dmg: 5, dur: 1100 } });
+defItem(I.AERITE_SWORD, 'Sable de aerita', 'Tan ligero que golpea más rápido que una espada normal.', { stack: 1, rarity: 3, tool: { type: 'sword', tier: 'special', level: 0, speed: 1.5, dmg: 7, dur: 1100, fast: 0.75 } });
+defItem(I.AERITE_AXE, 'Hacha de aerita', 'Corta madera a toda velocidad.', { stack: 1, rarity: 3, tool: { type: 'axe', tier: 'special', level: 3, speed: 9.5, dmg: 7, dur: 1100 } });
+shaped(I.AERITE_PICK, 1, ['aaa', ' s ', ' s '], { a: I.AERITE, s: I.STICK }, 'Personaje');
+shaped(I.AERITE_SWORD, 1, ['a', 'a', 's'], { a: I.AERITE, s: I.STICK }, 'Personaje');
+shaped(I.AERITE_AXE, 1, ['aa', 'as', ' s'], { a: I.AERITE, s: I.STICK }, 'Personaje');
+
+/* ---------- Accesorios (2 espacios en el inventario) ---------- */
+defItem(I.RING_POWER, 'Anillo de fuerza', 'Accesorio: +10 % de daño cuerpo a cuerpo.', { stack: 1, rarity: 2, acc: { dmg: 0.10 } });
+defItem(I.RING_LIFE, 'Anillo vital', 'Accesorio: recuperas medio corazón cada 10 s.', { stack: 1, rarity: 2, acc: { regen: 0.1 } });
+defItem(I.MINER_PENDANT, 'Colgante del minero', 'Accesorio: minas un 15 % más rápido.', { stack: 1, rarity: 2, acc: { mine: 0.15 } });
+defItem(I.SWIFT_ANKLET, 'Tobillera veloz', 'Accesorio: +8 % de velocidad al andar y correr.', { stack: 1, rarity: 2, acc: { speed: 0.08 } });
+defItem(I.LUCKY_CLOVER, 'Trébol de la suerte', 'Accesorio raro de mazmorra: +15 % de experiencia y +8 % de probabilidad de mineral doble.', { stack: 1, rarity: 3, acc: { xp: 0.15, ore: 0.08 } });
+ITEMS[I.FEATHER_CHARM].acc = {}; ITEMS[I.TIDE_CHARM].acc = {};
+ITEMS[I.FEATHER_CHARM].desc = 'Llévalo en una mano o en un espacio de accesorio: caes despacio y sin hacerte daño.';
+ITEMS[I.TIDE_CHARM].desc = 'Llévalo en una mano o en un espacio de accesorio: respiras bajo el agua y ves mejor en la oscuridad del fondo.';
+shaped(I.RING_POWER, 1, [' g ', 'gcg', ' g '], { g: I.GOLD_INGOT, c: I.BEAR_CLAW }, 'Personaje');
+shaped(I.RING_LIFE, 1, [' g ', 'gcg', ' g '], { g: I.GOLD_INGOT, c: I.GOLDEN_APPLE }, 'Personaje');
+shaped(I.MINER_PENDANT, 1, ['s s', ' i ', ' d '], { s: I.STRING, i: I.IRON_INGOT, d: I.DIAMOND }, 'Personaje');
+shaped(I.SWIFT_ANKLET, 1, ['fff', 'l l', 'lll'], { f: I.FEATHER, l: I.LEATHER }, 'Personaje');
+
+/* ---------- Mochilas ---------- */
+defItem(I.BACKPACK, 'Mochila', 'Ponla en el espacio de mochila del inventario: 9 espacios extra.', { stack: 1, rarity: 1, pack: 9 });
+defItem(I.BACKPACK_LARGE, 'Mochila grande', 'Ponla en el espacio de mochila del inventario: 18 espacios extra.', { stack: 1, rarity: 2, pack: 18 });
+defItem(I.EXPLORER_PACK, 'Mochila de explorador', 'Ponla en el espacio de mochila del inventario: 27 espacios extra.', { stack: 1, rarity: 3, pack: 27 });
+shaped(I.BACKPACK, 1, ['lsl', 'lcl', 'lll'], { l: I.LEATHER, s: I.STRING, c: CHEST }, 'Personaje');
+shaped(I.BACKPACK_LARGE, 1, ['lil', 'ibi', 'lil'], { l: I.LEATHER, i: I.IRON_INGOT, b: I.BACKPACK }, 'Personaje');
+shaped(I.EXPLORER_PACK, 1, ['apa', 'pbp', 'apa'], { a: I.AERITE, p: I.ABYSS_PEARL, b: I.BACKPACK_LARGE }, 'Personaje');
+
+/* ---------- Armas legendarias (solo en cámaras selladas y mazmorras) ---------- */
+defItem(I.STORM_BLADE, 'Filo de la tormenta', 'Legendaria. Habilidad: una cadena de rayos salta entre los enemigos cercanos.', { stack: 1, rarity: 4,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1.5, dmg: 10, dur: 1600 }, ability: { id: 'storm', name: 'Cadena de rayos', cd: 9 } });
+defItem(I.FROST_LANCE, 'Lanza de escarcha', 'Legendaria. Cada golpe ralentiza al enemigo y lo empuja.', { stack: 1, rarity: 4,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 9, dur: 1400, knock: 1.2, frost: 4 } });
+defItem(I.BLOOD_DAGGER, 'Daga sanguina', 'Legendaria. Muy rápida: cada golpe te devuelve algo de vida.', { stack: 1, rarity: 4,
+  tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: 6, dur: 900, fast: 0.5, leech: 0.25 } });
+defItem(I.TITAN_PICK, 'Pico del titán', 'Legendario. Excava un área de 3×3 de una vez (agáchate para picar un solo bloque).', { stack: 1, rarity: 4,
+  tool: { type: 'pickaxe', tier: 'special', level: 4, speed: 8, dmg: 6, dur: 2600, area: true } });
+
+/* ---------- Mascotas y sabiduría ---------- */
+defItem(I.PET_WHISTLE, 'Silbato', 'Úsalo para llamar a tus mascotas y monturas: acuden a tu lado aunque estuvieran esperando.', { stack: 1, rarity: 1 });
+defItem(I.PET_TREAT, 'Golosina para mascotas', 'Dásela a una mascota domada: la cura del todo y la pone muy contenta.', { stack: 16, rarity: 1 });
+defItem(I.SKILL_TOME, 'Tomo de sabiduría', 'Raro tesoro de mazmorra. Úsalo para ganar un punto de habilidad.', { stack: 16, rarity: 3 });
+shaped(I.PET_WHISTLE, 1, [' i', 'ib'], { i: I.IRON_INGOT, b: I.BONE }, 'Personaje');
+shapeless(I.PET_TREAT, 2, [I.WHEAT, I.BONE_MEAL, I.APPLE], 'Personaje');
+
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const AE = [120, 205, 250], AD = [60, 140, 220], AL = [215, 242, 255], GO = [236, 196, 70], GD = [180, 140, 40], LE = [150, 92, 52], LD = [104, 62, 34];
+  const aer = (x, y) => ((x + y) % 3 === 0 ? AL : (x * 3 + y) % 5 === 0 ? AD : AE);
+  const ring = (gem, g2) => P((p) => { p.disk(8, 9.5, 5.2, (x, y) => (x + y < 16 ? GO : GD)); p.disk(8, 9.5, 2.9, null); p.poly([[8, 1], [11, 4], [8, 7], [5, 4]], (x, y) => (x < 8 ? gem : g2)); p.set(7, 3, [255, 255, 255]); });
+  const pack = (c, d, t) => P((p) => { p.poly([[3, 4], [13, 4], [14, 14], [2, 14]], (x, y) => ((x + y) % 5 === 0 ? d : c)); p.poly([[4, 2], [12, 2], [13, 6], [3, 6]], d); p.line([[5, 9], [11, 9]], 2.6, d); p.line([[6, 9], [10, 9]], 1, t); p.set(8, 5, t); p.line([[6, 1], [10, 1]], 1, d); });
+  Object.assign(ICON_OVERRIDE, {
+    [I.AERITE_PICK]: P((p) => { p.line([[2, 14], [11.5, 4.5]], 1.7, HANDLE); p.line([[4, 1.5], [7, 1.2], [10, 2], [12, 3.5], [13.6, 5.5], [14.6, 8.5], [14.8, 11.5]], 2.2, aer); }),
+    [I.AERITE_SWORD]: P((p) => { p.line([[1.5, 14.5], [4.5, 11.5]], 1.8, HANDLE); p.line([[5, 11], [9, 5], [14.5, 1.5]], 2, aer); p.line([[2.5, 8.5], [7.5, 13.5]], 1.6, GO); }),
+    [I.AERITE_AXE]: P((p) => { p.line([[2, 14], [11.5, 4.5]], 1.7, HANDLE); p.poly([[6.5, 4], [9, 1], [12, 0.8], [14, 3], [11.5, 6.5], [9, 7]], aer); }),
+    [I.RING_POWER]: ring([230, 60, 50], [150, 26, 30]),
+    [I.RING_LIFE]: ring([255, 130, 190], [200, 60, 120]),
+    [I.MINER_PENDANT]: P((p) => { p.line([[3, 1], [8, 8], [13, 1]], 1, [200, 200, 206]); p.poly([[8, 7], [12, 11], [8, 15], [4, 11]], (x, y) => (x + y < 18 ? [110, 235, 225] : [40, 160, 170])); p.set(7, 10, [255, 255, 255]); }),
+    [I.SWIFT_ANKLET]: P((p) => { p.disk(8, 9, 5.6, (x, y) => (y < 9 ? LE : LD)); p.disk(8, 9, 3.2, null); p.poly([[9, 1], [15, 3], [11, 7]], [240, 244, 250]); p.line([[10, 2], [13, 4]], 0.8, [150, 170, 200]); }),
+    [I.LUCKY_CLOVER]: P((p) => { const G = [70, 190, 80], D = [36, 130, 56]; for (const [x, y] of [[5.5, 5.5], [10.5, 5.5], [5.5, 10.5], [10.5, 10.5]]) p.disk(x, y, 3, (a, b) => (a + b < x + y ? G : D)); p.line([[8, 8], [12, 15]], 1.2, D); p.set(5, 4, [200, 250, 200]); }),
+    [I.BACKPACK]: pack(LE, LD, GO),
+    [I.BACKPACK_LARGE]: pack([96, 110, 70], [62, 74, 44], [210, 210, 214]),
+    [I.EXPLORER_PACK]: pack([60, 130, 190], [30, 80, 130], [150, 240, 225]),
+    [I.STORM_BLADE]: P((p) => { p.line([[1.5, 14.5], [4.5, 11.5]], 1.8, [60, 60, 90]); p.line([[5, 11], [8, 9], [8, 6], [11, 5], [11, 2.5], [14.5, 1.5]], 2, (x, y) => ((x + y) % 3 === 0 ? [255, 250, 170] : [250, 215, 60])); p.line([[2.5, 8.5], [7.5, 13.5]], 1.6, [120, 110, 220]); }),
+    [I.FROST_LANCE]: P((p) => { p.line([[1.5, 14.5], [10, 6]], 1.6, [90, 110, 150]); p.poly([[9, 7], [10, 2.5], [15, 1], [13.5, 6]], (x, y) => (x + y < 15 ? [225, 245, 255] : [130, 200, 245])); p.set(4, 10, [225, 245, 255]); p.set(6, 12, [225, 245, 255]); }),
+    [I.BLOOD_DAGGER]: P((p) => { p.line([[3, 13], [6, 10]], 1.8, [50, 30, 36]); p.line([[6.5, 9.5], [12.5, 3.5]], 2.2, (x, y) => ((x + y) % 3 === 0 ? [255, 120, 120] : [200, 30, 50])); p.line([[4.5, 8.5], [8, 12]], 1.4, [110, 100, 110]); p.set(13, 2, [255, 200, 200]); }),
+    [I.TITAN_PICK]: P((p) => { p.line([[2, 14], [11, 5]], 2, [70, 60, 60]); p.line([[3, 2], [7, 1.2], [10.5, 2], [13, 4], [14.4, 7], [14.8, 12]], 3, (x, y) => ((x + y) % 3 === 0 ? [255, 210, 120] : [214, 140, 50])); p.set(11, 4, [255, 245, 200]); }),
+    [I.PET_WHISTLE]: P((p) => { p.poly([[2, 6], [9, 6], [9, 10], [2, 10]], [200, 200, 208]); p.disk(11, 9, 3.6, (x, y) => (y < 9 ? [220, 220, 228] : [150, 150, 160])); p.disk(11, 9, 1.4, [40, 40, 50]); p.line([[11, 5], [13, 2]], 1, [200, 60, 60]); }),
+    [I.PET_TREAT]: P((p) => { const B = [226, 196, 150], D = [180, 140, 96]; p.line([[5, 11], [11, 5]], 3, (x, y) => ((x + y) % 4 === 0 ? D : B)); for (const [x, y] of [[3.5, 10.5], [5.5, 12.5], [10.5, 3.5], [12.5, 5.5]]) p.disk(x, y, 1.9, B); }),
+    [I.SKILL_TOME]: P((p) => { p.poly([[3, 2], [13, 2], [13, 14], [3, 14]], (x, y) => (x < 5 ? [70, 40, 120] : [120, 70, 190])); p.line([[12.5, 3], [12.5, 13]], 1, [236, 226, 200]); p.poly([[8.5, 4.5], [9.4, 7], [12, 7], [10, 8.6], [10.8, 11], [8.5, 9.6], [6.2, 11], [7, 8.6], [5, 7], [7.6, 7]], [255, 220, 90]); }),
+  });
+}
+
+/* ---------- Botines: armas legendarias y objetos raros de mazmorra ---------- */
+LOOT.vault44.push([I.FROST_LANCE, 1, 1, 1], [I.BLOOD_DAGGER, 1, 1, 1], [I.TITAN_PICK, 1, 1, 1], [I.SKILL_TOME, 1, 1, 2], [I.LUCKY_CLOVER, 1, 1, 1]);
+LOOT.skyvault.push([I.STORM_BLADE, 1, 1, 2], [I.SKILL_TOME, 1, 1, 2], [I.SWIFT_ANKLET, 1, 1, 1]);
+LOOT.seavault.push([I.TITAN_PICK, 1, 1, 1], [I.FROST_LANCE, 1, 1, 1], [I.SKILL_TOME, 1, 1, 2], [I.RING_LIFE, 1, 1, 1]);
+for (const k of ['catacomb', 'atemple', 'castle', 'lab']) LOOT[k].push([I.SKILL_TOME, 1, 1, 1]);
+LOOT.catacomb.push([I.RING_POWER, 1, 1, 1]); LOOT.atemple.push([I.LUCKY_CLOVER, 1, 1, 1]); LOOT.castle.push([I.BACKPACK, 1, 1, 1]); LOOT.lab.push([I.MINER_PENDANT, 1, 1, 1]);
+
+/* ---------- Monturas y mascotas ---------- */
+MOBS.griffin = { name: 'Grifo', hp: 34, w: 1.1, h: 1.5, speed: 2.6, xp: 6, sound: 'raider', solo: true, flies: true, tameFood: [I.RAW_FISH, I.COOKED_FISH, I.CHICKEN, I.COOKED_CHICKEN], tameChance: 0.25, drops: [[I.FEATHER, 2, 4]],
+  model: (m) => { const B = rgb(196, 150, 84), D = rgb(150, 108, 56), W = rgb(244, 240, 228), Y = rgb(240, 190, 60), K = rgb(20, 16, 14), WG = rgb(120, 86, 50), WT = rgb(236, 226, 200);
+    const mdl = MOB_MODELS.quadruped(m, { legH: 10, legW: 3.6, bodyW: 11, bodyH: 10, bodyL: 22, headW: 7, headH: 7, headL: 7, headY: 6, body: B, leg: D, head: W,
+      bodyExtra: [[7, 9, 7, 0, 6, 9, W], [11.4, 10.4, 8, 0, 0, 8, W]],
+      headExtra: [[3, 3, 4, 0, 5, 8.6, Y], [2, 2, 1.4, 0, 3.6, 9.6, Y], [1.4, 3, 2, -2.6, 10.4, 2, W], [1.4, 3, 2, 2.6, 10.4, 2, W],
+        ...eyesHD(7, 7.2, 2.3, rgb(250, 200, 60), K, { w: 1.4, h: 1.3, pw: 0.7, ph: 1, po: 0 })],
+      tail: [[2, 2, 10, 0, 0, -5, D], [3.2, 3.2, 3.2, 0, 0, -11, WG]] });
+    mdl.gwings = [-1, 1].map((sx) => part(mdl.root, m, sx * 5.5, 19.5, 2, [[13, 1.4, 10, sx * 6.5, 0, 0, WG], [9, 1.2, 7, sx * 16, 0, -1, WG], [5, 1, 5, sx * 22, 0, -2, WT]]));
+    mdl.saddle = part(mdl.root, m, 0, 20.4, -2, [[11.6, 1.6, 8, 0, 0, 0, rgb(150, 60, 60)], [12, 4, 2, 0, -2.4, 2, rgb(110, 40, 40)], [1.4, 1.4, 1.4, 0, 1.4, 3.4, rgb(230, 200, 90)]]); mdl.saddle.visible = false;
+    return mdl; } };
+Object.assign(MOBS.fox, { tameFood: [I.RAW_FISH, I.COOKED_FISH, I.CHICKEN, I.GLOW_BERRIES], tameChance: 0.34 });
+Object.assign(MOBS.mule, { tameFood: [I.WHEAT, I.APPLE, I.CARROT], tameChance: 0.4 });
+// Qué hace cada compañero (se muestra en su panel y en la enciclopedia)
+const PET_INFO = {
+  wolf: { role: 'Guardián', desc: 'Ataca a lo que tú ataques y a quien te haga daño.' },
+  fox: { role: 'Rastreador', desc: 'Recoge los objetos sueltos, te los trae y olfatea cofres cercanos.' },
+  mule: { role: 'Carga', desc: 'Lleva alforjas con 9 espacios y te sigue a todas partes. Con montura también se puede montar, despacio.' },
+  horse: { role: 'Montura terrestre', desc: 'Cada caballo tiene su propia velocidad. Necesita montura.' },
+  griffin: { role: 'Montura voladora', desc: 'Con montura, mantén Saltar para despegar. Volar lo cansa: descansa en tierra.' },
+};
+{
+  const add = (name, list) => { const b = BIOMES.find((x) => x.name === name); if (b) b.passive = [...b.passive, ...list]; };
+  add('Montañas', ['griffin']); add('Tierras altas', ['griffin']); add('Montañas nevadas', ['griffin']);
+  add('Sabana', ['mule']); add('Llanuras', ['mule']); add('Pradera florida', ['mule']);
+  Object.assign(BREED_FOOD, { griffin: [I.GOLDEN_APPLE], mule: [I.GOLDEN_APPLE] });
+}
+
+/* ---------- Árbol de habilidades ----------
+   [id, nombre, rangos, texto(rango), mods por rango]. Cada habilidad pide puntos
+   ya gastados en su rama (SKILL_GATE), así que se desbloquean de arriba abajo. */
+const SKILL_GATE = [0, 2, 4, 6, 9];
+const pc = (v) => Math.round(v * 100) + ' %';
+const SKILLS = {
+  warrior: { name: 'Guerrero', icon: '⚔', color: '#e0564a', list: [
+    ['edge', 'Filo', 3, (r) => `+${pc(0.06 * r)} de daño cuerpo a cuerpo`, { dmg: 0.06 }],
+    ['skin', 'Piel dura', 3, (r) => `−${pc(0.05 * r)} de daño recibido`, { def: 0.05 }],
+    ['vigor', 'Vigor', 3, (r) => `Recuperas medio corazón cada ${[0, 14, 10, 7][r]} s`, { regen: [0, 1 / 14, 0.1, 1 / 7] }],
+    ['crit', 'Golpe certero', 2, (r) => `Los críticos hacen +${pc(0.2 * r)} y un ${pc(0.06 * r)} de tus golpes es crítico`, { crit: 0.2, critCh: 0.06 }],
+    ['thirst', 'Sed de batalla', 1, () => 'Derrotar a un monstruo te cura un corazón', { killHeal: 2 }],
+  ] },
+  explorer: { name: 'Explorador', icon: '🧭', color: '#5ab4ff', list: [
+    ['feet', 'Pies ligeros', 3, (r) => `+${pc(0.04 * r)} de velocidad`, { speed: 0.04 }],
+    ['lungs', 'Pulmones', 3, (r) => `Aguantas un ${pc(0.3 * r)} más bajo el agua`, { air: 0.3 }],
+    ['acro', 'Acróbata', 3, (r) => `−${pc(0.15 * r)} de daño por caída`, { fall: 0.15 }],
+    ['carto', 'Cartógrafo', 2, (r) => `Descubres lugares desde un ${pc(0.4 * r)} más lejos`, { disc: 0.4 }],
+    ['ranger', 'Montaraz', 1, () => 'El hambre baja un 25 % más despacio y tus monturas van un 15 % más rápido', { hunger: 0.25, ride: 0.15 }],
+  ] },
+  miner: { name: 'Minero', icon: '⛏', color: '#f0b040', list: [
+    ['arm', 'Brazo fuerte', 3, (r) => `Minas un ${pc(0.08 * r)} más rápido`, { mine: 0.08 }],
+    ['care', 'Buen cuidado', 3, (r) => `${pc(0.1 * r)} de probabilidad de no gastar la herramienta`, { toolSave: 0.1 }],
+    ['vein', 'Buena veta', 3, (r) => `${pc(0.08 * r)} de probabilidad de mineral doble`, { ore: 0.08 }],
+    ['sense', 'Sexto sentido', 2, (r) => `Detectas el mineral más cercano a ${[0, 6, 10][r]} bloques`, { sense: [0, 6, 10] }],
+    ['veiner', 'Minero de vetas', 1, () => 'Al picar un mineral se rompe la veta entera (hasta 8 bloques; agáchate para evitarlo)', { veiner: 1 }],
+  ] },
+  builder: { name: 'Constructor', icon: '🧱', color: '#7be06a', list: [
+    ['reach', 'Brazo largo', 3, (r) => `+${(0.5 * r).toFixed(1)} bloques de alcance`, { reach: 0.5 }],
+    ['thrift', 'Economía', 3, (r) => `${pc(0.06 * r)} de probabilidad de no gastar el bloque al colocarlo`, { blockSave: 0.06 }],
+    ['dismantle', 'Desmontaje', 3, (r) => `Rompes madera, cristal y decoración un ${pc(0.15 * r)} más rápido`, { dismantle: 0.15 }],
+    ['neighbor', 'Buen vecino', 2, (r) => `+${pc(0.5 * r)} de reputación ganada en las aldeas`, { rep: 0.5 }],
+    ['foreman', 'Capataz', 1, () => 'Cuando se acaba un bloque de la barra rápida, se repone solo desde el inventario o la mochila', { refill: 1 }],
+  ] },
+  alchemist: { name: 'Alquimista', icon: '⚗', color: '#c37bff', list: [
+    ['distill', 'Destilador', 3, (r) => `Los efectos beneficiosos duran un ${pc(0.15 * r)} más`, { potion: 0.15 }],
+    ['antidote', 'Antídoto', 3, (r) => `Los efectos dañinos duran un ${pc(0.2 * r)} menos`, { badFx: 0.2 }],
+    ['gourmet', 'Gourmet', 3, (r) => `La comida sacia un ${pc(0.12 * r)} más`, { food: 0.12 }],
+    ['scholar', 'Erudito', 2, (r) => `+${pc(0.1 * r)} de experiencia`, { xp: 0.1 }],
+    ['elixir', 'Último elixir', 1, () => 'Una vez cada 10 minutos, un golpe mortal te deja con dos corazones en vez de matarte', { lastStand: 1 }],
+  ] },
+};
+const SKILL_MAX_LEVEL = 40;
+// Experiencia de habilidad por cada acción (clave de estadística → puntos)
+const SKILL_XP = { mined: 1, placed: 0.25, crafted: 1, harvested: 1, kills: 2, hostileKills: 6, trades: 3, tamed: 10, quests: 20, structures: 15, bosses: 60, bred: 3, brewed: 3, enchanted: 5,
+  seals: 15, community: 15, villageUps: 10, potions: 1, sleeps: 2 };
+// Bonificaciones activas del personaje (habilidades + conjunto + accesorios); las recalcula char45.recalc
+const MODS = { dmg: 0, def: 0, regen: 0, crit: 0, critCh: 0, killHeal: 0, speed: 0, air: 0, fall: 0, disc: 0, hunger: 0, ride: 0, mine: 0, toolSave: 0, ore: 0, sense: 0, veiner: 0,
+  reach: 0, blockSave: 0, dismantle: 0, rep: 0, refill: 0, potion: 0, badFx: 0, food: 0, xp: 0, lastStand: 0, jump: 0, swim: 0, breathe: 0 };
+const ORE_BLOCKS = new Set([COPPER_ORE, COAL_ORE, IRON_ORE, GOLD_ORE, DIAMOND_ORE, EMERALD_ORE, INFERNITE_ORE, VOIDITE_ORE, AERITE_ORE]);
+
+/* ==========================================================================
    §14 AMBIENTE: CICLO DÍA/NOCHE Y CLIMA
    --------------------------------------------------------------------------
    Reloj interno t ∈ [0,1): 0 amanecer, 0,25 mediodía, 0,5 atardecer, 0,75
@@ -8779,6 +9044,7 @@ function containerOf(c) {
   if (c === 'chest' || c === 'furnace' || c === 'enchant' || c === 'brew') return ui.tile.inv;
   if (c === 'armor') return game.player.armor;
   if (c === 'offhand') return game.player.offhand;
+  if (c === 'acc') return game.player.acc;
   return null;
 }
 function stackAt(c, i) { if (c === 'hot') c = 'inv'; const ct = containerOf(c); return ct ? ct.slots[i] : null; }
@@ -8846,7 +9112,7 @@ function buildInventoryUI() {
     left.append(tabs, grid);
   } else if (ui.mode === 'chest') {
     const g = document.createElement('div'); g.className = 'grid9';
-    for (let i = 0; i < 27; i++) g.append(slotEl('chest', i));
+    for (let i = 0; i < ui.tile.inv.slots.length; i++) g.append(slotEl('chest', i));
     left.append(chestBar(), g);
   } else if (ui.mode === 'furnace') {
     const f = document.createElement('div'); f.className = 'furnace';
@@ -9365,6 +9631,7 @@ function renderInventory3() {
 function slotAccepts(c, i, s) {
   if (!s) return true;
   if (c === 'armor') return ITEMS[s.id].armor && ITEMS[s.id].armor.idx === i;
+  if (c === 'acc') return i === 2 ? !!ITEMS[s.id].pack : !!ITEMS[s.id].acc;
   if (c === 'enchant') return enchantsFor(s.id).length > 0;
   if (c === 'brew') return i === 3 ? true : (s.id === I.WATER_BOTTLE || !!ITEMS[s.id].potion);
   return true;
@@ -9728,7 +9995,7 @@ function chestBar() {
   const bar = document.createElement('div'); bar.className = 'chestBar';
   const mk = (txt, title, fn) => { const b = document.createElement('button'); b.textContent = txt; b.title = title; b.onclick = () => { fn(); sfx.play('click'); renderInventory(); }; bar.append(b); };
   mk('⬆ Sacar todo', 'Pasa todo el contenido a tu inventario', () => { moveAll(ui.tile.inv, 0, ui.tile.inv.slots.length, game.player.inv); game.player.discoverAll(); });
-  mk('⬇ Guardar mochila', 'Guarda toda la mochila (no la barra rápida)', () => moveAll(game.player.inv, 9, 36, ui.tile.inv));
+  mk('⬇ Guardar todo', 'Guarda aquí todo tu inventario (menos la barra rápida)', () => moveAll(game.player.inv, 9, 36, ui.tile.inv));
   mk('↕ Ordenar', 'Ordena el contenido y junta montones', () => sortSlots(ui.tile.inv, 0, ui.tile.inv.slots.length));
   return bar;
 }
@@ -10165,7 +10432,7 @@ const game = {
     p.dead = true; this.state = 'dead'; bus.emit('died', {}); this.releaseInputs(); sfx.stopAmbient(); p.effects.clear(); p.seat = null; this.stats.add('deaths');
     sfx.play('death');
     if (!this.meta.keepInventory) {
-      for (const inv of [p.inv, p.armor, p.offhand]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
+      for (const inv of [p.inv, p.armor, p.offhand, p.acc, p.pack]) for (let i = 0; i < inv.slots.length; i++) { const s = inv.slots[i]; if (s) { this.entities.dropItem(s, p.pos.x, p.pos.y + 1, p.pos.z); inv.slots[i] = null; } }
       p.level = 0; p.xp = 0;
     }
     $('#deathCause').textContent = cause; $('#deathScore').textContent = `Puntuación: ${p.score}`;
@@ -10376,7 +10643,7 @@ const game = {
     }
     if (s.id === I.BUCKET || s.id === I.BOTTLE) {
       const d = new THREE.Vector3(); camera.getWorldDirection(d);
-      const w = raycastBlocks(camera.position, d, REACH, true);
+      const w = raycastBlocks(camera.position, d, REACH + MODS.reach, true);
       if (w && w.id === WATER) {
         if (s.id === I.BUCKET) world.set(w.x, w.y, w.z, AIR, 0);
         consume(); give(s.id === I.BUCKET ? I.WATER_BUCKET : I.WATER_BOTTLE); sfx.play('bucket'); this.swing = 1; hud.update(); return true;
@@ -10527,15 +10794,15 @@ const game = {
     if (p.onGround && !p.crouching && this.mode === 'survival' && BLOCKS[world.get(Math.floor(p.pos.x), Math.floor(p.pos.y - 0.2), Math.floor(p.pos.z))]?.burns) { if ((p.magmaT = (p.magmaT || 0) - dt) <= 0) { p.magmaT = 0.5; p.damage(1, 'Te quemaste con magma', null, 'contact'); } }
 
     if (p.flying) {
-      const sp = FLY_SPEED * (sprint ? 1.8 : 1);
+      const sp = FLY_SPEED * (char45.gfly ? (sprint ? 1.5 : 1.05) * rideSpeedK(p.mount) / 2 : sprint ? 1.8 : 1);
       p.vel.x += (wish.x * sp - p.vel.x) * Math.min(1, dt * 8); p.vel.z += (wish.z * sp - p.vel.z) * Math.min(1, dt * 8);
-      const vy = (jump ? 1 : 0) - (down('descend') || input.flyDown ? 1 : 0);
+      const vy = (jump ? 1 : 0) - (down('descend') || input.flyDown || (char45.gfly && (down('sneak') || input.sneakToggle)) ? 1 : 0);
       p.vel.y += (vy * 8 - p.vel.y) * Math.min(1, dt * 10);
       moveBody(p, p.vel.x * dt, p.vel.y * dt, p.vel.z * dt, false);
       if (p.onGround && vy < 0) p.flying = false;
       p.fallStart = null;
     } else if (p.inWater) {
-      const sp = 2.6 * (sprint ? 1.5 : 1);
+      const sp = 2.6 * (sprint ? 1.5 : 1) * (1 + MODS.swim);
       p.vel.x += (wish.x * sp - p.vel.x) * Math.min(1, dt * 5); p.vel.z += (wish.z * sp - p.vel.z) * Math.min(1, dt * 5);
       p.vel.y -= 7 * dt;
       if (jump) p.vel.y = Math.min(p.vel.y + 22 * dt, 3.2);
@@ -10545,7 +10812,7 @@ const game = {
       p.fallStart = null;
       if (moving) p.exhaust(0.01 * Math.hypot(p.pos.x - ox, p.pos.z - oz));
     } else {
-      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1) * (1 + (ITEMS[p.armor.slots[1]?.id]?.speedBonus || 0)) * (this.blocking ? 0.4 : 1) * (this.effLvl('slow') ? 0.6 : 1) * (p.mount ? 2 : 1);
+      const speed = (sprint ? SPRINT_SPEED : WALK_SPEED) * (1 + 0.2 * this.effLvl('speed')) * (c.web ? 0.25 : 1) * (p.crouching ? 0.32 : 1) * (1 + (ITEMS[p.armor.slots[1]?.id]?.speedBonus || 0)) * (this.blocking ? 0.4 : 1) * (this.effLvl('slow') ? 0.6 : 1) * (p.mount ? rideSpeedK(p.mount) : 1 + MODS.speed);
       const groundId = world.get(Math.floor(p.pos.x), Math.floor(p.pos.y - 0.1), Math.floor(p.pos.z));
       const slip = BLOCKS[groundId]?.slippery;
       const accel = p.onGround ? (slip ? 2.5 : 14) : 3.5;
@@ -10557,7 +10824,7 @@ const game = {
         p.fallStart = null;
       }
       if (jump && p.onGround && !c.ladder) {
-        p.vel.y = JUMP_SPEED;
+        p.vel.y = JUMP_SPEED * (1 + MODS.jump);
         if (sprint) { p.vel.x += wish.x * 1.5; p.vel.z += wish.z * 1.5; }
         p.exhaust(sprint ? 0.2 : 0.05);
         // doble toque de espacio → volar (creativo)
@@ -10602,7 +10869,7 @@ const game = {
 
   updateTarget() {
     const d = new THREE.Vector3(); camera.getWorldDirection(d);
-    this.target = raycastBlocks(camera.position, d, REACH);
+    this.target = raycastBlocks(camera.position, d, REACH + MODS.reach);
     const m = this.entities.raycast(camera.position, d, 3.6 + (ITEMS[this.player.held()?.id]?.tool?.reach || 0));   // las lanzas llegan más lejos
     this.mobTarget = m && (!this.target || m.dist < this.target.dist) ? m.e : null;
     if (this.target && !this.mobTarget) {
@@ -10626,8 +10893,9 @@ const game = {
         if (this.attackCd <= 0) {
           const s = p.held(), tool = s && ITEMS[s.id].tool;
           let dmg = (tool ? tool.dmg : 1) + enchLevel(s, 'sharp') * 1.25 + this.effLvl('strength') * 3;
+          dmg *= 1 + MODS.dmg;
           this.mobTarget.lastHit = 'player';
-          if (!p.onGround && p.vel.y < 0 && !p.inWater) { dmg *= 1.5; this.particles.emit(this.mobTarget.pos.x, this.mobTarget.pos.y + 1, this.mobTarget.pos.z, [1, 1, 0.6], 8, { up: 2 }); }
+          if ((!p.onGround && p.vel.y < 0 && !p.inWater) || Math.random() < MODS.critCh) { dmg *= 1.5 + MODS.crit; combat.crit = true; this.particles.emit(this.mobTarget.pos.x, this.mobTarget.pos.y + 1, this.mobTarget.pos.z, [1, 1, 0.6], 8, { up: 2 }); }
           const mt = this.mobTarget;
           if (mt.hurt(dmg, p.pos)) {
             p.exhaust(0.1); this.stats.add('damage', dmg); onPlayerHit(mt, tool, dmg);
@@ -10682,7 +10950,7 @@ const game = {
         if (Math.random() < dt * 8) sfx.play('eat');
         if (Math.random() < dt * 12) this.particles.emit(camera.position.x + Math.sin(this.yaw()) * -0.4, camera.position.y - 0.25, camera.position.z + Math.cos(this.yaw()) * -0.4, [0.7, 0.45, 0.3], 2, { size: 0.05 });
         if (p.eatT >= 1.6 && food) {
-          p.hunger = Math.min(20, p.hunger + food.hunger); p.sat = Math.min(p.hunger, p.sat + food.sat);
+          p.hunger = Math.min(20, p.hunger + Math.round(food.hunger * (1 + MODS.food))); p.sat = Math.min(p.hunger, p.sat + food.sat * (1 + MODS.food));
           for (const [e, l, d] of food.effects || []) this.applyEffect(e, l, d);
           s.count--; if (!s.count) p.inv.slots[p.selected] = null;
           p.eatT = 0; sfx.play('burp'); this.useCd = 0.3; this.stats.add('eaten'); hud.update();
@@ -10918,7 +11186,7 @@ function loop(now) {
   renderer.clear();
   renderer.render(scene, camera);
   if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -10929,7 +11197,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `MiniCraft 4.4  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `MiniCraft 4.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -10954,7 +11222,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -11616,7 +11884,7 @@ Object.assign(game, {
       const poi = plan.poi;
       if (poi && !p.pois.has(id)) {
         const d = poi.underground ? Math.hypot(p.pos.x - poi.x, p.pos.y - poi.y, p.pos.z - poi.z) : Math.hypot(p.pos.x - poi.x, p.pos.z - poi.z);
-        if (d < (poi.underground ? 22 : 40)) {
+        if (d < (poi.underground ? 22 : 40) * (1 + MODS.disc)) {
           p.pois.set(id, { type: poi.type, name: poi.name, x: poi.x, z: poi.z });
           notify(`${POI_ICON[poi.type] || '📍'} ¡Has descubierto!`, poi.name, 'poi'); sfx.play('xp');
           this.stats.add('structures'); if (POI_ACH[poi.type]) this.unlock(POI_ACH[poi.type]);
@@ -12411,7 +12679,7 @@ const mobBar = {
     this.trail.style.width = (this.ghost * 100).toFixed(1) + '%';
     if (this.lastE !== cur) {
       this.lastE = cur;
-      this.nameEl.textContent = s.name || 'Criatura';
+      this.nameEl.textContent = (cur.pname ? `${cur.pname} · ${s.name}` : s.name) || 'Criatura';
       this.el.classList.toggle('hostile', !!s.hostile);
       this.el.classList.toggle('villager', cur instanceof Villager);
     }
@@ -12601,7 +12869,7 @@ combat.update = function (dt) {
   if (combat.petTarget && (combat.petTarget.dead || combat.petTarget.deathT)) combat.petTarget = null;
   const m = p.mount;
   if (m) {
-    if (m.dead || p.dead || down('sneak') || input.sneakToggle || p.headInWater) { m.ridden = false; m.pos.copy(p.pos); p.mount = null; input.sneakToggle = false; $('[data-act=sneak]')?.classList.remove('on'); hud.toast('Has desmontado'); }
+    if (m.dead || p.dead || ((down('sneak') || input.sneakToggle) && !char45.gfly && !(m.spec.flies && !p.onGround)) || p.headInWater) { m.ridden = false; m.pos.copy(p.pos); p.mount = null; input.sneakToggle = false; $('[data-act=sneak]')?.classList.remove('on'); hud.toast('Has desmontado'); }
     else { m.pos.copy(p.pos); m.vel.copy(p.vel); m.yaw = camera.rotation.y + Math.PI; m.onGround = p.onGround; m.walk += Math.hypot(p.vel.x, p.vel.z) * dt * 4; m.syncMesh(dt, null); p.fallStart = null; }
   }
 };
@@ -12712,7 +12980,7 @@ function petAI(dt, game) {
       this.poisonT -= dt;
       if ((this.poisonTick = (this.poisonTick || 0) - dt) <= 0) { this.poisonTick = 1.2; if (this.hp > 1) { this.hp -= 1; this.hurtT = 0.2; dmgText.add(this.pos.x, this.pos.y + this.h + 0.3, this.pos.z, '1', 'fx'); } game.particles.emit(this.pos.x, this.pos.y + this.h * 0.7, this.pos.z, [0.4, 0.8, 0.2], 3, { gravity: -1, speed: 0.5, life: 0.6, size: 0.08 }); }
     }
-    if (this.tamed && this.type === 'wolf' && !this.deathT) return petAI.call(this, dt, game);
+    if (this.tamed && !this.deathT && !this.remote && petActive(this)) return petAI.call(this, dt, game);
     let restore = null;
     if ((this.stunT > 0 || this.slowT > 0) && !this.deathT) {
       restore = this.spec;
@@ -13713,7 +13981,7 @@ const EGGS = {};
   let id = 600;
   // Los huevos se numeran por orden. Las criaturas añadidas desde la 4.3 van siempre al final para que
   // los huevos ya guardados en inventarios y cofres no cambien de criatura. (Las nuevas: añadir aquí al final.)
-  const LATE_MOBS = ['mule', 'harpy', 'sentinel', 'automaton'];
+  const LATE_MOBS = ['mule', 'harpy', 'sentinel', 'automaton', 'griffin'];
   const mobOrder = [...Object.entries(MOBS).filter(([t]) => !LATE_MOBS.includes(t)), ...LATE_MOBS.filter((t) => MOBS[t]).map((t) => [t, MOBS[t]])];
   for (const [type, s] of mobOrder) {
     if (s.boss || type.startsWith('__') || type === 'villager' || !s.model) continue;
@@ -13865,6 +14133,26 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '4.5', name: 'Personaje', date: 'noviembre de 2026', items: [
+    'Árbol de habilidades con cinco ramas (Guerrero, Explorador, Minero, Constructor y Alquimista) y 25 habilidades con varios rangos. Se abre con la tecla H, con el botón 🌟 del inventario o desde la pausa.',
+    'Experiencia de habilidad: se gana jugando (minar, fabricar, cultivar, combatir, comerciar, descubrir lugares, domar, cumplir misiones…). Cada nivel da un punto, hasta el nivel 40. Las habilidades de cada rama se desbloquean de arriba abajo al gastar puntos en ella, y no alcanza para todo: elige tu estilo. Reiniciar el árbol cuesta 5 esmeraldas.',
+    'Guerrero: más daño, menos daño recibido, regeneración, golpes críticos y curación al derrotar monstruos. Explorador: velocidad, aire bajo el agua, menos daño por caída, descubrir lugares desde más lejos, menos hambre y monturas más rápidas.',
+    'Minero: minar más rápido, no gastar la herramienta, mineral doble, detector del mineral más cercano y minero de vetas (rompe la veta entera; agáchate para evitarlo). Constructor: más alcance, no gastar bloques, desmontar madera y decoración más rápido, más reputación en las aldeas y reposición automática de la barra rápida.',
+    'Alquimista: pociones que duran más, efectos dañinos más cortos, comida que sacia más, más experiencia y Último elixir (una vez cada 10 minutos, sobrevives a un golpe mortal).',
+    'Pantalla de personaje con tres pestañas: habilidades, equipo (conjuntos, accesorios, mochila y todas las bonificaciones activas) y mascotas y monturas.',
+    'Bonificaciones de conjunto: con las cuatro piezas del mismo material. Cuero: menos hambre. Hierro: menos daño. Oro: más experiencia. Diamante: menos daño y más golpe.',
+    'Armaduras nuevas: conjunto de aerita (más velocidad, saltas más alto y casi sin daño por caída) y conjunto abisal (piezas de hierro con perla abisal y linterna marina: respiras bajo el agua y nadas más rápido).',
+    'Herramientas de aerita: pico, sable (golpea más rápido) y hacha.',
+    'Accesorios: dos espacios nuevos en el inventario para anillo de fuerza, anillo vital, colgante del minero, tobillera veloz y trébol de la suerte (raro, de mazmorra). Los amuletos de pluma y de las mareas también funcionan ahí.',
+    'Mochilas: un espacio de mochila en el inventario. Mochila (9 espacios), mochila grande (18) y mochila de explorador (27). Se abre con la tecla B o con el botón «Abrir»; su contenido se guarda y, si mueres, cae al suelo como el resto.',
+    'Armas legendarias en las cámaras selladas: Filo de la tormenta (cadena de rayos entre enemigos), Lanza de escarcha (ralentiza y empuja), Daga sanguina (muy rápida, te cura al golpear) y Pico del titán (excava 3×3; agáchate para picar un solo bloque).',
+    'Tomo de sabiduría (raro, en mazmorras y zonas): da un punto de habilidad.',
+    'Mascotas: el zorro y la mula ya se pueden domar. El lobo es tu guardián, el zorro es un rastreador (recoge objetos sueltos, te los trae y olfatea cofres sin abrir) y la mula lleva alforjas con 9 espacios.',
+    'Cuidado de mascotas: tienen ánimo. Dales de comer de vez en cuando: contentas rinden más y se curan antes; tristes dejan de ayudar. Golosina para mascotas: las cura del todo y las pone muy contentas.',
+    'Panel de mascota (agáchate y úsala): nombre, vida, ánimo, seguir, quieto, libre, alforjas y liberar. Silbato: llama a todas tus mascotas y monturas a tu lado.',
+    'Monturas: cada caballo domado tiene su propia velocidad. Montura voladora nueva: el grifo, en las montañas y tierras altas. Con montura, salta y mantén Saltar para despegar; volar lo cansa y descansa en tierra. En pantalla táctil aparece el botón Bajar mientras lo montas.',
+    'La enciclopedia muestra qué hace cada compañero y con qué se doma. Teclas nuevas configurables: Personaje (H) y Mochila (B). 9 logros nuevos.',
+  ] },
   { v: '4.4', name: 'Zonas nuevas', date: 'noviembre de 2026', items: [
     'Siete zonas nuevas para explorar, cada una con sus enemigos, trampas, secretos y botín. Aparecen en los mundos que crees a partir de ahora; tus mundos anteriores no cambian.',
     'Catacumbas: salas y pasillos bajo tierra a los que se baja por un pozo. Tumbas, generadores de monstruos, salas de pinchos y una cámara del tesoro.',
@@ -14099,7 +14387,6 @@ const CHANGELOG = [
   { v: '1.0', name: 'Primera versión', items: ['Mundo voxel con terreno por ruido y cuevas.', 'Controles en primera persona, mira, romper y colocar bloques, barra rápida, gravedad y saltos.'] },
 ];
 const ROADMAP = [      // camino a la 5.0
-  { v: '4.5', name: 'Personaje', items: ['Árbol de habilidades.', 'Conjuntos de armadura, accesorios, mochilas, mascotas y monturas.'] },
   { v: '4.6', name: 'Combate y jefes', items: ['Enemigos más listos y ataques especiales.', 'Jefes nuevos con sus arenas.'] },
   { v: '4.7', name: 'Actividades', items: ['Pesca, cocina, cría y cultivos por bioma.', 'Misiones secundarias y expediciones.'] },
   { v: '4.8', name: 'Construcción y mecanismos', items: ['Más bloques, muebles y mecanismos.'] },
@@ -17782,6 +18069,725 @@ ACHIEVEMENTS.push(['zone_vault', 'Rompesellos', 'Abre un cofre sellado venciendo
     return _break.call(this, x, y, z, byPlayer);
   };
 }
+
+/* ==========================================================================
+   §42 PERSONAJE 4.5 — habilidades, conjuntos, accesorios, mochilas,
+   armas legendarias, mascotas y monturas (lógica)
+   --------------------------------------------------------------------------
+   · MODS (definido en §41) reúne todas las bonificaciones activas. Se
+     recalcula a partir de las habilidades aprendidas, el conjunto de armadura
+     completo y los accesorios equipados; el resto del juego solo lee MODS.
+   · La experiencia de habilidad sale de las estadísticas de juego (minar,
+     fabricar, combatir, comerciar, descubrir…): un punto por nivel.
+   · Mascotas: lobo (guardián), zorro (rastreador), mula (carga), caballo
+     (montura) y grifo (montura voladora). Tienen nombre, ánimo y panel propio.
+   ========================================================================== */
+for (const [k, n] of [['acc', 3], ['pack', 0]]) Object.defineProperty(Player.prototype, k, { configurable: true,
+  get() { return this['_' + k] || (this['_' + k] = new Inventory(n)); }, set(v) { this['_' + k] = v; } });
+Object.defineProperty(Player.prototype, 'sk', { configurable: true, get() { return this._sk || (this._sk = { xp: 0, lvl: 0, pts: 0, r: {} }); }, set(v) { this._sk = v; } });
+
+const SKILL_BY_ID = {};
+for (const [bk, B] of Object.entries(SKILLS)) B.list.forEach((s, i) => (SKILL_BY_ID[s[0]] = { branch: bk, idx: i, name: s[1], max: s[2], text: s[3], mods: s[4] }));
+const BAD_EFFECTS = new Set(['poison', 'slow', 'wither', 'hunger', 'weak', 'blind']);
+const MOD_TEXT = {
+  dmg: (v) => `+${pc(v)} de daño cuerpo a cuerpo`, def: (v) => `−${pc(v)} de daño recibido`, regen: (v) => `Medio corazón cada ${Math.round(1 / v)} s`, crit: (v) => `Críticos +${pc(v)}`, critCh: (v) => `${pc(v)} de golpes críticos`,
+  killHeal: () => 'Curación al derrotar monstruos', speed: (v) => `+${pc(v)} de velocidad`, air: (v) => `+${pc(v)} de aire bajo el agua`, fall: (v) => `−${pc(v)} de daño por caída`, disc: (v) => `+${pc(v)} de radio de descubrimiento`,
+  hunger: (v) => `−${pc(v)} de hambre`, ride: (v) => `Monturas +${pc(v)} más rápidas`, mine: (v) => `+${pc(v)} de velocidad al minar`, toolSave: (v) => `${pc(v)} de no gastar la herramienta`, ore: (v) => `${pc(v)} de mineral doble`,
+  sense: (v) => `Detector de minerales (${v} bloques)`, veiner: () => 'Minero de vetas', reach: (v) => `+${v.toFixed(1)} bloques de alcance`, blockSave: (v) => `${pc(v)} de no gastar el bloque`, dismantle: (v) => `+${pc(v)} al desmontar`,
+  rep: (v) => `+${pc(v)} de reputación en aldeas`, refill: () => 'Reposición automática de la barra rápida', potion: (v) => `Efectos buenos +${pc(v)} de duración`, badFx: (v) => `Efectos malos −${pc(v)} de duración`,
+  food: (v) => `La comida sacia +${pc(v)}`, xp: (v) => `+${pc(v)} de experiencia`, lastStand: () => 'Último elixir (cada 10 min)', jump: (v) => `Salto +${pc(v)}`, swim: (v) => `Nado +${pc(v)}`, breathe: () => 'Respiración bajo el agua',
+};
+const MOD_CAP = { def: 0.4, fall: 0.9, hunger: 0.6, toolSave: 0.5, ore: 0.5, blockSave: 0.3, badFx: 0.7 };
+
+const char45 = {
+  gfly: false, t: 0, senseT: 0, chain: false, open: false, tab: 'skills', pet: null, lastSet: null, standCd: 0, hinted: false,
+  need(lvl) { return 40 + lvl * 20; },
+  rank(id) { return game.player?.sk.r[id] || 0; },
+  spent(branch) { let n = 0; for (const s of SKILLS[branch].list) n += this.rank(s[0]); return n; },
+  // Experiencia de habilidad: un punto de habilidad por nivel
+  addSkillXp(n) {
+    const p = game.player; if (!p || game.mode !== 'survival' || !(n > 0)) return;
+    const sk = p.sk; if (sk.lvl >= SKILL_MAX_LEVEL) return;
+    sk.xp += n;
+    let up = 0;
+    while (sk.lvl < SKILL_MAX_LEVEL && sk.xp >= this.need(sk.lvl)) { sk.xp -= this.need(sk.lvl); sk.lvl++; sk.pts++; up++; }
+    if (sk.lvl >= SKILL_MAX_LEVEL) sk.xp = 0;
+    if (up) {
+      notify('🌟 ¡Nivel de habilidad ' + sk.lvl + '!', `Tienes ${sk.pts} ${sk.pts === 1 ? 'punto' : 'puntos'} para gastar (${IS_TOUCH ? 'botón 🌟 del inventario' : 'tecla ' + keyName(settings.keys.skills)})`, 'ach'); sfx.play('levelup');
+      if (sk.lvl >= 10) game.unlock('skill_10');
+      if (this.open) this.render();
+    }
+  },
+  state(id) {
+    const S = SKILL_BY_ID[id], r = this.rank(id), sk = game.player.sk;
+    if (r >= S.max) return 'max';
+    if (this.spent(S.branch) < SKILL_GATE[S.idx]) return 'lock';
+    return sk.pts > 0 ? 'can' : r ? 'has' : 'none';
+  },
+  learn(id) {
+    if (this.state(id) !== 'can') return false;
+    const sk = game.player.sk; sk.pts--; sk.r[id] = this.rank(id) + 1;
+    this.recalc(); sfx.play('levelup', { vol: 0.5 }); game.unlock('skill_first');
+    const S = SKILL_BY_ID[id]; if (S.idx === 4) game.unlock('skill_master');
+    return true;
+  },
+  // Reiniciar el árbol devuelve todos los puntos; cuesta esmeraldas para que no sea gratis cambiar de estilo a cada momento
+  RESPEC_COST: 5,
+  respec() {
+    const p = game.player, sk = p.sk, n = Object.values(sk.r).reduce((a, b) => a + b, 0);
+    if (!n) { hud.toast('No has gastado ningún punto todavía'); return false; }
+    if (game.mode === 'survival') { if (p.inv.count(I.EMERALD) < this.RESPEC_COST) { hud.toast(`Reiniciar cuesta ${this.RESPEC_COST} esmeraldas`); return false; } p.inv.remove(I.EMERALD, this.RESPEC_COST); }
+    sk.pts += n; sk.r = {}; this.recalc(); sfx.play('chime'); hud.update();
+    return true;
+  },
+  setMat() {
+    const a = game.player.armor.slots; if (!a.every(Boolean)) return null;
+    const mat = ITEMS[a[0].id].armor.mat;
+    return a.every((s) => ITEMS[s.id].armor.mat === mat) && SET_BONUS[mat] ? mat : null;
+  },
+  accIds() { const out = new Set(); for (let i = 0; i < 2; i++) { const s = game.player.acc.slots[i]; if (s && ITEMS[s.id].acc) out.add(s.id); } return out; },
+  recalc() {
+    const p = game.player; if (!p) return;
+    for (const k in MODS) MODS[k] = 0;
+    const add = (mods, r = 1) => { for (const k in mods) { const v = mods[k]; MODS[k] += Array.isArray(v) ? v[r] : v * r; } };
+    for (const id in p.sk.r) { const S = SKILL_BY_ID[id], r = Math.min(S ? S.max : 0, p.sk.r[id]); if (S && r > 0) add(S.mods, r); }
+    const mat = this.setMat(); if (mat) add(SET_BONUS[mat].mods);
+    if (mat !== this.lastSet) { if (mat && this.lastSet !== undefined && game.state !== 'loading') { hud.toast(`✨ Conjunto ${SET_BONUS[mat].name}: ${SET_BONUS[mat].desc}`, 3500); game.unlock('set_bonus'); } this.lastSet = mat; }
+    for (const id of this.accIds()) add(ITEMS[id].acc);
+    for (const k in MOD_CAP) MODS[k] = Math.min(MOD_CAP[k], MODS[k]);
+    this.syncPack();
+  },
+  // La mochila equipada decide cuántos espacios hay; si se quita o se cambia por una menor, lo que sobra vuelve al inventario
+  syncPack() {
+    const p = game.player, cap = ITEMS[p.acc.slots[2]?.id]?.pack || 0, old = p.pack.slots;
+    if (old.length === cap) return;
+    const inv = new Inventory(cap); let spilled = 0;
+    old.forEach((s, i) => { if (!s) return; if (i < cap) inv.slots[i] = s; else { const left = inv.add(s.id, s.count, s.dmg, s.ench); const l2 = left ? p.inv.add(s.id, left, s.dmg, s.ench) : 0; if (l2) game.entities.dropItem({ ...s, count: l2 }, p.pos.x, p.pos.y + 1.2, p.pos.z); spilled++; } });
+    p.pack = inv;
+    if (spilled) hud.toast('La mochila ya no tiene sitio: su contenido ha vuelto a tu inventario', 3000);
+    if (cap) game.unlock('backpack');
+  },
+  /* ---------- Cada fotograma ---------- */
+  update(dt) {
+    const p = game.player; if (!p || !world) return;
+    if ((this.t -= dt) <= 0) {
+      this.t = 0.25; this.recalc();
+      // aviso de puntos sin gastar en el botón 🌟 del inventario y de la pausa
+      const n = game.mode === 'survival' ? p.sk.pts : 0, v = n > 0 ? String(Math.min(99, n)) : null;
+      if (v !== this._badge) { this._badge = v; for (const b of [$('#charBtn'), $('#pChar')]) if (b) { if (v) b.dataset.pts = v; else delete b.dataset.pts; } }
+    }
+    if (this.standCd > 0) this.standCd -= dt;
+    if (game.state !== 'playing' || p.dead) { this.flightHud(null); return; }
+    // --- montura voladora ---
+    const m = p.mount, flier = m && m.spec.flies && game.mode === 'survival' ? m : null;
+    if (flier) {
+      flier.stam ??= 1;
+      const jump = down('jump') || input.flyUp, tired = (flier.mood ?? 70) < 25;
+      if (!this.gfly) {
+        if (p.onGround) flier.stam = Math.min(1, flier.stam + dt / 14);
+        if (jump && !p.onGround && p.vel.y < 2.5 && flier.stam > 0.15 && !p.inWater) { this.gfly = true; p.flying = true; p.vel.y = 3; sfx.play('swing', { pitch: 0.6 }); game.unlock('griffin_fly');
+          if (!this.hinted) { this.hinted = true; hud.toast(IS_TOUCH ? 'Volando: Saltar sube y ⇩ Bajar desciende. Aterriza para que descanse.' : `Volando: ${keyName(settings.keys.jump)} sube, ${keyName(settings.keys.sneak)} baja. Aterriza para que descanse.`, 4000); } }
+      } else {
+        flier.stam -= dt / (p.sprinting ? 24 : 40) * (tired ? 1.6 : 1);
+        if (!p.flying) this.gfly = false;                                                    // aterrizó
+        else if (flier.stam <= 0) { flier.stam = 0; this.gfly = false; p.flying = false; hud.toast('El grifo está agotado: planea hasta el suelo y déjalo descansar', 3000); }
+      }
+      if (!this.gfly && !p.onGround && p.vel.y < -5) p.vel.y = -5;                           // planea
+    } else if (this.gfly) { this.gfly = false; p.flying = false; }
+    if (game.mode === 'survival' && p.flying && !this.gfly) p.flying = false;                // en supervivencia solo se vuela a lomos de un grifo
+    this.flightHud(flier);
+    // --- detector de minerales ---
+    if ((this.senseT -= dt) <= 0) { this.senseT = 0.8; this.sense(); }
+  },
+  flightHud(m) {
+    const on = !!m; if (on !== this._gm) { this._gm = on; document.body.classList.toggle('gmount', on); }
+    if (!on) return;
+    const el = $('#gStam'); el.querySelector('i').style.width = Math.round(m.stam * 100) + '%'; el.classList.toggle('low', m.stam < 0.25);
+  },
+  sense() {
+    const el = $('#senseChip'), R = MODS.sense, p = game.player;
+    let best = null;
+    if (R > 0 && game.mode === 'survival') {
+      const px = Math.floor(p.pos.x), py = Math.floor(p.pos.y + 1), pz = Math.floor(p.pos.z); let bd = (R + 0.5) ** 2;
+      for (let y = Math.max(1, py - R); y <= py + R; y++) for (let x = px - R; x <= px + R; x++) for (let z = pz - R; z <= pz + R; z++) {
+        const d = (x - px) ** 2 + (y - py) ** 2 + (z - pz) ** 2; if (d >= bd) continue;
+        const id = world.get(x, y, z); if (ORE_BLOCKS.has(id)) { bd = d; best = { id, x, y, z, d: Math.sqrt(d) }; }
+      }
+    }
+    this.nearOre = best;
+    if (!best) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
+    const dy = best.y - Math.floor(p.pos.y + 1);
+    el.style.display = 'block'; el.textContent = `⛏ ${BLOCKS[best.id].name} · ${Math.max(1, Math.round(best.d))} m ${dy > 1 ? '▲' : dy < -1 ? '▼' : '●'}`;
+  },
+  /* ---------- Mochila ---------- */
+  packTile() { const p = game.player; return { type: 'pack', inv: p.pack, title: itemName(p.acc.slots[2].id) }; },
+  // Cambia lo que muestra el inventario sin cerrarlo (devuelve antes el cursor y la cuadrícula de fabricación)
+  switchInv(mode, tile) {
+    const p = game.player;
+    const giveBack = (s) => { if (!s) return; const left = p.inv.add(s.id, s.count, s.dmg, s.ench); if (left) game.entities.dropItem({ ...s, count: left }, p.pos.x, p.pos.y + 1.4, p.pos.z, p.lookVel(4)); };
+    giveBack(ui.cursor); ui.cursor = null; for (const s of ui.craft.slots) giveBack(s);
+    if (ui.mode === 'enchant') giveBack(ui.tile.inv.slots[0]);
+    if (ui.villager) { ui.villager.trading = false; ui.villager = null; }
+    ui.mode = mode; ui.tile = tile || null; ui.craftW = 2; ui.craft = new Inventory(4);
+    buildInventoryUI(); sfx.play('equip');
+  },
+  openPack() {
+    const p = game.player; this.syncPack();
+    if (!p.pack.slots.length) { hud.toast('No llevas mochila: fabrica una y ponla en su espacio del inventario'); return; }
+    if (game.state === 'inventory') { if (ui.tile?.type === 'pack') this.switchInv('inv'); else this.switchInv('chest', this.packTile()); }
+    else if (game.state === 'playing') { openInventory('chest', this.packTile()); }
+  },
+  /* ---------- Pantalla de personaje ---------- */
+  show(tab) {
+    if (game.state === 'inventory') closeInventory();
+    if (game.state !== 'playing' && game.state !== 'paused') return;
+    this.wasPaused = game.state === 'paused'; if (tab) this.tab = tab;
+    game.releaseInputs(); game.state = 'char'; this.open = true;
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('charScreen'); this.recalc(); this.render();
+  },
+  hide() {
+    this.open = false;
+    if (this.wasPaused) { game.state = 'paused'; showScreen('pauseScreen'); return; }
+    showScreen(null); game.state = 'playing'; game.resume();
+  },
+  render() {
+    $$('#charScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.chtab === this.tab));
+    const body = $('#charBody'), p = game.player, sk = p.sk;
+    if (this.tab === 'skills') {
+      const maxed = sk.lvl >= SKILL_MAX_LEVEL, need = this.need(sk.lvl);
+      let h = `<div class="skHead"><b>Nivel ${sk.lvl}</b><div class="skBar"><i style="width:${maxed ? 100 : sk.xp / need * 100}%"></i><span>${maxed ? 'Nivel máximo' : Math.floor(sk.xp) + ' / ' + need}</span></div>
+        <span class="skPts">${sk.pts} ${sk.pts === 1 ? 'punto' : 'puntos'}</span><button class="btn" id="skRespec" style="width:auto;margin:0;padding:5px 10px;font-size:13px">↺ Reiniciar (${this.RESPEC_COST} 💎)</button></div><div class="skTree">`;
+      for (const [bk, B] of Object.entries(SKILLS)) {
+        const spent = this.spent(bk);
+        h += `<div class="skBranch" style="--bc:${B.color}"><h3 style="color:${B.color}">${B.icon} ${B.name}<small>${spent} / 12 puntos</small></h3>`;
+        B.list.forEach(([id, name, max, text], i) => {
+          const r = this.rank(id), st = this.state(id);
+          const pips = Array.from({ length: max }, (_, k) => (k < r ? '<u>●</u>' : '●')).join('');
+          const desc = st === 'lock' ? `🔒 Requiere ${SKILL_GATE[i]} puntos en ${B.name}` : r >= max ? text(r) : r ? `${text(r)}<br>Siguiente: ${text(r + 1)}` : text(1);
+          h += `<button class="skill ${st}${r ? ' has' : ''}" data-sk="${id}"><b>${name}</b><span class="pips">${pips}</span><em>${desc}</em></button>`;
+        });
+        h += '</div>';
+      }
+      h += `</div><p class="skNote">Ganas experiencia de habilidad minando, fabricando, combatiendo, cultivando, comerciando, descubriendo lugares y cumpliendo misiones. Cada nivel da un punto (máximo ${SKILL_MAX_LEVEL}); no alcanza para todo, así que elige tu estilo. Los Tomos de sabiduría de las mazmorras dan puntos extra.</p>`;
+      body.innerHTML = h;
+      body.querySelectorAll('.skill').forEach((b) => (b.onclick = () => { if (this.learn(b.dataset.sk)) this.render(); else if (this.state(b.dataset.sk) === 'none' || this.state(b.dataset.sk) === 'has') hud.toast('No te quedan puntos de habilidad'); }));
+      $('#skRespec').onclick = () => { if (this.respec()) this.render(); };
+    } else if (this.tab === 'gear') {
+      const mat = this.setMat(), acc = [...this.accIds()], cap = p.pack.slots.length;
+      let h = '<div class="gearGrid"><div class="gearBox"><h3>Conjuntos de armadura</h3>';
+      for (const [k, S] of Object.entries(SET_BONUS)) h += `<p class="${k === mat ? 'on' : 'off'}">${k === mat ? '✔' : '·'} <b>${S.name}</b> (${ARMOR_STATS[k].name}): ${S.desc}</p>`;
+      h += '<p>Lleva las cuatro piezas del mismo material para activar su bonificación.</p></div><div class="gearBox"><h3>Accesorios y mochila</h3>';
+      h += acc.length ? acc.map((id) => `<p class="on">✔ <b>${itemName(id)}</b>: ${escapeHtml(ITEMS[id].desc)}</p>`).join('') : '<p class="off">Sin accesorios. Los anillos, colgantes y amuletos van en los dos espacios 💍 del inventario.</p>';
+      h += cap ? `<p class="on">✔ <b>${itemName(p.acc.slots[2].id)}</b>: ${cap} espacios (${p.pack.slots.filter(Boolean).length} ocupados)</p>` : '<p class="off">Sin mochila. Fabrica una y ponla en el espacio 🎒 del inventario.</p>';
+      h += '</div><div class="gearBox"><h3>Bonificaciones activas</h3>';
+      const act = Object.keys(MODS).filter((k) => MODS[k] > 0);
+      h += act.length ? act.map((k) => `<p class="on">${MOD_TEXT[k](MODS[k])}</p>`).join('') : '<p class="off">Ninguna todavía.</p>';
+      h += '</div></div>';
+      body.innerHTML = h;
+    } else {
+      const pets = this.pets(), has = p.inv.count(I.PET_WHISTLE) > 0 || game.mode === 'creative';
+      let h = pets.length ? '' : '<p class="skNote">Todavía no tienes compañeros cerca. Doma un lobo (hueso), un zorro (pescado o pollo), una mula o un caballo (trigo, manzana o zanahoria) o un grifo de las montañas (pescado o pollo): dales de comer hasta que confíen en ti.</p>';
+      pets.forEach((e, i) => { const d = Math.round(e.pos.distanceTo(p.pos));
+        h += `<div class="petRow"><span><b>${escapeHtml(petName(e))}</b> · ${PET_INFO[e.type].role}<small>${Math.ceil(e.hp)}/${e.spec.hp} ♥ · ${moodName(e)} · ${petModeName(e)} · a ${d} m</small></span><button class="btn" data-pet="${i}">Panel</button></div>`; });
+      h += `<div class="petRow"><span>${has ? 'Tienes un silbato' : 'Con un <b>silbato</b> (2 lingotes de hierro y un hueso) puedes llamarlos desde lejos.'}</span>${has ? '<button class="btn" id="petCall">📯 Llamar a todos</button>' : ''}</div>`;
+      h += '<p class="skNote">Agáchate y usa a un compañero domado para abrir su panel. Dales de comer de vez en cuando: contentos rinden más; tristes dejan de ayudar.</p>';
+      body.innerHTML = h;
+      body.querySelectorAll('[data-pet]').forEach((b) => (b.onclick = () => { this.open = false; petPanel.show(pets[+b.dataset.pet], true); }));
+      const c = $('#petCall'); if (c) c.onclick = () => { callPets(); this.render(); };
+    }
+  },
+  pets() { return game.entities.list.filter((e) => e.kind === 'mob' && e.tamed && PET_INFO[e.type] && !e.dead && !e.deathT && !e.remote); },
+};
+
+/* ---------- Bonificaciones: ganchos sobre el jugador y el juego ---------- */
+{
+  const P = Player.prototype, _addXp = P.addXp, _damage = P.damage, _exhaust = P.exhaust, _tick = P.survivalTick, _toJSON = P.toJSON, _load = P.load;
+  P.addXp = function (n) { if (n > 0 && MODS.xp) { const v = n * (1 + MODS.xp); n = Math.floor(v) + (Math.random() < v % 1 ? 1 : 0); } return _addXp.call(this, n); };
+  P.damage = function (n, cause, from, kind) {
+    if (n > 0) {
+      if (!kind || kind === 'contact') n *= 1 - MODS.def;
+      else if (kind === 'fall') { if (zones44.charm('feather')) return false; n *= 1 - MODS.fall; }
+    }
+    return _damage.call(this, n, cause, from, kind);
+  };
+  P.exhaust = function (v) { return _exhaust.call(this, v * (1 - MODS.hunger)); };
+  P.survivalTick = function (dt) {
+    const r = _tick.call(this, dt);
+    if (game.mode !== 'survival' || this.dead) return r;
+    if (MODS.regen > 0 && this.health < 20 && this.hunger > 6) { this.rgT = (this.rgT || 0) + dt * MODS.regen; if (this.rgT >= 1) { this.rgT = 0; this.heal(1); } }
+    if (this.headInWater) { if (MODS.breathe) this.air = MAX_AIR; else if (MODS.air && this.air > 0) this.air = Math.min(MAX_AIR, this.air + dt / 1.5 * (1 - 1 / (1 + MODS.air))); }
+    return r;
+  };
+  const invJSON = (inv) => inv.toJSON();
+  P.toJSON = function () {
+    const o = _toJSON.call(this);
+    o.acc = invJSON(this.acc); o.pack = invJSON(this.pack); o.sk = { xp: Math.round(this.sk.xp * 100) / 100, lvl: this.sk.lvl, pts: this.sk.pts, r: this.sk.r }; if (char45.standCd > 0) o.lsT = Math.round(char45.standCd);
+    return o;
+  };
+  P.load = function (o) {
+    const r = _load.call(this, o);
+    this.acc = new Inventory(3); if (Array.isArray(o.acc)) this.acc.load(o.acc);
+    const pk = Array.isArray(o.pack) ? o.pack : []; this.pack = new Inventory(pk.length); this.pack.load(pk);
+    const s = o.sk && typeof o.sk === 'object' ? o.sk : {}, rr = {};
+    if (s.r && typeof s.r === 'object') for (const k in s.r) if (SKILL_BY_ID[k]) rr[k] = clamp(Math.floor(+s.r[k]) || 0, 0, SKILL_BY_ID[k].max);
+    this.sk = { xp: Math.max(0, +s.xp || 0), lvl: clamp(Math.floor(+s.lvl) || 0, 0, SKILL_MAX_LEVEL), pts: Math.max(0, Math.floor(+s.pts) || 0), r: rr };
+    char45.standCd = +o.lsT || 0; char45.lastSet = undefined; char45.gfly = false;
+    return r;
+  };
+
+  // experiencia de habilidad a partir de las estadísticas de juego
+  const _stat = game.stats.add;
+  game.stats.add = function (k, n = 1) { _stat.call(this, k, n); const v = SKILL_XP[k]; if (v) char45.addSkillXp(v * (k === 'crafted' ? Math.min(n, 4) : n)); };
+
+  const _breakTime = game.breakTime, _wear = game.wearTool, _break = game.breakBlock, _place = game.placeHeld, _effect = game.applyEffect, _die = game.die, _killed = game.onMobKilled, _useItem = game.useItem;
+  game.breakTime = function (def, stack) {
+    const t = _breakTime.call(this, def, stack);
+    if (!Number.isFinite(t) || t <= 0.05) return t;
+    return t / (1 + MODS.mine + (def.tool === 'axe' || !def.tool ? MODS.dismantle : 0));
+  };
+  game.wearTool = function (n) { if (MODS.toolSave && Math.random() < MODS.toolSave) return; return _wear.call(this, n); };
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z); if (!id) return;
+    const def = BLOCKS[id], p = this.player, held = p.held(), meta = world.getMeta(x, y, z), surv = this.mode === 'survival';
+    const first = byPlayer && !char45.chain, sneak = p.crouching || down('sneak');
+    const ore = ORE_BLOCKS.has(id), can = !surv || this.canHarvest(def, held), normal = this.target && this.target.x === x && this.target.y === y && this.target.z === z ? this.target.normal : null;
+    const r = _break.call(this, x, y, z, byPlayer);
+    if (world.get(x, y, z) === id) return r;                                                   // algo lo impidió (sello, permisos de sala…)
+    if (byPlayer && surv && ore && can) {
+      char45.addSkillXp(3);
+      if (MODS.ore && Math.random() < MODS.ore) {
+        const extra = typeof def.drop === 'function' ? def.drop(Math.random, held, meta) : def.drop != null ? [[def.drop, 1]] : [];
+        for (const [did, n] of extra) if (n > 0) this.entities.dropItem({ id: did, count: n }, x + 0.5, y + 0.4, z + 0.5);
+        dmgText.add(x + 0.5, y + 1, z + 0.5, '×2', 'crit');
+      }
+    }
+    if (!first || sneak || !can) return r;
+    const tool = held && ITEMS[held.id].tool, same = () => p.held() === held && (held.count > 0);
+    char45.chain = true;
+    try {
+      if (ore && MODS.veiner && surv) {
+        // veta entera: bloques del mismo mineral conectados (también en diagonal)
+        const seen = new Set([`${x},${y},${z}`]), q = [[x, y, z]]; let n = 0;
+        while (q.length && n < 8) {
+          const [cx, cy, cz] = q.shift();
+          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+            const nx = cx + dx, ny = cy + dy, nz = cz + dz, k = `${nx},${ny},${nz}`;
+            if (seen.has(k) || n >= 8 || world.get(nx, ny, nz) !== id) continue;
+            seen.add(k); if (!same()) continue;
+            this.breakBlock(nx, ny, nz, true); if (world.get(nx, ny, nz) !== id) { n++; q.push([nx, ny, nz]); }
+          }
+        }
+      } else if (tool && tool.area && def.tool === 'pickaxe' && normal) {
+        // Pico del titán: 3×3 en el plano de la cara que se pica
+        const ax = normal[0] ? 0 : normal[1] ? 1 : 2;
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+          if (!a && !b) continue;
+          const o = ax === 0 ? [0, a, b] : ax === 1 ? [a, 0, b] : [a, b, 0], nx = x + o[0], ny = y + o[1], nz = z + o[2];
+          const nid = world.get(nx, ny, nz), nd = nid && BLOCKS[nid];
+          if (!nd || nd.tool !== 'pickaxe' || nd.hardness <= 0 || nd.hardness > def.hardness * 2 + 1 || nd.interact || !same() || (surv && !this.canHarvest(nd, held))) continue;
+          this.breakBlock(nx, ny, nz, true);
+        }
+      }
+    } finally { char45.chain = false; }
+    return r;
+  };
+  game.placeHeld = function () {
+    const p = this.player, s = p.held(), sel = p.selected, id = s?.id, n = s?.count, isBlock = s && (ITEMS[id].block || ITEMS[id].place);
+    const r = _place.call(this);
+    if (!r || !isBlock || this.mode !== 'survival') return r;
+    const now = p.inv.slots[sel];
+    if ((now ? (now.id === id ? now.count : n) : 0) !== n - 1) return r;                        // no se gastó exactamente un bloque (cubos, puertas…)
+    if (MODS.blockSave && Math.random() < MODS.blockSave) { if (now) now.count++; else p.inv.slots[sel] = { id, count: 1, dmg: 0 }; }
+    else if (!now && MODS.refill) {
+      // Capataz: repone desde el inventario y, si no, desde la mochila
+      for (const [inv, a, b] of [[p.inv, 9, 36], [p.pack, 0, p.pack.slots.length]]) {
+        let done = false;
+        for (let i = a; i < b; i++) { const t = inv.slots[i]; if (t && t.id === id && !t.ench) { p.inv.slots[sel] = t; inv.slots[i] = null; done = true; break; } }
+        if (done) { sfx.play('pop', { vol: 0.4 }); break; }
+      }
+    }
+    hud.update();
+    return r;
+  };
+  game.applyEffect = function (eff, lvl, dur) {
+    if (BAD_EFFECTS.has(eff)) dur *= 1 - MODS.badFx; else dur *= 1 + MODS.potion;
+    return _effect.call(this, eff, lvl, dur);
+  };
+  game.die = function (cause) {
+    const p = this.player;
+    if (MODS.lastStand && char45.standCd <= 0 && this.mode === 'survival' && p.pos.y > -5) {
+      char45.standCd = 600; p.health = 4; p.invuln = 1.5; _effect.call(this, 'regen', 1, 8);
+      this.particles.emit(p.pos.x, p.pos.y + 1, p.pos.z, [0.76, 0.48, 1], 40, { speed: 5, up: 5, gravity: 3, life: 1.1 });
+      notify('⚗ ¡Último elixir!', 'Has esquivado la muerte. Volverá a estar listo en 10 minutos', 'ach'); sfx.play('levelup');
+      return;
+    }
+    return _die.call(this, cause);
+  };
+  game.onMobKilled = function (m) {
+    _killed.call(this, m);
+    if (m && m.lastHit === 'player' && m.spec.hostile && MODS.killHeal && this.mode === 'survival') { const p = this.player; if (!p.dead && p.health < 20) { p.heal(MODS.killHeal); dmgText.add(p.pos.x, p.pos.y + 2.2, p.pos.z, '+♥', 'fx'); } }
+  };
+  // objetos de uso: tomo de sabiduría y silbato
+  game.useItem = function () {
+    const p = this.player, s = p.held();
+    if (s && s.id === I.SKILL_TOME) {
+      if (this.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; }
+      p.sk.pts++; sfx.play('levelup'); this.swing = 1; this.useCd = 0.5; hud.update();
+      notify('📘 Tomo de sabiduría', `+1 punto de habilidad (tienes ${p.sk.pts})`, 'ach');
+      return true;
+    }
+    if (s && s.id === I.PET_WHISTLE) { callPets(); this.swing = 1; this.useCd = 0.8; return true; }
+    return _useItem.call(this);
+  };
+
+  // reputación en las aldeas
+  const _addRep = addRep;
+  addRep = function (planId, n, why) { return _addRep(planId, n > 0 && MODS.rep ? Math.round(n * (1 + MODS.rep)) : n, why); };
+  // amuletos también en los espacios de accesorio
+  const _charm = zones44.charm;
+  zones44.charm = function (kind) { if (_charm.call(this, kind)) return true; const a = game.player.acc.slots; return [a[0], a[1]].some((s) => s && ITEMS[s.id].charm === kind); };
+
+  // golpes: armas legendarias
+  const _hit = onPlayerHit;
+  onPlayerHit = function (mt, tool, dmg) {
+    _hit(mt, tool, dmg);
+    const p = game.player;
+    if (tool && tool.leech && game.mode === 'survival' && p.health < 20) { p.heal(Math.max(1, Math.round(dmg * tool.leech))); game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, [0.9, 0.1, 0.2], 5, { speed: 1.5, life: 0.5, size: 0.08 }); }
+    if (tool && tool.frost && !mt.isBoss) { mt.slowT = Math.max(mt.slowT || 0, tool.frost); game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, [0.75, 0.92, 1], 8, { speed: 1.2, life: 0.7, size: 0.09 }); }
+  };
+  // Filo de la tormenta: cadena de rayos entre los enemigos cercanos
+  const _ability = useAbility;
+  useAbility = function (stack) {
+    const ab = ITEMS[stack.id].ability; if (ab.id !== 'storm') return _ability(stack);
+    const p = game.player, now = performance.now() / 1000, left = (abilityCd.get(stack.id) || 0) - now;
+    if (left > 0) { if (!useAbility.warn || now - useAbility.warn > 0.8) { useAbility.warn = now; hud.toast(`${ab.name}: lista en ${Math.ceil(left)} s`, 900); } return true; }
+    const pool = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !(e instanceof Villager) && !e.isPlayer && !e.tamed && (e.spec.hostile || e.isBoss) && e.pos.distanceTo(p.pos) < 16);
+    if (!pool.length) { hud.toast('No hay enemigos cerca'); return true; }
+    abilityCd.set(stack.id, now + ab.cd);
+    let from = new THREE.Vector3(p.pos.x, p.pos.y + 1.4, p.pos.z), dmg = 12; const hit = new Set();
+    for (let k = 0; k < 5; k++) {
+      let best = null, bd = k ? 8 : 16;
+      for (const e of pool) { if (hit.has(e)) continue; const d = e.pos.distanceTo(from); if (d < bd) { bd = d; best = e; } }
+      if (!best) break;
+      hit.add(best);
+      const to = new THREE.Vector3(best.pos.x, best.pos.y + best.h * 0.6, best.pos.z);
+      for (let i = 0; i <= 10; i++) { const t = i / 10; game.particles.emit(lerp(from.x, to.x, t) + (Math.random() - 0.5) * 0.3, lerp(from.y, to.y, t) + (Math.random() - 0.5) * 0.3, lerp(from.z, to.z, t) + (Math.random() - 0.5) * 0.3, [1, 0.95, 0.45], 2, { speed: 0.4, gravity: 0, life: 0.35, size: 0.1 }); }
+      best.lastHit = 'player'; best.hurt(dmg, null); if (!best.isBoss) best.stunT = Math.max(best.stunT || 0, 1);
+      from = to; dmg *= 0.8;
+    }
+    game.wearTool(2); game.swing = 1; game.shake = 0.25; sfx.play('thunder', { vol: 0.6 }); game.env.flash = Math.max(game.env.flash || 0, 0.5);
+    return true;
+  };
+}
+
+/* ---------- Mascotas y monturas ---------- */
+const petName = (e) => e.pname || e.spec.name;
+const moodName = (e) => { const m = e.mood ?? 70; return m >= 70 ? '😊 Feliz' : m >= 25 ? '🙂 Tranquilo' : '😞 Triste'; };
+const petModeName = (e) => (e.sitting ? 'Quieto' : e.follow ? 'Te sigue' : 'Libre');
+// Lobos y zorros siempre acompañan; las monturas y la mula solo si se les pide seguir o quedarse quietas (si no, pastan a su aire y pueden criar)
+function petActive(e) { return !!PET_INFO[e.type] && (e.type === 'wolf' || e.type === 'fox' || e.follow || e.sitting); }
+function rideSpeedK(m) {
+  const mood = m.mood ?? 70;
+  return (m.rideK || { mule: 1.35, griffin: 1.7 }[m.type] || 2) * (1 + MODS.ride) * (mood >= 70 ? 1.06 : mood < 25 ? 0.85 : 1);
+}
+function tamePet(e) {
+  e.tamed = true; e.persistent = true; e.ai.panic = 0; e.mood = 80;
+  if (e.type === 'horse') e.rideK = +(1.7 + Math.random() * 0.8).toFixed(2);
+  if (e.type === 'mule') { e.follow = true; e.pinv = new Inventory(9); }
+  if (e.type === 'wolf' || e.type === 'fox') e.follow = true;
+  game.stats.add('tamed'); game.unlock('pet_first');
+  const kinds = new Set(char45.pets().map((x) => x.type)); kinds.add(e.type); if (kinds.size >= 3) game.unlock('pet_three');
+}
+function callPets() {
+  const p = game.player, pets = char45.pets().filter((e) => !e.ridden);
+  sfx.play('horn', { pitch: 1.8, vol: 0.5 });
+  if (!pets.length) { hud.toast('Ningún compañero te oye'); return 0; }
+  pets.forEach((e, i) => { const a = i / pets.length * 6.283; e.sitting = false; if (e.type !== 'wolf' && e.type !== 'fox') e.follow = true;
+    e.pos.set(p.pos.x + Math.cos(a) * 1.8, p.pos.y + 0.3, p.pos.z + Math.sin(a) * 1.8); e.vel.set(0, 0, 0); e.goalDrop = e.sniff = null;
+    game.particles.emit(e.pos.x, e.pos.y + e.h * 0.5, e.pos.z, [1, 1, 1], 8, { speed: 1.5, life: 0.5 }); });
+  hud.toast(pets.length === 1 ? `${petName(pets[0])} acude a tu llamada` : `${pets.length} compañeros acuden a tu llamada`, 1800);
+  return pets.length;
+}
+// El zorro busca objetos sueltos y cofres sin abrir. Devuelve hacia dónde ir, o null para seguir al jugador.
+function foxGoal(e, dt) {
+  const p = game.player;
+  if (e.carry) {
+    if (e.pos.distanceTo(p.pos) < 2.4) {
+      const s = e.carry, left = p.inv.add(s.id, s.count, s.dmg, s.ench); e.carry = null;
+      if (left) game.entities.dropItem({ ...s, count: left }, e.pos.x, e.pos.y + 0.5, e.pos.z);
+      if (left < s.count) { sfx.play('pop'); p.discover(s.id); hud.toast(`🦊 ${petName(e)} te trae: ${itemName(s.id)}${s.count > 1 ? ' ×' + s.count : ''}`, 1600); hud.update(); }
+      return null;
+    }
+    return { x: p.pos.x, z: p.pos.z, speed: 1.5 };
+  }
+  const g = e.goalDrop;
+  if (g) {
+    if (g.dead || g.pos.distanceTo(p.pos) > 30) e.goalDrop = null;
+    else if (g.pos.distanceTo(e.pos) < 1.2) { e.carry = { ...g.stack }; g.dead = true; e.goalDrop = null; sfx.play('pop', { pos: e.pos, vol: 0.5 }); return null; }
+    else return { x: g.pos.x, z: g.pos.z, speed: 1.5 };
+  }
+  if (e.sniff) {
+    const s = e.sniff, d = Math.hypot(s.x + 0.5 - e.pos.x, s.z + 0.5 - e.pos.z);
+    if ((s.t -= dt) <= 0 || world.get(s.x, s.y, s.z) !== CHEST || Math.hypot(s.x - p.pos.x, s.z - p.pos.z) > 34) e.sniff = null;
+    else if (d < 1.8) { if (Math.random() < dt * 3) game.particles.emit(s.x + 0.5, s.y + 1.2, s.z + 0.5, [1, 0.85, 0.3], 2, { gravity: -1, up: 1, speed: 0.4, life: 0.8, size: 0.09 }); return { x: e.pos.x, z: e.pos.z, speed: 0, face: [s.x + 0.5, s.z + 0.5] }; }
+    else return { x: s.x + 0.5, z: s.z + 0.5, speed: 1.4 };
+  }
+  if ((e.scanT = (e.scanT || 0) - dt) > 0) return null;
+  e.scanT = 2;
+  if (!net.active) {
+    let best = null, bd = 12;
+    for (const it of game.entities.list) { if (it.kind !== 'item' || it.dead || it.did || it.pickupDelay > 0 || it.age < 1.5) continue; if (it.pos.distanceTo(p.pos) < 2.6) continue; const d = it.pos.distanceTo(e.pos); if (d < bd && Math.abs(it.pos.y - e.pos.y) < 5) { bd = d; best = it; } }
+    if (best) { e.goalDrop = best; return { x: best.pos.x, z: best.pos.z, speed: 1.5 }; }
+  }
+  if ((e.chestT = (e.chestT || 0) - 2) > 0) return null;
+  e.chestT = 8;
+  const known = (e.known ||= new Set()), fx = Math.floor(e.pos.x), fy = Math.floor(e.pos.y), fz = Math.floor(e.pos.z), R = 12; let found = null, fd = 1e9;
+  for (let y = Math.max(1, fy - 7); y <= fy + 5; y++) for (let x = fx - R; x <= fx + R; x++) for (let z = fz - R; z <= fz + R; z++) {
+    if (world.get(x, y, z) !== CHEST) continue;
+    const k = `${x},${y},${z}`; if (known.has(k) || world.tiles.has(k)) continue;                // con contenido generado = ya abierto
+    const d = Math.hypot(x - fx, y - fy, z - fz); if (d < fd) { fd = d; found = { x, y, z, k }; }
+  }
+  if (found) {
+    known.add(found.k); if (known.size > 200) known.clear();
+    e.sniff = { x: found.x, y: found.y, z: found.z, t: 40 };
+    const dy = found.y - Math.floor(p.pos.y);
+    hud.toast(`🦊 ${petName(e)} ha olfateado un cofre a ${Math.round(Math.hypot(found.x - p.pos.x, found.z - p.pos.z))} m${dy < -2 ? ', bajo tierra' : dy > 3 ? ', en alto' : ''}. ¡Síguelo!`, 3500); sfx.play('chime', { pitch: 1.4, vol: 0.5 });
+  }
+  return null;
+}
+// Inteligencia de los compañeros (sustituye a la del lobo de la 3.2)
+petAI = function (dt, game) {
+  const p = game.player, s = this.spec, type = this.type; this.invuln -= dt; this.hurtT -= dt; this.ai.attackCd -= dt;
+  const before = this.mood ?? 70; this.mood = clamp(before - dt / 55, 0, 100);
+  if (before >= 25 && this.mood < 25) hud.toast(`${petName(this)} está triste: dale de comer`, 2600);
+  const sad = this.mood < 25, happy = this.mood >= 70;
+  let tx = null, tz = null, speed = 0, face = null; const t = combat.petTarget;
+  if (!this.sitting) {
+    if (type === 'wolf' && !sad && t && !t.dead && !t.deathT && t.pos.distanceTo(this.pos) < 24) {
+      tx = t.pos.x; tz = t.pos.z; speed = s.speed * 1.4;
+      if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt(happy ? 5 : 4, this.pos); } }
+    } else {
+      const g = type === 'fox' && !sad ? foxGoal(this, dt) : null;
+      if (g) { tx = g.x; tz = g.z; speed = s.speed * g.speed; face = g.face || null; }
+      else {
+        const d = p.pos.distanceTo(this.pos), keep = type === 'wolf' || type === 'fox' ? 3.2 : 4.5;
+        if (d > 26 && p.onGround && !p.mount?.spec.flies) { this.pos.set(p.pos.x + 1, p.pos.y + 0.2, p.pos.z + 1); this.vel.set(0, 0, 0); }
+        else if (d > keep) { tx = p.pos.x; tz = p.pos.z; speed = d > 8 ? s.speed * (p.mount ? 2.6 : 1.5) : s.speed; }
+      }
+    }
+  }
+  if (tx != null && speed > 0) { const want = Math.atan2(tx - this.pos.x, tz - this.pos.z); this.yaw += ((((want - this.yaw) % 6.283) + 9.425) % 6.283 - 3.1416) * Math.min(1, dt * 8); }
+  const ox = this.pos.x, oz = this.pos.z;
+  this.vel.x = Math.sin(this.yaw) * speed; this.vel.z = Math.cos(this.yaw) * speed;
+  this.physics(dt);
+  if (speed > 0 && this.onGround && Math.hypot(this.pos.x - ox, this.pos.z - oz) < speed * dt * 0.4) this.vel.y = 7.4;      // obstáculo: salta
+  if (this.hp < s.hp && !sad && (this.regenT = (this.regenT || 0) + dt) > (happy ? 4 : 6)) { this.regenT = 0; this.hp = Math.min(s.hp, this.hp + 1); }
+  this.walk += Math.hypot(this.vel.x, this.vel.z) * dt * 4;
+  this.syncMesh(dt, this.sitting ? null : face ? Math.atan2(face[0] - this.pos.x, face[1] - this.pos.z) : Math.atan2(p.pos.x - this.pos.x, p.pos.z - this.pos.z));
+  if (this.sitting && (type === 'wolf' || type === 'fox')) { this.mesh.position.y -= type === 'fox' ? 0.1 : 0.16; this.model.legs[2].rotation.x = this.model.legs[3].rotation.x = -1.3; }
+};
+tameInteract = function (e, s) {
+  const spec = e.spec, p = game.player; if (!spec.tameFood || e.deathT || (typeof PackMule !== 'undefined' && e instanceof PackMule)) return false;
+  const use = () => { if (game.mode === 'survival') { s.count--; if (s.count <= 0) p.inv.slots[p.selected] = null; } hud.update(); };
+  const hearts = (ok) => game.particles.emit(e.pos.x, e.pos.y + e.h + 0.2, e.pos.z, ok ? [1, 0.3, 0.4] : [0.4, 0.4, 0.4], ok ? 10 : 5, { gravity: -1, up: 1.2, speed: 0.5, life: 0.9, size: 0.1 });
+  if (!e.tamed) {
+    if (!s || !spec.tameFood.includes(s.id) || e.age < 0) return false;
+    use(); sfx.play('eat', { pos: e.pos });
+    if (Math.random() < (spec.tameChance || 0.34)) {
+      tamePet(e); hearts(true); sfx.play('levelup', { vol: 0.4 });
+      hud.toast({ horse: '¡Has domado al caballo! Ponle una montura para montarlo.', griffin: '¡Has domado al grifo! Ponle una montura y mantén Saltar para volar.', mule: '¡La mula es tuya! Te seguirá con sus alforjas: úsala para abrirlas.',
+        fox: '¡El zorro ahora es tu compañero! Te traerá objetos y olfateará cofres.', wolf: '¡El lobo ahora es tu compañero! Úsalo para que se siente o te siga.' }[e.type] + (IS_TOUCH ? ' Agáchate y tócalo para ver su panel.' : ' Agáchate y úsalo para ver su panel.'), 4500);
+    } else { hearts(false); hud.toast('Todavía no confía en ti…', 1200); }
+    return true;
+  }
+  if (e.ridden) return true;
+  const mount = e.type === 'horse' || e.type === 'griffin' || e.type === 'mule';
+  if (s && s.id === I.PET_TREAT) { e.hp = spec.hp; e.mood = Math.min(100, (e.mood ?? 70) + 45); use(); hearts(true); sfx.play('eat', { pos: e.pos }); return true; }
+  if (s && s.id === I.SADDLE && mount && !e.saddled) { e.saddled = true; use(); sfx.play('equip'); return true; }
+  const foods = [...spec.tameFood, ...(e.type === 'wolf' ? BREED_FOOD.wolf : [])];
+  if (s && foods.includes(s.id) && (e.hp < spec.hp || (e.mood ?? 70) < 80)) { e.hp = Math.min(spec.hp, e.hp + 6); e.mood = Math.min(100, (e.mood ?? 70) + 22); use(); hearts(true); sfx.play('eat', { pos: e.pos }); return true; }
+  if (s && (BREED_FOOD[e.type] || []).includes(s.id)) return false;                             // deja pasar la crianza
+  if (p.crouching || down('sneak') || input.sneakToggle) { petPanel.show(e); return true; }
+  if (mount && e.saddled) {
+    if (!p.mount) { p.mount = e; e.ridden = true; e.sitting = false; p.crouching = false;
+      hud.toast((IS_TOUCH ? 'Montado. Toca Agachar para bajar.' : `Montado. Pulsa ${keyName(settings.keys.sneak)} para bajar.`) + (spec.flies ? ' Salta y mantén Saltar para despegar.' : ''), 3000); sfx.play('equip'); }
+    return true;
+  }
+  if (e.type === 'mule') { petPanel.openBags(e); return true; }
+  if (mount) { hud.toast('Necesita una montura (cuero y hierro)'); return true; }
+  e.sitting = !e.sitting; hud.toast(e.sitting ? `${petName(e)} se queda aquí` : `${petName(e)} te sigue`, 1200); return true;
+};
+{
+  // guardado, alas del grifo y muerte de un compañero
+  const M = Mob.prototype, _json = M.toJSON, _update = M.update;
+  M.toJSON = function () {
+    const o = _json.call(this);
+    if (o && this.tamed) { o.md = Math.round(this.mood ?? 70); if (this.pname) o.pn = this.pname; if (this.follow) o.fw = 1; if (this.rideK) o.rk = this.rideK; if (this.stam != null) o.sm = +this.stam.toFixed(2); if (this.pinv) o.pi = this.pinv.toJSON(); }
+    return o;
+  };
+  M.loadExtra = function (o) {
+    if (!o.tm) return;
+    this.mood = Number.isFinite(o.md) ? clamp(o.md, 0, 100) : 70; if (typeof o.pn === 'string') this.pname = o.pn.slice(0, 20);
+    this.follow = o.fw != null ? !!o.fw : (this.type === 'wolf' || this.type === 'fox');
+    if (Number.isFinite(o.rk)) this.rideK = clamp(o.rk, 1, 3); if (Number.isFinite(o.sm)) this.stam = clamp(o.sm, 0, 1);
+    if (this.type === 'mule') { this.pinv = new Inventory(9); if (Array.isArray(o.pi)) this.pinv.load(o.pi); }
+  };
+  M.update = function (dt, game) {
+    const r = _update.call(this, dt, game), w = this.model.gwings;
+    if (w) {
+      const fly = this.ridden && char45.gfly, air = this.ridden && !game.player.onGround;
+      const a = fly ? Math.sin(this.animT * 9) * 0.55 : air ? 0.15 : -1.15, k = Math.min(1, dt * 10);
+      this.wingA = (this.wingA ?? -1.15) + (a - (this.wingA ?? -1.15)) * (fly ? 1 : k);
+      w[0].rotation.z = -this.wingA; w[1].rotation.z = this.wingA; w[0].rotation.y = w[1].rotation.y = 0;
+      if (!fly && !air) { w[0].rotation.y = -0.5; w[1].rotation.y = 0.5; }
+      if (this.ridden) this.animT = (this.animT || 0) + dt;
+    }
+    if (this.deathT && this.tamed && !this._petDead && PET_INFO[this.type]) {
+      this._petDead = true;
+      if (this.pinv) for (const s of this.pinv.slots) if (s) game.entities.dropItem(s, this.pos.x, this.pos.y + 0.6, this.pos.z);
+      if (this.carry) game.entities.dropItem(this.carry, this.pos.x, this.pos.y + 0.6, this.pos.z);
+      if (!this.remote) notify('💔 Has perdido a un compañero', petName(this), 'info');
+      if (petPanel.pet === this) petPanel.hide();
+    }
+    return r;
+  };
+}
+const petPanel = {
+  pet: null, open: false, confirm: false,
+  show(e, fromChar) {
+    if (game.state !== 'playing' && game.state !== 'char') return;
+    this.pet = e; this.confirm = false; this.back = !!fromChar; this.open = true;
+    game.releaseInputs(); game.state = 'pet';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('petScreen'); this.render();
+  },
+  hide() {
+    this.open = false; this.pet = null;
+    if (this.back) { game.state = 'playing'; char45.wasPaused = false; char45.show('pets'); return; }
+    showScreen(null); game.state = 'playing'; game.resume();
+  },
+  openBags(e) {
+    if (this.open) { this.open = false; this.pet = null; showScreen(null); game.state = 'playing'; }
+    openInventory('chest', { type: 'pet', inv: e.pinv, title: `Alforjas de ${petName(e)}`, pet: e });
+  },
+  render() {
+    const e = this.pet; if (!e) return;
+    const info = PET_INFO[e.type], mood = e.mood ?? 70, mount = e.type === 'horse' || e.type === 'griffin' || e.type === 'mule', free = mount;
+    $('#petTitle').textContent = `${{ wolf: '🐺', fox: '🦊', mule: '🫏', horse: '🐴', griffin: '🪽' }[e.type]} ${petName(e)}`;
+    let h = `<input id="petNameIn" maxlength="20" placeholder="Ponle nombre (${e.spec.name})" value="${escapeHtml(e.pname || '')}" autocomplete="off" spellcheck="false">
+      <p><b>${info.role}</b> · ${e.spec.name}. ${info.desc}</p>
+      <p>Vida: ${Math.ceil(e.hp)} / ${e.spec.hp}</p><div class="petMeter"><i style="width:${e.hp / e.spec.hp * 100}%;background:#e0564a"></i></div>
+      <p>Ánimo: ${moodName(e)}${mood >= 70 ? ' (rinde más)' : mood < 25 ? ' (no ayuda: dale de comer)' : ''}</p><div class="petMeter"><i style="width:${mood}%;background:${mood >= 70 ? '#7be06a' : mood >= 25 ? '#f0b040' : '#e0564a'}"></i></div>`;
+    if (mount) h += `<p>Velocidad con jinete: ${(WALK_SPEED * rideSpeedK(e)).toFixed(1)} bloques/s${e.spec.flies ? ` · en vuelo: ${(FLY_SPEED * 1.05 * rideSpeedK(e) / 2).toFixed(1)}` : ''}${e.saddled ? '' : ' · <b>sin montura</b>'}</p>`;
+    if (e.spec.flies) h += `<p>Resistencia de vuelo: ${Math.round((e.stam ?? 1) * 100)} %</p>`;
+    h += `<p>Come: ${e.spec.tameFood.map((id) => itemName(id)).join(', ')} o golosinas.</p><div class="petBtns">
+      <button class="btn" data-pm="follow">${e.follow && !e.sitting ? '✔ ' : ''}Seguir</button><button class="btn" data-pm="stay">${e.sitting ? '✔ ' : ''}Quieto</button>
+      ${free ? `<button class="btn" data-pm="free">${!e.follow && !e.sitting ? '✔ ' : ''}Libre</button>` : ''}${e.pinv ? '<button class="btn" data-pm="bags">🎒 Alforjas</button>' : ''}
+      <button class="btn" data-pm="release">${this.confirm ? '¿Seguro? Pulsa otra vez' : 'Liberar'}</button></div>`;
+    $('#petBody').innerHTML = h;
+    const inp = $('#petNameIn');
+    inp.onchange = inp.onblur = () => { const v = inp.value.trim().slice(0, 20); if (v !== (e.pname || '')) { e.pname = v || undefined; mobBar.lastE = null; $('#petTitle').textContent = $('#petTitle').textContent.split(' ')[0] + ' ' + petName(e); if (v) game.unlock('pet_name'); } };
+    $$('#petBody [data-pm]').forEach((b) => (b.onclick = () => {
+      const a = b.dataset.pm; inp.onchange();
+      if (a === 'follow') { e.follow = true; e.sitting = false; } else if (a === 'stay') { e.sitting = true; } else if (a === 'free') { e.follow = false; e.sitting = false; }
+      else if (a === 'bags') { this.back = false; this.openBags(e); return; }
+      else if (a === 'release') {
+        if (!this.confirm) { this.confirm = true; this.render(); return; }
+        if (e.pinv) for (const s of e.pinv.slots) if (s) game.entities.dropItem(s, e.pos.x, e.pos.y + 0.6, e.pos.z);
+        if (e.saddled) game.entities.dropItem({ id: I.SADDLE, count: 1 }, e.pos.x, e.pos.y + 0.6, e.pos.z);
+        e.tamed = false; e.saddled = false; e.sitting = false; e.follow = false; e.pinv = null; e.pname = undefined; e.persistent = false; mobBar.lastE = null;
+        hud.toast('Lo has dejado en libertad'); this.hide(); return;
+      }
+      this.confirm = false; sfx.play('click'); this.render();
+    }));
+  },
+};
+
+/* ---------- Inventario: accesorios, mochila y accesos ---------- */
+{
+  const _build3 = buildInventory3;
+  buildInventory3 = function (left, creative) {
+    const r = _build3(left, creative);
+    if (ui.mode === 'inv' && !creative) {
+      const p = game.player, col = document.createElement('div'); col.className = 'accCol';
+      for (let i = 0; i < 2; i++) { const el = slotEl('acc', i, 'armorSlot'); el.dataset.hint = '💍'; el.title = 'Accesorio (anillos, colgantes, amuletos)'; col.append(el); }
+      const pk = slotEl('acc', 2, 'armorSlot packSlot'); pk.dataset.hint = '🎒'; pk.title = 'Mochila'; col.append(pk);
+      const b = document.createElement('button'); b.className = 'ibtn'; b.id = 'packOpen'; b.textContent = 'Abrir'; b.title = `Abrir la mochila (${keyName(settings.keys.pack)})`; b.onclick = () => char45.openPack(); col.append(b);
+      left.append(col);
+    }
+    return r;
+  };
+  const _bar = chestBar;
+  chestBar = function () {
+    const bar = _bar();
+    if (ui.tile && (ui.tile.type === 'pack' || ui.tile.type === 'pet')) {
+      if (ui.tile.type === 'pack') { const b = document.createElement('button'); b.textContent = '⬅ Inventario'; b.title = 'Volver al inventario'; b.onclick = () => char45.switchInv('inv'); bar.prepend(b); }
+    }
+    return bar;
+  };
+  const _render = renderInventory;
+  renderInventory = function () {
+    char45.syncPack();
+    const b = $('#packOpen'); if (b) b.style.visibility = game.player.pack.slots.length ? '' : 'hidden';
+    // las alforjas se cierran si la mula se aleja o muere
+    if (ui.tile && ui.tile.type === 'pet') { const e = ui.tile.pet; if (e.dead || e.deathT || !e.tamed || e.pos.distanceTo(game.player.pos) > 8) { closeInventory(); return; } }
+    return _render();
+  };
+  // Mayús+clic: equipar accesorios y mochilas directamente
+  const _quick = quickMove;
+  quickMove = function (c, i) {
+    const p = game.player, s = stackAt(c, i);
+    if (s && c === 'inv' && ui.mode === 'inv') {
+      const it = ITEMS[s.id], slot = it.pack ? (p.acc.slots[2] ? -1 : 2) : it.acc ? [0, 1].find((k) => !p.acc.slots[k]) ?? -1 : -1;
+      if (slot >= 0) { p.acc.slots[slot] = s; setStackAt(c, i, null); sfx.play('equip'); char45.recalc(); return; }
+    }
+    if (s && c === 'acc') { const left = p.inv.add(s.id, s.count, s.dmg, s.ench); if (!left) { setStackAt(c, i, null); char45.recalc(); } return; }
+    return _quick(c, i);
+  };
+}
+KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'codex') + 1, 0, ['skills', 'Personaje y habilidades', 'KeyH'], ['pack', 'Abrir la mochila', 'KeyB']);
+settings.keys.skills ??= 'KeyH'; DEFAULT_KEYS.skills = 'KeyH'; settings.keys.pack ??= 'KeyB'; DEFAULT_KEYS.pack = 'KeyB';
+{
+  const _ad = actionDown;
+  actionDown = function (a, ev) {
+    if (a === 'skills') { if (char45.open) char45.hide(); else if (game.state === 'playing') char45.show(); return; }
+    if (a === 'pack') { if (game.state === 'playing') char45.openPack(); return; }
+    return _ad(a, ev);
+  };
+  $$('#charScreen .stab').forEach((b) => (b.onclick = () => { char45.tab = b.dataset.chtab; char45.render(); }));
+  $('#charClose').onclick = () => char45.hide();
+  $('#petClose').onclick = () => { $('#petNameIn')?.onchange(); petPanel.hide(); };
+  $('#pChar').onclick = () => char45.show();
+  $('#charBtn').onclick = () => char45.show();
+  document.addEventListener('keydown', (e) => {
+    if (game.state === 'inventory' && e.code === settings.keys.pack && e.target.tagName !== 'INPUT') { e.preventDefault(); e.stopImmediatePropagation(); char45.openPack(); return; }
+    if (!char45.open && !petPanel.open) return;
+    const typing = e.target.tagName === 'INPUT';
+    if (e.code === 'Escape' || (!typing && e.code === settings.keys.skills) || (typing && e.code === 'Enter')) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (typing && e.code === 'Enter') { e.target.blur(); return; }
+      if (petPanel.open) $('#petClose').click(); else char45.hide();
+    } else if (typing) e.stopPropagation();
+  }, true);
+}
+// Enciclopedia: ficha de compañero (papel y cómo domarlo)
+{
+  const _card = codex.mobCard;
+  codex.mobCard = function (card, type) {
+    const r = _card.call(this, card, type), info = PET_INFO[type], s = MOBS[type];
+    if (info && s.tameFood && (this.data().seen[type] || game.mode === 'creative')) {
+      const h = document.createElement('div');
+      h.innerHTML = `<h4>Compañero</h4><p><b>${escapeHtml(info.role)}</b>. ${escapeHtml(info.desc)}</p><p>Se doma con: ${escapeHtml((s.tameFood || []).map((id) => itemName(id)).join(', '))}.</p>`;
+      card.append(...h.childNodes);
+    }
+    return r;
+  };
+}
+ACHIEVEMENTS.push(['skill_first', 'Aprendiz', 'Aprende tu primera habilidad.'], ['skill_10', 'Con experiencia', 'Llega al nivel 10 de habilidad.'], ['skill_master', 'Maestría', 'Aprende la habilidad final de una rama.'],
+  ['set_bonus', 'De punta en blanco', 'Activa la bonificación de un conjunto de armadura.'], ['backpack', 'Con la casa a cuestas', 'Equipa una mochila.'],
+  ['pet_first', 'Amigo fiel', 'Doma a un compañero.'], ['pet_three', 'Arca de Noé', 'Ten a la vez tres tipos distintos de compañero.'], ['pet_name', 'Ya es de la familia', 'Ponle nombre a un compañero.'],
+  ['griffin_fly', 'Jinete del cielo', 'Despega a lomos de un grifo.']);
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)
