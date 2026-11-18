@@ -115,3 +115,5 @@ Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pa
 **4.9:** actualiza `server.js` (un solo archivo, sin dependencias: copia el nuevo encima del anterior y reinicia con `node server.js`). Añade todo lo de la sección «Grupo, equipos, comercio y terrenos». No cambia el protocolo; las salas guardadas se cargan tal cual y ganan los campos nuevos al guardarse.
 
 **5.0 (LinkCraft):** el juego y el servidor pasan a llamarse LinkCraft (el nombre por defecto del servidor es «Servidor LinkCraft»; `/status` responde también con la clave `minicraft` para herramientas viejas). No cambia el protocolo ni los datos: si ya tienes el servidor 4.9, solo cambia el nombre que muestra. El juego 5.0 entra a servidores 4.9 y 4.x sin problemas.
+
+**5.2:** actualiza `server.js` para que los jugadores se vean con el aspecto que eligió cada uno (el servidor reenvía el campo `sk` del estado del jugador). Con un servidor anterior se juega igual, pero cada uno ve a los demás con el aspecto por defecto.

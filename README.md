@@ -1,4 +1,4 @@
-# LinkCraft 5.1
+# LinkCraft 5.2
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -35,6 +35,7 @@ Para jugar por internet, opciones y comandos, mira [`server/README.md`](server/R
 | Moverse / mirar | WASD + ratón | joystick + arrastrar | sticks |
 | Saltar / agacharse / correr | Espacio / Mayús / Ctrl | botones Saltar y Agachar | A / B / stick izquierdo |
 | Minar / usar | clic izquierdo / derecho | botones Minar y Usar | RT / LT |
+| Cámara (1.ª / 3.ª persona) | V o F5 | 🎥 | Pausa → Cámara |
 | Inventario, mapa, misiones | E, M, J | 🎒 🗺 📜 | Y, Select, cruceta |
 | Personaje, mochila, enciclopedia | H, B, K | Pausa → … | Pausa → … |
 | Chat y panel de grupo (multijugador) | T, G (Tab: lista de jugadores) | 💬 👥 | Pausa → Grupo |
@@ -117,6 +118,15 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - Lo que corre se retira al quitar la fuente.
 - Agua y lava que se tocan forman obsidiana, roca o piedra.
 - Al cargar una zona, los fluidos que quedaron al borde de un hueco empiezan a correr.
+
+**Tercera persona y texturas (5.2)**
+- Cámara en tercera persona, detrás o de frente (tecla V o F5, botón 🎥 en el celular, Pausa → Cámara), sin atravesar paredes.
+- Personaje propio y personalizable en Pausa → Aspecto: piel, pelo, peinado, ojos, ropa y complemento.
+  - Muestra la armadura y el objeto en la mano, con animaciones.
+  - Los demás jugadores lo ven en un servidor 5.2.
+- Texturas de bloques con relieve.
+- Criaturas, jefes y jugadores con textura «pixelada» en lugar de colores lisos.
+- Cama con patas y almohada, y cofres con tapa y cerrojo en 3D.
 
 ## Funciones existentes que se mejoraron
 

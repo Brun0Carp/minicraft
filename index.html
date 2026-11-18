@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.1</title>
+<title>LinkCraft 5.2</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -782,6 +782,18 @@
     background: rgba(12,12,16,.88); border: 2px solid #b8862b; border-radius: 6px; text-align: center; pointer-events: auto; }
   body.net-lost #netReconnect { display: flex; }
 
+
+  /* 5.2: cámara y aspecto */
+  #camTouch { display: none; position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(178px + env(safe-area-inset-top)); width: 40px; height: 40px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; pointer-events: auto; z-index: 6; }
+  body.touch #camTouch { display: block; } body.touch:not(.minimap-on) #camTouch { top: calc(62px + env(safe-area-inset-top)); }
+  body.inv-open #camTouch, body.overlay #camTouch { display: none !important; }
+  #lookScreen { justify-content: flex-start; background: transparent !important; }
+  .lookCard { width: min(340px, 92vw); max-height: 94vh; overflow-y: auto; text-align: left; background: rgba(16,16,20,.88); }
+  .lookCard h2 { text-align: center; } .lkRow { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; } .lkRow > span { font-size: 13px; color: #c9ccd4; }
+  .lkSw { display: flex; flex-wrap: wrap; gap: 5px; } .lkSw .sw { width: 28px; height: 28px; border: 2px solid #0b0b0b; border-radius: 5px; cursor: pointer; padding: 0; } .lkSw .sw.on { border-color: #fff; box-shadow: 0 0 0 2px #000; }
+  .lkOpt { display: flex; flex-wrap: wrap; gap: 5px; } .lkOpt .btn { flex: 1 1 auto; }
+  body.look-open #hud { display: none; }
+  @media (max-aspect-ratio: 1/1) { #lookScreen { align-items: flex-end; justify-content: center; } .lookCard { max-height: 52vh; width: 100%; } }
   /* 5.0: interfaz */
   #bottomHud { transform: translateX(-50%) scale(var(--hudS, 1)); transform-origin: 50% 100%; }
   #minimapContainer { transform: scale(var(--hudS, 1)); transform-origin: 100% 0; }
@@ -944,6 +956,7 @@
   <div id="chatBar"><div id="chatHint"></div><input id="chatInput" type="text" maxlength="200" placeholder="Escribe un mensaje…" autocomplete="off"><button id="chatTeam" class="btn small net49Only" title="Escribir solo a tu equipo">Equipo</button><button id="chatSend" class="btn small">Enviar</button></div>
   <div id="trackers"><div id="questTracker"></div><div id="coopTracker" style="display:none"></div></div>
   <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
+  <button id="camTouch" title="Cambiar cámara">🎥</button>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
   <div id="notifs"></div>
@@ -994,7 +1007,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.1!</span>
+      <span class="ver">¡Versión 5.2!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1004,7 +1017,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.2</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1247,6 +1260,7 @@
     <div class="row"><button id="pQuests" class="btn">📜 Misiones</button><button id="pStats" class="btn">📊 Estadísticas</button></div>
     <button id="pLog" class="btn">🔔 Avisos</button>
     <div class="row"><button id="pCodex" class="btn">📖 Enciclopedia</button><button id="pChar" class="btn">🌟 Personaje</button></div>
+    <div class="row"><button id="pView" class="btn">🎥 Primera persona</button><button id="pLook" class="btn">👤 Aspecto</button></div>
     <button id="pRoom" class="btn netOnly">👥 Sala y jugadores</button>
     <button id="pGroup" class="btn net49Only">🤝 Grupo: equipo, comercio, terrenos y misiones</button>
     <button id="pFull" class="btn fsOnly">⛶ Pantalla completa</button>
@@ -1273,6 +1287,8 @@
   </div>
 </div>
 <div id="achScreen" class="screen"><div class="card"><h2>🏆 Logros</h2><p id="achCount" class="muted" style="color:#aaa;text-align:center"></p><div id="achList"></div><button id="achBack" class="btn">Volver</button></div></div>
+<div id="lookScreen" class="screen"><div class="card lookCard"><h2>👤 Aspecto</h2><p class="g49info">Así te ven en tercera persona (y los demás en un servidor).</p><div id="lookBody"></div>
+  <div class="row"><button id="lookReset" class="btn small">Restablecer</button></div><button id="lookClose" class="btn primary">Listo</button></div></div>
 <div id="logScreen" class="screen"><div class="card"><h2>🔔 Avisos recientes</h2><div id="logList"></div><div class="row"><button id="logClear" class="btn small">Vaciar</button></div><button id="logClose" class="btn primary">Volver</button></div></div>
 <div id="bakScreen" class="screen"><div class="card wideCard"><h2 id="bakTitle">Copias de seguridad</h2>
   <p class="g49info">LinkCraft guarda copias automáticas: el guardado anterior, cómo quedó el último día que jugaste y la partida tal como estaba antes de cada actualización. Al restaurar una, la partida actual no se pierde: queda como «Antes de la última restauración».</p>
@@ -3059,6 +3075,78 @@ const TEAM_CHEST = 1079;
 defBlock(TEAM_CHEST, 'Cofre de equipo', 'En un servidor multijugador abre el almacén que comparte todo tu equipo (27 espacios guardados en el servidor; solo un miembro a la vez puede tenerlo abierto).',
   { top: T.chest_top, bottom: T.chest_top, side: T.chest_side, front: T.chest_front },
   { shape: 'box', box: [1, 0, 1, 15, 14, 15], opaque: false, hardness: 2.5, tool: 'axe', sound: 'wood', interact: 'tchest49', oriented: true, tint: [0.6, 0.76, 1] });
+
+/* ==========================================================================
+   §2i TEXTURAS CON RELIEVE (5.2)
+   --------------------------------------------------------------------------
+   Repaso de todas las texturas de bloques opacos después de pintarlas:
+     · Relieve: cada píxel se aclara u oscurece según la diferencia de brillo
+       con su vecino de abajo a la derecha (luz desde arriba a la izquierda),
+       así las piedras, vetas, juntas, tablones y cortezas parecen tener volumen.
+     · Un poco más de contraste alrededor del tono medio de cada textura.
+     · El borde de hierba de los laterales gana una sombra justo debajo.
+   Se repite cada 16 píxeles, así que los bloques siguen encajando sin costuras.
+   No toca las texturas con transparencia (hojas, plantas, vidrios, antorchas)
+   ni el agua, la lava y los portales.
+   ========================================================================== */
+{
+  const SKIP = /water|lava|portal|fire|cloud|glass|ice|crystal|slime|light_strip|lamp_.*_on|glow|sea_lantern|cross|torch/;
+  const _paintExtra = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _paintExtra(h);
+    const { get, px } = h;
+    // sombra bajo el borde de hierba (lateral del bloque de hierba)
+    for (const t of [T.grass_side, T.snowy_grass_side]) {
+      if (t == null) continue;
+      for (let x = 0; x < 16; x++) {
+        const top = (c) => (t === T.snowy_grass_side ? c[2] > 225 && c[0] > 210 : c[1] - c[0] > 30);
+        let y = 0; while (y < 15 && top(get(t, x, y))) y++;
+        if (y > 0 && y < 15) { const c = get(t, x, y); px(t, x, y, c[0] * 0.72, c[1] * 0.72, c[2] * 0.72); }
+      }
+    }
+    const L = new Float32Array(256), out = new Float32Array(256 * 3);
+    for (let t = 0; t < TILE_NAMES.length; t++) {
+      if (SKIP.test(TILE_NAMES[t])) continue;
+      let opaque = true, sum = 0;
+      for (let i = 0; i < 256 && opaque; i++) { const c = get(t, i & 15, i >> 4); if (c[3] < 255) opaque = false; L[i] = c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11; sum += L[i]; }
+      if (!opaque) continue;
+      const mean = sum / 256;
+      let varSum = 0; for (let i = 0; i < 256; i++) varSum += (L[i] - mean) ** 2;
+      if (varSum / 256 < 4) continue;                        // colores lisos (lana, hormigón): sin cambios
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const i = x | (y << 4), c = get(t, x, y);
+        const br = L[((x + 1) & 15) | (((y + 1) & 15) << 4)], tl = L[((x + 15) & 15) | (((y + 15) & 15) << 4)];
+        const s = Math.max(-22, Math.min(22, (L[i] - br) * 0.32 + (L[i] - tl) * -0.12));
+        for (let k = 0; k < 3; k++) out[i * 3 + k] = (c[k] - mean) * 1.06 + mean + s;
+      }
+      for (let i = 0; i < 256; i++) px(t, i & 15, i >> 4, out[i * 3], out[i * 3 + 1], out[i * 3 + 2]);
+    }
+  };
+}
+
+/* ---------- Modelos de bloques mejorados (5.2) ----------
+   · Cama: patas de madera, colchón y almohada en relieve en la cabecera.
+   · Cofres (y cofre de equipo): tapa que sobresale un poco y cerrojo metálico. */
+{
+  const P = (b) => b.map((v) => v / 16);
+  const BED_COL = [[0, 0, 0, 1, 9 / 16, 1]];
+  BLOCKS[BED].boxes = (m, nb, mode) => {
+    if (mode !== 'render') return BED_COL;
+    const f = m & 3, head = !!(m & 8);
+    const legs = head ? [[0, 0, 0, 3, 3, 3], [13, 0, 0, 16, 3, 3]] : [[0, 0, 13, 3, 3, 16], [13, 0, 13, 16, 3, 16]];
+    const out = [P([0, 3, 0, 16, 9, 16]), ...legs.map(P)];
+    if (head) out.push(P([2, 9, 1.5, 14, 11, 6.5]));
+    return out.map((b) => rotBox(b, f));
+  };
+  const _bedTile = BLOCKS[BED].tileFn;
+  BLOCKS[BED].tileFn = (f, meta, bi) => (bi === 1 || bi === 2 ? T.oak_planks : bi === 3 ? T.wool : _bedTile(f, meta, bi));
+  for (const id of [CHEST, TEAM_CHEST]) {
+    const def = BLOCKS[id], COL = [P([1, 0, 1, 15, 14, 15])];
+    def.boxes = (m, nb, mode) => (mode !== 'render' ? COL : [P([1.4, 0, 1.4, 14.6, 9.4, 14.6]), P([1, 9.4, 1, 15, 14, 15]), P([7, 7, 0.4, 9, 11, 1])].map((b) => rotBox(b, m & 3)));
+    const prev = def.tileFn;
+    def.tileFn = (f, meta, bi) => (bi === 2 ? T.iron_block : prev ? prev(f, meta, bi) : null);
+  }
+}
 
 /* ==========================================================================
    §5 BIOMAS Y GENERACIÓN PROCEDURAL
@@ -5804,14 +5892,39 @@ for (const id of [LANTERN, IRON_BARS, BREWING_STAND, TRAPDOOR, CARPET, RED_CARPE
    ========================================================================== */
 const SHADE6 = [0.8, 0.8, 1.0, 0.5, 0.68, 0.68];  // orden de caras de BoxGeometry: +x −x +y −y +z −z
 
-// Caja coloreada con sombreado por cara; color puede ser [r,g,b] o (cara)→[r,g,b]
+// Caja coloreada con sombreado por cara; color puede ser [r,g,b] o (cara)→[r,g,b].
+// 5.2: las caras grandes se dividen en «píxeles» con pequeñas variaciones de tono y un borde
+// algo más oscuro, como una textura pintada (según «Detalle lejano»: Bajo = color liso).
+const MOB_PIX = { bajo: 0, medio: 3, alto: 2, ultra: 1.5 };
 function cbox(w, h, d, x, y, z, color) {
-  const g = new THREE.BoxGeometry(w, h, d);
+  const cell = MOB_PIX[settings.detail] ?? 2, segs = (v) => (cell ? Math.max(1, Math.min(8, Math.round(v / (cell / 16)))) : 1);
+  const sx = segs(w), sy = segs(h), sz = segs(d), plain = sx * sy * sz === 1;
+  let g = new THREE.BoxGeometry(w, h, d, sx, sy, sz);
   g.deleteAttribute('normal'); g.deleteAttribute('uv');
-  const col = new Float32Array(24 * 3);
-  for (let f = 0; f < 6; f++) {
-    const c = typeof color === 'function' ? color(f) : color;
-    for (let v = 0; v < 4; v++) { const i = (f * 4 + v) * 3; col[i] = c[0] * SHADE6[f]; col[i + 1] = c[1] * SHADE6[f]; col[i + 2] = c[2] * SHADE6[f]; }
+  if (plain) {
+    const col = new Float32Array(24 * 3);
+    for (let f = 0; f < 6; f++) {
+      const c = typeof color === 'function' ? color(f) : color;
+      for (let v = 0; v < 4; v++) { const i = (f * 4 + v) * 3; col[i] = c[0] * SHADE6[f]; col[i + 1] = c[1] * SHADE6[f]; col[i + 2] = c[2] * SHADE6[f]; }
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g = g.toNonIndexed();                              // todas iguales para poder unirlas
+    g.translate(x, y, z);
+    return g;
+  }
+  // cada celda con su color: triángulos sin vértices compartidos
+  const groups = g.groups.map((q) => ({ ...q })); g = g.toNonIndexed();
+  const n = g.attributes.position.count, col = new Float32Array(n * 3);
+  const dims = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];       // celdas de cada cara (+x −x +y −y +z −z)
+  const seed = Math.round((w * 131 + h * 71 + d * 37 + x * 13 + y * 7 + z * 3) * 1000);
+  for (const q of groups) {
+    const f = q.materialIndex, c = typeof color === 'function' ? color(f) : color, [cu, cv] = dims[f];
+    for (let t = 0; t < q.count; t += 6) {
+      const cellI = t / 6, u = cellI % cu, v = Math.floor(cellI / cu);
+      const edge = (cu > 2 && (u === 0 || u === cu - 1)) || (cv > 2 && (v === 0 || v === cv - 1));
+      const r = hash3(u + f * 17, v, seed & 0xffff, seed >> 16), k = SHADE6[f] * (1 + (r - 0.5) * 0.2) * (edge ? 0.9 : 1);
+      for (let j = 0; j < 6; j++) { const i = (q.start + t + j) * 3; col[i] = c[0] * k; col[i + 1] = c[1] * k; col[i + 2] = c[2] * k; }
+    }
   }
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   g.translate(x, y, z);
@@ -12365,8 +12478,11 @@ function loop(now) {
   game.update(dt);
   controls.pointerSpeed = settings.sensitivity;
   renderer.clear();
+  view52.update(dt);                                  // 5.2: personaje visible en tercera persona
+  const third = view52.beforeRender();
   renderer.render(scene, camera);
-  if (game.state === 'playing' || game.state === 'inventory') { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
+  view52.afterRender();
+  if (!third && (game.state === 'playing' || game.state === 'inventory')) { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
   updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); fluids.update50(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
@@ -12378,7 +12494,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.2  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12403,7 +12519,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -12788,7 +12904,7 @@ class NetClient {
     if ((this.tP += dt) >= 0.1) {
       this.tP = 0;
       this.send({ type: 'player', p: [+p.pos.x.toFixed(2), +p.pos.y.toFixed(2), +p.pos.z.toFixed(2)], yaw: +camera.rotation.y.toFixed(3), pitch: +camera.rotation.x.toFixed(3),
-        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0, lt: heldLight(p) });
+        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0, lt: heldLight(p), sk: lookCode(settings.look) });
     }
     if ((this.tE += dt) >= 0.2) {
       this.tE = 0;
@@ -15338,6 +15454,16 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.2', name: 'Tercera persona y texturas nuevas', date: 'noviembre de 2026', items: [
+    'Cámara en tercera persona: la tecla V (o F5), el botón 🎥 en pantalla táctil o Pausa → Cámara cambian entre primera persona, detrás del personaje y de frente. La cámara se acerca si detrás hay una pared; apuntar, minar y usar siguen haciéndose desde los ojos.',
+    'Tu personaje: un aventurero propio de LinkCraft, con pañuelo, chaleco de cuero, cinturón con hebilla, bolsa y botas. Lleva puesta la armadura (con el color de cada material) y en la mano el objeto que tienes elegido, y se anima al caminar, golpear, agacharse, nadar y montar. La cabeza sigue a la mirada y el cuerpo la acompaña.',
+    'Aspecto (Pausa → 👤 Aspecto): elige piel, color de pelo, peinado (corto, largo, coleta o rapado), ojos, camiseta, chaleco, pantalón y complemento (pañuelo, bufanda o nada) con su color. Mientras lo eliges te ves de frente.',
+    'En un servidor 5.2, los demás jugadores te ven con tu aspecto (y tú a ellos con el suyo).',
+    'Texturas de bloques con relieve: todas las texturas opacas ganan volumen (luz desde arriba a la izquierda) y un poco más de contraste. Piedras, vetas de mineral, juntas de ladrillo, tablones y cortezas se ven con más detalle. El borde de hierba de los laterales tiene sombra.',
+    'Criaturas, jefes y jugadores con textura: las caras de sus modelos se dividen en «píxeles» con pequeñas variaciones de tono y un borde más marcado, en lugar de colores lisos. El tamaño del píxel depende de «Detalle lejano» (en Bajo se mantienen lisos, para ir más rápido).',
+    'Modelos de bloques mejorados: la cama tiene patas de madera, colchón y almohada en relieve; los cofres tienen una tapa que sobresale y un cerrojo de metal.',
+    'Teclas nuevas configurables: Cambiar cámara (V). En el mando se puede asignar en Ajustes → Mando.',
+  ] },
   { v: '5.1', name: 'Agua y lava que corren', date: 'noviembre de 2026', items: [
     'El agua y la lava ahora caen por la gravedad: si debajo hay un hueco, bajan formando una cascada hasta tocar suelo, y ahí se extienden. De lado avanzan hacia el desnivel más cercano.',
     'Al cargarse una zona, el agua y la lava que quedaron al borde de un hueco (una cueva junto a un arroyo, un lago subterráneo junto a un pozo) empiezan a correr. Las cascadas que crea el terreno se mantienen como estaban.',
@@ -18334,7 +18460,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.1';
+const GAME_VERSION = '5.2';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -22674,6 +22800,233 @@ const NB6 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]
   World.prototype.loadChunk = function (cx, cz) { const c = _load.call(this, cx, cz); if (c && this === world) fluids.scanQ.push(c); return c; };
   const _start = game.startWorld;
   game.startWorld = async function (...a) { fluids.reset(); return _start.apply(this, a); };
+}
+
+/* ==========================================================================
+   §52 CÁMARA EN TERCERA PERSONA Y PERSONAJE DEL JUGADOR (5.2)
+   --------------------------------------------------------------------------
+   · Tecla V (o F5), botón 🎥 en pantalla táctil y Pausa → Cámara: primera
+     persona → tercera persona (detrás) → tercera persona (de frente). La
+     cámara se acerca si detrás hay una pared. Apuntar, minar y usar siguen
+     haciéndose desde los ojos del personaje.
+   · El personaje: un aventurero propio de LinkCraft (pañuelo, chaleco de
+     cuero, cinturón y botas), con piel, pelo, peinado, ojos, camiseta,
+     pantalón y complemento a elegir en Pausa → Aspecto (con vista previa de
+     frente). Lleva puesta la armadura y en la mano el objeto elegido, y se
+     anima al caminar, golpear, agacharse, nadar y montar.
+   · En un servidor 5.2 los demás jugadores te ven con tu aspecto.
+   ========================================================================== */
+const LOOK = {
+  skin: [[238, 196, 164], [216, 164, 124], [182, 124, 86], [134, 90, 62], [96, 64, 46]],
+  hair: [[58, 38, 26], [28, 24, 22], [148, 96, 52], [214, 176, 98], [172, 62, 40], [206, 206, 212], [70, 90, 160]],
+  eyes: [[70, 46, 30], [60, 110, 180], [70, 140, 80], [120, 120, 130]],
+  shirt: [[236, 232, 220], [46, 140, 120], [70, 110, 190], [190, 64, 60], [230, 170, 50], [120, 80, 170], [70, 140, 60], [52, 52, 62]],
+  pants: [[146, 128, 96], [62, 72, 110], [92, 70, 50], [50, 50, 56], [72, 100, 70]],
+  accent: [[200, 52, 50], [230, 160, 40], [60, 120, 200], [60, 160, 90], [234, 234, 234], [150, 70, 170]],
+};
+const HAIR_STYLES = ['Corto', 'Largo', 'Coleta', 'Rapado'];
+const ACC_STYLES = ['Pañuelo', 'Bufanda', 'Ninguno'];
+const LOOK_KEYS = ['skin', 'hair', 'style', 'eyes', 'shirt', 'pants', 'acc', 'accent', 'vest'];
+const LOOK_DEFAULT = { skin: 1, hair: 0, style: 0, eyes: 0, shirt: 0, pants: 0, acc: 0, accent: 0, vest: 1 };
+settings.look = Object.assign({}, LOOK_DEFAULT, settings.look || {});
+const lookCode = (l) => LOOK_KEYS.map((k) => l[k] | 0).join('.');
+const lookFrom = (code) => { const o = { ...LOOK_DEFAULT }; String(code || '').split('.').forEach((v, i) => { if (LOOK_KEYS[i] && /^\d+$/.test(v)) o[LOOK_KEYS[i]] = +v; }); return o; };
+const pick = (arr, i) => arr[((i | 0) % arr.length + arr.length) % arr.length];
+// Opciones del modelo humanoide para un aspecto
+function lookModel(l) {
+  const C = (k) => rgb(...pick(LOOK[k], l[k])), skin = C('skin'), hair = rgb(...pick(LOOK.hair, l.hair)), acc = rgb(...pick(LOOK.accent, l.accent));
+  const dk = (c, k = 0.75) => c.map((v) => v * k), shirt = C('shirt'), pants = C('pants'), vest = rgb(122, 82, 50), belt = rgb(70, 50, 34), boot = rgb(84, 56, 36);
+  const head = [...eyesHD(4, 4.2, 2, rgb(245, 245, 245), rgb(...pick(LOOK.eyes, l.eyes))), [2.4, 0.7, 0.2, 0, 1.6, 4.05, dk(skin, 0.7)], [1, 1.2, 0.4, 0, 3, 4.1, dk(skin, 0.88)]];
+  const st = l.style | 0;
+  if (st !== 3) head.push([8.6, 2.2, 8.6, 0, 7.3, 0, hair], [8.4, 4, 1, 0, 5, -3.9, hair], [1, 3, 5, -3.9, 5.4, -1.2, hair], [1, 3, 5, 3.9, 5.4, -1.2, hair], [8.4, 1.2, 1, 0, 6.6, 3.95, dk(hair, 0.9)]);
+  else head.push([8.3, 1, 8.3, 0, 7.6, 0, dk(hair, 0.85)]);
+  if (st === 1) head.push([8.6, 8, 1.2, 0, 2.6, -4.3, hair], [1.2, 6, 4, -4.1, 2.8, -2, hair], [1.2, 6, 4, 4.1, 2.8, -2, hair]);
+  if (st === 2) head.push([2.4, 2, 2.4, 0, 5.5, -4.8, dk(hair, 0.85)], [1.8, 5, 1.8, 0, 2.5, -5.2, hair]);
+  if ((l.acc | 0) === 0) head.push([8.8, 1.6, 8.8, 0, 6.2, 0, acc], [2.4, 2, 1.4, 0, 5.8, -5, dk(acc)], [1, 3, 0.6, -0.8, 4, -5.4, dk(acc)]);
+  const body = [];
+  if (l.vest) body.push([3, 10.4, 0.6, -2.6, 0.6, 2.25, vest], [3, 10.4, 0.6, 2.6, 0.6, 2.25, vest], [8.4, 10.4, 0.6, 0, 0.6, -2.25, vest], [0.6, 10.4, 4.4, -4.15, 0.6, 0, vest], [0.6, 10.4, 4.4, 4.15, 0.6, 0, vest]);
+  body.push([8.4, 1.4, 4.4, 0, -5.2, 0, belt], [1.8, 1.3, 0.5, 0, -5.2, 2.35, rgb(214, 180, 70)], [2.2, 2.6, 1.6, 3.4, -5.6, 1.4, dk(vest, 0.9)]);
+  if ((l.acc | 0) === 1) body.push([8.8, 2, 4.8, 0, 5.3, 0, acc], [2, 4.5, 0.8, -2, 2.6, 2.6, dk(acc)]);
+  return { limb: 4, eyeHD: true, skin, arm: skin, shirt, sleeve: shirt, pants, shoe: boot, eye: rgb(30, 30, 30), headExtra: head, bodyExtra: body,
+    legExtra: [[4.4, 3.4, 4.6, 0, -9.8, 0.1, boot]], armExtra: [[4.3, 1.2, 4.3, 0, -8.4, 0, dk(shirt, 0.8)]] };
+}
+
+/* ---------- El personaje en el mundo ---------- */
+const ARMOR_COL = { leather: [140, 90, 52], iron: [196, 198, 204], gold: [236, 196, 70], diamond: [90, 220, 210], feather: [236, 236, 228], fur: [200, 120, 64], turtle: [86, 160, 86], crown: [236, 196, 70] };
+class PlayerAvatar extends Mob {
+  constructor(look) {
+    MOBS.__pa = { name: 'Tú', hp: 20, w: 0.6, h: 1.8, speed: 4.3, xp: 0, sound: 'hit', drops: [], model: (m) => MOB_MODELS.humanoid(m, lookModel(look)) };
+    try { super('__pa', 0, -100, 0); } finally { delete MOBS.__pa; }
+    this.isAvatar = true; this.armorSig = ''; this.heldId = -1; this.held = null; this.armorMeshes = [];
+  }
+  dispose() {
+    this.mesh.parent && this.mesh.parent.remove(this.mesh);
+    this.mesh.traverse((o) => { if (o.geometry && !o.geometry.userData.shared && !(o === this.held)) o.geometry.dispose(); });
+    this.mat.dispose(); if (this.held) this.held.material.dispose();
+  }
+  // Armadura puesta: cajas del color del material sobre cada parte
+  syncArmor(p) {
+    const sig = p.armor.slots.map((s) => (s ? s.id : 0)).join(',');
+    if (sig === this.armorSig) return; this.armorSig = sig;
+    for (const m of this.armorMeshes) { m.parent.remove(m); m.geometry.dispose(); }
+    this.armorMeshes = [];
+    const M = this.model, add = (pivot, boxes) => {
+      const geo = mergeGeometries(boxes.map(([w, h, d, x, y, z, c]) => cbox(w * P16, h * P16, d * P16, x * P16, y * P16, z * P16, c)));
+      const mesh = new THREE.Mesh(geo, this.mat); pivot.add(mesh); this.armorMeshes.push(mesh);
+    };
+    p.armor.slots.forEach((s, i) => {
+      if (!s) return;
+      const a = ITEMS[s.id].armor, c = rgb(...(ARMOR_STATS[a.mat]?.color || ARMOR_COL[a.mat] || [170, 170, 176])), d = c.map((v) => v * 0.8);
+      if (a.slot === 'helmet') add(M.head, [[9.2, 4, 9.2, 0, 7, 0, c], [1.4, 4.4, 9.2, -4, 3.8, 0, d], [1.4, 4.4, 9.2, 4, 3.8, 0, d], [9.2, 4.4, 1.4, 0, 3.8, -4, d]]);
+      if (a.slot === 'chest') { add(M.body, [[9, 12.6, 5, 0, 0.2, 0, c], [9.2, 1.4, 5.2, 0, -5, 0, d]]); for (const arm of M.arms) add(arm, [[4.8, 5.4, 4.8, 0, 0.4, 0, c]]); }
+      if (a.slot === 'legs') for (const leg of M.legs) add(leg, [[4.8, 8, 4.8, 0, -3.8, 0, c]]);
+      if (a.slot === 'boots') for (const leg of M.legs) add(leg, [[4.9, 4, 5, 0, -10, 0.2, c], [4.9, 1, 5.4, 0, -11.6, 0.4, d]]);
+    });
+  }
+  // Objeto en la mano derecha
+  syncHeld(p) {
+    const s = p.held(), id = s ? s.id : 0; if (id === this.heldId) return; this.heldId = id;
+    if (this.held) { this.held.parent.remove(this.held); this.held.material.dispose(); this.held = null; }
+    if (!id) return;
+    const info = itemModel(id);
+    const mat = info.textured ? new THREE.MeshBasicMaterial({ map: atlasTex, vertexColors: true, alphaTest: 0.5 }) : new THREE.MeshBasicMaterial({ vertexColors: true });
+    const m = new THREE.Mesh(info.geo, mat);
+    // objeto plano (espadas, herramientas…): el mango en la mano y la hoja hacia delante
+    // (la diagonal del icono va del mango, abajo a la izquierda, a la punta, arriba a la derecha)
+    if (info.flat) { m.scale.setScalar(0.5); m.rotation.set(Math.PI / 4, -Math.PI / 2, 0); m.position.set(0, -10.5 * P16, 5.6 * P16); }
+    else { m.scale.setScalar(0.28); m.rotation.set(0.2, 0.7, 0); m.position.set(0, -10.5 * P16, 1.4 * P16); }
+    this.model.arms[1].add(m); this.held = m;
+  }
+  pose(dt) {
+    const p = game.player; if (!p) return;
+    const M = this.model;
+    this.pos.set(p.pos.x, p.pos.y + (p.mount ? 0.62 : 0) - (p.crouching ? 0.12 : 0), p.pos.z);
+    this.vel.set(p.mount ? 0 : p.vel.x, 0, p.mount ? 0 : p.vel.z);
+    if (!p.mount) this.walk = p.walkDist * 2.2;
+    // el cuerpo sigue a la mirada con algo de retraso (la cabeza gira primero)
+    const look = camera.rotation.y + Math.PI;
+    let d = ((look - this.yaw) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+    const moving = Math.hypot(p.vel.x, p.vel.z) > 0.4;
+    if (moving || Math.abs(d) > 0.9) this.yaw += d * Math.min(1, dt * (moving ? 10 : 4));
+    d = ((look - this.yaw) % (Math.PI * 2) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+    this.syncMesh(dt, null);
+    M.head.rotation.y = d; M.head.rotation.x = -camera.rotation.x * 0.8;
+    // golpear / usar
+    if (game.swing > 0) M.arms[1].rotation.x = -1.6 * Math.min(1, game.swing) - 0.2;
+    else if (this.held) M.arms[1].rotation.x = Math.min(M.arms[1].rotation.x, -0.25);
+    // agacharse, nadar, montar
+    if (p.crouching && !p.mount) { M.body.rotation.x = 0.4; M.head.position.z = (M.base?.hz || 0) + 0.12; }
+    else { M.body.rotation.x = 0; if (M.base) M.head.position.z = M.base.hz; }
+    if (p.headInWater && moving) { this.mesh.rotation.x = 0.9; M.legs[0].rotation.x = Math.sin(performance.now() / 160) * 0.5; M.legs[1].rotation.x = -M.legs[0].rotation.x; }
+    else this.mesh.rotation.x = 0;
+    if (p.mount) { M.legs[0].rotation.x = M.legs[1].rotation.x = -1.3; M.legs[0].rotation.z = -0.25; M.legs[1].rotation.z = 0.25; }
+    else { M.legs[0].rotation.z = M.legs[1].rotation.z = 0; }
+    this.syncArmor(p); this.syncHeld(p);
+  }
+}
+
+/* ---------- Modos de cámara ---------- */
+const VIEW_NAMES = ['Primera persona', 'Tercera persona (detrás)', 'Tercera persona (de frente)'];
+const view52 = {
+  mode: 0, avatar: null, lookSig: '', saved: null, dist: 4.2, _v: null,
+  set(m) {
+    this.mode = ((m % 3) + 3) % 3;
+    hud.toast('🎥 ' + VIEW_NAMES[this.mode], 1400);
+    const b = $('#pView'); if (b) b.textContent = '🎥 ' + VIEW_NAMES[this.mode];
+  },
+  cycle() { this.set(this.mode + 1); },
+  ensure() {
+    const sig = lookCode(settings.look);
+    if (this.avatar && this.lookSig === sig) return this.avatar;
+    if (this.avatar) this.avatar.dispose();
+    this.avatar = new PlayerAvatar(settings.look); this.lookSig = sig; scene.add(this.avatar.mesh);
+    return this.avatar;
+  },
+  update(dt) {
+    const p = game.player, show = this.mode !== 0 && p && !p.dead && world && game.state !== 'menu' && game.state !== 'loading';
+    if (!show) { if (this.avatar) this.avatar.mesh.visible = false; return; }
+    const a = this.ensure(); a.mesh.visible = true; a.pose(dt);
+  },
+  // Antes de dibujar: la cámara se aleja (o se pone delante) sin atravesar paredes
+  beforeRender() {
+    if (this.mode === 0 || !game.player || game.state === 'menu' || game.state === 'loading') return false;
+    const V = this._v || (this._v = { o: new THREE.Vector3(), d: new THREE.Vector3() });
+    this.saved = [camera.position.x, camera.position.y, camera.position.z, camera.rotation.x, camera.rotation.y];
+    camera.getWorldDirection(V.d); if (this.mode === 1) V.d.negate();
+    V.o.copy(camera.position);
+    const hit = raycastBlocks(V.o, V.d, this.dist + 0.4);
+    const d = hit ? Math.max(0.35, hit.dist - 0.3) : this.dist;
+    camera.position.addScaledVector(V.d, d);
+    if (this.mode === 2) { camera.rotation.y += Math.PI; camera.rotation.x = -camera.rotation.x; }
+    // en Aspecto con la pantalla vertical el panel ocupa la mitad de abajo: el personaje se ve más arriba
+    if (look52.open && window.innerHeight > window.innerWidth) { camera.rotation.x -= 0.38; }
+    camera.updateMatrixWorld();
+    return true;
+  },
+  afterRender() {
+    if (!this.saved) return;
+    const s = this.saved; camera.position.set(s[0], s[1], s[2]); camera.rotation.x = s[3]; camera.rotation.y = s[4]; camera.updateMatrixWorld(); this.saved = null;
+  },
+};
+
+/* ---------- Aspecto ---------- */
+const look52 = {
+  open: false, prevMode: 0,
+  show() {
+    if (!game.player) return;
+    this.open = true; this.prevMode = view52.mode; view52.mode = 2; view52.dist = 2.9;
+    game.releaseInputs(); game.state = 'look';
+    if (controlsLocked()) { game.ignoreUnlock = true; controls.unlock(); }
+    showScreen('lookScreen'); document.body.classList.add('look-open'); this.render();
+  },
+  hide() {
+    if (!this.open) return; this.open = false; view52.mode = this.prevMode; view52.dist = 4.2; document.body.classList.remove('look-open');
+    saveSettings(); showScreen('pauseScreen'); game.state = 'paused';
+    if (net.active) net.lookDirty = true;
+  },
+  render() {
+    const l = settings.look, box = $('#lookBody');
+    const sw = (key, arr) => `<div class="lkRow"><span>${{ skin: 'Piel', hair: 'Pelo', eyes: 'Ojos', shirt: 'Camiseta', pants: 'Pantalón', accent: 'Color del complemento' }[key]}</span><div class="lkSw">${arr.map((c, i) => `<button class="sw${(l[key] | 0) === i ? ' on' : ''}" data-k="${key}" data-v="${i}" style="background:rgb(${c.join(',')})" title="${i + 1}"></button>`).join('')}</div></div>`;
+    const opts = (key, label, names) => `<div class="lkRow"><span>${label}</span><div class="lkOpt">${names.map((n, i) => `<button class="btn small${(l[key] | 0) === i ? ' primary' : ''}" data-k="${key}" data-v="${i}">${n}</button>`).join('')}</div></div>`;
+    box.innerHTML = sw('skin', LOOK.skin) + sw('hair', LOOK.hair) + opts('style', 'Peinado', HAIR_STYLES) + sw('eyes', LOOK.eyes) + sw('shirt', LOOK.shirt) + opts('vest', 'Chaleco', ['Sin chaleco', 'Con chaleco']) +
+      sw('pants', LOOK.pants) + opts('acc', 'Complemento', ACC_STYLES) + sw('accent', LOOK.accent);
+  },
+  set(k, v) { settings.look[k] = v; this.render(); sfx.play('click'); },
+};
+
+/* ---------- Otros jugadores con su aspecto (servidor 5.2) ---------- */
+RemotePlayer.prototype.applyLook = function (code) {
+  if (this.lookCode === code) return; this.lookCode = code;
+  const nm = MOB_MODELS.humanoid(this.mat, lookModel(lookFrom(code)));
+  for (const c of [...this.mesh.children]) if (c !== this.tag) { this.mesh.remove(c); c.traverse((o) => o.geometry && o.geometry.dispose()); }
+  for (const c of [...nm.root.children]) this.mesh.add(c);
+  nm.root = this.mesh; this.model = nm;
+};
+{
+  const _set = RemotePlayer.prototype.setState;
+  RemotePlayer.prototype.setState = function (m) { _set.call(this, m); if (typeof m.sk === 'string' && /^[\d.]{1,40}$/.test(m.sk)) this.applyLook(m.sk); };
+}
+
+/* ---------- Enganches ---------- */
+KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'fullscreen'), 0, ['view', 'Cambiar cámara (primera / tercera persona)', 'KeyV']);
+settings.keys.view ??= 'KeyV'; DEFAULT_KEYS.view = 'KeyV';
+{
+  const _ad = actionDown;
+  actionDown = function (a, ev) { if (a === 'view') { if (game.state === 'playing') view52.cycle(); return; } return _ad(a, ev); };
+  // F5 también cambia la cámara (como en otros juegos de bloques) sin recargar la página
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'F5' && game.player && (game.state === 'playing' || game.state === 'paused')) { e.preventDefault(); if (game.state === 'playing') view52.cycle(); }
+    if (look52.open && (e.code === 'Escape')) { e.preventDefault(); e.stopImmediatePropagation(); look52.hide(); }
+  }, true);
+  $('#camTouch').onclick = () => { if (game.state === 'playing') view52.cycle(); };
+  $('#pView').onclick = () => view52.cycle();
+  $('#pLook').onclick = () => look52.show();
+  $('#lookClose').onclick = () => look52.hide();
+  $('#lookReset').onclick = () => { settings.look = { ...LOOK_DEFAULT }; look52.render(); };
+  $('#lookBody').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) look52.set(b.dataset.k, +b.dataset.v); });
+  // al salir del mundo vuelve la primera persona y se quita el personaje
+  const _quit = game.quitToMenu;
+  game.quitToMenu = function (...a) { view52.mode = 0; if (view52.avatar) { view52.avatar.dispose(); view52.avatar = null; } return _quit.apply(this, a); };
 }
 
 /* ==========================================================================
