@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.4</title>
+<title>LinkCraft 5.5</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -783,6 +783,67 @@
   body.net-lost #netReconnect { display: flex; }
 
 
+
+  /* 5.5: libro de aventuras */
+  #questScreen { background: rgba(8,10,8,.55); }
+  #questScreen .book { position: relative; width: min(940px, calc(96vw - 56px)); margin-right: 44px; height: min(560px, 82vh); display: flex; padding: 14px 16px 22px; image-rendering: pixelated; }
+  .bkCover { position: absolute; inset: 0 0 6px 0; background: #6e3524; box-shadow: inset 0 0 0 3px #3e1a10, inset 0 -8px 0 #4f2418, 0 6px 0 #2a120a, 0 0 0 3px #2a120a; }
+  .bkCover::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 2px; height: 8px; background: repeating-linear-gradient(90deg, #8a4a30 0 46px, #5a2a1a 46px 50px); }
+  .bkPage { position: relative; flex: 1 1 0; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 18px 20px 16px; background: #eadcbe; color: #4c3a28; font-size: 14px;
+    box-shadow: inset 0 0 0 3px #d7c49c, inset 0 0 0 6px #f3e8cf, inset 0 0 0 7px #cdb68a, 0 3px 0 #c4ad80; }
+  .bkPage.left { margin-right: 0; box-shadow: inset 0 0 0 3px #d7c49c, inset 0 0 0 6px #f3e8cf, inset 0 0 0 7px #cdb68a, inset -14px 0 14px -10px rgba(120,90,50,.45), 0 3px 0 #c4ad80; }
+  .bkPage.right { box-shadow: inset 0 0 0 3px #d7c49c, inset 0 0 0 6px #f3e8cf, inset 0 0 0 7px #cdb68a, inset 14px 0 14px -10px rgba(120,90,50,.45), 0 3px 0 #c4ad80; }
+  .bkPage::before, .bkPage::after { content: ''; position: absolute; width: 6px; height: 6px; background: #d2bd92; box-shadow: 8px 0 0 #d2bd92, 0 8px 0 #d2bd92; top: 12px; left: 12px; }
+  .bkPage::after { top: auto; left: auto; bottom: 12px; right: 12px; box-shadow: -8px 0 0 #d2bd92, 0 -8px 0 #d2bd92; }
+  .bkSpine { position: relative; flex: none; width: 10px; background: linear-gradient(90deg, #c9b38a, #8e7650 45%, #6e5a3c 50%, #8e7650 55%, #c9b38a); z-index: 1; }
+  .bkPage h3 { margin: 4px 0 8px; padding-bottom: 6px; text-align: center; font-size: 15px; font-weight: 600; color: #4c3a28; border-bottom: 2px solid #cdb68a; }
+  .bkScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 4px 6px; scrollbar-width: thin; scrollbar-color: #b49a6a transparent; }
+  .bkQ { margin: 0 0 10px; cursor: pointer; }
+  .bkBand { position: relative; display: flex; align-items: center; gap: 6px; padding: 3px 26px 3px 22px; background: #d8c3a0; color: #5a4632; font-size: 13.5px;
+    clip-path: polygon(0 50%, 8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%); }
+  .bkQ.main .bkBand { background: #e3c98c; } .bkQ.sel .bkBand { background: #cdb07a; color: #3a2a1a; }
+  .bkBand span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .bkBand b { font-size: 12px; font-weight: 600; }
+  .bkBand em { font-style: normal; font-size: 11px; }
+  .bkGem { position: absolute; left: 6px; width: 9px; height: 9px; background: #8a8478; transform: rotate(45deg); box-shadow: 0 0 0 1px #5a5246; }
+  .bkQ.ready .bkGem { background: #5ec24e; box-shadow: 0 0 0 1px #2e6a24; } .bkQ.main .bkGem { background: #d8a432; }
+  .bkIco { font-style: normal; font-size: 13px; margin-left: -14px; }
+  .bkX { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); padding: 0 4px; background: none; border: 0; color: #b0302a; font-size: 14px; font-weight: 700; cursor: pointer; line-height: 1; }
+  .bkX.sure { right: 4px; font-size: 11px; background: #b0302a; color: #fff; padding: 2px 5px; }
+  .bkBar { display: block; height: 7px; margin: 4px 6px 2px 14px; background: #d3c2a0; box-shadow: inset 0 0 0 1px #a88f62; text-decoration: none; }
+  .bkBar s { display: block; height: 100%; background: #7a9a3a; box-shadow: inset 0 -2px 0 rgba(0,0,0,.18); text-decoration: none; }
+  .bkQ.ready .bkBar s { background: #3d8a3a; }
+  .bkSub { display: flex; justify-content: space-between; gap: 8px; margin: 0 6px 0 14px; font-size: 12px; color: #7a6650; } .bkQ.ready .bkSub span:first-child { color: #2f7a2c; font-weight: 600; }
+  .bkHow { margin: 2px 6px 0 14px; font-size: 11.5px; color: #8a7660; }
+  .bkKV { display: flex; justify-content: space-between; gap: 10px; padding: 3px 4px; font-size: 13.5px; } .bkKV span { color: #6a5640; } .bkKV b { font-weight: 600; color: #4c3a28; }
+  .bkPage h4 { margin: 12px 0 6px; padding-top: 8px; text-align: center; font-size: 14px; font-weight: 600; border-top: 2px solid #d9c7a2; }
+  .bkRep { display: flex; align-items: center; gap: 8px; padding: 3px 4px; font-size: 13.5px; } .bkRep i { font-style: normal; width: 18px; text-align: center; } .bkRep span { flex: 1; } .bkRep b { font-weight: 600; font-size: 13px; }
+  .bkDone { padding: 5px 4px; border-bottom: 1px dashed #cdb68a; } .bkDone b { display: block; font-size: 13.5px; color: #3d6a32; font-weight: 600; } .bkDone span { font-size: 12px; color: #7a6650; }
+  .bkSmall { font-size: 12.5px; color: #7a6650; margin: 6px 4px; } .bkWho { margin: 0 0 6px; font-size: 12.5px; color: #8a7660; text-align: center; }
+  .bkGoal { font-weight: 600; margin: 8px 4px 2px; } .bkRew { margin: 8px 4px; font-size: 13px; color: #8a5a1a; }
+  #bkRight p { margin-left: 4px; margin-right: 4px; } #bkRight .bkBar { margin-left: 4px; margin-right: 4px; }
+  .bkExtra .qRew { color: #6a5640; font-size: 12.5px; }
+  .bkActs { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 4px; }
+  .bkBtn { padding: 5px 10px; background: #d8c3a0; color: #4c3a28; border: 0; box-shadow: inset 0 0 0 2px #a88f62, 0 2px 0 #a88f62; font-family: var(--font); font-size: 13px; cursor: pointer; }
+  .bkBtn:hover { background: #e3d0ac; } .bkBtn.red { color: #a02a22; } .bkBtn.red.sure { background: #b0302a; color: #fff; }
+  .bkLink { background: none; border: 0; padding: 0; color: #8a5a1a; font-family: var(--font); font-size: 12.5px; cursor: pointer; } .bkBack { margin: 0 0 2px; }
+  .bkTabs { position: absolute; right: -40px; top: 46px; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
+  .bkTab { position: relative; width: 50px; height: 38px; padding: 0 10px 0 6px; border: 0; color: #fff; font-size: 17px; cursor: pointer; text-align: left;
+    clip-path: polygon(0 0, 100% 0, 78% 50%, 100% 100%, 0 100%); box-shadow: inset 0 -4px 0 rgba(0,0,0,.25), inset 0 3px 0 rgba(255,255,255,.18); transition: transform .12s; filter: saturate(.85) brightness(.9); }
+  .bkTab.on { transform: translateX(8px); filter: none; } .bkTab:hover { transform: translateX(5px); }
+  .bkTab.red { background: #b8443a; } .bkTab.blue { background: #3f6fb0; } .bkTab.green { background: #4a8f3e; } .bkTab.purple { background: #7a4aa0; }
+  .bkRibbon { position: absolute; left: 22%; bottom: -10px; width: 16px; height: 46px; background: #c0402e; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); box-shadow: inset -3px 0 0 rgba(0,0,0,.2); z-index: 2; }
+  .bkClose { position: absolute; right: -6px; top: -14px; width: 34px; height: 34px; background: #6e3524; color: #f3e8cf; border: 0; box-shadow: inset 0 0 0 3px #3e1a10; font-size: 16px; cursor: pointer; z-index: 3; font-family: var(--font); }
+  .bkCorner { position: absolute; width: 56px; height: 56px; pointer-events: none; opacity: .9;
+    background: linear-gradient(#fff,#fff) 0 0/100% 6px no-repeat, linear-gradient(#fff,#fff) 0 0/6px 100% no-repeat, linear-gradient(#fff,#fff) 12px 12px/18px 6px no-repeat, linear-gradient(#fff,#fff) 12px 12px/6px 18px no-repeat, linear-gradient(#fff,#fff) 24px 24px/6px 6px no-repeat; }
+  .bkCorner.tl { left: 14px; top: 14px; } .bkCorner.tr { right: 14px; top: 14px; transform: scaleX(-1); } .bkCorner.bl { left: 14px; bottom: 14px; transform: scaleY(-1); } .bkCorner.br { right: 14px; bottom: 14px; transform: scale(-1); }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #questScreen .book { flex-direction: column; height: 86vh; width: 96vw; margin-right: 0; padding: 52px 10px 18px; }
+    .bkSpine { width: auto; height: 8px; background: linear-gradient(#c9b38a, #8e7650 50%, #c9b38a); }
+    .bkPage { padding: 12px 14px; } .bkPage.left, .bkPage.right { box-shadow: inset 0 0 0 3px #d7c49c, inset 0 0 0 6px #f3e8cf, inset 0 0 0 7px #cdb68a; }
+    .bkTabs { right: auto; left: 12px; top: 8px; flex-direction: row; } .bkTab { width: 46px; height: 40px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); padding: 0; text-align: center; }
+    .bkTab.on { transform: translateY(4px); } .bkTab:hover { transform: translateY(2px); } .bkClose { right: 8px; top: 8px; } .bkRibbon { display: none; } .bkCorner { display: none; }
+  }
+  @media (max-height: 480px) { #questScreen .book { height: 92vh; padding: 8px 12px 16px; } .bkClose { right: -46px; top: 0; } .bkTabs { top: 44px !important; gap: 5px; } .bkTab { height: 34px; } .bkPage { padding: 10px 14px; } .bkPage h3 { margin: 0 0 4px; } .bkCorner { display: none; } .bkTabs { top: 20px; } }
   /* 5.2: cámara y aspecto */
   #camTouch { display: none; position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(178px + env(safe-area-inset-top)); width: 40px; height: 40px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: rgba(0,0,0,.4); color: #fff; font-size: 18px; pointer-events: auto; z-index: 6; }
   body.touch #camTouch { display: block; } body.touch:not(.minimap-on) #camTouch { top: calc(62px + env(safe-area-inset-top)); }
@@ -1007,7 +1068,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.4!</span>
+      <span class="ver">¡Versión 5.5!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1017,7 +1078,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1174,11 +1235,18 @@
   </div>
 </div>
 <div id="questScreen" class="screen">
-  <div class="card wideCard questCard">
-    <div class="cardHead"><h2>📜 Registro de aventuras</h2></div>
-    <div class="stabs"><button class="stab on" data-tab="active">Misiones</button><button class="stab" data-tab="done">Completadas</button><button class="stab" data-tab="villages">Aldeas y reputación</button></div>
-    <div id="questList"></div>
-    <button id="questClose" class="btn primary">Cerrar</button>
+  <i class="bkCorner tl"></i><i class="bkCorner tr"></i><i class="bkCorner bl"></i><i class="bkCorner br"></i>
+  <div class="book">
+    <div class="bkCover"></div>
+    <div class="bkPage left"><h3 id="bkLT">Misiones activas</h3><div id="questList" class="bkScroll"></div></div>
+    <div class="bkSpine"></div>
+    <div class="bkPage right"><h3 id="bkRT">Diario del aventurero</h3><div id="bkRight" class="bkScroll"></div></div>
+    <div class="bkTabs">
+      <button class="bkTab red on" data-tab="active" title="Misiones">📜</button><button class="bkTab blue" data-tab="done" title="Completadas">✔</button>
+      <button class="bkTab green" data-tab="villages" title="Aldeas">🏘</button><button class="bkTab purple" data-tab="trades" title="Oficios">★</button>
+    </div>
+    <i class="bkRibbon"></i>
+    <button id="questClose" class="bkClose" title="Cerrar">✕</button>
   </div>
 </div>
 <div id="codexScreen" class="screen">
@@ -12579,7 +12647,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.4  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12604,7 +12672,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -14697,7 +14765,7 @@ const TRADES_PLUS = {
 const VN_A = ['Val', 'Pino', 'Roble', 'Monte', 'Río', 'Fuente', 'Peña', 'Villa', 'Campo', 'Torre', 'Sierra', 'Prado', 'Castro', 'Mira'];
 const VN_B = ['dulce', 'alto', 'claro', 'verde', 'sol', 'rubio', 'hondo', 'frío', 'luna', 'mayor', 'nuevo', 'real', 'flor', 'bravo'];
 const strHash = (s) => { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; };
-function villageName(id) { const n = getPlan(id)?.poi?.name; if (n && /^Aldea\s+\S/.test(n)) return n.replace(/^Aldea\s+/, ''); const h = strHash(id); return VN_A[h % VN_A.length] + VN_B[(h >> 8) % VN_B.length]; }
+function villageName(id) { const n = getPlan(id)?.poi?.name; if (n && /^Aldea\s+\S/.test(n)) return n.replace(/^Aldea\s+/, ''); const h = strHash(id); return VN_A[h % VN_A.length] + VN_B[(h >>> 8) % VN_B.length]; }
 const VILLAGE_LEVELS = ['', 'Asentamiento', 'Aldea', 'Pueblo', 'Villa', 'Ciudad fortificada'];
 const REP_TIERS = [[-100, 'Hostil', '#ff5a4a'], [-39, 'Desconfiado', '#ff9a4a'], [-9, 'Neutral', '#d4d4d4'], [15, 'Amistoso', '#7be06a'], [40, 'Venerado', '#5ab4ff'], [70, 'Héroe del pueblo', '#ffb43c']];
 function repTier(r) { let t = REP_TIERS[0]; for (const x of REP_TIERS) if (r >= x[0]) t = x; return t; }
@@ -15539,6 +15607,19 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.5', name: 'Libro de aventuras', date: 'noviembre de 2026', items: [
+    'El registro de misiones (tecla J, botón del mando o Pausa → Misiones) ahora es un libro abierto de pergamino, con tapa de cuero, lomo, cinta de marcapáginas y adornos en las esquinas.',
+    'Pestañas de colores en el canto del libro: Misiones (rojo), Completadas (azul), Aldeas (verde) y Oficios (violeta). Con mando, LB y RB pasan de pestaña.',
+    'Página «Misiones activas»: cada misión en una cinta con un rombo (verde cuando está lista), barra de progreso, quién la encargó y «¡Lista para entregar!» cuando ya puedes cobrarla.',
+    'Abandonar un encargo desde la ✕ de su cinta (hay que tocarla dos veces para confirmar).',
+    'Tocando una misión, la página derecha muestra su detalle: descripción, objetivo, progreso, recompensa y los botones para seguirla en pantalla o abandonarla.',
+    'Nuevo «Diario del aventurero»: puntos de misión (10 por misión de la historia y 3 por encargo), encargos activos sobre 5, misiones completadas y avance de la historia.',
+    'Nueva reputación por oficios: Cazador, Recolector, Artesano, Explorador y Comerciante. Suben solos con lo que haces (cazar, picar y cosechar, fabricar, explorar y comerciar) y tienen siete rangos, de Novato a Leyenda.',
+    'Pestaña Oficios: cada oficio con sus puntos, su rango, una barra hasta el rango siguiente y qué cuenta para subirlo.',
+    'Pestaña Aldeas: lista de aldeas con su reputación y, al tocar una, su tamaño, precios, prosperidad y lo que traerá el siguiente nivel.',
+    'En el teléfono en vertical el libro se abre con las páginas una debajo de la otra y las pestañas arriba; en horizontal y en PC, a doble página.',
+    'Corregido: algunas aldeas sin nombre propio aparecían como «…undefined» en el registro y en los diálogos.',
+  ] },
   { v: '5.4', name: 'Gráficos renovados', date: 'noviembre de 2026', items: [
     'Gran mejora visual: el mundo se ve con luz, sombras, reflejos y color mucho más detallados. Las texturas de bloques, criaturas y agua ganan volumen y brillo con la luz del sol.',
     'Nuevo ajuste «Shaders» en Ajustes → Gráficos: Apagado, Suaves o Completos. La calidad Alto los trae Suaves y Ultra, Completos (necesita WebGL 2; consume más en equipos modestos y celulares).',
@@ -17473,7 +17554,7 @@ const pad = {
     if (edge(9)) { if (game.state === 'paused') $('#pResume').click(); else this.back(); }
     // LB / RB cambian de pestaña en las pantallas con pestañas
     if (edge(4) || edge(5)) {
-      const tabs = $$('.screen.show .stab').filter((t) => t.offsetParent);
+      const tabs = $$('.screen.show .stab, .screen.show .bkTab').filter((t) => t.offsetParent);
       const cur = tabs.findIndex((t) => t.classList.contains('on'));
       if (tabs.length) tabs[(cur + (edge(5) ? 1 : -1) + tabs.length) % tabs.length].click();
     }
@@ -18566,7 +18647,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.4';
+const GAME_VERSION = '5.5';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -23607,6 +23688,138 @@ const fx54 = {
     renderer.setRenderTarget(null);
   },
 };
+
+/* ==========================================================================
+   §55 LIBRO DE AVENTURAS (5.5)
+   --------------------------------------------------------------------------
+   El registro de misiones (tecla J) pasa a ser un libro abierto de pergamino:
+     · Pestañas de colores en el canto: Misiones (rojo), Completadas (azul),
+       Aldeas (verde) y Oficios (violeta).
+     · Misiones: a la izquierda las misiones activas (cinta de pergamino con
+       el nombre, barra de progreso, «¡Lista para entregar!» y ✕ para
+       abandonar); a la derecha el diario del aventurero (puntos de misión,
+       encargos, completadas y reputación por oficio). Tocando una misión, la
+       página derecha muestra su detalle (quién la pidió, objetivo, recompensa,
+       seguir o dejar de seguir).
+     · Oficios: Cazador, Recolector, Artesano, Explorador y Comerciante,
+       calculados con tus estadísticas reales, con rango y barra al siguiente.
+   ========================================================================== */
+const TRADE_RANKS = [[0, 'Novato', '#7a6a58'], [25, 'Aprendiz', '#5a6b3a'], [75, 'Aventurero', '#2f7a34'], [200, 'Veterano', '#2f5fa8'], [450, 'Experto', '#7a3fa0'], [900, 'Maestro', '#b0651a'], [1800, 'Leyenda', '#b8322a']];
+const TRADES55 = [
+  ['hunter', 'Cazador', '⚔', (s) => (s.hostileKills || 0) + (s.bosses || 0) * 25, 'Monstruos derrotados (los jefes cuentan 25)'],
+  ['gatherer', 'Recolector', '⛏', (s) => Math.floor((s.mined || 0) / 8) + (s.harvested || 0) + (s.foraged || 0) + (s.fished || 0), 'Bloques picados (1 cada 8), cosechas, recolección y pesca'],
+  ['crafter', 'Artesano', '🔨', (s) => (s.crafted || 0) + (s.cooked || 0) + (s.enchanted || 0) * 3 + (s.brewed || 0) * 2, 'Objetos fabricados, platos, encantamientos (3) y pociones (2)'],
+  ['explorer', 'Explorador', '🧭', (s) => (s.structures || 0) * 10 + (s.biomes || 0) * 5 + Math.floor((s.distance || 0) / 500) + (s.expeditions || 0) * 5, 'Lugares (10), biomas (5), cada 500 m recorridos y expediciones (5)'],
+  ['merchant', 'Comerciante', '💰', (s) => (s.trades || 0) + (s.community || 0) * 5 + (s.villageUps || 0) * 10, 'Tratos con aldeanos, encargos de la comunidad (5) y mejoras de aldea (10)'],
+];
+function tradeRank(v) { let i = 0; while (i + 1 < TRADE_RANKS.length && v >= TRADE_RANKS[i + 1][0]) i++; return i; }
+const darkCol = (hex, k = 0.62) => { const n = parseInt(hex.slice(1), 16); return `rgb(${Math.round((n >> 16) * k)},${Math.round(((n >> 8) & 255) * k)},${Math.round((n & 255) * k)})`; };
+
+Object.assign(questUI, {
+  sel: null, selV: null,
+  stats() { const p = game.player; return { ...p.stats, biomes: p.biomes.size, structures: p.pois.size }; },
+  points(Q) { return Q.done.reduce((a, d) => a + (d.kind === 'main' ? 10 : 3), 0); },
+  bar(a, b, col) { return `<u class="bkBar"><s style="width:${b ? Math.min(100, a / b * 100) : 0}%${col ? `;background:${col}` : ''}"></s></u>`; },
+  // Diario del aventurero (página derecha por defecto)
+  logPage(Q) {
+    const s = this.stats(), side = Q.active.filter((q) => q.kind === 'side').length;
+    let h = `<div class="bkKV"><span>Puntos de misión</span><b>${this.points(Q)}</b></div><div class="bkKV"><span>Encargos</span><b>${side}/5</b></div>
+      <div class="bkKV"><span>Completadas</span><b>${Q.done.length}</b></div><div class="bkKV"><span>Historia</span><b>${Math.min(Q.main, MAIN_QUESTS.length)}/${MAIN_QUESTS.length}</b></div>
+      <h4>Reputación</h4>`;
+    for (const [, name, icon, fn] of TRADES55) { const v = fn(s), r = TRADE_RANKS[tradeRank(v)]; h += `<div class="bkRep"><i>${icon}</i><span>${name}</span><b style="color:${r[2]}">${r[1]} (${v})</b></div>`; }
+    return h;
+  },
+  questDetail(q, Q) {
+    const p = game.player, [a, b] = questProgress(q, p), ready = a >= b;
+    const who = q.kind === 'main' ? 'Misión principal' : `${escapeHtml(q.giver)} · ${villageName(q.village)}`;
+    return `<p class="bkBack"><button class="bkLink" data-act="log">‹ Diario</button></p><h4>${escapeHtml(q.title)}</h4><p class="bkWho">${who}</p>
+      ${q.desc ? `<p>${escapeHtml(q.desc)}</p>` : ''}<p class="bkGoal">${escapeHtml(q.goal)}</p>${this.bar(a, b, ready ? '#3d8a3a' : null)}
+      <p class="bkSmall">${a} / ${b}${ready ? (q.kind === 'side' ? ' · ¡Lista! Vuelve a la aldea para entregarla' : ' · ¡Completada!') : ''}</p>
+      <p class="bkRew">Recompensa: ${rewardText(q.reward)}</p>
+      <div class="bkActs"><button class="bkBtn" data-act="track" data-id="${escapeHtml(q.id)}">${Q.track === q.id ? 'Dejar de seguir' : '📍 Seguir en pantalla'}</button>
+      ${q.kind === 'side' ? `<button class="bkBtn red" data-act="drop" data-id="${escapeHtml(q.id)}">Abandonar</button>` : ''}</div>`;
+  },
+  render() {
+    const p = game.player, Q = questState(p), L = $('#questList'), R = $('#bkRight'), lt = $('#bkLT'), rt = $('#bkRT');
+    $$('#questScreen .bkTab').forEach((b) => b.classList.toggle('on', b.dataset.tab === this.tab));
+    const rows = [];
+    if (this.tab === 'active') {
+      lt.textContent = 'Misiones activas';
+      const list = [], m = mainQuest(p); if (m) list.push(m); list.push(...Q.active);
+      for (const q of list) {
+        const [a, b] = questProgress(q, p), ready = a >= b;
+        rows.push(`<div class="bkQ${ready ? ' ready' : ''}${this.sel === q.id ? ' sel' : ''}${q.kind === 'main' ? ' main' : ''}" data-q="${escapeHtml(q.id)}">
+          <div class="bkBand"><i class="bkGem"></i><span>${q.kind === 'main' ? '👑 ' : ''}${escapeHtml(q.title)}</span>${Q.track === q.id ? '<em title="Se muestra en pantalla">📍</em>' : ''}
+          ${q.kind === 'side' ? `<button class="bkX" data-act="drop" data-id="${escapeHtml(q.id)}" title="Abandonar">✕</button>` : ''}</div>
+          ${this.bar(a, b, ready ? '#3d8a3a' : null)}<div class="bkSub"><span>${ready ? (q.kind === 'side' ? '¡Lista para entregar!' : '¡Completada!') : `${a}/${b}`}</span><span>${q.kind === 'main' ? 'Historia' : escapeHtml(q.giver || '')}</span></div></div>`);
+      }
+      if (!m) rows.unshift('<p class="bkSmall">👑 Historia completada: has derrotado a todas las amenazas del reino.</p>');
+      if (!Q.active.length) rows.push('<p class="bkSmall">No tienes encargos. Habla con los aldeanos: cada uno puede ofrecerte un trabajo al día.</p>');
+      const q = list.find((x) => x.id === this.sel);
+      rt.textContent = q ? 'Detalle' : 'Diario del aventurero';
+      R.innerHTML = q ? this.questDetail(q, Q) : this.logPage(Q);
+    } else if (this.tab === 'done') {
+      lt.textContent = 'Misiones completadas';
+      if (!Q.done.length) rows.push('<p class="bkSmall">Todavía no has completado ninguna misión.</p>');
+      for (const d of [...Q.done].reverse()) rows.push(`<div class="bkDone"><b>✔ ${escapeHtml(d.title)}</b><span>${d.kind === 'main' ? 'Misión principal' : `${escapeHtml(d.giver || '')} · ${villageName(d.village)}`} · día ${d.t + 1}</span></div>`);
+      const main = Q.done.filter((d) => d.kind === 'main').length;
+      rt.textContent = 'Resumen';
+      R.innerHTML = `<div class="bkKV"><span>Puntos de misión</span><b>${this.points(Q)}</b></div><div class="bkKV"><span>Misiones de la historia</span><b>${main}</b></div>
+        <div class="bkKV"><span>Encargos de aldeanos</span><b>${Q.done.length - main}</b></div><p class="bkSmall">Cada misión de la historia da 10 puntos y cada encargo, 3.</p>`;
+    } else if (this.tab === 'villages') {
+      lt.textContent = 'Aldeas';
+      const vs = Object.entries(p.villages || {});
+      if (!vs.length) rows.push('<p class="bkSmall">Aún no conoces ninguna aldea. Habla con sus habitantes para empezar a ganarte su confianza.</p>');
+      for (const [id, r] of vs) {
+        const t = repTier(r.rep);
+        rows.push(`<div class="bkQ${this.selV === id ? ' sel' : ''}" data-v="${escapeHtml(id)}"><div class="bkBand"><i class="bkGem" style="background:${darkCol(t[2], 0.8)}"></i><span>🏘 ${villageName(id)}</span></div>
+          ${this.bar(r.rep + 100, 200, darkCol(t[2], 0.75))}<div class="bkSub"><span style="color:${darkCol(t[2])}">${t[1]} (${r.rep > 0 ? '+' : ''}${r.rep})</span><span>${VILLAGE_LEVELS[r.lvl]}</span></div></div>`);
+      }
+      const sel = vs.find(([id]) => id === this.selV) || vs[0];
+      rt.textContent = sel ? villageName(sel[0]) : 'Aldea';
+      if (sel) {
+        const [id, r] = sel, t = repTier(r.rep);
+        R.innerHTML = `<div class="bkKV"><span>Reputación</span><b style="color:${darkCol(t[2])}">${t[1]} (${r.rep > 0 ? '+' : ''}${r.rep})</b></div><div class="bkKV"><span>Tamaño</span><b>${VILLAGE_LEVELS[r.lvl]}${r.bq ? ' (en obras)' : ''}</b></div>
+          <div class="bkKV"><span>Precios</span><b>×${priceMult(id).toFixed(2)}</b></div>${r.lvl < 5 ? `<p class="bkSmall">Siguiente nivel: ${VILLAGE_LEVELS[r.lvl + 1]}${VILLAGE_UPGRADES[r.lvl + 1].rep > 0 ? ` (reputación ${VILLAGE_UPGRADES[r.lvl + 1].rep}+)` : ''}: ${VILLAGE_UPGRADES[r.lvl + 1].what}. Se construye con el proyecto de la aldea.</p>` : ''}<div class="bkExtra">${villageExtraHTML(id, r)}</div>`;
+      } else R.innerHTML = '<p class="bkSmall">Cuando conozcas una aldea, aquí verás su reputación, tamaño y precios.</p>';
+    } else {
+      lt.textContent = 'Oficios';
+      const s = this.stats();
+      for (const [, name, icon, fn, how] of TRADES55) {
+        const v = fn(s), i = tradeRank(v), r = TRADE_RANKS[i], nx = TRADE_RANKS[i + 1];
+        rows.push(`<div class="bkQ"><div class="bkBand"><i class="bkIco">${icon}</i><span>${name}</span><b style="color:${r[2]}">${r[1]}</b></div>
+          ${this.bar(nx ? v - r[0] : 1, nx ? nx[0] - r[0] : 1, r[2])}<div class="bkSub"><span>${v} puntos</span><span>${nx ? `${nx[1]}: ${nx[0]}` : 'Rango máximo'}</span></div><p class="bkHow">${how}</p></div>`);
+      }
+      rt.textContent = 'Rangos';
+      R.innerHTML = TRADE_RANKS.map(([n, name, c]) => `<div class="bkKV"><span style="color:${c}">${name}</span><b>${n}+</b></div>`).join('') +
+        `<p class="bkSmall">Los oficios suben solos con lo que haces en el mundo: cazar, recolectar, fabricar, explorar y comerciar.</p>`;
+    }
+    L.innerHTML = rows.join('');
+    this.dirty = false;
+  },
+  click(e) {
+    const b = e.target.closest('[data-act]'), Q = questState(game.player);
+    if (b) {
+      e.stopPropagation();
+      const id = b.dataset.id, q = Q.active.find((x) => x.id === id);
+      if (b.dataset.act === 'log') this.sel = null;
+      else if (b.dataset.act === 'track') Q.track = Q.track === id ? null : id;
+      else if (b.dataset.act === 'drop' && q) {
+        if (!b.dataset.sure) { b.dataset.sure = 1; b.classList.add('sure'); b.textContent = b.classList.contains('bkX') ? '¿Seguro?' : '¿Seguro? Toca otra vez'; sfx.play('click'); return; }
+        Q.active = Q.active.filter((x) => x !== q); if (Q.track === id) Q.track = null; if (this.sel === id) this.sel = null;
+        game.player.markers = game.player.markers.filter((m) => m.ref !== (q.poi || 'q:' + q.id)); hud.toast(`Abandonaste «${q.title}»`);
+      }
+      sfx.play('click'); this.render(); return;
+    }
+    const r = e.target.closest('[data-q]'), v = e.target.closest('[data-v]');
+    if (r) { this.sel = this.sel === r.dataset.q ? null : r.dataset.q; sfx.play('click'); this.render(); }
+    else if (v) { this.selV = v.dataset.v; sfx.play('click'); this.render(); }
+  },
+});
+{
+  $('#questScreen').addEventListener('click', (e) => questUI.click(e));
+  $$('#questScreen .bkTab').forEach((b) => (b.onclick = () => { questUI.tab = b.dataset.tab; questUI.sel = null; sfx.play('click'); questUI.render(); }));
+}
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)

@@ -1,4 +1,4 @@
-# LinkCraft 5.4
+# LinkCraft 5.5
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -138,6 +138,14 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - **Suaves:** luz del sol con dirección y color, agua con olas, reflejos y brillo del sol, atardeceres naranjas y violetas, resplandor de las luces, rayos de sol y curva de tono cinematográfica.
 - **Completos:** además, sombras reales del sol, el mundo reflejado en el agua y vegetación que se mece con el viento.
 - Necesita WebGL 2.
+
+**Libro de aventuras (5.5)**
+- El registro de misiones (J) es ahora un libro abierto de pergamino con tapa de cuero, lomo, cinta y pestañas de colores: Misiones, Completadas, Aldeas y Oficios (LB/RB con mando).
+- Misiones activas en cintas con rombo de estado, barra de progreso, «¡Lista para entregar!» y ✕ para abandonar (con confirmación). Tocando una, la página derecha muestra su detalle con Seguir y Abandonar.
+- Diario del aventurero: puntos de misión, encargos n/5, completadas y avance de la historia.
+- Reputación por oficios (Cazador, Recolector, Artesano, Explorador y Comerciante) calculada con tus estadísticas reales, con siete rangos de Novato a Leyenda.
+- Doble página en PC y teléfono horizontal; una columna en teléfono vertical.
+- Corregido el nombre «…undefined» de algunas aldeas.
 
 ## Funciones existentes que se mejoraron
 
