@@ -1,4 +1,4 @@
-# LinkCraft 5.6
+# LinkCraft 5.7
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -156,6 +156,10 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - Clases (Vanguardia, Lancero, Pícaro y Arcanista) con habilidad en la tecla C, botón táctil ✦ o cruceta derecha del mando.
 - Oficios (Herrería con calidad y gemas, Cocina, Minería y Domador), planos de forja y Enciclopedia → Saber.
 - Luna carmesí, tormentas que cargan cristales y runas, y zoom (Z, 🔍 o mantener R3).
+
+**Menús con estilo (5.7)**
+- Cada menú lleva la textura de lo que representa: la mesa de fabricación es de madera con patas, el cofre tiene cerrojo, el horno brilla, los encantamientos son de obsidiana, el mapa es de pergamino, los logros de oro, la enciclopedia una estantería…
+- Se puede apagar en Ajustes → Gráficos.
 
 ## Funciones existentes que se mejoraron
 

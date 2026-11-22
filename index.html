@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.6</title>
+<title>LinkCraft 5.7</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -1094,7 +1094,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.6!</span>
+      <span class="ver">¡Versión 5.7!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1104,7 +1104,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.7</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -10907,6 +10907,7 @@ function initSettingsUI() {
     ['hudScale', 'Tamaño de la interfaz', 'range', 0.7, 1.3, 0.05, (v) => Math.round(v * 100) + '%'], ['mmZoom', 'Zoom del minimapa', 'select', ['cerca', 'normal', 'lejos']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
     ['menuPanorama', 'Paisaje animado en el menú', 'check'], ['minimap', 'Minimapa', 'check'], ['mobBars', 'Barra de vida al apuntar', 'check'],
+    ['menuThemes', 'Menús con el material de cada bloque', 'check'],
   ];
   // cada ajuste va a su pestaña: Gráficos, Sonido o Controles
   const TAB = { music: '#settingsAudio', volume: '#settingsAudio', sensitivity: '#settingsCtrlRows', touchSensitivity: '#settingsCtrlRows' };
@@ -12670,7 +12671,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.7  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12695,7 +12696,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { zoom56, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15632,6 +15633,15 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.7', name: 'Menús con estilo', date: 'noviembre de 2026', items: [
+    'Cada menú se viste con el material de lo que representa, con las mismas texturas pixeladas del mundo.',
+    'Mesa de fabricación: tablones de madera, la cara de la mesa en la cabecera y patas debajo, como una mesita.',
+    'Cofre: tablones con cerrojo de hierro. Barril, comedero de heno, y dispensador y tolva de piedra y hierro, cada uno con el suyo.',
+    'Horno de piedra con el resplandor del fuego, mesa de encantamientos de obsidiana con brillo violeta, soporte de pociones de madera oscura y comercio con toldo de mercado.',
+    'Inventario de cuero de mochila (el creativo, de piedra pulida), con el icono del bloque en la cabecera.',
+    'Pantallas: pausa, ajustes, estadísticas y créditos de ladrillo de piedra; mapa, novedades, avisos y diálogos de pergamino; logros de oro; «Has muerto» de ladrillo del Inframundo; Personaje de piedra cincelada; Enciclopedia de estantería; Grupo de lana; olla de cobre con fuego; mascotas de heno; carteles de madera; ascensor de hierro; terminal de cobre; y los menús del inicio de tierra, como el clásico.',
+    'Se puede volver al estilo anterior en Ajustes → Gráficos → «Menús con el material de cada bloque».',
+  ] },
   { v: '5.6', name: 'Combate RPG', date: 'noviembre de 2026', items: [
     'Nuevas familias de armas en ocho materiales (madera, piedra, hierro, oro, diamante, infernita, vacuita y aerita): lanza, hacha de batalla, martillo de guerra y daga. Cada una con su daño, velocidad, alcance, empuje, barrido y perforación de armadura, que se ven en la ficha del objeto.',
     'Lanza: hasta dos bloques más de alcance, se ve larga en la mano, y hace un 35 % más de daño corriendo o montado en el grifo.',
@@ -18697,7 +18707,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.6';
+const GAME_VERSION = '5.7';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -24874,6 +24884,168 @@ const zoom56 = {
   if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); if (game.state === 'playing') { zoom56.touch = !zoom56.touch; hud.toast(zoom56.touch ? '🔍 Zoom activado' : '🔍 Zoom desactivado', 800); } });
   const _u = rpg56.update;
   rpg56.update = function (dt) { zoom56.update(); return _u.call(this, dt); };
+}
+
+/* ==========================================================================
+   §60 MENÚS CON ESTILO PROPIO (5.7)
+   --------------------------------------------------------------------------
+   Cada menú se viste con el material de lo que representa, usando las mismas
+   texturas pixeladas del mundo:
+     · Mesa de fabricación: tablones con la cara de la mesa y patas de madera.
+     · Cofre: tablones con herrajes y cerrojo; barril; comedero de heno;
+       dispensador y tolva de piedra y hierro.
+     · Horno: piedra con el resplandor del fuego. Encantamientos: obsidiana
+       con brillo violeta. Pociones: madera oscura. Comercio: toldo de mercado.
+     · Inventario: cuero de mochila (el creativo, piedra pulida).
+     · Pantallas: pausa y ajustes de ladrillo de piedra, mapa y diario de
+       pergamino, logros de oro, muerte de ladrillo del Inframundo, personaje
+       de piedra cincelada, enciclopedia de estantería, grupo de lana, olla de
+       cobre, mascotas de heno, carteles de madera… y los menús del inicio
+       con tierra, como el clásico.
+   Las texturas salen del atlas del juego al arrancar (THEMES57.init) y las
+   reglas CSS se generan aquí. Se puede apagar en Ajustes → Interfaz.
+   ========================================================================== */
+const THEMES57 = {
+  // bg: textura de fondo; fr: textura de la cabecera; dim: oscurecido del fondo; edge/hi: marco; icon: bloque de la cabecera
+  leather: { bg: 'leather', fr: 'leatherDark', dim: 0.42, edge: '#2e1a0c', hi: '#b07a48', size: 48 },
+  table: { bg: 'oak_planks', fr: 'table_top', dim: 0.38, edge: '#3a2410', hi: '#c08a4a', size: 48, icon: () => CRAFTING_TABLE, deco: 'legs' },
+  chest: { bg: 'oak_planks', fr: 'chest_top', dim: 0.42, edge: '#2a1a0a', hi: '#c9c9cf', size: 48, icon: () => CHEST, deco: 'latch' },
+  barrel: { bg: 'barrel_side', fr: 'barrel_top', dim: 0.45, edge: '#2a1a0a', hi: '#a07040', size: 48, icon: () => BARREL },
+  hay: { bg: 'hay_side', fr: 'feeder_top', dim: 0.55, edge: '#4a3a10', hi: '#e8c860', size: 48, icon: () => FEEDER },
+  iron: { bg: 'cobble', fr: 'iron_block', dim: 0.5, edge: '#202024', hi: '#d0d0d8', size: 48, icon: () => DISPENSER },
+  furnace: { bg: 'cobble', fr: 'furnace_top', dim: 0.5, edge: '#1c1c1e', hi: '#9a9a9a', size: 48, icon: () => FURNACE, deco: 'fire' },
+  enchant: { bg: 'obsidian', fr: 'enchant_top', dim: 0.3, edge: '#0e0718', hi: '#a060ff', size: 48, icon: () => ENCHANT_TABLE, deco: 'glow' },
+  brew: { bg: 'dark_planks', fr: 'stone_bricks', dim: 0.4, edge: '#1a120a', hi: '#d0a050', size: 48, icon: () => BREWING_STAND },
+  market: { bg: 'spruce_planks', fr: 'awning', dim: 0.42, edge: '#3a1a10', hi: '#f0d090', size: 48, frSize: 32 },
+  stone: { bg: 'stone_bricks', fr: 'smooth_stone', dim: 0.5, edge: '#1a1a1c', hi: '#a8a8ae', size: 64 },
+  creative: { bg: 'smooth_stone', fr: 'stone_bricks', dim: 0.45, edge: '#1a1a1c', hi: '#b8b8c0', size: 48 },
+  paper: { bg: 'parchment', fr: 'parchmentDark', dim: 0.62, edge: '#3a2814', hi: '#e0c890', size: 64 },
+  gold: { bg: 'gold_block', fr: 'gold_block', dim: 0.66, edge: '#4a3608', hi: '#ffe070', size: 48 },
+  nether: { bg: 'nether_bricks', fr: 'nether_bricks', dim: 0.45, edge: '#200808', hi: '#c04040', size: 48 },
+  hero: { bg: 'chiseled_bricks', fr: 'stone_bricks', dim: 0.52, edge: '#18181c', hi: '#ffd860', size: 64 },
+  library: { bg: 'bookshelf', fr: 'oak_planks', dim: 0.58, edge: '#2a1a0a', hi: '#c08a4a', size: 64, icon: () => BOOKSHELF },
+  banner: { bg: 'red_wool', fr: 'wool', dim: 0.5, edge: '#3a0c0c', hi: '#f0e0e0', size: 48 },
+  pot: { bg: 'copper_tiles', fr: 'pot_top', dim: 0.5, edge: '#3a2010', hi: '#e8a070', size: 48, icon: () => COOKING_POT, deco: 'fire' },
+  sign: { bg: 'oak_planks', fr: 'dark_planks', dim: 0.3, edge: '#3a2410', hi: '#c08a4a', size: 64 },
+  wardrobe: { bg: 'spruce_planks', fr: 'dark_planks', dim: 0.42, edge: '#22160a', hi: '#b08050', size: 48 },
+  copper: { bg: 'copper_block', fr: 'copper_tiles', dim: 0.55, edge: '#3a2010', hi: '#f0a070', size: 48 },
+  dirt: { bg: 'dirt', fr: 'grass_side', dim: 0.5, edge: '#1e140c', hi: '#8a6a4a', size: 64 },
+};
+// Pantalla → estilo
+const SCREEN_TH = {
+  pauseScreen: 'stone', settingsScreen: 'stone', statsScreen: 'stone', aboutScreen: 'stone', bakScreen: 'chest',
+  newsScreen: 'paper', logScreen: 'paper', dialogScreen: 'paper', mapScreen: 'paper', achScreen: 'gold', deathScreen: 'nether',
+  charScreen: 'hero', codexScreen: 'library', grpScreen: 'banner', tradeScreen: 'market', termScreen: 'copper', elevScreen: 'iron',
+  cookScreen: 'pot', petScreen: 'hay', signScreen: 'sign', worldsScreen: 'dirt', createScreen: 'dirt', mpScreen: 'dirt', roomScreen: 'dirt',
+};
+// Texturas hechas a mano (no hay bloque): cuero, pergamino y toldo de mercado
+const PROC57 = {
+  noise(base, amp, fn) { const c = document.createElement('canvas'); c.width = c.height = 16; const x = c.getContext('2d'), rnd = mulberry32(base[0] * 7 + base[1] * 13 + amp);
+    for (let j = 0; j < 16; j++) for (let i = 0; i < 16; i++) { const n = (rnd() - 0.5) * amp, col = fn ? fn(i, j, n, rnd) : base.map((v) => v + n); x.fillStyle = `rgb(${col.map((v) => clamp(Math.round(v), 0, 255)).join(',')})`; x.fillRect(i, j, 1, 1); }
+    return c; },
+  leather() { return this.noise([128, 80, 46], 22, (i, j, n, r) => { const k = r() < 0.06 ? -26 : 0; return [128 + n + k, 80 + n * 0.7 + k, 46 + n * 0.5 + k]; }); },
+  leatherDark() { return this.noise([92, 56, 30], 18, (i, j, n) => (j === 7 && i % 4 < 2 ? [214, 190, 150] : [92 + n, 56 + n * 0.7, 30 + n * 0.5])); },
+  parchment() { return this.noise([212, 188, 140], 16, (i, j, n, r) => { const k = r() < 0.05 ? -30 : 0; return [212 + n + k, 188 + n + k, 140 + n * 0.8 + k]; }); },
+  parchmentDark() { return this.noise([170, 140, 96], 14); },
+  awning() { return this.noise([0, 0, 0], 10, (i, j, n) => (Math.floor(i / 4) % 2 ? [236 + n, 230 + n, 220 + n] : [190 + n, 40 + n * 0.5, 36 + n * 0.5]).map((v) => (j > 12 ? v * 0.8 : v))); },
+};
+settings.menuThemes ??= true;
+const THEME_OFF57 = () => settings.menuThemes === false;
+const themes57 = {
+  ready: false,
+  url(name) {
+    if (PROC57[name]) return PROC57[name]().toDataURL();
+    const t = T[name]; if (t == null) return '';
+    return tileCanvas(t).toDataURL();
+  },
+  init() {
+    if (this.ready) return; this.ready = true;
+    let css = '';
+    for (const [k, th] of Object.entries(THEMES57)) {
+      const bg = this.url(th.bg), fr = this.url(th.fr) || bg, d = th.dim, sel = `[data-th="${k}"]`;
+      css += `.th57${sel} { background: linear-gradient(rgba(10,8,6,${d}), rgba(10,8,6,${d})), url(${bg}) 0 0 / ${th.size}px ${th.size}px repeat !important; image-rendering: pixelated;
+          border: 4px solid ${th.edge} !important; border-radius: 3px !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+          box-shadow: inset 0 0 0 2px ${th.hi}88, inset 0 0 0 5px rgba(0,0,0,.38), inset 0 -6px 0 2px rgba(0,0,0,.25), 0 16px 44px rgba(0,0,0,.6), 0 3px 0 ${th.edge} !important; }
+        .th57${sel} > .cardHead, .th57${sel} .invHeader { background: linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.28)), url(${fr}) 0 0 / ${th.frSize || 32}px ${th.frSize || 32}px repeat; image-rendering: pixelated;
+          border: 3px solid ${th.edge}; border-radius: 3px; box-shadow: inset 0 2px 0 ${th.hi}66, inset 0 -3px 0 rgba(0,0,0,.35), 0 2px 0 rgba(0,0,0,.4); padding: 6px 10px; }
+        .th57${sel} > .cardHead h2 { text-shadow: 0 3px 0 #000, 0 0 10px rgba(0,0,0,.6); }
+        .invPanel${sel} #invTitle, .invPanel${sel} .invLabel, .invPanel${sel} .lbl, .invPanel${sel} h3 { color: #f6ecd8 !important; text-shadow: 0 2px 0 #000; }
+        .invPanel${sel} #recipeBook { background: rgba(0,0,0,.32); }\n`;
+    }
+    css += `
+      .invPanel[data-th] #invTitle::before { content: ''; display: inline-block; width: 22px; height: 22px; margin-right: 6px; vertical-align: -5px; background: var(--th-icon, none) center / contain no-repeat; image-rendering: pixelated; }
+      .invPanel[data-th]:not([style*="--th-icon"]) #invTitle::before { display: none; }
+      /* decoraciones: patas de la mesa, cerrojo del cofre, fuego del horno y brillo de la mesa de encantamientos */
+      .thDeco { position: absolute; pointer-events: none; z-index: 0; }
+      .thDeco.legs { left: 6%; right: 6%; bottom: -22px; height: 22px; background: linear-gradient(90deg, #5a3a1a 0 26px, transparent 26px calc(100% - 26px), #5a3a1a calc(100% - 26px)); box-shadow: inset 0 -4px 0 rgba(0,0,0,.35); }
+      .thDeco.latch { left: 50%; top: 0; width: 26px; height: 22px; margin-left: -13px; background: #c9c9cf; border: 3px solid #2a2a30; border-top: 0; box-shadow: inset 0 -4px 0 #8a8a92; }
+      .thDeco.fire { left: 4px; right: 4px; bottom: 4px; height: 38%; background: linear-gradient(0deg, rgba(255,120,30,.28), rgba(255,120,30,0)); animation: fire57 1.6s ease-in-out infinite alternate; }
+      .thDeco.glow { inset: 4px; box-shadow: inset 0 0 40px rgba(170,90,255,.35); animation: fire57 2.4s ease-in-out infinite alternate; }
+      @keyframes fire57 { from { opacity: .55; } to { opacity: 1; } }
+      .th57[data-th] { isolation: isolate; } .thDeco { z-index: -1; }
+      .thDeco.legs { position: fixed; z-index: 0; }
+      @media (prefers-reduced-motion: reduce) { .thDeco { animation: none !important; } }
+      #invScreen:has(.invPanel[data-th="table"]) { padding-bottom: 30px; }`;
+    const st = document.createElement('style'); st.id = 'themes57'; st.textContent = css; document.head.appendChild(st);
+    this.applyScreens();
+  },
+  deco(el, kind) {
+    el.querySelectorAll(':scope > .thDeco').forEach((d) => d.remove());
+    if (el === this.legsOf) { this.legs?.remove(); this.legs = null; this.legsOf = null; }
+    if (!kind || THEME_OFF57()) return;
+    const d = document.createElement('i'); d.className = 'thDeco ' + kind;
+    // las patas de la mesa van fuera del panel (que se desplaza), pegadas a su borde inferior
+    if (kind === 'legs') { el.parentNode.appendChild(d); this.legs = d; this.legsOf = el; this.placeLegs(); }
+    else el.appendChild(d);
+  },
+  placeLegs() {
+    const d = this.legs, el = this.legsOf; if (!d || !el) return;
+    const r = el.getBoundingClientRect(); if (!r.width) return;
+    d.style.left = r.left + r.width * 0.06 + 'px'; d.style.width = r.width * 0.88 + 'px'; d.style.top = r.bottom - 2 + 'px'; d.style.bottom = 'auto';
+  },
+  set(el, th) {
+    if (!el) return;
+    if (!th || THEME_OFF57()) { el.classList.remove('th57'); delete el.dataset.th; el.style.removeProperty('--th-icon'); this.deco(el, null); return; }
+    el.classList.add('th57'); el.dataset.th = th; const T0 = THEMES57[th], id = T0.icon && T0.icon();
+    if (id != null && ICON[id]) el.style.setProperty('--th-icon', `url(${ICON[id]})`); else el.style.removeProperty('--th-icon');
+    this.deco(el, T0.deco);
+  },
+  applyScreens() { for (const [id, th] of Object.entries(SCREEN_TH)) this.set(document.querySelector(`#${id} .card, #${id} .mapPanel`), th); },
+  // estilo del inventario según lo que abriste
+  invTheme() {
+    const m = ui.mode, t = ui.tile;
+    if (m === 'inv') return game.mode === 'creative' ? 'creative' : 'leather';
+    if (m === 'table') return 'table';
+    if (m === 'furnace') return 'furnace';
+    if (m === 'enchant') return 'enchant';
+    if (m === 'brew') return 'brew';
+    if (m === 'trade') return 'market';
+    if (m === 'chest') {
+      const ty = t && t.type, title = t && t.title || '';
+      if (ty === 'feeder') return 'hay';
+      if (ty === 'dispenser' || ty === 'hopper') return 'iron';
+      if (ty === 'pot') return 'pot';
+      if (/barril/i.test(title)) return 'barrel';
+      return 'chest';
+    }
+    return 'leather';
+  },
+};
+{
+  const _bi = buildIcons;
+  buildIcons = function () { _bi(); themes57.init(); };
+  addEventListener('resize', () => themes57.placeLegs());
+  const _as = applySettings;
+  applySettings = function (key) { const r = _as.apply(this, arguments); if (key === 'menuThemes' || key == null) { themes57.applyScreens(); if (ui.mode) themes57.set($('#invScreen .invPanel'), settings.menuThemes ? themes57.invTheme() : null); } return r; };
+  const _bui = buildInventoryUI;
+  buildInventoryUI = function () {
+    const r = _bui.apply(this, arguments);
+    const panel = $('#invScreen .invPanel'), th = themes57.invTheme();
+    themes57.set(panel, th); requestAnimationFrame(() => themes57.placeLegs());
+    // el icono del barril, el comedero o la tolva cuando corresponde
+    if (th === 'iron' && ui.tile && ui.tile.type === 'hopper' && ICON[HOPPER]) panel.style.setProperty('--th-icon', `url(${ICON[HOPPER]})`);
+    return r;
+  };
 }
 
 /* ==========================================================================
