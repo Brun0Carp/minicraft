@@ -117,3 +117,5 @@ Los servidores de versiones anteriores siguen sirviendo: su `data/world.json` pa
 **5.0 (LinkCraft):** el juego y el servidor pasan a llamarse LinkCraft (el nombre por defecto del servidor es «Servidor LinkCraft»; `/status` responde también con la clave `minicraft` para herramientas viejas). No cambia el protocolo ni los datos: si ya tienes el servidor 4.9, solo cambia el nombre que muestra. El juego 5.0 entra a servidores 4.9 y 4.x sin problemas.
 
 **5.2:** actualiza `server.js` para que los jugadores se vean con el aspecto que eligió cada uno (el servidor reenvía el campo `sk` del estado del jugador). Con un servidor anterior se juega igual, pero cada uno ve a los demás con el aspecto por defecto.
+
+**5.6:** actualiza `server.js` para que los demás vean el golpe del combo (tajo, corte o remate) y con qué mano atacas con dos dagas: el campo `sw` del estado ahora lleva del 1 al 6. Con un servidor anterior se juega igual y los demás ven un golpe simple. La calidad de forja y las gemas viajan dentro de los encantamientos del objeto, así que los cofres, el comercio y el cofre de equipo funcionan con cualquier servidor 4.9 o posterior.

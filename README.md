@@ -1,4 +1,4 @@
-# LinkCraft 5.5
+# LinkCraft 5.6
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -38,6 +38,7 @@ Para jugar por internet, opciones y comandos, mira [`server/README.md`](server/R
 | Cámara (1.ª / 3.ª persona) | V o F5 | 🎥 | Pausa → Cámara |
 | Inventario, mapa, misiones | E, M, J | 🎒 🗺 📜 | Y, Select, cruceta |
 | Personaje, mochila, enciclopedia | H, B, K | Pausa → … | Pausa → … |
+| Habilidad de clase / zoom | C / Z (mantener) | ✦ / 🔍 | Cruceta derecha / mantener R3 |
 | Chat y panel de grupo (multijugador) | T, G (Tab: lista de jugadores) | 💬 👥 | Pausa → Grupo |
 
 Todas las teclas y botones del mando se pueden cambiar en **Ajustes → Controles** y **Ajustes → Mando**. Los botones táctiles se pueden mover desde **Ajustes → Controles**.
@@ -146,6 +147,15 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 - Reputación por oficios (Cazador, Recolector, Artesano, Explorador y Comerciante) calculada con tus estadísticas reales, con siete rangos de Novato a Leyenda.
 - Doble página en PC y teléfono horizontal; una columna en teléfono vertical.
 - Corregido el nombre «…undefined» de algunas aldeas.
+
+**Combate RPG (5.6)**
+- Lanzas, hachas de batalla, martillos de guerra y dagas en ocho materiales, cada familia con su mecánica (alcance y carga, barrido y sangrado, onda de choque, golpe por la espalda y dos dagas).
+- Escudos de madera, hierro, diamante y vacuita, y parada perfecta de 0,25 s.
+- Combo de tres golpes con estela, pausa en los críticos y reacción de los enemigos, también en tercera persona y multijugador.
+- Peso de la armadura, armaduras de infernita y vacuita, conjuntos nuevos y detalles 3D (hombreras, visera, cresta y capa).
+- Clases (Vanguardia, Lancero, Pícaro y Arcanista) con habilidad en la tecla C, botón táctil ✦ o cruceta derecha del mando.
+- Oficios (Herrería con calidad y gemas, Cocina, Minería y Domador), planos de forja y Enciclopedia → Saber.
+- Luna carmesí, tormentas que cargan cristales y runas, y zoom (Z, 🔍 o mantener R3).
 
 ## Funciones existentes que se mejoraron
 

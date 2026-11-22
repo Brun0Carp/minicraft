@@ -485,7 +485,7 @@ function handle(c, m) {
     case 'player': {
       if (!Array.isArray(m.p) || m.p.length !== 3 || !m.p.every(Number.isFinite)) return;
       c.state = { p: m.p.map((v) => Math.round(v * 100) / 100), yaw: num(m.yaw), pitch: num(m.pitch), anim: m.anim === 'walk' ? 'walk' : 'idle',
-        held: m.held | 0, hp: Math.max(0, Math.min(40, num(m.hp, 20))), cr: m.cr ? 1 : 0, sw: m.sw ? 1 : 0, lt: Math.max(0, Math.min(15, m.lt | 0)),
+        held: m.held | 0, hp: Math.max(0, Math.min(40, num(m.hp, 20))), cr: m.cr ? 1 : 0, sw: Math.max(0, Math.min(6, m.sw | 0)), lt: Math.max(0, Math.min(15, m.lt | 0)),
         ...(typeof m.sk === 'string' && /^[\d.]{1,40}$/.test(m.sk) ? { sk: m.sk } : {}) };      // 5.2: aspecto del personaje
       R.broadcast({ type: 'player', id: c.id, ...c.state }, c);
       break;

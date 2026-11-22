@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.5</title>
+<title>LinkCraft 5.6</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -784,6 +784,30 @@
 
 
 
+
+  /* 5.6: combate RPG */
+  #zoomTouch { display: none; position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(224px + env(safe-area-inset-top)); width: 40px; height: 40px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: rgba(0,0,0,.4); color: #fff; font-size: 19px; z-index: 6; }
+  body.touch #zoomTouch { display: block; } body.touch:not(.minimap-on) #zoomTouch { top: calc(108px + env(safe-area-inset-top)); } body.inv-open #zoomTouch, body.overlay #zoomTouch { display: none !important; }
+  #zoomTouch.on { background: rgba(255,225,77,.45); }
+  body.zoom56::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(circle at 50% 50%, transparent 46%, rgba(0,0,0,.55) 62%, rgba(0,0,0,.9) 80%); }
+  @media (max-width: 640px) { .charCard .stabs, .codexCard .stabs { flex-wrap: wrap; justify-content: center; } }
+  #tbClass { position: absolute; left: -72px; bottom: 0; width: 62px; } #tbClass.hide { display: none; }
+  body.hidden56::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2; box-shadow: inset 0 0 120px 40px rgba(60,20,90,.55); }
+  .clsNote { font-size: 12.5px; color: #aab0bb; } .skHead .clsNote { flex-basis: 100%; }
+  .clsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
+  .clsCard { background: rgba(0,0,0,.32); border: 2px solid #0b0b0b; border-radius: 5px; padding: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+  .clsCard.on { border-color: var(--bc, #ffe14d); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .clsCard h3 { margin: 0; font-size: 15px; color: var(--bc, #ffe14d); } .clsCard h3 small { font-size: 12px; color: #c9ccd4; font-weight: 400; margin-left: 4px; }
+  .clsCard p { margin: 1px 0; color: #c9ccd4; line-height: 1.3; } .clsCard h4 { margin: 6px 0 2px; font-size: 13.5px; color: #ffe14d; }
+  .clsAb { color: #e8e8ee !important; background: rgba(255,255,255,.05); padding: 4px 6px; border-radius: 4px; }
+  .clsRank { color: #777 !important; letter-spacing: 1px; } .clsRank u { text-decoration: none; color: var(--bc, #ffe14d); }
+  .clsBtn { width: 100%; margin: 4px 0 0; padding: 6px; font-size: 13px; } .clsBtn:disabled, .gemBtn:disabled { opacity: .45; cursor: default; }
+  .profCard { --bc: #ffe14d; } .profCard .skBar { margin: 2px 0 4px; flex: none; }
+  .gemRow { display: flex; flex-wrap: wrap; gap: 4px; } .gemBtn { width: auto; margin: 0; padding: 4px 7px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .gemBtn i { width: 18px; height: 18px; background-size: contain; image-rendering: pixelated; }
+  .loreGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; margin-top: 6px; }
+  .loreCard { background: rgba(0,0,0,.32); border: 2px solid #0b0b0b; border-radius: 5px; padding: 8px; } .loreCard h4 { margin: 0 0 3px; font-size: 14px; color: #ffe14d; }
+  .loreCard p { margin: 0; font-size: 12.5px; color: #c9ccd4; line-height: 1.35; } .loreCard.off h4 { color: #777; } .loreCard.off p { color: #666; }
   /* 5.5: libro de aventuras */
   #questScreen { background: rgba(8,10,8,.55); }
   #questScreen .book { position: relative; width: min(940px, calc(96vw - 56px)); margin-right: 44px; height: min(560px, 82vh); display: flex; padding: 14px 16px 22px; image-rendering: pixelated; }
@@ -1018,6 +1042,7 @@
   <div id="trackers"><div id="questTracker"></div><div id="coopTracker" style="display:none"></div></div>
   <div id="mobBar"><b></b><div class="mbBar"><i class="mbTrail"></i><i class="mbFill"></i></div><em></em></div>
   <button id="camTouch" title="Cambiar cámara">🎥</button>
+  <button id="zoomTouch" title="Zoom">🔍</button>
   <div id="minimapContainer"><canvas id="minimapCanvas" width="100" height="100"></canvas></div>
   <div id="effectsHud"></div>
   <div id="notifs"></div>
@@ -1035,6 +1060,7 @@
     <div id="lookZone"></div>
     <div id="joy"><div id="joyKnob"></div></div>
     <div class="tbtns">
+      <button class="tbtn small hide" id="tbClass" data-act="classAb"><span>✦</span>Clase</button>
       <button class="tbtn small" data-act="swap"><span>⇄</span>Mano</button>
       <button class="tbtn" data-act="place"><span>▣</span>Usar</button>
       <button class="tbtn" data-act="break"><span>⛏</span>Minar</button>
@@ -1068,7 +1094,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.5!</span>
+      <span class="ver">¡Versión 5.6!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1078,7 +1104,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.5</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.6</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1243,7 +1269,7 @@
     <div class="bkPage right"><h3 id="bkRT">Diario del aventurero</h3><div id="bkRight" class="bkScroll"></div></div>
     <div class="bkTabs">
       <button class="bkTab red on" data-tab="active" title="Misiones">📜</button><button class="bkTab blue" data-tab="done" title="Completadas">✔</button>
-      <button class="bkTab green" data-tab="villages" title="Aldeas">🏘</button><button class="bkTab purple" data-tab="trades" title="Oficios">★</button>
+      <button class="bkTab green" data-tab="villages" title="Aldeas">🏘</button><button class="bkTab purple" data-tab="trades" title="Reputación">★</button>
     </div>
     <i class="bkRibbon"></i>
     <button id="questClose" class="bkClose" title="Cerrar">✕</button>
@@ -1252,7 +1278,7 @@
 <div id="codexScreen" class="screen">
   <div class="card wideCard codexCard">
     <div class="cardHead"><h2>📖 Enciclopedia</h2></div>
-    <div class="stabs"><button class="stab on" data-ctab="items">Objetos</button><button class="stab" data-ctab="mobs">Criaturas</button><button class="stab" data-ctab="explore">Exploración</button><button class="stab" data-ctab="journal">Diario</button></div>
+    <div class="stabs"><button class="stab on" data-ctab="items">Objetos</button><button class="stab" data-ctab="mobs">Criaturas</button><button class="stab" data-ctab="explore">Exploración</button><button class="stab" data-ctab="journal">Diario</button><button class="stab" data-ctab="lore">Saber</button></div>
     <div id="codexBody"></div>
     <button id="codexClose" class="btn primary">Cerrar</button>
   </div>
@@ -1260,7 +1286,7 @@
 <div id="charScreen" class="screen">
   <div class="card wideCard charCard">
     <div class="cardHead"><h2>🌟 Personaje</h2></div>
-    <div class="stabs"><button class="stab on" data-chtab="skills">Habilidades</button><button class="stab" data-chtab="gear">Equipo</button><button class="stab" data-chtab="pets">Mascotas y monturas</button></div>
+    <div class="stabs"><button class="stab on" data-chtab="skills">Habilidades</button><button class="stab" data-chtab="gear">Equipo</button><button class="stab" data-chtab="pets">Mascotas y monturas</button><button class="stab" data-chtab="class">Clase</button><button class="stab" data-chtab="profs">Oficios</button></div>
     <div id="charBody"></div>
     <button id="charClose" class="btn primary">Cerrar</button>
   </div>
@@ -5193,7 +5219,9 @@ class ChunkManager {
     // Orden por distancia (espiral aproximada)
     if (!this.order || this.orderR !== R) {
       this.order = [];
-      for (let dz = -R - 1; dz <= R + 1; dz++) for (let dx = -R - 1; dx <= R + 1; dx++) if (dx * dx + dz * dz <= (R + 1.5) * (R + 1.5)) this.order.push([dx, dz, dx * dx + dz * dz]);
+      // 5.6: el anillo cargado llega hasta R + 2 para que todo chunk visible tenga sus 8 vecinos (con distancia 2 faltaban
+      // vecinos en diagonal, esos chunks nunca se mallaban y la carga de un mundo nuevo se quedaba en el 62 %)
+      for (let dz = -R - 2; dz <= R + 2; dz++) for (let dx = -R - 2; dx <= R + 2; dx++) if (dx * dx + dz * dz <= (R + 2) * (R + 2)) this.order.push([dx, dz, dx * dx + dz * dz]);
       this.order.sort((a, b) => a[2] - b[2]); this.orderR = R;
     }
     let total = 0, ready = 0;
@@ -6461,7 +6489,7 @@ class Mob extends Entity {
     let speed = 0, wantDir = this.yaw;
     const survival = game.mode === 'survival' && !p.dead;
     // --- Inteligencia artificial ---
-    if (s.hostile && !s.boss && survival && dist < 20) {
+    if (s.hostile && !s.boss && survival && dist < (p.hidden56 > 0 ? 2.5 : this.bloodMoon ? 32 : 20)) {   // 5.6: paso sombrío (casi invisible) y luna carmesí (más agresivos)
       this.ai.losT -= dt;
       if (this.ai.losT <= 0) { this.ai.losT = 0.5; this.ai.los = hasLineOfSight(this.pos.x, this.pos.y + s.h * 0.85, this.pos.z, p.pos.x, p.pos.y + EYE_H, p.pos.z); }
       if ((this.ai.los || dist < 6 || this.ai.alertT > 0) && !(this.ai.giveUp > 0)) {
@@ -10369,15 +10397,17 @@ function outline(pat) { // añade contorno de 1 px a un patrón
 }
 const HEART_O = outline(HEART), DRUM_O = outline(DRUM);
 
-function drawBar(canvas, value, kind, flash) {
-  const ctx = canvas.getContext('2d'), s = 2, cell = 9 * s;
-  canvas.width = cell * 10; canvas.height = 9 * s;
+function drawBar(canvas, value, kind, flash, max = 20) {
+  const ctx = canvas.getContext('2d'), s = 2, cell = 9 * s, rows = Math.max(1, Math.ceil(max / 20));
+  canvas.width = cell * 10; canvas.height = 9 * s * rows + (rows - 1) * s;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 10; i++) {
-    const idx = kind === 'hunger' ? 9 - i : i;          // el hambre se vacía desde la derecha, como en el original
+  // 5.6: con más de 20 de vida máxima los corazones extra van en una fila encima, como en el original
+  for (let k = 0; k < Math.ceil(max / 2); k++) {
+    const i = k % 10, row = Math.floor(k / 10);
+    const idx = kind === 'hunger' ? 9 - i : k;          // el hambre se vacía desde la derecha, como en el original
     const full = value - idx * 2;                          // 2 = lleno, 1 = medio, ≤0 = vacío
-    const ox = i * cell, pat = kind === 'hunger' ? DRUM_O : HEART_O;
-    drawPattern(ctx, pat, ox, 0, s, (ch, x, y) => {
+    const ox = i * cell, oy = (rows - 1 - row) * (9 * s + s), pat = kind === 'hunger' ? DRUM_O : HEART_O;
+    drawPattern(ctx, pat, ox, oy, s, (ch, x, y) => {
       if (ch === 'o') return flash ? '#fff' : '#1a1a1a';
       const half = kind === 'hunger' ? x >= 4 : x <= 4;
       const on = full >= 2 || (full === 1 && half);
@@ -10434,8 +10464,8 @@ const hud = {
     const surv = game.mode === 'survival';
     $('#survivalHud').style.visibility = surv ? 'visible' : 'hidden';
     const flash = p.hurtFlash > 0 && Math.floor(p.hurtFlash * 10) % 2 === 0;
-    const hk = Math.ceil(p.health) + ':' + flash;
-    if (force || this.last.h !== hk) { drawBar($('#hearts'), Math.ceil(p.health), 'heart', flash); this.last.h = hk; }
+    const hk = Math.ceil(p.health) + ':' + flash + ':' + p.maxHp;
+    if (force || this.last.h !== hk) { drawBar($('#hearts'), Math.ceil(p.health), 'heart', flash, p.maxHp); this.last.h = hk; }
     const fk = Math.ceil(p.hunger);
     if (force || this.last.f !== fk) { drawBar($('#hungerBar'), fk, 'hunger', false); this.last.f = fk; }
     const air = p.headInWater || p.air < 10 ? p.air : 0, ak = Math.ceil(air);
@@ -10605,11 +10635,13 @@ function showInfo(id) {
 }
 function itemInfoHTML(id, st) {
   const it = ITEMS[id], extra = [];
-  if (it.tool) extra.push(`Daño ${it.tool.dmg}`, `Velocidad ×${it.tool.speed}`, `Nivel ${it.tool.level}`);
+  if (it.tool && !it.tool.wt) extra.push(`Daño ${it.tool.dmg}`, `Velocidad ×${it.tool.speed}`, `Nivel ${it.tool.level}`);
+  extra.push(...rpg56.infoLines(id, st));                     // 5.6: estadísticas de combate, peso, calidad y gema
   if (it.armor) extra.push(`Armadura +${it.armor.pts}`);
   if (it.bow) extra.push('Daño 2-7 según la tensión');
   const dur = durOf(id); if (dur) extra.push(`Durabilidad ${st ? dur - (st.dmg || 0) : dur}/${dur}`);
-  if (st && st.ench) extra.push('<span style="color:#7a3ab0">' + Object.entries(st.ench).map(([k, l]) => `${ENCH[k].name} ${ROMAN[l]}`).join(', ') + '</span>');
+  const en = st && st.ench ? Object.entries(st.ench).filter(([k]) => ENCH[k]) : [];   // las claves con «_» son calidad y gema (5.6)
+  if (en.length) extra.push('<span style="color:#7a3ab0">' + en.map(([k, l]) => `${ENCH[k].name} ${ROMAN[l]}`).join(', ') + '</span>');
   if (it.potion) extra.push(`${EFFECTS[it.potion.eff].name} ${ROMAN[it.potion.lvl]} · ${Math.floor(it.potion.dur / 60)}:${String(it.potion.dur % 60).padStart(2, '0')}`);
   if (BREW_INGREDIENTS[id]) extra.push(`Ingrediente: ${EFFECTS[BREW_INGREDIENTS[id]].name}`);
   if (it.food) extra.push(`Hambre +${it.food.hunger / 2} 🍗`);
@@ -10684,14 +10716,14 @@ function takeCraft(shift) {
   if (shift) {
     let n = 0;
     while (matchRecipe(ui.craft.slots, ui.craftW) === r && n < 64) {
-      const left = p.inv.add(r.out, r.n);
+      const left = p.inv.add(r.out, r.n, 0, rpg56.forge(r.out));
       if (left) { game.entities.dropItem({ id: r.out, count: left }, p.pos.x, p.pos.y + 1.4, p.pos.z, p.lookVel(3)); }
       doOne(); n++;
     }
     return;
   }
   if (ui.cursor && (ui.cursor.id !== r.out || ui.cursor.count + r.n > maxStack(r.out))) return;
-  if (ui.cursor) ui.cursor.count += r.n; else ui.cursor = { id: r.out, count: r.n, dmg: 0 };
+  if (ui.cursor) ui.cursor.count += r.n; else { ui.cursor = { id: r.out, count: r.n, dmg: 0 }; const e = rpg56.forge(r.out); if (e) ui.cursor.ench = e; }   // 5.6: calidad de forja
   doOne();
 }
 function quickMove(c, i) {
@@ -11243,7 +11275,7 @@ function craftRecipe(r, times) {
   let made = 0;
   while (made < times && p.inv.canAfford(needs)) {
     p.inv.consume(needs);
-    const left = p.inv.add(r.out, r.n);
+    const left = p.inv.add(r.out, r.n, 0, rpg56.forge(r.out));
     p.discover(r.out); game.onCraft(r.out, r.n); made++;
     if (left) {
       game.entities.dropItem({ id: r.out, count: left }, p.pos.x, p.pos.y + 1.4, p.pos.z, p.lookVel(3));
@@ -11549,13 +11581,13 @@ class Player {
       game.die(cause || 'Has muerto');
     }
   }
-  heal(n) { this.health = Math.min(20, this.health + n); }
+  heal(n) { this.health = Math.min(this.maxHp, this.health + n); }
   // Hambre, regeneración e inanición
   survivalTick(dt) {
     if (game.mode !== 'survival') { this.health = 20; this.hunger = 20; this.air = MAX_AIR; return; }
     while (this.exh >= 4) { this.exh -= 4; if (this.sat > 0) this.sat = Math.max(0, this.sat - 1); else this.hunger = Math.max(0, this.hunger - 1); }
     this.regenT += dt;
-    if (this.hunger >= 18 && this.health < 20) {
+    if (this.hunger >= 18 && this.health < this.maxHp) {
       const fast = this.hunger >= 20 && this.sat > 0;
       if (this.regenT >= (fast ? 0.6 : 4)) { this.regenT = 0; this.heal(1); this.exh += fast ? Math.min(this.sat, 6) * 0.6 : 6; }
     } else if (this.hunger <= 0) {
@@ -11798,13 +11830,16 @@ const game = {
     // Generación progresiva con pantalla de carga (sin congelar la página)
     const R0 = Math.min(settings.renderDistance, 3);
     await new Promise((resolve) => {
+      let best = -1, stuckT = performance.now();
       const step = () => {
         const saved = settings.renderDistance; settings.renderDistance = R0;
         const ready = this.chunks.update(this.player.pos.x, this.player.pos.z, 28);
         settings.renderDistance = saved; this.chunks.order = null;
         $('#loadBar').style.width = Math.round(ready * 100) + '%';
         $('#loadText').textContent = `Generando terreno… ${Math.round(ready * 100)}%`;
-        if (ready >= 1) resolve(); else requestAnimationFrame(step);
+        if (ready > best + 0.001) { best = ready; stuckT = performance.now(); }
+        // 5.6: si la carga no avanza en 10 s, entra igual (el resto del terreno se sigue generando mientras juegas)
+        if (ready >= 1 || performance.now() - stuckT > 10000) resolve(); else requestAnimationFrame(step);
       };
       step();
     });
@@ -12177,7 +12212,7 @@ const game = {
     const d = new THREE.Vector3(); camera.getWorldDirection(d);
     const speed = 14 + 26 * c, dmg = Math.round(2 + 5 * c + enchLevel(s, 'power') * 1.5 + this.effLvl('strength'));
     const o = camera.position.clone().addScaledVector(d, 0.6);
-    const ar = new Arrow(o.x, o.y - 0.1, o.z, d.x * speed, d.y * speed, d.z * speed, dmg, 'player'); ar.effect = ARROW_FX[ammo]; tintArrow(ar);
+    const ar = new Arrow(o.x, o.y - 0.1, o.z, d.x * speed, d.y * speed, d.z * speed, dmg * rpg56.bowMul(), 'player'); ar.effect = ARROW_FX[ammo]; tintArrow(ar);
     this.entities.add(ar);
     if (this.mode === 'survival') { p.inv.remove(ammo, 1); this.wearTool(1); }
     sfx.play('bow'); this.swing = 0.6; hud.update();
@@ -12308,7 +12343,7 @@ const game = {
     p.eyeOff = (p.eyeOff || 0) + ((p.crouching ? -0.3 : 0) - (p.eyeOff || 0)) * Math.min(1, dt * 14);   // la cámara baja suave al agacharse
     camera.position.set(p.pos.x, p.pos.y + EYE_H + p.eyeOff + bob + (p.mount ? 0.95 : 0), p.pos.z);
     if (this.shake > 0) { this.shake -= dt; camera.position.x += (Math.random() - 0.5) * this.shake * 0.15; }
-    const fovT = settings.fov + (sprint ? 8 : 0) + (p.flying && sprint ? 6 : 0) - Math.min(1, p.bowT) * 12;
+    const fovT = (settings.fov + (sprint ? 8 : 0) + (p.flying && sprint ? 6 : 0) - Math.min(1, p.bowT) * 12) * zoom56.fovMul();   // 5.6: zoom
     if (Math.abs(camera.fov - fovT) > 0.05) { camera.fov += (fovT - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
     $('#waterFx').classList.toggle('on', p.headInWater);
   },
@@ -12336,19 +12371,7 @@ const game = {
     if (input.primary) {
       if (this.mobTarget) {
         this.mining = null;
-        if (this.attackCd <= 0) {
-          const s = p.held(), tool = s && ITEMS[s.id].tool;
-          let dmg = (tool ? tool.dmg : 1) + enchLevel(s, 'sharp') * 1.25 + this.effLvl('strength') * 3;
-          dmg *= 1 + MODS.dmg;
-          this.mobTarget.lastHit = 'player';
-          if ((!p.onGround && p.vel.y < 0 && !p.inWater) || Math.random() < MODS.critCh) { dmg *= 1.5 + MODS.crit; combat.crit = true; this.particles.emit(this.mobTarget.pos.x, this.mobTarget.pos.y + 1, this.mobTarget.pos.z, [1, 1, 0.6], 8, { up: 2 }); }
-          const mt = this.mobTarget;
-          if (mt.hurt(dmg, p.pos)) {
-            p.exhaust(0.1); this.stats.add('damage', dmg); onPlayerHit(mt, tool, dmg);
-            if (tool) { this.wearTool(tool.type === 'sword' ? 1 : 2); if (tool.fire) mt.burnT = 5; if (tool.knock && !mt.isBoss) { const k = new THREE.Vector3().subVectors(mt.pos, p.pos).setY(0).normalize(); mt.vel.x += k.x * 8; mt.vel.z += k.z * 8; mt.vel.y = 7; } }
-          }
-          this.attackCd = tool && tool.type === 'sword' ? (tool.fast ? 0.45 * tool.fast : 0.45) : 0.6; this.swing = 1;
-        }
+        if (this.attackCd <= 0) combat56.attack(this.mobTarget);          // §57: combo, armas por familia y efectos
       } else if (this.target) {
         const t = this.target, def = BLOCKS[t.id];
         if (!this.mining || this.mining.x !== t.x || this.mining.y !== t.y || this.mining.z !== t.z) this.mining = { x: t.x, y: t.y, z: t.z, prog: 0, snd: 0 };
@@ -12360,7 +12383,7 @@ const game = {
           if (this.mining.snd <= 0) { this.mining.snd = 0.25; sfx.play('dig', { mat: def.sound, pos: { x: t.x, y: t.y, z: t.z } }); }
           if (this.mining.prog >= 1) { this.breakBlock(t.x, t.y, t.z); this.mining = null; this.attackCd = 0.12; }
         }
-      } else if (this.attackCd <= 0) { this.swing = 1; this.attackCd = 0.3; sfx.play('swing'); }
+      } else if (this.attackCd <= 0 && !combat56.attack(null)) { this.swing = 1; this.attackCd = 0.3; sfx.play('swing'); }
     } else this.mining = null;
     if (this.mining && this.mining.prog > 0) {
       crack.visible = true; crack.position.set(this.mining.x + 0.5, this.mining.y + 0.5, this.mining.z + 0.5);
@@ -12397,7 +12420,7 @@ const game = {
         if (Math.random() < dt * 12) this.particles.emit(camera.position.x + Math.sin(this.yaw()) * -0.4, camera.position.y - 0.25, camera.position.z + Math.cos(this.yaw()) * -0.4, [0.7, 0.45, 0.3], 2, { size: 0.05 });
         if (p.eatT >= 1.6 && food) {
           p.hunger = Math.min(20, p.hunger + Math.round(food.hunger * (1 + MODS.food))); p.sat = Math.min(p.hunger, p.sat + food.sat * (1 + MODS.food));
-          for (const [e, l, d] of food.effects || []) this.applyEffect(e, l, d);
+          for (const [e, l, d] of food.effects || []) this.applyEffect(e, l, d * (ITEMS[s.id].dish ? rpg56.dishMul() : 1));   // 5.6: la Cocina alarga los platos
           s.count--; if (!s.count) p.inv.slots[p.selected] = null;
           p.eatT = 0; sfx.play('burp'); this.useCd = 0.3; this.stats.add('eaten'); hud.update();
         }
@@ -12566,7 +12589,7 @@ function initInput() {
   look.addEventListener('pointerdown', (e) => { sfx.init(); look.setPointerCapture(e.pointerId); lp.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 }); });
   look.addEventListener('pointermove', (e) => {
     const q = lp.get(e.pointerId); if (!q || game.state !== 'playing') return;
-    const k = 0.0055 * settings.touchSensitivity;
+    const k = 0.0055 * settings.touchSensitivity * zoom56.sens();
     eul.setFromQuaternion(camera.quaternion);
     eul.y -= (e.clientX - q.x) * k; eul.x = clamp(eul.x - (e.clientY - q.y) * k, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
     camera.quaternion.setFromEuler(eul);
@@ -12636,7 +12659,7 @@ function loop(now) {
   if (fx54.level() && game.player && world) fx54.render(camera); else renderer.render(scene, camera);
   view52.afterRender();
   if (!third && (game.state === 'playing' || game.state === 'inventory')) { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
-  updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); fluids.update50(dt); dims.update(dt);
+  updateAbilityHud(); ambient.update(dt); combat.update(dt); combat56.update(dt); rpg56.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); fluids.update50(dt); dims.update(dt);
   if (game.state === 'playing') { minimap.render(game.player, world); mobBar.update(dt); }   // §24 y §25: solo con el HUD activo y sin pausa
   else mobBar.hide();
   dbgT += dt;
@@ -12647,7 +12670,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.5  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.6  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12672,7 +12695,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { zoom56, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -13057,7 +13080,7 @@ class NetClient {
     if ((this.tP += dt) >= 0.1) {
       this.tP = 0;
       this.send({ type: 'player', p: [+p.pos.x.toFixed(2), +p.pos.y.toFixed(2), +p.pos.z.toFixed(2)], yaw: +camera.rotation.y.toFixed(3), pitch: +camera.rotation.x.toFixed(3),
-        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? 1 : 0, lt: heldLight(p), sk: lookCode(settings.look) });
+        anim: Math.hypot(p.vel.x, p.vel.z) > 0.5 ? 'walk' : 'idle', held: p.held()?.id || 0, hp: Math.max(0, Math.ceil(p.health)), cr: p.crouching ? 1 : 0, sw: game.swing > 0.6 ? (combat56.anim ? combat56.anim.step + 1 + (combat56.anim.hand === 'off' ? 3 : 0) : 1) : 0, lt: heldLight(p), sk: lookCode(settings.look) });
     }
     if ((this.tE += dt) >= 0.2) {
       this.tE = 0;
@@ -13478,7 +13501,7 @@ Object.assign(game, {
 /* ---------- Encantamientos ---------- */
 const ENCH_REQ = [1, 5, 10], ENCH_COST = [1, 2, 3];
 function enchantOffers(stack) {
-  const p = game.player, opts = enchantsFor(stack.id); if (!opts.length || stack.ench) return [];
+  const p = game.player, opts = enchantsFor(stack.id); if (!opts.length || (stack.ench && Object.keys(stack.ench).some((k) => k[0] !== '_'))) return [];   // 5.6: la calidad y la gema no cuentan como encantamiento
   const rnd = mulberry32(p.enchSeed * 31 + stack.id);
   return [0, 1, 2].map((i) => { const k = opts[Math.floor(rnd() * opts.length)]; return { k, lvl: Math.min(ENCH[k].max, i + 1), req: ENCH_REQ[i], cost: ENCH_COST[i], bonus: i === 2 && opts.length > 1 && rnd() < 0.5 ? opts.find((o) => o !== k) : null }; });
 }
@@ -13486,7 +13509,8 @@ function doEnchant(i) {
   const p = game.player, t = ui.tile, s = t.inv.slots[0]; if (!s) return;
   const o = enchantOffers(s)[i]; if (!o) return;
   if (game.mode === 'survival' && p.level < o.req) { hud.toast(`Necesitas nivel ${o.req}`); return; }
-  s.ench = { [o.k]: o.lvl }; if (o.bonus) s.ench[o.bonus] = 1;
+  const keep = s.ench ? Object.fromEntries(Object.entries(s.ench).filter(([k]) => k[0] === '_')) : {};
+  s.ench = { ...keep, [o.k]: o.lvl }; if (o.bonus) s.ench[o.bonus] = 1;
   if (game.mode === 'survival') p.level -= o.cost;
   p.enchSeed++; game.unlock('enchant'); game.stats.add('enchanted'); sfx.play('levelup');
   game.particles.emit(p.pos.x, p.pos.y + 1.2, p.pos.z, [0.7, 0.4, 1], 16, { gravity: -2, up: 2 });
@@ -13628,6 +13652,7 @@ const actionsFor = (code) => KEY_ACTIONS.filter(([id]) => settings.keys[id] === 
 // ¿Hay que usar el modo sin captura del ratón?
 const noLockMode = () => !IS_TOUCH && (settings.mouseMode !== 'auto' || game.noLock);
 function rotateCam(dx, dy) {
+  dx *= zoom56.sens(); dy *= zoom56.sens();                     // 5.6: con zoom la cámara gira más despacio
   const e = new THREE.Euler(0, 0, 0, 'YXZ');
   e.setFromQuaternion(camera.quaternion);
   e.y -= dx; e.x = clamp(e.x - dy, -Math.PI / 2 + 0.01, Math.PI / 2 - 0.01);
@@ -14282,13 +14307,13 @@ function onPlayerHit(mt, tool, dmg) {
         const inv = combat.blockHand === 'off' ? this.offhand : this.inv, si = combat.blockHand === 'off' ? 0 : this.selected, s = inv.slots[si];
         s.dmg = (s.dmg || 0) + 1; if (s.dmg >= durOf(s.id)) { inv.slots[si] = null; sfx.play('toolBreak'); hud.toast('¡Se rompió el escudo!'); }
         sfx.play('arrowHit'); game.particles.emit(this.pos.x + d.x * 0.6, this.pos.y + 1.2, this.pos.z + d.z * 0.6, [0.9, 0.9, 0.7], 6, { speed: 2, life: 0.3, size: 0.07 }); hud.update();
-        if (performance.now() - combat.blockStart < 280) {            // parada perfecta
+        if (performance.now() - combat.blockStart < 250) {            // parada perfecta (5.6: ventana de 0,25 s, sin daño, destello y sonido metálico)
           if (att && !att.isBoss) { att.stunT = 2; att.vel.x += dx / l * 9; att.vel.z += dz / l * 9; att.vel.y = 5; }
           else if (att) att.stunT = 0;
-          dmgText.add(this.pos.x + d.x * 1.5, this.pos.y + 1.6, this.pos.z + d.z * 1.5, '¡Parada perfecta!', 'crit'); sfx.play('levelup', { vol: 0.25 });
+          dmgText.add(this.pos.x + d.x * 1.5, this.pos.y + 1.6, this.pos.z + d.z * 1.5, '¡Parada perfecta!', 'crit'); sfx.play('levelup', { vol: 0.25 }); sfx.play('clang'); game.env.flash = Math.max(game.env.flash || 0, 0.22); if (att) att.lean56 = { t: 0.3, dx, dz }; game.stats.add('parries');
           this.invuln = 0.4; return;
         }
-        n *= 0.25; from = null;                                      // bloqueo: 75 % menos y sin empujón
+        n *= 1 - Math.min(0.95, (ITEMS[s?.id]?.block ?? 0.75) + rpg56.blockBonus(this)); from = null;   // bloqueo según el escudo (5.6) y sin empujón
       }
     }
     const before = this.health;
@@ -14315,7 +14340,7 @@ function fireCrossbow(stack) {
   const p = game.player, ammo = pickArrow(p);
   if (!ammo) { hud.toast('No tienes flechas'); return false; }
   const d = new THREE.Vector3(); camera.getWorldDirection(d);
-  const o = camera.position.clone().addScaledVector(d, 0.6), a = new Arrow(o.x, o.y - 0.1, o.z, d.x * 48, d.y * 48, d.z * 48, 9 + game.effLvl('strength') + enchLevel(stack, 'power') * 1.5, 'player');
+  const o = camera.position.clone().addScaledVector(d, 0.6), a = new Arrow(o.x, o.y - 0.1, o.z, d.x * 48, d.y * 48, d.z * 48, (9 + game.effLvl('strength') + enchLevel(stack, 'power') * 1.5) * rpg56.bowMul(), 'player');
   a.effect = ARROW_FX[ammo]; tintArrow(a); game.entities.add(a);
   if (game.mode === 'survival') { p.inv.remove(ammo, 1); game.wearTool(1); }
   sfx.play('bow', { pitch: 0.7 }); game.swing = 0.6; hud.update();
@@ -14422,7 +14447,7 @@ function petAI(dt, game) {
   let tx = null, tz = null, speed = 0; const t = combat.petTarget;
   if (!this.sitting && t && !t.dead && !t.deathT && t.pos.distanceTo(this.pos) < 24) {
     tx = t.pos.x; tz = t.pos.z; speed = s.speed * 1.4;
-    if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt(4, this.pos); } }
+    if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt(4 * rpg56.petMul(), this.pos); } }
   } else if (!this.sitting) {
     const d = p.pos.distanceTo(this.pos);
     if (d > 26 && p.onGround) { this.pos.set(p.pos.x + 1, p.pos.y + 0.2, p.pos.z + 1); this.vel.set(0, 0, 0); }
@@ -14558,7 +14583,7 @@ function rarityOf(id, stack) {
   const it = ITEMS[id]; if (!it) return 0;
   let r = it.rarity;
   if (r == null) r = it.tool ? ({ gold: 1, diamond: 2 }[it.tool.tier] || 0) : it.armor ? ({ gold: 1, diamond: 2 }[it.armor.mat] || 0) : it.potion ? 1 : 0;
-  return Math.min(5, r + (stack && stack.ench ? 1 : 0));
+  return Math.min(5, r + (stack && stack.ench && Object.keys(stack.ench).some((k) => k[0] !== '_' || (k === '_q' && stack.ench._q === 2)) ? 1 : 0));
 }
 // Ficha del inventario y nombre al cambiar de objeto: con el color y la etiqueta de su rareza
 {
@@ -15399,7 +15424,7 @@ const adventure = {
     const Q = questState(p), m = mainQuest(p);
     if (m && game.state === 'playing') { const [a, b] = m.check ? m.check(p) : MAIN_QUESTS[m.idx].check(p); if (a >= b) completeQuest(m); }
     // corona del héroe: regenera la vida poco a poco
-    if (ITEMS[p.armor.slots[0]?.id]?.wearEffect === 'regen' && game.mode === 'survival' && !p.dead && p.health < 20 && (this.regT = (this.regT || 0) + 0.5) >= 4) { this.regT = 0; p.health = Math.min(20, p.health + 1); hud.update(); }
+    if (ITEMS[p.armor.slots[0]?.id]?.wearEffect === 'regen' && game.mode === 'survival' && !p.dead && p.health < p.maxHp && (this.regT = (this.regT || 0) + 0.5) >= 4) { this.regT = 0; p.health = Math.min(p.maxHp, p.health + 1); hud.update(); }
     // conocer una aldea: la registra al estar cerca de sus habitantes
     for (const e of game.entities.list) if (e instanceof Villager && e.planId != null && !p.villages?.[e.planId] && e.pos.distanceTo(p.pos) < 16) vrec(e.planId);
     updateQuestTracker();
@@ -15607,6 +15632,31 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.6', name: 'Combate RPG', date: 'noviembre de 2026', items: [
+    'Nuevas familias de armas en ocho materiales (madera, piedra, hierro, oro, diamante, infernita, vacuita y aerita): lanza, hacha de batalla, martillo de guerra y daga. Cada una con su daño, velocidad, alcance, empuje, barrido y perforación de armadura, que se ven en la ficha del objeto.',
+    'Lanza: hasta dos bloques más de alcance, se ve larga en la mano, y hace un 35 % más de daño corriendo o montado en el grifo.',
+    'Hacha de batalla: hoja doble, su barrido golpea a todos los enemigos de delante, atraviesa parte de la armadura y a veces causa sangrado o aturde.',
+    'Martillo de guerra: cabeza de bloque en 3D, levanta antes de golpear, onda de choque con polvo en el suelo y +50 % contra acorazados y criaturas de piedra.',
+    'Dagas: muy rápidas, +60 % por la espalda o justo después de esquivar; con otra daga en la mano secundaria atacas alternando las dos manos.',
+    'Escudos de madera, hierro (el escudo de siempre), diamante y vacuita: bloquean del 60 % al 90 % de frente. La parada perfecta ahora es de 0,25 s, no recibes daño, hay destello y sonido metálico y el atacante queda desequilibrado.',
+    'Combo de tres golpes con ventana de 0,9 s: tajo diagonal, corte horizontal y remate (estocada con lanzas y dagas, golpe vertical con el resto) que hace más daño y empuja más. Con curvas suaves, estela del color del material, pausa breve en críticos y remates, y los enemigos se echan hacia atrás al recibir el golpe.',
+    'El combo se ve también en tercera persona, y los demás jugadores lo ven si el servidor está actualizado a la 5.6.',
+    'Peso de la armadura: ligera (cuero, aerita) ataca más rápido y esquiva más lejos; pesada (diamante, infernita, vacuita) resiste el empuje pero esquiva algo más corto.',
+    'Armaduras nuevas de infernita y de vacuita. Conjuntos: Infernita (el fuego y la lava no te queman y quien te golpea arde), Vacuita (al esquivar, un segundo de paso sombrío sin daño) y Aerita (además el grifo recupera el aliento más rápido).',
+    'Las armaduras se ven con más detalle en tu personaje: hombreras, visera y cresta en el casco, y una capa corta con el conjunto completo.',
+    'Clases de combate en Personaje → Clase: Vanguardia (más vida y dominio de hachas, martillos y escudos; Golpe sísmico), Lancero (lanzas, arcos y grifo; Estocada perforante), Pícaro (esquiva y dagas; Paso sombrío) y Arcanista (pociones, runas y armas de vacuita y aerita; Onda rúnica).',
+    'La habilidad de clase se usa con la tecla C, el botón ✦ en pantalla táctil o la cruceta derecha del mando, y se ve su recarga bajo la mira. Se mejora con puntos de clase y se puede cambiar de clase una vez por día del juego.',
+    'Oficios en Personaje → Oficios: Herrería, Cocina, Minería y Domador, del nivel 1 al 10, que suben solos con lo que haces.',
+    'Herrería: lo que forjas puede salir Templado (+10 %) o Maestro (+20 %); desde el nivel 3 engarzas gemas (núcleo de brasa, fragmento de cristal o esquirla del vacío) para añadir daño elemental. Las armas de infernita, aerita y vacuita necesitan un plano de forja o subir la Herrería.',
+    'Cocina: los platos duran más y algunos dan resistencia elemental o saber del oficio (más experiencia de oficio). Minería: más minerales y gemas ocultas en la piedra profunda. Domador: el grifo vuela más tiempo, los comederos van más rápido y tus mascotas pegan más y se curan solas.',
+    'Vida máxima variable: la Vanguardia tiene dos corazones más, que se ven en una segunda fila.',
+    'Al romper un sello de mazmorra o completar un encargo ganas un punto de clase, a veces un plano de forja y una entrada nueva en la Enciclopedia → Saber.',
+    'La luna de sangre pasa a llamarse luna carmesí: los monstruos te detectan desde más lejos y, además del botín doble, a veces sueltan materiales raros y una esencia de experiencia.',
+    'En las tormentas eléctricas pican más peces raros y tesoros, y los cristales y bloques rúnicos te cargan de energía: tus golpes hacen daño eléctrico.',
+    'Zoom: mantén Z (con la rueda acercas o alejas), toca 🔍 en pantalla táctil o mantén R3 en el mando.',
+    'La pestaña «Oficios» del libro de aventuras pasa a llamarse «Reputación».',
+    'Corregido: con la distancia de dibujado más corta (calidad Baja, la que usan muchos teléfonos) la carga de un mundo nuevo se quedaba trabada en el 62 %. Además, si la carga dejara de avanzar, el juego entra igual a los 10 segundos y termina de generar el terreno mientras juegas.',
+  ] },
   { v: '5.5', name: 'Libro de aventuras', date: 'noviembre de 2026', items: [
     'El registro de misiones (tecla J, botón del mando o Pausa → Misiones) ahora es un libro abierto de pergamino, con tapa de cuero, lomo, cinta de marcapáginas y adornos en las esquinas.',
     'Pestañas de colores en el canto del libro: Misiones (rojo), Completadas (azul), Aldeas (verde) y Oficios (violeta). Con mando, LB y RB pasan de pestaña.',
@@ -15844,7 +15894,7 @@ const CHANGELOG = [
     'Eventos dinámicos: nueve sucesos que aparecen solos según la hora, el lugar y la suerte, cada uno con su duración, efectos, música y recompensa. Una barra arriba de la pantalla muestra el evento, su progreso y el tiempo que queda.',
     'Lluvia de meteoritos (noche): caen estrellas que abren cráteres con fragmentos estelares.',
     'Invasión nocturna (noche): tres oleadas de monstruos vienen a por ti. Si resistes ganas esmeraldas, oro y a veces un diamante.',
-    'Luna de sangre (noche): cielo rojo, monstruos más fuertes y el doble de botín.',
+    'Luna carmesí (noche): cielo rojo, monstruos más fuertes y el doble de botín.',
     'Tormenta eléctrica: caen rayos a tu alrededor y donde caen queda esencia de tormenta.',
     'Ciervo dorado (día): una criatura especial que huye. Si la atrapas suelta un asta dorada y oro.',
     'Ruinas misteriosas: aparecen unas ruinas con un cofre para saquear y se desvanecen al terminar el evento, devolviendo el terreno como estaba (también si sales y vuelves a entrar).',
@@ -17649,7 +17699,7 @@ initPadAndFullscreen();
    probabilidad, duración, efectos visuales y sonoros, un indicador en el HUD
    y recompensas reales. Solo ocurren en la superficie.
      ☄ Lluvia de meteoritos (noche) · ⚔ Invasión nocturna (noche, 3 oleadas)
-     🌑 Luna de sangre (noche) · ⚡ Tormenta eléctrica · 🦌 Ciervo dorado (día)
+     🌑 Luna carmesí (noche) · ⚡ Tormenta eléctrica · 🦌 Ciervo dorado (día)
      🏛 Ruinas misteriosas (se desvanecen) · 🎉 Festival de la aldea (día)
      🏰 Asedio a la aldea (noche) · ✨ Aurora mágica (noche, orbes de maná)
    Ajustes → Juego: frecuencia de los eventos (o desactivarlos).
@@ -17662,7 +17712,7 @@ const EVENT_FREQ = { off: 0, pocos: 0.5, normal: 1, muchos: 2 };
 const EVENTS = {
   meteor: { name: 'Lluvia de meteoritos', icon: '☄', when: 'night', chance: 0.3, dur: 120, color: '#ffb347', desc: 'Caen estrellas del cielo. Busca los cráteres: guardan fragmentos estelares.' },
   invasion: { name: 'Invasión nocturna', icon: '⚔', when: 'night', chance: 0.25, dur: 300, color: '#ff5a4a', survival: true, desc: 'Oleadas de monstruos vienen a por ti. Resiste las tres oleadas.' },
-  bloodmoon: { name: 'Luna de sangre', icon: '🌑', when: 'night', chance: 0.12, dur: 240, color: '#d8304a', survival: true, desc: 'Salen más monstruos, más fuertes, y sueltan el doble de botín.' },
+  bloodmoon: { name: 'Luna carmesí', icon: '🌑', when: 'night', chance: 0.12, dur: 240, color: '#d8304a', survival: true, desc: 'Salen más monstruos, más fuertes, y sueltan el doble de botín.' },
   storm: { name: 'Tormenta eléctrica', icon: '⚡', when: 'any', chance: 0.18, dur: 150, color: '#8ab8ff', desc: 'Caen rayos a tu alrededor. Donde caen queda esencia de tormenta.' },
   stag: { name: 'Ciervo dorado', icon: '🦌', when: 'day', chance: 0.22, dur: 180, color: '#ffd84a', desc: 'Un ciervo de pelaje dorado ronda cerca. ¡Atrápalo antes de que se vaya!' },
   ruins: { name: 'Ruinas misteriosas', icon: '🏛', when: 'any', chance: 0.2, dur: 240, color: '#b9a3ff', build: true, desc: 'Unas ruinas aparecieron de la nada. Saquéalas antes de que se desvanezcan.' },
@@ -17931,7 +17981,7 @@ const events = {
     bloodmoon: {
       start(ev) { ev.d = { next: 2, mobs: [] }; },
       tick(ev, dt) {
-        const d = ev.d; if (game.player.dead) return this.end(false, 'La luna de sangre te venció');
+        const d = ev.d; if (game.player.dead) return this.end(false, 'La luna carmesí te venció');
         d.mobs = this.driveHunters(d.mobs);
         if ((d.next -= dt) > 0 || d.mobs.length >= 10) return;
         d.next = 6 + Math.random() * 5;
@@ -17941,7 +17991,7 @@ const events = {
         d.mobs.push(...got);
       },
       info(ev) { return `Monstruos cerca: ${ev.d.mobs.length}`; },
-      timeoutWin: true, timeoutMsg: 'Sobreviviste a la luna de sangre',
+      timeoutWin: true, timeoutMsg: 'Sobreviviste a la luna carmesí',
       reward() { this.give({ id: I.GOLD_INGOT, count: rint(3, 6) }); this.give({ id: I.EMERALD, count: rint(2, 4) }); game.player.addXp(30); },
       stop(ev) { for (const m of ev.d.mobs) m.persistent = false; },
     },
@@ -18120,7 +18170,7 @@ function eventCard(title, sub, color) {
   const _pm = priceMult;
   priceMult = function (planId) { const m = _pm(planId), ev = events.cur; return ev && ev.id === 'festival' && ev.vil && String(ev.vil.id) === String(planId) ? m * 0.7 : m; };
 }
-// Luna de sangre: botín doble de los monstruos
+// Luna carmesí: botín doble de los monstruos
 {
   const _death = EntityManager.prototype.onMobDeath;
   EntityManager.prototype.onMobDeath = function (m) {
@@ -18129,7 +18179,7 @@ function eventCard(title, sub, color) {
     return r;
   };
 }
-// Cielo: luna roja y niebla rojiza durante la luna de sangre
+// Cielo: luna roja y niebla rojiza durante la luna carmesí
 {
   const _envUpdate = Environment.prototype.update;
   Environment.prototype.update = function (dt, cam, player, underwater) {
@@ -18647,7 +18697,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.5';
+const GAME_VERSION = '5.6';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -19814,11 +19864,11 @@ const char45 = {
       flier.stam ??= 1;
       const jump = down('jump') || input.flyUp, tired = (flier.mood ?? 70) < 25;
       if (!this.gfly) {
-        if (p.onGround) flier.stam = Math.min(1, flier.stam + dt / 14);
+        if (p.onGround) flier.stam = Math.min(1, flier.stam + dt / 14 * rpg56.griffinRegen());
         if (jump && !p.onGround && p.vel.y < 2.5 && flier.stam > 0.15 && !p.inWater) { this.gfly = true; p.flying = true; p.vel.y = 3; sfx.play('swing', { pitch: 0.6 }); game.unlock('griffin_fly');
           if (!this.hinted) { this.hinted = true; hud.toast(IS_TOUCH ? 'Volando: Saltar sube y ⇩ Bajar desciende. Aterriza para que descanse.' : `Volando: ${keyName(settings.keys.jump)} sube, ${keyName(settings.keys.sneak)} baja. Aterriza para que descanse.`, 4000); } }
       } else {
-        flier.stam -= dt / (p.sprinting ? 24 : 40) * (tired ? 1.6 : 1);
+        flier.stam -= dt / (p.sprinting ? 24 : 40) * (tired ? 1.6 : 1) / rpg56.griffinMax();
         if (!p.flying) this.gfly = false;                                                    // aterrizó
         else if (flier.stam <= 0) { flier.stam = 0; this.gfly = false; p.flying = false; hud.toast('El grifo está agotado: planea hasta el suelo y déjalo descansar', 3000); }
       }
@@ -19945,7 +19995,7 @@ const char45 = {
   P.survivalTick = function (dt) {
     const r = _tick.call(this, dt);
     if (game.mode !== 'survival' || this.dead) return r;
-    if (MODS.regen > 0 && this.health < 20 && this.hunger > 6) { this.rgT = (this.rgT || 0) + dt * MODS.regen; if (this.rgT >= 1) { this.rgT = 0; this.heal(1); } }
+    if (MODS.regen > 0 && this.health < this.maxHp && this.hunger > 6) { this.rgT = (this.rgT || 0) + dt * MODS.regen; if (this.rgT >= 1) { this.rgT = 0; this.heal(1); } }
     if (this.headInWater) { if (MODS.breathe) this.air = MAX_AIR; else if (MODS.air && this.air > 0) this.air = Math.min(MAX_AIR, this.air + dt / 1.5 * (1 - 1 / (1 + MODS.air))); }
     return r;
   };
@@ -20056,7 +20106,7 @@ const char45 = {
   };
   game.onMobKilled = function (m) {
     _killed.call(this, m);
-    if (m && m.lastHit === 'player' && m.spec.hostile && MODS.killHeal && this.mode === 'survival') { const p = this.player; if (!p.dead && p.health < 20) { p.heal(MODS.killHeal); dmgText.add(p.pos.x, p.pos.y + 2.2, p.pos.z, '+♥', 'fx'); } }
+    if (m && m.lastHit === 'player' && m.spec.hostile && MODS.killHeal && this.mode === 'survival') { const p = this.player; if (!p.dead && p.health < p.maxHp) { p.heal(MODS.killHeal); dmgText.add(p.pos.x, p.pos.y + 2.2, p.pos.z, '+♥', 'fx'); } }
   };
   // objetos de uso: tomo de sabiduría y silbato
   game.useItem = function () {
@@ -20083,7 +20133,7 @@ const char45 = {
   onPlayerHit = function (mt, tool, dmg) {
     _hit(mt, tool, dmg);
     const p = game.player;
-    if (tool && tool.leech && game.mode === 'survival' && p.health < 20) { p.heal(Math.max(1, Math.round(dmg * tool.leech))); game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, [0.9, 0.1, 0.2], 5, { speed: 1.5, life: 0.5, size: 0.08 }); }
+    if (tool && tool.leech && game.mode === 'survival' && p.health < p.maxHp) { p.heal(Math.max(1, Math.round(dmg * tool.leech))); game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, [0.9, 0.1, 0.2], 5, { speed: 1.5, life: 0.5, size: 0.08 }); }
     if (tool && tool.frost && !mt.isBoss) { mt.slowT = Math.max(mt.slowT || 0, tool.frost); game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, [0.75, 0.92, 1], 8, { speed: 1.2, life: 0.7, size: 0.09 }); }
   };
   // Filo de la tormenta: cadena de rayos entre los enemigos cercanos
@@ -20196,7 +20246,7 @@ petAI = function (dt, game) {
   if (!this.sitting) {
     if (type === 'wolf' && !sad && t && !t.dead && !t.deathT && t.pos.distanceTo(this.pos) < 24) {
       tx = t.pos.x; tz = t.pos.z; speed = s.speed * 1.4;
-      if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt(happy ? 5 : 4, this.pos); } }
+      if (t.pos.distanceTo(this.pos) < this.hw + t.hw + 0.9) { speed = 0; if (this.ai.attackCd <= 0) { this.ai.attackCd = 0.9; t.lastHit = 'player'; t.hurt((happy ? 5 : 4) * rpg56.petMul(), this.pos); } }
     } else {
       const g = type === 'fox' && !sad ? foxGoal(this, dt) : null;
       if (g) { tx = g.x; tz = g.z; speed = s.speed * g.speed; face = g.face || null; }
@@ -20896,13 +20946,13 @@ const fishing = {
   frenzy() { return events.cur && events.cur.id === 'fishfrenzy'; },
   // qué pica: tesoro, basura, pez dorado o un pez de la tabla de esa agua
   roll() {
-    const env = game.env, night = env.isNight(), rain = env.rainAmt > 0.3, deep = this.depth() >= 4, fr = this.frenzy();
+    const env = game.env, night = env.isNight(), rain = env.rainAmt > 0.3, deep = this.depth() >= 4, fr = this.frenzy(), storm = rpg56.stormy();   // 5.6: en tormenta pican más peces raros
     let r = Math.random();
-    const pTreasure = 0.035 + (deep ? 0.025 : 0) + (fr ? 0.04 : 0), pGold = 0.01 + (night ? 0.008 : 0) + (rain ? 0.008 : 0) + (fr ? 0.025 : 0), pJunk = fr ? 0.04 : 0.09;
+    const pTreasure = 0.035 + (deep ? 0.025 : 0) + (fr ? 0.04 : 0) + (storm ? 0.03 : 0), pGold = 0.01 + (night ? 0.008 : 0) + (rain ? 0.008 : 0) + (fr ? 0.025 : 0) + (storm ? 0.02 : 0), pJunk = fr ? 0.04 : 0.09;
     if ((r -= pTreasure) < 0) return { id: I.FISHER_TREASURE, diff: 0.8, kind: 'treasure' };
     if ((r -= pGold) < 0) return { id: I.GOLDFISH, diff: 1.55, kind: 'gold' };
     if ((r -= pJunk) < 0) { const j = FISH_JUNK[Math.floor(Math.random() * FISH_JUNK.length)]; return { id: j[0], n: j[1] > 1 ? 1 + Math.floor(Math.random() * j[1]) : 1, diff: 0.3, kind: 'junk' }; }
-    const tab = FISH_TABLE[this.wtype].map(([id, w, d]) => [id, w * (night && id === I.CATFISH ? 2 : 1), d]);
+    const tab = FISH_TABLE[this.wtype].map(([id, w, d]) => [id, w * (night && id === I.CATFISH ? 2 : 1) * (storm && d >= 0.9 ? 2.5 : 1), d]);
     let tot = tab.reduce((a, t) => a + t[1], 0), k = Math.random() * tot;
     for (const [id, w, d] of tab) if ((k -= w) < 0) return { id, diff: d, kind: 'fish' };
     return { id: tab[0][0], diff: tab[0][2], kind: 'fish' };
@@ -21266,7 +21316,7 @@ const life47 = {
       }
     }
     if (potUI.open) potScreen.render();
-    if ((this.feedT -= step) <= 0) { this.feedT = 6; this.feed(); }
+    if ((this.feedT -= step) <= 0) { this.feedT = 6 * rpg56.feederMul(); this.feed(); }
     if ((this.expT -= step) <= 0) { this.expT = 1; this.expeditions(); }
   },
   // comederos: los animales adultos de alrededor comen solos y entran en celo
@@ -21279,7 +21329,7 @@ const life47 = {
       const near = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && !e.deathT && !e.remote && BREED_FOOD[e.type] && Math.hypot(e.pos.x - x - 0.5, e.pos.z - z - 0.5) < 7);
       let fed = 0;
       for (const e of near) {
-        if (fed >= 4 || e.age < 0 || e.love > 0 || e.loveCd > 0 || e.tamed && !BREED_FOOD[e.type]) continue;
+        if (fed >= 4 + rpg56.feederExtra() || e.age < 0 || e.love > 0 || e.loveCd > 0 || e.tamed && !BREED_FOOD[e.type]) continue;
         const crowd = near.filter((o) => o.type === e.type).length; if (crowd >= 16) continue;          // corral lleno: no crían más
         const i = t.inv.slots.findIndex((s) => s && BREED_FOOD[e.type].includes(s.id)); if (i < 0) continue;
         const s = t.inv.slots[i]; s.count--; if (s.count <= 0) t.inv.slots[i] = null;
@@ -23694,7 +23744,7 @@ const fx54 = {
    --------------------------------------------------------------------------
    El registro de misiones (tecla J) pasa a ser un libro abierto de pergamino:
      · Pestañas de colores en el canto: Misiones (rojo), Completadas (azul),
-       Aldeas (verde) y Oficios (violeta).
+       Aldeas (verde) y Reputación (violeta; en 5.5 se llamaba Oficios).
      · Misiones: a la izquierda las misiones activas (cinta de pergamino con
        el nombre, barra de progreso, «¡Lista para entregar!» y ✕ para
        abandonar); a la derecha el diario del aventurero (puntos de misión,
@@ -23783,7 +23833,7 @@ Object.assign(questUI, {
           <div class="bkKV"><span>Precios</span><b>×${priceMult(id).toFixed(2)}</b></div>${r.lvl < 5 ? `<p class="bkSmall">Siguiente nivel: ${VILLAGE_LEVELS[r.lvl + 1]}${VILLAGE_UPGRADES[r.lvl + 1].rep > 0 ? ` (reputación ${VILLAGE_UPGRADES[r.lvl + 1].rep}+)` : ''}: ${VILLAGE_UPGRADES[r.lvl + 1].what}. Se construye con el proyecto de la aldea.</p>` : ''}<div class="bkExtra">${villageExtraHTML(id, r)}</div>`;
       } else R.innerHTML = '<p class="bkSmall">Cuando conozcas una aldea, aquí verás su reputación, tamaño y precios.</p>';
     } else {
-      lt.textContent = 'Oficios';
+      lt.textContent = 'Reputación';
       const s = this.stats();
       for (const [, name, icon, fn, how] of TRADES55) {
         const v = fn(s), i = tradeRank(v), r = TRADE_RANKS[i], nx = TRADE_RANKS[i + 1];
@@ -23792,7 +23842,7 @@ Object.assign(questUI, {
       }
       rt.textContent = 'Rangos';
       R.innerHTML = TRADE_RANKS.map(([n, name, c]) => `<div class="bkKV"><span style="color:${c}">${name}</span><b>${n}+</b></div>`).join('') +
-        `<p class="bkSmall">Los oficios suben solos con lo que haces en el mundo: cazar, recolectar, fabricar, explorar y comerciar.</p>`;
+        `<p class="bkSmall">La reputación sube sola con lo que haces en el mundo: cazar, recolectar, fabricar, explorar y comerciar.</p>`;
     }
     L.innerHTML = rows.join('');
     this.dirty = false;
@@ -23819,6 +23869,1011 @@ Object.assign(questUI, {
 {
   $('#questScreen').addEventListener('click', (e) => questUI.click(e));
   $$('#questScreen .bkTab').forEach((b) => (b.onclick = () => { questUI.tab = b.dataset.tab; questUI.sel = null; sfx.play('click'); questUI.render(); }));
+}
+
+/* ==========================================================================
+   §56 COMBATE RPG 5.6 — datos: familias de armas, escudos y armaduras
+   --------------------------------------------------------------------------
+   · WEAPON_TYPES: lanza, hacha de batalla, martillo de guerra y daga, en los
+     ocho materiales (madera, piedra, hierro, oro, diamante, infernita, vacuita
+     y aerita). Cada familia tiene daño, velocidad, alcance, empuje, ángulo de
+     barrido y perforación de armadura propios (TIER56 × WEAPON_TYPES).
+   · Las lanzas y hachas de combate de hierro y diamante (3.2) conservan su id
+     y pasan a formar parte de la familia.
+   · Escudos de madera, hierro (el escudo de siempre), diamante y vacuita.
+   · Armaduras de infernita y de vacuita, y peso de cada armadura (ligera,
+     media o pesada).
+   · La lógica está en §57 (p9zj_combat56.js) y §58 (p9zk_rpg56.js).
+   ========================================================================== */
+const TIER56 = {
+  wood: { name: 'madera', D: 4, dur: 59, col: [168, 124, 72], dk: [112, 80, 44], mat: PLANKS_ANY },
+  stone: { name: 'piedra', D: 5, dur: 131, col: [150, 150, 152], dk: [96, 96, 100], mat: [COBBLE] },
+  iron: { name: 'hierro', D: 6, dur: 250, col: [222, 222, 226], dk: [150, 150, 158], mat: [I.IRON_INGOT] },
+  gold: { name: 'oro', D: 4.5, dur: 60, col: [250, 214, 60], dk: [190, 148, 30], mat: [I.GOLD_INGOT] },
+  diamond: { name: 'diamante', D: 7, dur: 1561, col: [96, 232, 222], dk: [40, 160, 170], mat: [I.DIAMOND] },
+  infernite: { name: 'infernita', D: 9, dur: 1800, col: [244, 120, 44], dk: [170, 54, 22], mat: [I.INFERNITE], el: 'fire', rar: 3 },
+  voidite: { name: 'vacuita', D: 10, dur: 2000, col: [160, 100, 230], dk: [76, 44, 140], mat: [I.VOIDITE], el: 'void', rar: 3 },
+  aerite: { name: 'aerita', D: 8, dur: 1100, col: [120, 205, 250], dk: [60, 140, 220], mat: [I.AERITE], el: 'air', rar: 3 },
+};
+const TIERS56 = Object.keys(TIER56);
+// Familias: multiplicador de daño, recarga (× 0,45 s), alcance extra, empuje, barrido (grados) y perforación de armadura
+const WEAPON_TYPES = {
+  spear: { name: 'Lanza', dm: 0.95, fast: 1.15, reach: 1.5, kb: 0.7, sweep: 0, pierce: 0.1, desc: 'Alcance largo y estocada precisa. +35 % de daño corriendo o montado en el grifo.' },
+  baxe: { name: 'Hacha de batalla', dm: 1.45, fast: 1.7, reach: 0.3, kb: 1.1, sweep: 110, pierce: 0.35, desc: 'Lenta. Su barrido golpea a todos los enemigos de delante, atraviesa parte de la armadura y puede causar sangrado o aturdir.' },
+  hammer: { name: 'Martillo de guerra', dm: 1.7, fast: 2, reach: 0, kb: 2.2, sweep: 0, pierce: 0.2, desc: 'Muy lento y demoledor. Lanza lejos, su onda de choque daña a los enemigos de alrededor y hace un 50 % más a las criaturas acorazadas o de piedra.' },
+  dagger: { name: 'Daga', dm: 0.6, fast: 0.55, reach: -0.7, kb: 0.3, sweep: 0, pierce: 0, desc: 'Muy rápida y de alcance corto. +60 % de daño por la espalda o justo después de esquivar. Con otra daga en la mano secundaria atacas con las dos.' },
+};
+const WT_ORDER = ['spear', 'baxe', 'hammer', 'dagger'];
+const WEAPON56 = { spear: { iron: I.SPEAR_IRON, diamond: I.SPEAR_DIAMOND }, baxe: { iron: I.BATTLE_AXE_IRON, diamond: I.BATTLE_AXE_DIAMOND }, hammer: {}, dagger: {} };
+{
+  let id = 724;
+  const KEY = { spear: 'SPEAR', baxe: 'BATTLE_AXE', hammer: 'WARHAMMER', dagger: 'DAGGER' };
+  for (const wt of WT_ORDER) for (const tier of TIERS56) if (!WEAPON56[wt][tier]) { WEAPON56[wt][tier] = id; I[`${KEY[wt]}_${tier.toUpperCase()}`] = id; id++; }
+  Object.assign(I, { WOOD_SHIELD: 752, DIAMOND_SHIELD: 753, VOID_SHIELD: 754 });
+  Object.assign(I, { INFERNITE_HELMET: 755, INFERNITE_CHEST: 756, INFERNITE_LEGS: 757, INFERNITE_BOOTS: 758, VOID_HELMET: 759, VOID_CHEST: 760, VOID_LEGS: 761, VOID_BOOTS: 762 });
+}
+const WEAPON_INFO = {};     // id → { wt, tier }
+const r1_56 = (v) => Math.round(v * 10) / 10;
+for (const wt of WT_ORDER) for (const tier of TIERS56) {
+  const W = WEAPON_TYPES[wt], M = TIER56[tier], id = WEAPON56[wt][tier];
+  let reach = W.reach, fast = W.fast, kb = W.kb, pierce = W.pierce;
+  if (wt === 'spear') reach = tier === 'voidite' || tier === 'aerite' ? 2 : tier === 'diamond' || tier === 'infernite' ? 1.8 : 1.5;
+  if (M.el === 'air') { fast *= 0.85; kb += 0.3; }
+  if (M.el === 'void') pierce = Math.min(0.6, pierce + 0.25);
+  const el = M.el === 'fire' ? ' Prende fuego a los enemigos.' : M.el === 'void' ? ' La vacuita atraviesa aún más armadura.' : M.el === 'air' ? ' La aerita la hace más rápida y empuja más.' : '';
+  const name = `${W.name} de ${M.name}`;
+  defItem(id, name, W.desc + el, { stack: 1, rarity: M.rar || (tier === 'diamond' ? 2 : 0),
+    tool: { type: 'sword', tier: 'special', level: 0, speed: 1, dmg: r1_56(M.D * W.dm), dur: Math.round(M.dur * (wt === 'dagger' ? 0.8 : wt === 'hammer' ? 1.2 : 1)), fast, reach, kb, sweep: W.sweep, pierce, wt, mat: tier, fire: M.el === 'fire' || undefined } });
+  WEAPON_INFO[id] = { wt, tier };
+}
+/* ---------- Escudos: cuánto bloquean de frente y cuánto aguantan ---------- */
+const SHIELD56 = { [I.WOOD_SHIELD]: { name: 'Escudo de madera', block: 0.6, dur: 160, tier: 'wood' }, [I.SHIELD]: { name: 'Escudo de hierro', block: 0.75, dur: 336, tier: 'iron' },
+  [I.DIAMOND_SHIELD]: { name: 'Escudo de diamante', block: 0.85, dur: 1000, tier: 'diamond' }, [I.VOID_SHIELD]: { name: 'Escudo de vacuita', block: 0.9, dur: 1600, tier: 'voidite' } };
+for (const [id, S] of Object.entries(SHIELD56)) {
+  const desc = `Equípalo en la mano secundaria y mantén Usar para bloquear el ${Math.round(S.block * 100)} % del daño de frente y el empujón. Si bloqueas justo antes del golpe (un cuarto de segundo), haces una parada perfecta: no recibes daño y desequilibras al atacante.`;
+  const props = { stack: 1, shield: true, block: S.block, dur: S.dur, rarity: S.tier === 'voidite' ? 3 : S.tier === 'diamond' ? 2 : 0 };
+  if (ITEMS[id]) Object.assign(ITEMS[id], { name: S.name, desc }, props); else defItem(+id, S.name, desc, props);
+}
+/* ---------- Armaduras de infernita y vacuita; peso de cada material ---------- */
+ARMOR_STATS.infernite = { name: 'infernita', pts: [3, 8, 6, 3], dur: 36, color: [214, 86, 34] };
+ARMOR_STATS.voidite = { name: 'vacuita', pts: [3, 8, 7, 3], dur: 40, color: [104, 64, 170] };
+const ARMOR_WEIGHT = { leather: 'light', aerite: 'light', feather: 'light', fur: 'light', turtle: 'medium', iron: 'medium', gold: 'medium', abyss: 'medium', crown: 'medium', diamond: 'heavy', infernite: 'heavy', voidite: 'heavy' };
+const WEIGHT_NAMES = { light: 'Ligera', medium: 'Media', heavy: 'Pesada' };
+{
+  const ids = { infernite: [I.INFERNITE_HELMET, I.INFERNITE_CHEST, I.INFERNITE_LEGS, I.INFERNITE_BOOTS], voidite: [I.VOID_HELMET, I.VOID_CHEST, I.VOID_LEGS, I.VOID_BOOTS] };
+  const pieces = ['Yelmo', 'Coraza', 'Grebas', 'Botas'];
+  for (const mat of ['infernite', 'voidite']) ARMOR_SLOTS.forEach((slot, i) => {
+    const a = ARMOR_STATS[mat];
+    defItem(ids[mat][i], `${pieces[i]} de ${a.name}`, (mat === 'infernite' ? 'Armadura pesada forjada en el Inframundo.' : 'Armadura pesada con el brillo del Vacío.') + ' El conjunto completo da una bonificación.',
+      { stack: 1, rarity: 3, armor: { mat, slot, idx: i, pts: a.pts[i], dur: a.dur * DUR_MUL[i] } });
+    const m = mat === 'infernite' ? I.INFERNITE : I.VOIDITE;
+    shaped(ids[mat][i], 1, [['mmm', 'm m'], ['m m', 'mmm', 'mmm'], ['mmm', 'm m', 'm m'], ['m m', 'm m']][i], { m }, 'Personaje');
+  });
+  SET_BONUS.infernite = { name: 'Brasa', desc: 'El fuego y la lava no te queman, y quien te golpea cuerpo a cuerpo recibe chispas que lo prenden', mods: { def: 0.06 } };
+  SET_BONUS.voidite = { name: 'Sombra del vacío', desc: 'Al esquivar ganas 1 s de paso sombrío: más velocidad y nadie te puede dañar', mods: { def: 0.08 } };
+  SET_BONUS.aerite.desc += ', y el grifo recupera el aliento un 50 % más rápido';
+}
+/* ---------- Recetas ---------- */
+{
+  const PAT = { spear: ['  m', ' s ', 's  '], baxe: ['mmm', 'msm', ' s '], hammer: ['mmm', 'mmm', ' s '], dagger: [' m', 's '] };
+  const LOGS56 = [OAK_LOG, BIRCH_LOG, SPRUCE_LOG, DARK_LOG];
+  for (const wt of WT_ORDER) for (const tier of TIERS56) {
+    const id = WEAPON56[wt][tier];
+    if (RECIPES.some((r) => r.out === id)) continue;          // hierro y diamante de lanza y hacha ya tenían receta
+    shaped(id, 1, PAT[wt], { m: wt === 'hammer' && tier === 'wood' ? LOGS56 : TIER56[tier].mat, s: I.STICK }, 'Combate');   // el martillo de madera lleva troncos (con tablas sería un cartel)
+  }
+  shaped(I.WOOD_SHIELD, 1, ['###', '###', ' # '], { '#': PLANKS_ANY }, 'Combate');
+  shaped(I.DIAMOND_SHIELD, 1, ['#d#', '#d#', ' # '], { '#': PLANKS_ANY, d: I.DIAMOND }, 'Combate');
+  shaped(I.VOID_SHIELD, 1, ['#v#', '#v#', ' # '], { '#': PLANKS_ANY, v: I.VOIDITE }, 'Combate');
+}
+/* ---------- Iconos (pixel art 16×16) ---------- */
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  const lite = (c) => c.map((v) => Math.min(255, Math.round(v * 1.22 + 14)));
+  const icons = {};
+  for (const tier of TIERS56) {
+    const M = TIER56[tier], C = M.col, D = M.dk, L = lite(C), mat = (x, y) => ((x + y) % 3 === 0 ? L : (x * 3 + y) % 5 === 0 ? D : C);
+    const H = tier === 'wood' ? [96, 68, 38] : HANDLE, H2 = H.map((v) => v * 0.72);
+    icons[WEAPON56.spear[tier]] = P((p) => { p.line([[1.5, 14.5], [6, 10]], 1.6, H2); p.line([[6, 10], [10.5, 5.5]], 1.6, H); p.line([[9.5, 6.5], [10.6, 7.6]], 1.4, D); p.poly([[10, 4.4], [14.8, 1.2], [11.6, 6]], mat); p.line([[10.6, 5.4], [13.6, 2.4]], 0.8, L); });
+    icons[WEAPON56.baxe[tier]] = P((p) => {
+      p.line([[2, 14], [12, 4]], 1.7, H);
+      p.poly([[8.6, 5.2], [6, 2.5], [8, 0.6], [11.6, 1.6], [11.2, 4.4]], mat); p.poly([[10.8, 7.4], [13.5, 10], [15.4, 8], [14.4, 4.4], [11.6, 4.8]], mat);
+      p.line([[6.2, 2.4], [8, 0.8]], 0.9, L); p.line([[13.6, 9.8], [15.2, 8]], 0.9, L); p.disk(11.2, 4.8, 1.3, D);
+    });
+    icons[WEAPON56.hammer[tier]] = P((p) => {
+      p.line([[2, 14], [9, 7]], 1.8, H); p.line([[2, 14], [3.6, 12.4]], 2, H2);
+      p.poly([[7, 1.5], [14.5, 1.5], [14.5, 8.5], [7, 8.5]], (x, y) => (x < 8 || y < 3 ? L : x > 12.5 || y > 6.5 ? D : C));
+      p.line([[7.5, 5], [14, 5]], 0.8, D);
+    });
+    icons[WEAPON56.dagger[tier]] = P((p) => {
+      p.line([[2.5, 13.5], [5, 11]], 1.8, H); p.line([[3, 9], [7, 13]], 1.4, tier === 'gold' ? [200, 150, 40] : [196, 170, 90]);
+      p.poly([[5.4, 9.6], [11, 3.6], [13.2, 2.8], [12.4, 5], [6.4, 10.6]], mat); p.line([[6.4, 9.2], [11.4, 4.2]], 0.7, L);
+    });
+  }
+  const shield = (face, faceD, rim) => P((p) => { p.poly([[3, 2], [13, 2], [13, 9], [8, 14.5], [3, 9]], (x, y) => (x === 8 || y === 6 ? rim : x < 8 ? face : faceD)); p.disk(8, 6.5, 1.6, rim); });
+  icons[I.WOOD_SHIELD] = shield([168, 124, 72], [132, 94, 52], [104, 72, 40]);
+  icons[I.DIAMOND_SHIELD] = shield([96, 232, 222], [52, 176, 180], [150, 110, 64]);
+  icons[I.VOID_SHIELD] = shield([150, 96, 222], [96, 58, 160], [220, 255, 246]);
+  Object.assign(ICON_OVERRIDE, icons);
+}
+/* ---------- Modelos 3D en la mano: lanza larga de dos tramos y martillo con cabeza de bloque ---------- */
+{
+  const _itemModel = itemModel;
+  const diag = (parts) => { const g = mergeGeometries(parts); g.rotateZ(-Math.PI / 4); return g; };
+  itemModel = function (id) {
+    const W = WEAPON_INFO[id];
+    if (!W || (W.wt !== 'spear' && W.wt !== 'hammer') || GEO_CACHE.has(id)) return _itemModel(id);
+    const M = TIER56[W.tier], c = M.col.map((v) => v / 255), d = M.dk.map((v) => v / 255), h = (W.tier === 'wood' ? [96, 68, 38] : HANDLE).map((v) => v / 255), h2 = h.map((v) => v * 0.72);
+    let geo;
+    if (W.wt === 'spear') geo = diag([cbox(0.075, 0.62, 0.075, 0, -0.56, 0, h2), cbox(0.075, 0.66, 0.075, 0, 0.08, 0, h), cbox(0.11, 0.06, 0.11, 0, 0.42, 0, d),
+      cbox(0.15, 0.2, 0.06, 0, 0.55, 0, c), cbox(0.09, 0.14, 0.05, 0, 0.71, 0, c), cbox(0.04, 0.08, 0.04, 0, 0.82, 0, M.col.map((v) => Math.min(1, v / 220)))]);
+    else geo = diag([cbox(0.08, 0.5, 0.08, 0, -0.42, 0, h2), cbox(0.08, 0.5, 0.08, 0, 0.06, 0, h), cbox(0.34, 0.26, 0.26, 0, 0.42, 0, (f) => (f === 2 ? c.map((v) => Math.min(1, v * 1.15)) : f === 4 || f === 5 ? d : c)),
+      cbox(0.36, 0.05, 0.28, 0, 0.42, 0, d)]);
+    const entry = { geo, textured: false, flat: true };
+    GEO_CACHE.set(id, entry); return entry;
+  };
+}
+
+/* ==========================================================================
+   §57 COMBATE RPG 5.6 — lógica del combate
+   --------------------------------------------------------------------------
+   · Mecánicas por familia de arma (§56): lanza (alcance y +35 % corriendo o
+     en el grifo), hacha de batalla (barrido en arco, perfora armadura,
+     sangrado o aturdimiento), martillo (onda de choque, empuje, +50 % a
+     acorazados y criaturas de piedra) y dagas (golpe por la espalda o tras
+     esquivar, ataque alternado con dos dagas).
+   · combatAnim: combo de tres golpes (tajo diagonal, corte horizontal inverso
+     y remate: estocada o golpe vertical) con curvas suaves; las armas
+     pesadas levantan antes y el daño llega en el impacto; estela del color
+     del material, pausa breve en críticos y remates, y los enemigos se
+     echan hacia atrás al recibir el golpe.
+   · Escudos por material, parada perfecta de 0,25 s con destello, y esquiva
+     según el peso de la armadura y la clase.
+   ========================================================================== */
+const STONE56 = new Set(['golem', 'automaton', 'magmacube', 'bonearmor', 'scarab', 'specter', 'brute']);
+const TRAIL_COL = { fire: [1, 0.55, 0.2], void: [0.72, 0.45, 1], air: [0.6, 0.88, 1] };
+const ease56 = { out: (u) => 1 - Math.pow(1 - u, 3), inOut: (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2) };
+// Poses del combo: [posX, posY, posZ, rotX, rotY, rotZ] de inicio (A) y final (B) de cada golpe
+const COMBO_POSE = {
+  diag: [[0.12, 0.16, 0.02, 0.9, -0.5, -0.5], [-0.38, -0.12, -0.12, -0.8, 0.9, 0.6]],
+  flat: [[-0.36, 0.02, -0.06, -0.2, 1.1, 0.25], [0.2, -0.02, -0.14, -0.2, -0.95, -0.25]],
+  thrust: [[0.04, -0.02, 0.2, 0.05, 0, 0], [-0.06, 0.02, -0.62, -0.12, 0, 0]],
+  over: [[-0.04, 0.26, 0.08, 1.25, 0.1, 0], [-0.06, -0.22, -0.12, -1.5, 0.1, 0]],
+};
+const COMBO_NAMES = ['diag', 'flat'];
+const combat56 = {
+  step: 0, lastAtk: -9, dodgeAt: -9, anim: null, pending: null, alt: false, trail: null, v: new THREE.Vector3(), v2: new THREE.Vector3(),
+  now() { return performance.now() / 1000; },
+  tool(s) { const it = s && ITEMS[s.id]; return it && it.tool && it.tool.type === 'sword' ? it.tool : null; },
+  isDagger(s) { return !!(s && ITEMS[s.id]?.tool?.wt === 'dagger'); },
+  dual(p) { return this.isDagger(p.held()) && this.isDagger(p.offhand.slots[0]); },
+  heavy(t) { return !!t && (t.wt === 'hammer' || t.wt === 'baxe'); },
+  finisher(t) { return t && (t.wt === 'spear' || t.wt === 'dagger') ? 'thrust' : 'over'; },
+  cooldown(p, t) { return (t && t.type === 'sword' ? 0.45 * (t.fast || 1) : t ? 0.6 : 0.45) * (1 - rpg56.atkSpeed(p)) * (this.dual(p) ? 0.85 : 1); },
+  // calidad de forja y gema guardadas en el objeto (§58)
+  qual(s) { const q = s && s.ench && s.ench._q; return q === 2 ? 1.2 : q === 1 ? 1.1 : 1; },
+  // Ataque cuerpo a cuerpo (mt: criatura apuntada, o null si golpeas al aire). Devuelve false si no hay arma.
+  attack(mt) {
+    const g = game, p = g.player, main = p.held();
+    if (!mt && !this.tool(main)) return false;
+    const now = this.now();
+    let hand = 'main', s = main;
+    if (this.dual(p)) { this.alt = !this.alt; if (this.alt) { hand = 'off'; s = p.offhand.slots[0]; } }
+    const t = this.tool(s) || (hand === 'main' ? ITEMS[main?.id]?.tool : null);
+    const cd = this.cooldown(p, t);
+    this.step = now - this.lastAtk < cd + 0.9 ? (this.step + 1) % 3 : 0;
+    this.lastAtk = now;
+    const fin = this.step === 2, heavy = this.heavy(t);
+    g.attackCd = cd * (fin ? 1.15 : 1); g.swing = 1;
+    const wind = heavy ? (t.wt === 'hammer' ? 0.2 : 0.15) : 0;
+    this.anim = { t: 0, dur: Math.max(0.24, Math.min(0.62, cd * 0.95)) + wind, wind, step: this.step, kind: fin ? this.finisher(t) : COMBO_NAMES[this.step], hand, freeze: 0, el: t && TIER56[t.mat]?.el, trailOn: false, wt: t?.wt };
+    if (!mt && !t) { sfx.play('swing'); return true; }
+    if (wind) { this.pending = { t: wind, mt, s, hand, step: this.step }; sfx.play('swing', { pitch: 0.7 }); }
+    else this.strike(mt, s, hand, this.step);
+    return true;
+  },
+  // El golpe llega: daño principal, barrido, onda de choque y efectos
+  strike(mt, s, hand, step) {
+    const g = game, p = g.player, t = this.tool(s) || ITEMS[s?.id]?.tool || null, d = this.v2; camera.getWorldDirection(d);
+    if (this.anim) this.anim.trailOn = true;
+    // el hacha de batalla barre aunque no apuntes a nadie
+    let sweepHits = 0;
+    if (t && t.sweep) {
+      const half = (t.sweep * Math.PI / 180) / 2, R = 3.4 + (t.reach || 0);
+      for (const e of g.entities.list) {
+        if (e === mt || !this.hittable(e) || e.isPlayer) continue;
+        const dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z, l = Math.hypot(dx, dz);
+        if (l > R || Math.abs(e.pos.y - p.pos.y) > 2.2) continue;
+        if (Math.acos(clamp((dx * d.x + dz * d.z) / ((l || 1) * (Math.hypot(d.x, d.z) || 1)), -1, 1)) > half) continue;
+        if (this.hitOne(e, s, t, step, 0.6)) sweepHits++;
+      }
+    }
+    if (!mt) { sfx.play('swing', { pitch: t && this.heavy(t) ? 0.75 : 1.05 }); if (sweepHits) this.sweepFx(p, d, t); return; }
+    if (mt.dead || mt.deathT) return;
+    const hit = this.hitOne(mt, s, t, step, 1, hand);
+    if (sweepHits || (hit && t && t.sweep)) this.sweepFx(p, d, t);
+  },
+  hittable(e) { return e && e.kind === 'mob' && !e.dead && !e.deathT && !e.tamed && !(e.owner) && (e.spec.hostile || e.isBoss); },
+  hitOne(mt, s, t, step, scale, hand = 'main') {
+    const g = game, p = g.player, fin = step === 2, now = this.now();
+    let dmg = (t ? t.dmg : 1) * this.qual(s) + enchLevel(s, 'sharp') * 1.25 + g.effLvl('strength') * 3;
+    dmg *= 1 + MODS.dmg + rpg56.dmgBonus(p, t);
+    let crit = (!p.onGround && p.vel.y < 0 && !p.inWater) || Math.random() < MODS.critCh + rpg56.critBonus(p, t), label = '';
+    if (t && t.wt === 'dagger') {
+      const back = this.behind(mt, p);
+      if (back || now - this.dodgeAt < 1.2) { dmg *= 1.6; crit = true; label = back ? '¡Por la espalda!' : '¡Contraataque!'; }
+    }
+    if (t && t.wt === 'spear' && (p.sprinting || (p.mount && p.mount.type === 'griffin'))) { dmg *= 1.35; label = label || '¡Carga!'; }
+    if (t && t.wt === 'hammer' && (mt.spec.armor || STONE56.has(mt.type))) dmg *= 1.5;
+    if (fin) dmg *= 1.25;
+    const gem = s && s.ench && s.ench._g, G = GEMS56[gem];
+    if (G) dmg += G.dmg;
+    if (crit && !label) dmg *= 1.5 + MODS.crit; else if (crit) dmg *= 1 + MODS.crit;
+    dmg *= scale;
+    combat.crit = crit; this.pierce = Math.min(0.9, (t?.pierce || 0) + (gem === 'void' ? 0.3 : 0));
+    if (t && t.wt === 'dagger' && mt.invuln > 0) mt.invuln = 0;            // las dagas golpean más seguido que la invulnerabilidad normal
+    mt.lastHit = 'player';
+    const ok = mt.hurt(dmg, p.pos); this.pierce = 0;
+    if (!ok) return false;
+    p.exhaust(0.1); g.stats.add('damage', dmg); onPlayerHit(mt, t, dmg);
+    if (label) dmgText.add(mt.pos.x, mt.pos.y + mt.h + 1.1, mt.pos.z, label, 'crit');
+    if (t) {
+      if (hand === 'off') { const o = p.offhand.slots[0]; if (o) { o.dmg = (o.dmg || 0) + 1; if (o.dmg >= durOf(o.id)) { p.offhand.slots[0] = null; sfx.play('toolBreak'); } } }
+      else g.wearTool(t.type === 'sword' ? 1 : 2);
+      if (t.fire) mt.burnT = 5;
+      if (t.knock && !mt.isBoss) { const k = this.v.subVectors(mt.pos, p.pos).setY(0).normalize(); mt.vel.x += k.x * 8; mt.vel.z += k.z * 8; mt.vel.y = 7; }
+      // empuje propio del arma (y el remate empuja más)
+      if (!mt.isBoss) { const kb = ((t.kb ?? 1) - 1 + (fin ? 0.6 : 0)) * (mt.spec.heavy ? 0.5 : 1); if (kb > 0) { const k = this.v.subVectors(mt.pos, p.pos).setY(0).normalize(); mt.vel.x += k.x * 5 * kb; mt.vel.z += k.z * 5 * kb; mt.vel.y = Math.max(mt.vel.y, 4 + kb * 2); } }
+      if (t.wt === 'baxe' && Math.random() < 0.25 && !mt.isBoss) {
+        if (Math.random() < 0.5) { mt.bleed56 = { t: 3, k: 0.5, dmg: Math.max(1, t.dmg * 0.12) }; dmgText.add(mt.pos.x, mt.pos.y + mt.h + 0.6, mt.pos.z, 'Sangrado', 'fx'); }
+        else { mt.stunT = Math.max(mt.stunT || 0, 0.6); dmgText.add(mt.pos.x, mt.pos.y + mt.h + 0.6, mt.pos.z, 'Aturdido', 'fx'); }
+      }
+      if (t.wt === 'hammer' && scale === 1) this.shockwave(mt, t, dmg);
+    }
+    if (G) G.hit(mt);
+    // reacción: se inclina hacia atrás y suelta cubitos del color del arma
+    mt.lean56 = { t: 0.26, dx: mt.pos.x - p.pos.x, dz: mt.pos.z - p.pos.z };
+    const col = t && TIER56[t.mat] ? TIER56[t.mat].col.map((v) => v / 255) : [0.9, 0.9, 0.9];
+    if (settings.particles) g.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.6, mt.pos.z, col, t && this.heavy(t) ? 9 : 5, { speed: 2.6, up: 2, life: 0.35, size: 0.07 });
+    if ((crit || fin) && this.anim) this.anim.freeze = 0.035;
+    if (fin) { g.shake = Math.max(g.shake || 0, 0.18); const k = this.v.subVectors(mt.pos, p.pos).setY(0).normalize(); if (p.onGround) { p.vel.x += k.x * 3; p.vel.z += k.z * 3; } }
+    return true;
+  },
+  // ¿el jugador está detrás de la criatura? (mira hacia donde apunta su yaw)
+  behind(mt, p) {
+    if (mt.isBoss || !Number.isFinite(mt.yaw)) return false;
+    const fx = Math.sin(mt.yaw), fz = Math.cos(mt.yaw), dx = p.pos.x - mt.pos.x, dz = p.pos.z - mt.pos.z, l = Math.hypot(dx, dz) || 1;
+    return (fx * dx + fz * dz) / l < -0.35;
+  },
+  shockwave(mt, t, dmg) {
+    const g = game; let n = 0;
+    for (const e of g.entities.list) {
+      if (e === mt || !this.hittable(e) || e.isPlayer) continue;
+      const dx = e.pos.x - mt.pos.x, dz = e.pos.z - mt.pos.z, l = Math.hypot(dx, dz);
+      if (l > 2 || Math.abs(e.pos.y - mt.pos.y) > 1.5) continue;
+      e.lastHit = 'player'; combat.crit = false;
+      if (e.hurt(dmg * 0.4, mt.pos)) { n++; if (!e.isBoss) { e.vel.x += dx / (l || 1) * 5; e.vel.z += dz / (l || 1) * 5; e.vel.y = 5; } e.lean56 = { t: 0.22, dx, dz }; }
+    }
+    // polvo en el suelo
+    const below = world.get(Math.floor(mt.pos.x), Math.floor(mt.pos.y - 0.5), Math.floor(mt.pos.z)), c = BLOCKS[below]?.sound === 'grass' ? [0.45, 0.36, 0.22] : [0.62, 0.6, 0.56];
+    if (settings.particles) for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2; g.particles.emit(mt.pos.x + Math.cos(a) * 1.2, mt.pos.y + 0.1, mt.pos.z + Math.sin(a) * 1.2, c, 2, { speed: 1.4, up: 1.2, life: 0.5, size: 0.11 }); }
+    sfx.play('dig', { mat: 'stone', pitch: 0.6, pos: mt.pos }); game.shake = Math.max(game.shake || 0, 0.25);
+    if (n) dmgText.add(mt.pos.x, mt.pos.y + mt.h + 1.2, mt.pos.z, `Onda de choque ×${n}`, 'fx');
+  },
+  sweepFx(p, d, t) {
+    if (!settings.particles) return;
+    const col = TIER56[t.mat]?.col.map((v) => v / 255) || [1, 1, 1];
+    for (let i = -3; i <= 3; i++) { const a = Math.atan2(d.x, d.z) + i * 0.22; game.particles.emit(p.pos.x + Math.sin(a) * 2, p.pos.y + 1.1, p.pos.z + Math.cos(a) * 2, col, 1, { speed: 0.6, life: 0.25, size: 0.08 }); }
+  },
+  /* ---------- Cada fotograma ---------- */
+  update(dt) {
+    const g = game, p = g.player;
+    if (this.pending) {
+      this.pending.t -= dt;
+      if (this.pending.t <= 0) {
+        const q = this.pending; this.pending = null;
+        // el objetivo sigue a tiro: golpea al que apuntas ahora (o al de antes si sigue cerca)
+        const mt = g.mobTarget || (q.mt && !q.mt.dead && q.mt.pos.distanceTo(p.pos) < 4.5 + (this.tool(q.s)?.reach || 0) ? q.mt : null);
+        this.strike(mt, q.s, q.hand, q.step);
+      }
+    }
+    const A = this.anim;
+    if (A) { if (A.freeze > 0) A.freeze -= dt; else A.t += dt; if (A.t >= A.dur) this.anim = null; }
+    this.updateTrail(dt);
+  },
+  // Pose de la mano para la animación del combo (null si no hay golpe en curso)
+  pose() {
+    const A = this.anim; if (!A) return null;
+    const [Pa, Pb] = COMBO_POSE[A.kind], t = A.t, w = A.wind, strike = (A.dur - w) * 0.42;
+    const lerp6 = (a, b, k) => a.map((v, i) => v + (b[i] - v) * k);
+    if (t < w) { const k = ease56.inOut(t / w); const up = lerp6([0, 0, 0, 0, 0, 0], Pa, k); up[1] += 0.08 * k; up[3] += 0.35 * k; return up; }   // anticipación de las armas pesadas
+    const u = t - w;
+    if (u < strike) { const k = u < strike * 0.15 && !w ? u / (strike * 0.15) : 1; const s = ease56.out(Math.min(1, u / strike)); return lerp6(k < 1 ? lerp6([0, 0, 0, 0, 0, 0], Pa, k) : Pa, Pb, s); }
+    const r = Math.min(1, (u - strike) / Math.max(0.01, A.dur - w - strike));
+    return lerp6(Pb, [0, 0, 0, 0, 0, 0], ease56.inOut(r));
+  },
+  /* ---------- Estela del golpe (3–4 tramos pixelados, 120 ms) ---------- */
+  updateTrail(dt) {
+    const A = this.anim, tr = this.trail || (this.trail = this.makeTrail());
+    const third = view52.mode !== 0 && view52.avatar && view52.avatar.held;
+    const src = third ? view52.avatar.held : (A && A.hand === 'off' ? offMesh : heldMesh);
+    const parent = third ? scene : viewScene;
+    if (tr.mesh.parent !== parent) { tr.mesh.parent?.remove(tr.mesh); parent.add(tr.mesh); tr.pts = []; }
+    if (A && A.trailOn && settings.particles && src && src.isMesh && A.t - A.wind < 0.12 + 0.05 && tr.pts.length < 10) {
+      const reach = A.wt === 'spear' ? 0.62 : A.wt === 'hammer' ? 0.5 : 0.45;
+      src.updateWorldMatrix(true, false);
+      tr.pts.push(src.localToWorld(this.v.set(reach, reach, 0)).clone(), src.localToWorld(this.v.set(reach * 0.5, reach * 0.5, 0)).clone());
+      tr.life = 0.16; tr.mat.color.setRGB(...(TRAIL_COL[A.el] || [0.95, 0.95, 0.95]));
+    } else if (tr.life > 0) tr.life -= dt;
+    if (tr.life <= 0) { tr.pts = []; tr.mesh.visible = false; return; }
+    const n = tr.pts.length / 2; if (n < 2) { tr.mesh.visible = false; return; }
+    const pos = tr.geo.attributes.position.array; let k = 0;
+    for (let i = 0; i < n - 1; i++) {
+      const a = tr.pts[i * 2], b = tr.pts[i * 2 + 1], c = tr.pts[i * 2 + 2], e = tr.pts[i * 2 + 3];
+      for (const v of [a, b, c, b, e, c]) { pos[k++] = v.x; pos[k++] = v.y; pos[k++] = v.z; }
+    }
+    tr.geo.setDrawRange(0, (n - 1) * 6); tr.geo.attributes.position.needsUpdate = true; tr.geo.computeBoundingSphere();
+    tr.mat.opacity = 0.42 * Math.min(1, tr.life / 0.16); tr.mesh.visible = true;
+  },
+  makeTrail() {
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9 * 6 * 3), 3));
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, side: THREE.DoubleSide, depthWrite: false, fog: false });
+    const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false; mesh.renderOrder = 5;
+    return { geo, mat, mesh, pts: [], life: 0 };
+  },
+};
+/* ---------- Gemas engarzadas (Herrería, §58) ---------- */
+const GEMS56 = {
+  ember: { item: I.EMBER_CORE, name: 'Núcleo de brasa', txt: '+2 de daño de fuego y prende al enemigo', dmg: 2, hit: (m) => { m.burnT = Math.max(m.burnT || 0, 4); } },
+  crystal: { item: I.CRYSTAL_SHARD, name: 'Fragmento de cristal', txt: '+1,5 de daño de escarcha y ralentiza', dmg: 1.5, hit: (m) => { m.slowT = Math.max(m.slowT || 0, 3); } },
+  void: { item: I.VOID_SHARD, name: 'Esquirla del vacío', txt: '+2 de daño del vacío y atraviesa un 30 % más de armadura', dmg: 2, hit: () => {} },
+};
+/* ---------- Criaturas: perforación de armadura, sangrado e inclinación al recibir el golpe ---------- */
+{
+  const _hurt = Mob.prototype.hurt;
+  Mob.prototype.hurt = function (dmg, from) {
+    const a = this.spec.armor;
+    if (a && combat56.pierce && !combat.crit) dmg *= (1 - a * (1 - combat56.pierce)) / (1 - a);
+    return _hurt.call(this, dmg, from);
+  };
+  const _sq = Mob.prototype.squash, Q = new THREE.Quaternion(), AX = new THREE.Vector3();
+  Mob.prototype.squash = function (dt) {
+    _sq.call(this, dt);
+    const L = this.lean56;
+    if (L && this.mesh) {
+      L.t -= dt;
+      if (L.t <= 0 || this.deathT) this.lean56 = null;
+      else { const l = Math.hypot(L.dx, L.dz) || 1, k = Math.sin(Math.min(1, L.t / 0.26) * Math.PI) * 0.32; AX.set(L.dz / l, 0, -L.dx / l); Q.setFromAxisAngle(AX, k); this.mesh.quaternion.premultiply(Q); }
+    }
+    const B = this.bleed56;
+    if (B && !this.remote && !this.deathT) {
+      B.t -= dt; B.k -= dt;
+      if (B.k <= 0) { B.k = 0.5; this.invuln = 0; this.lastHit = 'player'; combat.crit = false; const before = this.hp; this.hp -= B.dmg; this.hurtT = 0.2; if (this.hp <= 0 && before > 0) { this.hp = 0; this.deathT = 0.01; }
+        if (settings.particles) game.particles.emit(this.pos.x, this.pos.y + this.h * 0.5, this.pos.z, [0.7, 0.05, 0.05], 3, { speed: 1, life: 0.4, size: 0.06 }); }
+      if (B.t <= 0) this.bleed56 = null;
+    }
+  };
+}
+/* ---------- Mano en primera persona: pose del combo; segunda daga en la otra mano ---------- */
+{
+  const _pose = attackPose;
+  attackPose = function (style, sw, blocking) {
+    const P = !blocking && combat56.anim && combat56.anim.hand === 'main' ? combat56.pose() : null;
+    return P || _pose(style, combat56.anim && combat56.anim.hand === 'off' ? 0 : sw, blocking);
+  };
+  const _style = attackStyle;
+  attackStyle = function (s) { const t = s && ITEMS[s.id]?.tool; if (t && t.wt) return t.wt === 'spear' || t.wt === 'dagger' ? 'thrust' : 'chop'; return _style(s); };
+  const _off = updateOffhandView;
+  updateOffhandView = function (p, dt, blocking) {
+    _off(p, dt, blocking);
+    const A = combat56.anim;
+    if (A && A.hand === 'off' && offMesh) { const P = combat56.pose(); offGroup.position.x -= P[0]; offGroup.position.y += P[1]; offGroup.position.z += P[2]; offGroup.rotation.x += P[3]; offGroup.rotation.y -= P[4]; offGroup.rotation.z -= P[5]; }
+  };
+}
+/* ---------- Tercera persona y jugadores remotos: el brazo sigue el combo ---------- */
+{
+  const ARM = { diag: [-2.0, -0.5, 0.2, 0.5], flat: [-1.2, 0.9, -1.3, -0.8], thrust: [-1.0, 0, -1.8, 0], over: [-2.8, 0, -0.2, 0] };   // rotX inicio/fin y rotZ inicio/fin
+  const armPose = (arm, kind, k, side) => { const a = ARM[kind]; arm.rotation.x = a[0] + (a[2] - a[0]) * k; arm.rotation.z = (a[1] + (a[3] - a[1]) * k) * side; };
+  const _upd = PlayerAvatar.prototype.pose;
+  PlayerAvatar.prototype.pose = function (dt, ...rest) {
+    const r = _upd.call(this, dt, ...rest), A = combat56.anim;
+    if (A && this === view52.avatar) {
+      const M = this.model, w = A.wind, u = A.t < w ? 0 : ease56.out(Math.min(1, (A.t - w) / Math.max(0.05, (A.dur - w) * 0.42)));
+      const arm = A.hand === 'off' ? M.arms[0] : M.arms[1];
+      if (A.t < w) { arm.rotation.x = -2.4 * (A.t / w); arm.rotation.z = 0; } else armPose(arm, A.kind, u, A.hand === 'off' ? -1 : 1);
+    } else if (this === view52.avatar) { this.model.arms[0].rotation.z = 0; if (!combat56.anim) this.model.arms[1].rotation.z = 0; }
+    return r;
+  };
+  // remotos: sw lleva el golpe del combo (1–3) y +3 si es con la mano secundaria (servidor 5.6; los anteriores mandan 1)
+  const _set = RemotePlayer.prototype.setState;
+  RemotePlayer.prototype.setState = function (m) { _set.call(this, m); if (m.sw) { this.cs56 = { k: COMBO_NAMES[(m.sw - 1) % 3] || 'over', off: m.sw > 3, t: 0 }; } };
+  const _rupd = RemotePlayer.prototype.update;
+  RemotePlayer.prototype.update = function (dt, g) {
+    const r = _rupd.call(this, dt, g), C = this.cs56, M = this.model;
+    if (C && M && M.arms) { C.t += dt; const u = ease56.out(Math.min(1, C.t / 0.22)); armPose(C.off ? M.arms[0] : M.arms[1], C.k, u, C.off ? -1 : 1); if (C.t > 0.32) { this.cs56 = null; M.arms[0].rotation.z = M.arms[1].rotation.z = 0; } }
+    return r;
+  };
+}
+/* ---------- Escudos: bloqueo por material, parada de 0,25 s con destello; esquiva según armadura y clase ---------- */
+{
+  const _dodge = combat.dodge;
+  combat.dodge = function () {
+    const before = combat.dodgeCd; _dodge();
+    if (!(combat.dodgeCd > Math.max(0, before))) return;           // no hubo esquiva
+    const p = game.player, k = rpg56.dodgeDist(p);
+    p.vel.x *= k; p.vel.z *= k; combat.dodgeCd *= rpg56.dodgeCdMul(p);
+    combat56.dodgeAt = combat56.now();
+    if (char45.setMat() === 'voidite') { p.shadow56 = 1; game.applyEffect('speed', 2, 1); if (settings.particles) game.particles.emit(p.pos.x, p.pos.y + 1, p.pos.z, [0.45, 0.25, 0.7], 14, { speed: 1.6, life: 0.5, size: 0.12 }); }
+  };
+}
+
+/* ==========================================================================
+   §58 COMBATE RPG 5.6 — clases, oficios, forja, peso de armadura y mundo
+   --------------------------------------------------------------------------
+   · CLASSES: Vanguardia, Lancero, Pícaro y Arcanista. Bonificaciones fijas y
+     una habilidad (tecla C, botón táctil ✦, cruceta derecha del mando fuera
+     del creativo) que se mejora con puntos de clase. Se elige en Personaje
+     → Clase y se puede cambiar una vez por día del juego.
+   · PROFS56: Herrería, Cocina, Minería y Domador (niveles 1-10). Suben solos
+     con lo que haces. La Herrería da calidad a lo que forjas (Estándar,
+     Templada +10 %, Maestra +20 %), engarza gemas desde el nivel 3 y
+     desbloquea las recetas de infernita, aerita y vacuita (también con
+     planos de forja de mazmorras y encargos).
+   · Peso de la armadura (ligera, media, pesada) y conjuntos de infernita,
+     vacuita y aerita.
+   · Tormentas que cargan los cristales y runas, luna carmesí, recompensas
+     de mazmorras y encargos, y la pestaña «Saber» de la Enciclopedia.
+   · Todo se guarda en el jugador (rpg). Las partidas anteriores empiezan sin
+     clase y con los oficios a nivel 1.
+   ========================================================================== */
+const CLASSES = {
+  vanguard: { name: 'Vanguardia', icon: '🛡', color: '#d0643e', desc: '+20 % de vida máxima (dos corazones más). Dominio de hachas, martillos y escudos: +15 % de daño con hachas de batalla y martillos, y tus escudos bloquean un 10 % más.',
+    ab: { name: 'Golpe sísmico', cd: 14, txt: (r) => `Golpeas el suelo: ${fmt56(5 * (1 + r * 0.25))} de daño a 4 bloques, aturde 1,5 s y aparta a los enemigos.` } },
+  lancer: { name: 'Lancero', icon: '🗡', color: '#3f8fd0', desc: '+15 % de daño con lanzas y arcos. Montado en el grifo, +15 % más de daño y el grifo se cansa un 20 % menos.',
+    ab: { name: 'Estocada perforante', cd: 10, txt: (r) => `Te lanzas en línea recta unos 7 bloques y atraviesas a todos los enemigos del camino: ${fmt56(8 * (1 + r * 0.25))} de daño a cada uno.` } },
+  rogue: { name: 'Pícaro', icon: '🌙', color: '#8a5ad0', desc: 'Esquivas un 25 % más seguido y +15 % de probabilidad de crítico con dagas. Atacar desde el paso sombrío siempre es crítico.',
+    ab: { name: 'Paso sombrío', cd: 12, txt: (r) => `Te desplazas unos 5 bloques y te vuelves casi invisible ${fmt56(3 + r * 0.5)} s: los monstruos te pierden. Tu siguiente golpe es crítico.` } },
+  arcanist: { name: 'Arcanista', icon: '✦', color: '#3fc0b0', desc: 'Pociones y platos duran un 30 % más, +20 % de daño con armas de vacuita y aerita, y cerca de bloques rúnicos (o cargado por una tormenta) tu habilidad recarga el doble de rápido.',
+    ab: { name: 'Onda rúnica', cd: 12, txt: (r) => `Un pulso mágico de 6 bloques: ${fmt56(5 * (1 + r * 0.25))} de daño y ralentiza 4 s a los enemigos.` } },
+};
+const PROFS56 = {
+  smith: { name: 'Herrería', icon: '⚒', how: 'Forja armas, armaduras y escudos en la mesa, y engarza gemas.',
+    perks: (l) => [`Calidad al forjar: ${Math.round(q56(l)[1] * 100)} % Templada (+10 %), ${Math.round(q56(l)[2] * 100)} % Maestra (+20 %)`, l >= 3 ? 'Engarce de gemas desbloqueado' : 'Nivel 3: engarzar gemas', `Recetas: infernita (nivel 4)${l >= 4 ? ' ✔' : ''}, aerita (6)${l >= 6 ? ' ✔' : ''}, vacuita (8)${l >= 8 ? ' ✔' : ''}`] },
+  cook: { name: 'Cocina', icon: '🍲', how: 'Prepara platos en la olla.', perks: (l) => [`Los efectos de los platos duran +${Math.round((l - 1) * 6)} %`, 'Platos con bonificaciones de oficio: resistencia elemental y saber del oficio'] },
+  mine: { name: 'Minería', icon: '⛏', how: 'Pica minerales y piedra (mejor en las profundidades).', perks: (l) => [`+${Math.round((l - 1) * 3)} % de probabilidad de mineral extra`, `${fmt56(0.3 + l * 0.15)} % de encontrar una gema oculta en la piedra profunda`] },
+  tame: { name: 'Domador', icon: '🐾', how: 'Doma, cría, monta el grifo y llena los comederos.', perks: (l) => [`El grifo aguanta +${Math.round((l - 1) * 6)} % de vuelo`, `Comederos ${Math.round((l - 1) * 5)} % más rápidos y alimentan a ${4 + Math.floor(l / 3)} animales`, `Tus mascotas hacen +${Math.round((l - 1) * 5)} % de daño${l >= 4 ? ' y se curan solas' : ' (nivel 4: se curan solas)'}`] },
+};
+const PROF_MAX = 10, BP_LEVEL = { infernite: 4, aerite: 6, voidite: 8 };
+const fmt56 = (v) => String(Math.round(v * 10) / 10).replace('.', ',');
+const q56 = (l) => { const m = Math.max(0, (l - 3) * 0.05), t = Math.min(1 - m, 0.15 + l * 0.05); return [1 - m - t, t, m]; };   // [estándar, templada, maestra]
+const QUAL_NAMES = ['Estándar', 'Templada', 'Maestra'], QUAL_COL = ['#c8ccd6', '#7fd0ff', '#ffb84d'];
+const CHARGE56 = new Set([CRYSTAL_BLOCK, CRYSTAL, VOID_CRYSTAL, RUNE_BLOCK]);
+const DEEP56 = new Set([STONE, COBBLE, GRANITE, ANDESITE, DIORITE].filter((b) => b != null));
+const LORE56 = [
+  ['spear', '🗡', 'La lanza', 'Llega hasta dos bloques más lejos que una espada. Corriendo o montado en el grifo, la estocada hace un 35 % más de daño. Su remate es una estocada al frente.'],
+  ['baxe', '🪓', 'El hacha de batalla', 'Lenta, pero su barrido golpea a todos los enemigos que tienes delante (unos 110°). Atraviesa parte de la armadura y uno de cada cuatro golpes causa sangrado o aturde 0,6 s.'],
+  ['hammer', '🔨', 'El martillo de guerra', 'Levanta el martillo antes de golpear: el daño llega en el impacto. La onda de choque daña a los enemigos de alrededor y los acorazados o de piedra reciben un 50 % más.'],
+  ['dagger', '🔪', 'Las dagas', 'Golpean muy rápido. Por la espalda, o hasta 1,2 s después de esquivar, hacen un 60 % más. Con otra daga en la mano secundaria atacas alternando las dos manos y aún más rápido.'],
+  ['combo', '⚔', 'El combo de tres golpes', 'Si vuelves a atacar en menos de 0,9 s encadenas un tajo diagonal, un corte horizontal y un remate que hace un 25 % más, empuja más y te impulsa hacia delante.'],
+  ['shield', '🛡', 'Escudos y parada', 'Con el escudo en alto bloqueas de frente entre el 60 % (madera) y el 90 % (vacuita). Si lo levantas justo antes del golpe (0,25 s) no recibes daño y el atacante queda aturdido.'],
+  ['weight', '⚖', 'El peso de la armadura', 'Ligera (cuero, aerita): atacas hasta un 10 % más rápido y esquivas más lejos. Pesada (diamante, infernita, vacuita): resistes el empuje, pero esquivas algo más corto.'],
+  ['sets', '✨', 'Conjuntos legendarios', 'Infernita: el fuego y la lava no te queman y quien te golpea arde. Vacuita: al esquivar, un segundo de paso sombrío. Aerita: caes sin daño y el grifo descansa antes.'],
+  ['classes', '🌟', 'Las cuatro clases', 'Vanguardia, Lancero, Pícaro y Arcanista. Cada una tiene su habilidad (tecla C) y se mejora con puntos de clase que dan las mazmorras y los encargos.'],
+  ['smith', '⚒', 'Herrería y gemas', 'Cuanto más forjas, más a menudo sale una pieza Templada o Maestra. Desde el nivel 3 puedes engarzar un núcleo de brasa, un fragmento de cristal o una esquirla del vacío en tu arma.'],
+  ['blueprints', '📜', 'Planos de forja', 'Las armas de infernita, aerita y vacuita necesitan un plano o mucha experiencia en la Herrería. Los planos aparecen al romper sellos de mazmorras y al completar encargos.'],
+  ['moon', '🌑', 'La luna carmesí', 'Algunas noches la luna se tiñe de rojo: los monstruos te detectan desde más lejos, sueltan el doble de botín, a veces materiales raros, y una esencia de experiencia extra.'],
+  ['storm', '⚡', 'Tormentas eléctricas', 'Durante una tormenta los cristales y los bloques rúnicos se cargan: acércate y tus golpes harán daño eléctrico. Además pican más peces raros y tesoros.'],
+];
+Object.assign(EFFECTS, {
+  fireres: { name: 'Resistencia elemental', color: [255, 140, 60], icon: '🔥' },
+  lore: { name: 'Saber del oficio', color: [255, 214, 90], icon: '📖' },
+  charged: { name: 'Carga rúnica', color: [140, 200, 255], icon: '⚡' },
+});
+// platos con bonificaciones de oficio
+{
+  const add = (id, e, d, txt) => { const it = ITEMS[id]; if (!it || !it.food) return; it.food.effects = [...(it.food.effects || []), [e, 1, d]]; it.desc = it.desc.replace(/\.$/, '') + ` y ${txt} (${d} s).`; };
+  add(I.DISH_FISH_STEW, 'lore', 180, 'saber del oficio'); add(I.DISH_RICE_BOWL, 'lore', 120, 'saber del oficio');
+  add(I.DISH_CORN_SOUP, 'fireres', 120, 'resistencia elemental'); add(I.DISH_CABBAGE_ROLLS, 'fireres', 180, 'resistencia elemental');
+  add(I.DISH_GOLDEN_FISH, 'lore', 300, 'saber del oficio'); add(I.DISH_GOLDEN_FISH, 'fireres', 300, 'resistencia elemental');
+}
+ACHIEVEMENTS.push(['class_pick', 'Vocación', 'Elige una clase de combate.'], ['combo3', 'Tres tiempos', 'Encadena un combo completo de tres golpes.'],
+  ['parry', 'Muro de acero', 'Haz una parada perfecta con un escudo.'], ['forge_master', 'Obra maestra', 'Forja un arma o armadura de calidad Maestra.'],
+  ['gem_socket', 'Engarzador', 'Engarza una gema en un arma.'], ['prof10', 'Maestro de oficio', 'Lleva un oficio al nivel 10.']);
+
+const rpg56 = {
+  abReady: 0, dash: null, stormT: 0, stormTip: false, regT: 0, flyT: 0, tab56: null,
+  get p() { return game.player; },
+  data(p = game.player) {
+    if (!p) return null;
+    const d = p.rpg || (p.rpg = {});
+    d.cls ??= null; d.day ??= -99; d.pts ??= 0; d.rank ||= {}; d.bp ||= []; d.lore ||= [];
+    d.prof ||= {}; for (const k in PROFS56) d.prof[k] ||= { l: 1, x: 0 };
+    return d;
+  },
+  cls(p) { const d = this.data(p); return d && d.cls ? CLASSES[d.cls] && d.cls : null; },
+  rank(p) { const d = this.data(p), c = this.cls(p); return c ? Math.min(4, d.rank[c] | 0) : 0; },
+  lvl(k, p) { return this.data(p)?.prof[k].l || 1; },
+  /* ---------- Peso de la armadura ---------- */
+  weight(p = game.player) {
+    const n = { light: 0, medium: 0, heavy: 0 };
+    for (const s of p.armor.slots) if (s) n[ARMOR_WEIGHT[ITEMS[s.id].armor.mat] || 'medium']++;
+    return n;
+  },
+  weightName(p) { const n = this.weight(p), tot = n.light + n.medium + n.heavy; if (!tot) return 'Sin armadura'; return WEIGHT_NAMES[n.heavy >= 2 ? 'heavy' : n.light >= 3 || (n.light >= 2 && !n.heavy && !n.medium) ? 'light' : n.light > n.medium + n.heavy ? 'light' : 'medium']; },
+  /* ---------- Valores que lee el combate (§57) y el resto del juego ---------- */
+  atkSpeed(p) { return this.weight(p).light * 0.025; },
+  dmgBonus(p, t) {
+    const c = this.cls(p); let b = 0;
+    if (c === 'vanguard' && t && (t.wt === 'baxe' || t.wt === 'hammer')) b += 0.15;
+    if (c === 'lancer' && t && t.wt === 'spear') b += 0.15 + (p.mount && p.mount.type === 'griffin' ? 0.15 : 0);
+    if (c === 'arcanist' && t && (t.mat === 'voidite' || t.mat === 'aerite')) b += 0.2;
+    if (game.effLvl('charged') > 0) b += 0.15;
+    return b;
+  },
+  critBonus(p, t) { return (this.cls(p) === 'rogue' && t && t.wt === 'dagger' ? 0.15 : 0) + (p.hidden56 > 0 ? 1 : 0); },
+  blockBonus(p) { return this.cls(p) === 'vanguard' ? 0.1 : 0; },
+  bowMul() { const p = game.player; return this.cls(p) === 'lancer' ? 1.15 + (p.mount && p.mount.type === 'griffin' ? 0.15 : 0) : 1; },
+  dodgeDist(p) { const n = this.weight(p); return 1 + n.light * 0.05 - n.heavy * 0.04; },
+  dodgeCdMul(p) { return this.cls(p) === 'rogue' ? 0.75 : 1; },
+  hpBonus(p) { return this.cls(p) === 'vanguard' ? 4 : 0; },
+  dishMul() { return 1 + (this.lvl('cook') - 1) * 0.06; },
+  griffinMax() { return (1 + (this.lvl('tame') - 1) * 0.06) * (this.cls() === 'lancer' ? 1.25 : 1); },
+  griffinRegen() { return char45.setMat() === 'aerite' ? 1.5 : 1; },
+  petMul() { return 1 + (this.lvl('tame') - 1) * 0.05; },
+  feederMul() { return 1 - (this.lvl('tame') - 1) * 0.05; },
+  feederExtra() { return Math.floor(this.lvl('tame') / 3); },
+  stormy() { return game.env && game.env.weather === 'storm' || (typeof events !== 'undefined' && events.cur && events.cur.id === 'storm'); },
+  /* ---------- Oficios ---------- */
+  need(l) { return 40 + l * l * 25; },
+  profXp(k, n) {
+    const p = game.player, d = this.data(p); if (!d || game.mode !== 'survival' || !(n > 0)) return;
+    const P = d.prof[k]; if (P.l >= PROF_MAX) return;
+    P.x += n * (game.effLvl('lore') > 0 ? 1.5 : 1);
+    while (P.l < PROF_MAX && P.x >= this.need(P.l)) {
+      P.x -= this.need(P.l); P.l++;
+      const perk = PROFS56[k].perks(P.l)[0];
+      notify(`${PROFS56[k].icon} ${PROFS56[k].name}: nivel ${P.l}`, perk, 'ach'); sfx.play('levelup', { vol: 0.6 });
+      if (k === 'smith' && P.l === 3) hud.toast('⚒ Ya puedes engarzar gemas: Personaje → Oficios', 3500);
+      if (k === 'smith') for (const [tier, L] of Object.entries(BP_LEVEL)) if (P.l === L) hud.toast(`📜 Ya conoces las recetas de armas de ${TIER56[tier].name}`, 3500);
+      if (P.l >= PROF_MAX) { P.x = 0; game.unlock('prof10'); }
+      if (typeof journalAdd === 'function') journalAdd(PROFS56[k].icon, `${PROFS56[k].name} sube al nivel ${P.l}`);
+    }
+    if (char45.open) char45.render();
+  },
+  /* ---------- Forja: calidad al fabricar ---------- */
+  forgeable(id) { const it = ITEMS[id]; return !!it && (it.armor || it.shield || (it.tool && (it.tool.type === 'sword' || it.tool.wt))); },
+  forge(id) {
+    if (!this.forgeable(id) || game.mode !== 'survival') return null;
+    const it = ITEMS[id], tier = it.tool?.mat || it.tool?.tier || it.armor?.mat || '', rare = ['diamond', 'infernite', 'voidite', 'aerite', 'abyss', 'special'].includes(tier);
+    this.profXp('smith', rare ? 30 : 12);
+    const [st, tp] = q56(this.lvl('smith')), r = Math.random(), q = r < st ? 0 : r < st + tp ? 1 : 2;
+    if (!q) return null;
+    hud.toast(`${q === 2 ? '🌟' : '✨'} ¡Calidad ${QUAL_NAMES[q]}! ${itemName(id)} (+${q * 10} %)`, 2600);
+    if (q === 2) game.unlock('forge_master');
+    return { _q: q };
+  },
+  qualOf(s) { return (s && s.ench && s.ench._q) || 0; },
+  // engarzar una gema en el arma de la mano
+  socket(gem) {
+    const p = game.player, s = p.held(), G = GEMS56[gem];
+    if (!s || !G || !this.tool56(s)) return;
+    if (this.lvl('smith') < 3 && game.mode !== 'creative') { hud.toast('Necesitas Herrería nivel 3'); return; }
+    if (game.mode !== 'creative') { if (p.inv.count(G.item) < 1) { hud.toast(`Te falta: ${itemName(G.item)}`); return; } p.inv.remove(G.item, 1); }
+    s.ench = { ...(s.ench || {}), _g: gem };
+    this.profXp('smith', 20); game.unlock('gem_socket'); sfx.play('levelup', { vol: 0.5 }); hud.toast(`💎 ${G.name} engarzado en ${itemName(s.id)}`, 2600); hud.update(); char45.render();
+  },
+  tool56(s) { const t = s && ITEMS[s.id]?.tool; return !!t && t.type === 'sword'; },
+  /* ---------- Planos de forja (recetas de oficio) ---------- */
+  locked(id) {
+    const W = WEAPON_INFO[id]; if (!W || !BP_LEVEL[W.tier] || !game.player || game.mode === 'creative') return false;
+    const d = this.data(); return this.lvl('smith') < BP_LEVEL[W.tier] && !d.bp.includes(id);
+  },
+  giveBlueprint() {
+    const d = this.data(), list = Object.keys(WEAPON_INFO).map(Number).filter((id) => this.locked(id));
+    if (!list.length) return null;
+    const id = list[Math.floor(Math.random() * list.length)]; d.bp.push(id);
+    notify('📜 Plano de forja', `Ya puedes fabricar: ${itemName(id)}`, 'ach'); if (typeof journalAdd === 'function') journalAdd('📜', `Plano de forja: ${itemName(id)}`);
+    return id;
+  },
+  /* ---------- Saber (Enciclopedia) ---------- */
+  learn(key, quiet) {
+    const d = this.data(); if (!d || d.lore.includes(key)) return false;
+    const L = LORE56.find((x) => x[0] === key); if (!L) return false;
+    d.lore.push(key); if (!quiet) hud.toast(`📖 Nueva entrada en la Enciclopedia: ${L[2]}`, 2600);
+    return true;
+  },
+  learnNext() { const d = this.data(), L = LORE56.find((x) => !d.lore.includes(x[0])); return L ? this.learn(L[0]) : false; },
+  // mazmorra despejada o encargo completado: punto de clase, a veces un plano y una entrada del saber
+  reward(kind) {
+    const d = this.data(); if (!d || game.mode !== 'survival') return;
+    d.pts++; hud.toast(`🌟 +1 punto de clase${kind === 'seal' ? ' (mazmorra despejada)' : ' (encargo completado)'}`, 2600);
+    if (kind === 'seal' || Math.random() < 0.35) this.giveBlueprint();
+    this.learnNext();
+  },
+  /* ---------- Clase ---------- */
+  canChange() { const d = this.data(); return !d.cls || (game.env.days | 0) - d.day >= 1 || game.mode === 'creative'; },
+  choose(c) {
+    const d = this.data(); if (!CLASSES[c] || d.cls === c) return;
+    if (!this.canChange()) { hud.toast('Solo puedes cambiar de clase una vez por día del juego'); return; }
+    d.cls = c; d.day = game.env.days | 0; this.abReady = 0;
+    const p = game.player; if (p.health > p.maxHp) p.health = p.maxHp;
+    sfx.play('levelup'); notify(`${CLASSES[c].icon} Clase: ${CLASSES[c].name}`, CLASSES[c].ab.name + ' (tecla C)', 'ach'); game.unlock('class_pick'); this.learn('classes', true);
+    hud.update(true); char45.render(); this.syncTouch();
+  },
+  upgrade() {
+    const d = this.data(), c = this.cls(); if (!c) return;
+    if ((d.rank[c] | 0) >= 4) return; if (d.pts < 1) { hud.toast('Necesitas un punto de clase'); return; }
+    d.pts--; d.rank[c] = (d.rank[c] | 0) + 1; sfx.play('levelup', { vol: 0.6 }); char45.render();
+  },
+  abCd(p) {
+    const c = this.cls(p); if (!c) return 0;
+    let cd = CLASSES[c].ab.cd * (1 - this.rank(p) * 0.08);
+    if (c === 'arcanist' && (game.effLvl('charged') > 0 || this.nearRune(p))) cd *= 0.5;
+    return cd;
+  },
+  nearRune(p) { const x0 = Math.floor(p.pos.x), y0 = Math.floor(p.pos.y), z0 = Math.floor(p.pos.z); for (let x = -6; x <= 6; x++) for (let y = -3; y <= 4; y++) for (let z = -6; z <= 6; z++) if (world.get(x0 + x, y0 + y, z0 + z) === RUNE_BLOCK) return true; return false; },
+  useAbility() {
+    const g = game, p = g.player, c = this.cls(p);
+    if (g.state !== 'playing' || !p || p.dead) return;
+    if (!c) { hud.toast('Elige una clase en Personaje → Clase (tecla H)', 2200); return; }
+    const now = performance.now() / 1000;
+    if (now < this.abReady) { hud.toast(`${CLASSES[c].ab.name}: lista en ${Math.ceil(this.abReady - now)} s`, 900); return; }
+    this.abReady = now + this.abCd(p);
+    const r = this.rank(p), mul = 1 + r * 0.25, d = new THREE.Vector3(); camera.getWorldDirection(d); d.y = 0; d.normalize();
+    const foes = (R, o = p.pos) => g.entities.list.filter((e) => combat56.hittable(e) && !e.isPlayer && e.pos.distanceTo(o) < R);
+    const hit = (e, dmg) => { e.lastHit = 'player'; combat.crit = false; const ok = e.hurt(dmg, p.pos); if (ok) { g.stats.add('damage', dmg); onPlayerHit(e, null, dmg); e.lean56 = { t: 0.26, dx: e.pos.x - p.pos.x, dz: e.pos.z - p.pos.z }; } return ok; };
+    let n = 0;
+    if (c === 'vanguard') {
+      for (const e of foes(4)) if (hit(e, 5 * mul)) { n++; if (!e.isBoss) { e.stunT = Math.max(e.stunT || 0, 1.5); const dx = e.pos.x - p.pos.x, dz = e.pos.z - p.pos.z, l = Math.hypot(dx, dz) || 1; e.vel.x += dx / l * 9; e.vel.z += dz / l * 9; e.vel.y = 6; } }
+      g.shake = 0.6; sfx.play('slam'); this.ring(p.pos, 4, [0.75, 0.6, 0.45]);
+    } else if (c === 'lancer') {
+      this.dash = { t: 0.26, dir: d.clone(), v: 27, hit: new Set(), dmg: 8 * mul }; p.invuln = Math.max(p.invuln, 0.3); sfx.play('swing', { pitch: 0.6 });
+    } else if (c === 'rogue') {
+      this.dash = { t: 0.2, dir: d.clone(), v: 24, hit: null }; p.hidden56 = 3 + r * 0.5; document.body.classList.add('hidden56'); sfx.play('swing', { pitch: 1.4 });
+      if (settings.particles) g.particles.emit(p.pos.x, p.pos.y + 1, p.pos.z, [0.35, 0.2, 0.55], 16, { speed: 1.8, life: 0.6, size: 0.12 });
+    } else {
+      for (const e of foes(6)) if (hit(e, 5 * mul)) { n++; e.slowT = Math.max(e.slowT || 0, 4); }
+      sfx.play('chime', { pitch: 0.8 }); this.ring(p.pos, 6, [0.45, 0.95, 0.9]); g.env.flash = Math.max(g.env.flash || 0, 0.12);
+    }
+    if (c === 'vanguard' || c === 'arcanist') hud.toast(`${CLASSES[c].ab.name}${n ? `: ${n} ${n === 1 ? 'enemigo alcanzado' : 'enemigos alcanzados'}` : ''}`, 1200);
+  },
+  ring(o, R, col) { if (!settings.particles) return; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; game.particles.emit(o.x + Math.cos(a) * R, o.y + 0.3, o.z + Math.sin(a) * R, col, 2, { speed: 0.8, up: 1.4, life: 0.6, size: 0.12 }); } },
+  /* ---------- Cada fotograma ---------- */
+  update(dt) {
+    const g = game, p = g.player; if (!p || g.state !== 'playing') return;
+    if (this.dash) {
+      const D = this.dash; D.t -= dt;
+      p.vel.x = D.dir.x * D.v; p.vel.z = D.dir.z * D.v; if (p.vel.y < 0) p.vel.y = 0;
+      // distancia de cada enemigo al tramo recorrido desde el fotograma anterior (así no se salta a nadie aunque vaya rápido)
+      const a = D.last || p.pos.clone(), bx = p.pos.x - a.x, bz = p.pos.z - a.z, bl = bx * bx + bz * bz || 1;
+      const segD = (e) => { const k = clamp(((e.pos.x - a.x) * bx + (e.pos.z - a.z) * bz) / bl, 0, 1); return Math.hypot(e.pos.x - a.x - bx * k, e.pos.z - a.z - bz * k); };
+      D.last = p.pos.clone();
+      if (D.hit) for (const e of g.entities.list) if (combat56.hittable(e) && !e.isPlayer && !D.hit.has(e) && Math.abs(e.pos.y - p.pos.y) < 2.2 && segD(e) < 1.3 + e.hw) { D.hit.add(e); e.lastHit = 'player'; combat.crit = false; if (e.hurt(D.dmg, p.pos)) { g.stats.add('damage', D.dmg); onPlayerHit(e, null, D.dmg); dmgText.add(e.pos.x, e.pos.y + e.h + 0.6, e.pos.z, '¡Atravesado!', 'crit'); } }
+      if (settings.particles) g.particles.emit(p.pos.x, p.pos.y + 0.6, p.pos.z, this.cls(p) === 'rogue' ? [0.35, 0.2, 0.55] : [0.8, 0.9, 1], 2, { speed: 0.5, life: 0.3, size: 0.09 });
+      if (D.t <= 0) { this.dash = null; p.vel.x *= 0.3; p.vel.z *= 0.3; }
+    }
+    if (p.hidden56 > 0) { p.hidden56 -= dt; if (p.hidden56 <= 0) document.body.classList.remove('hidden56'); }
+    if (p.shadow56 > 0) p.shadow56 -= dt;
+    // tormenta: los cristales y las runas cercanas te cargan
+    if ((this.stormT -= dt) <= 0) {
+      this.stormT = 1;
+      if (this.stormy() && g.mode === 'survival') {
+        const x0 = Math.floor(p.pos.x), y0 = Math.floor(p.pos.y), z0 = Math.floor(p.pos.z); let hitB = null;
+        for (let x = -3; x <= 3 && !hitB; x++) for (let y = -2; y <= 3 && !hitB; y++) for (let z = -3; z <= 3 && !hitB; z++) if (CHARGE56.has(world.get(x0 + x, y0 + y, z0 + z))) hitB = [x0 + x, y0 + y, z0 + z];
+        if (hitB) {
+          if (g.effLvl('charged') <= 0) { hud.toast('⚡ ¡El cristal te carga de energía! Tus golpes hacen daño eléctrico', 2600); this.learn('storm', true); }
+          g.applyEffect('charged', 1, this.cls(p) === 'arcanist' ? 60 : 30);
+          if (settings.particles) g.particles.emit(hitB[0] + 0.5, hitB[1] + 1, hitB[2] + 0.5, [0.6, 0.85, 1], 6, { speed: 1.2, up: 1.5, life: 0.4, size: 0.07 });
+        }
+      }
+      // mascotas que se curan solas (Domador 4+)
+      if (this.lvl('tame') >= 4 && (this.regT += 1) >= 4) { this.regT = 0; for (const e of g.entities.list) if (e.kind === 'mob' && e.tamed && !e.dead && !e.deathT && !e.remote && e.hp < (e.maxHp || e.spec.hp)) e.hp = Math.min(e.maxHp || e.spec.hp, e.hp + 1); }
+      // vuelo en grifo: experiencia de Domador
+      if (p.mount && p.mount.type === 'griffin' && p.flying && (this.flyT += 1) >= 10) { this.flyT = 0; this.profXp('tame', 4); }
+    }
+  },
+  /* ---------- Información en la ficha de los objetos ---------- */
+  infoLines(id, st) {
+    const it = ITEMS[id], out = [];
+    if (it.tool && it.tool.wt) {
+      const t = it.tool, q = combat56.qual(st);
+      out.push(`Daño ${fmt56(t.dmg * q)}`, `${fmt56(1 / (0.45 * (t.fast || 1)))} golpes/s`, `Alcance ${t.reach >= 0 ? '+' : ''}${fmt56(t.reach || 0)}`, `Empuje ×${fmt56(t.kb ?? 1)}`);
+      if (t.sweep) out.push(`Barrido ${t.sweep}°`);
+      if (t.pierce) out.push(`Perfora ${Math.round(t.pierce * 100)} % de armadura`);
+      if (this.locked(id)) out.push(`<span style="color:#e0904a">🔒 Necesitas un plano de forja o Herrería ${BP_LEVEL[t.mat]}</span>`);
+    } else if (it.tool && it.tool.type === 'sword') out.push(`${fmt56(1 / (0.45 * (it.tool.fast || 1)))} golpes/s`);
+    if (it.shield) out.push(`Bloquea ${Math.round((it.block ?? 0.75) * 100)} % de frente`);
+    if (it.armor) out.push(`Peso: ${WEIGHT_NAMES[ARMOR_WEIGHT[it.armor.mat] || 'medium']}`);
+    const q = this.qualOf(st); if (q) out.push(`<span style="color:${QUAL_COL[q]}">Calidad ${QUAL_NAMES[q]} (+${q * 10} %)</span>`);
+    const g = st && st.ench && st.ench._g; if (g && GEMS56[g]) out.push(`<span style="color:#ff9ad0">💎 ${GEMS56[g].name}: ${GEMS56[g].txt}</span>`);
+    return out;
+  },
+  /* ---------- Botón táctil de la habilidad ---------- */
+  syncTouch() { const b = $('#tbClass'); if (b) { const c = this.cls(); b.classList.toggle('hide', !c); if (c) b.querySelector('span').textContent = CLASSES[c].icon; } },
+};
+Object.defineProperty(Player.prototype, 'maxHp', { configurable: true, get() { return 20 + rpg56.hpBonus(this); } });
+
+/* ---------- Calidad: más puntos de armadura ---------- */
+{
+  armorPoints = function (p) { let s = 0; for (const a of p.armor.slots) if (a) s += ITEMS[a.id].armor.pts * (1 + rpg56.qualOf(a) * 0.1); return Math.round(s * 10) / 10; };
+}
+/* ---------- Recetas bloqueadas por planos ---------- */
+{
+  const _m = matchRecipe;
+  matchRecipe = function (grid, w) { const r = _m(grid, w); return r && rpg56.locked(r.out) ? null : r; };
+}
+/* ---------- Daño recibido: conjuntos, paso sombrío, resistencia elemental y peso ---------- */
+{
+  const FIRE = /quem|lava|fuego|llama|brasa|ardiente/i;
+  const _dmg = Player.prototype.damage;
+  Player.prototype.damage = function (n, cause, from, kind) {
+    if (game.mode !== 'survival' || this.dead) return _dmg.call(this, n, cause, from, kind);
+    const hit = !kind || kind === 'contact';
+    if (this.shadow56 > 0 && kind !== 'void' && kind !== 'starve') return;                  // paso sombrío del conjunto de vacuita
+    const set = char45.setMat();
+    if (cause && FIRE.test(cause)) { if (set === 'infernite') return; if (game.effLvl('fireres') > 0) n *= 0.5; }
+    const heavy = rpg56.weight(this).heavy, vx = this.vel.x, vz = this.vel.z, hp = this.health;
+    const r = _dmg.call(this, n, cause, from, kind);
+    if (this.health < hp && from && heavy) { const k = 1 - Math.min(0.6, heavy * 0.15); this.vel.x = vx + (this.vel.x - vx) * k; this.vel.z = vz + (this.vel.z - vz) * k; }
+    // conjunto de infernita: quien te golpea cuerpo a cuerpo recibe chispas
+    if (this.health < hp && hit && from && set === 'infernite') {
+      const att = game.entities.list.find((e) => e.kind === 'mob' && !e.dead && !e.deathT && e.pos.distanceTo(from) < 2.2 && e !== this);
+      if (att && !att.spec.fireproof) { att.burnT = Math.max(att.burnT || 0, 3); att.lastHit = 'player'; att.hurt(1.5, this.pos); }
+      if (settings.particles) game.particles.emit(this.pos.x, this.pos.y + 1, this.pos.z, [1, 0.55, 0.15], 10, { speed: 2.4, up: 1.6, life: 0.4, size: 0.07 });
+    }
+    return r;
+  };
+}
+/* ---------- Experiencia de oficio y recompensas a partir de lo que pasa en el juego ---------- */
+{
+  const _add = game.stats.add;
+  game.stats.add = function (k, n = 1) {
+    _add.call(this, k, n);
+    if (k === 'cooked') rpg56.profXp('cook', 10 * n);
+    else if (k === 'tamed') rpg56.profXp('tame', 40 * n);
+    else if (k === 'bred') rpg56.profXp('tame', 15 * n);
+    else if (k === 'seals') rpg56.reward('seal');
+    else if (k === 'quests') rpg56.reward('quest');
+    else if (k === 'parries') game.unlock('parry');
+  };
+  const _brk = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const id = world.get(x, y, z), surv = this.mode === 'survival';
+    const r = _brk.call(this, x, y, z, byPlayer);
+    if (!byPlayer || !surv || world.get(x, y, z) === id || !id) return r;
+    if (ORE_BLOCKS.has(id)) rpg56.profXp('mine', 6);
+    else if (DEEP56.has(id)) {
+      rpg56.profXp('mine', y < 32 ? 0.6 : 0.3);
+      // gemas ocultas en la piedra profunda
+      if (y < 32 && dimOf(x, z) === 0 && Math.random() < (0.3 + rpg56.lvl('mine') * 0.15) / 100) {
+        const pick = Math.random(), gid = pick < 0.5 ? I.CRYSTAL_SHARD : pick < 0.85 ? I.EMERALD : I.DIAMOND;
+        this.entities.dropItem({ id: gid, count: 1 }, x + 0.5, y + 0.4, z + 0.5); dmgText.add(x + 0.5, y + 1, z + 0.5, '💎 Gema oculta', 'crit'); sfx.play('chime', { pitch: 1.3 });
+      }
+    }
+    return r;
+  };
+  const _kill = game.onMobKilled;
+  game.onMobKilled = function (m) {
+    const r = _kill.call(this, m);
+    // luna carmesí: materiales raros y esencia de experiencia
+    if (m && m.bloodMoon && m.lastHit === 'player' && this.mode === 'survival') {
+      this.player.addXp(4); dmgText.add(m.pos.x, m.pos.y + m.h + 0.8, m.pos.z, '+4 esencia', 'fx');
+      if (Math.random() < 0.2) { const list = [[I.EMBER, 1, 3], [I.CRYSTAL_SHARD, 1, 3], [I.VOID_SHARD, 1, 2], [I.EMERALD, 1, 2], [I.DIAMOND, 1, 1]], [id, a, b] = list[Math.floor(Math.random() * list.length)]; this.entities.dropItem({ id, count: a + Math.floor(Math.random() * (b - a + 1)) }, m.pos.x, m.pos.y + 0.5, m.pos.z); }
+      rpg56.learn('moon', true);
+    }
+    return r;
+  };
+  // el primer arma de cada familia que tienes desbloquea su entrada del saber
+  const _disc = Player.prototype.discover;
+  Player.prototype.discover = function (id) { const r = _disc.call(this, id); const W = WEAPON_INFO[id]; if (W && this === game.player) rpg56.learn(W.wt); if (SHIELD56[id] && this === game.player) rpg56.learn('shield'); return r; };
+}
+/* ---------- Bonificaciones de clase y oficio dentro de MODS ---------- */
+{
+  const _rc = char45.recalc;
+  char45.recalc = function () {
+    _rc.call(this);
+    const p = game.player; if (!p) return;
+    MODS.ore += (rpg56.lvl('mine') - 1) * 0.03;
+    if (rpg56.cls(p) === 'arcanist') MODS.potion += 0.3;
+    for (const k in MOD_CAP) MODS[k] = Math.min(MOD_CAP[k], MODS[k]);
+    if (p.health > p.maxHp) p.health = p.maxHp;
+  };
+}
+/* ---------- Guardado ---------- */
+{
+  const P = Player.prototype, _tj = P.toJSON, _ld = P.load;
+  P.toJSON = function () { const o = _tj.call(this); if (this.rpg) { const d = rpg56.data(this); o.rpg = { cls: d.cls, day: d.day, pts: d.pts, rank: d.rank, bp: d.bp, lore: d.lore, prof: Object.fromEntries(Object.entries(d.prof).map(([k, v]) => [k, { l: v.l, x: Math.round(v.x * 10) / 10 }])) }; } return o; };
+  P.load = function (o) {
+    const r = _ld.call(this, o), s = o && typeof o.rpg === 'object' && o.rpg ? o.rpg : {};
+    const d = { cls: CLASSES[s.cls] ? s.cls : null, day: Number.isFinite(s.day) ? s.day : -99, pts: clamp(Math.floor(+s.pts || 0), 0, 999), rank: {}, bp: [], lore: [], prof: {} };
+    for (const c in CLASSES) if (Number.isFinite(s.rank?.[c])) d.rank[c] = clamp(Math.floor(s.rank[c]), 0, 4);
+    if (Array.isArray(s.bp)) d.bp = s.bp.filter((id) => WEAPON_INFO[id]).slice(0, 64);
+    if (Array.isArray(s.lore)) d.lore = s.lore.filter((k) => LORE56.some((L) => L[0] === k));
+    for (const k in PROFS56) { const v = s.prof?.[k]; d.prof[k] = { l: clamp(Math.floor(+v?.l || 1), 1, PROF_MAX), x: Math.max(0, +v?.x || 0) }; }
+    this.rpg = d; rpg56.abReady = 0; this.hidden56 = 0; this.shadow56 = 0;
+    return r;
+  };
+}
+
+/* ==========================================================================
+   §59 COMBATE RPG 5.6 — pantallas y controles
+   --------------------------------------------------------------------------
+   · Personaje: pestañas nuevas «Clase» (elegir, habilidad, mejorar, peso de
+     la armadura) y «Oficios» (niveles, ventajas, forja con gemas y planos).
+   · Enciclopedia: pestaña «Saber» con las entradas que se desbloquean.
+   · Habilidad de clase: tecla C (configurable), botón táctil y cruceta
+     derecha del mando fuera del creativo; barra de recarga bajo la mira.
+   · Avatar: hombreras, visera y cresta del casco, y capa con la armadura
+     completa (tercera persona, Aspecto y otros jugadores no; solo el tuyo).
+   ========================================================================== */
+{
+  /* ---------- Personaje → Clase y Oficios ---------- */
+  const _render = char45.render;
+  char45.render = function () {
+    if (this.tab !== 'class' && this.tab !== 'profs') return _render.call(this);
+    $$('#charScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.chtab === this.tab));
+    const body = $('#charBody'), p = game.player, d = rpg56.data(p), c = rpg56.cls(p);
+    let h = '';
+    if (this.tab === 'class') {
+      const can = rpg56.canChange(), r = rpg56.rank(p);
+      h += `<div class="skHead"><b>${c ? `${CLASSES[c].icon} ${CLASSES[c].name}` : 'Sin clase'}</b><span class="skPts">${d.pts} ${d.pts === 1 ? 'punto de clase' : 'puntos de clase'}</span>
+        <span class="clsNote">${c ? (can ? 'Puedes cambiar de clase hoy.' : 'Podrás cambiar de clase mañana (día del juego).') : 'Elige una: la primera vez es gratis.'} Los puntos se ganan rompiendo sellos de mazmorras y completando encargos.</span></div><div class="clsGrid">`;
+      for (const [k, C] of Object.entries(CLASSES)) {
+        const mine = k === c, rk = Math.min(4, d.rank[k] | 0);
+        h += `<div class="clsCard${mine ? ' on' : ''}" style="--bc:${C.color}"><h3>${C.icon} ${C.name}</h3><p>${C.desc}</p>
+          <p class="clsAb"><b>${C.ab.name}</b> · ${fmt56(C.ab.cd * (1 - rk * 0.08))} s<br>${C.ab.txt(rk)}</p>
+          <p class="clsRank">${Array.from({ length: 4 }, (_, i) => (i < rk ? '<u>◆</u>' : '◇')).join('')} rango ${rk}/4</p>
+          ${mine ? (rk < 4 ? `<button class="btn clsBtn" data-up="1"${d.pts < 1 ? ' disabled' : ''}>Mejorar habilidad (1 punto)</button>` : '<button class="btn clsBtn" disabled>Habilidad al máximo</button>')
+            : `<button class="btn clsBtn" data-cls="${k}"${!can && c ? ' disabled' : ''}>${c ? 'Cambiar a esta clase' : 'Elegir'}</button>`}</div>`;
+      }
+      const n = rpg56.weight(p), set = char45.setMat();
+      h += `</div><div class="gearGrid" style="margin-top:6px"><div class="gearBox"><h3>⚖ Peso de la armadura: ${rpg56.weightName(p)}</h3>
+        <p class="${n.light ? 'on' : 'off'}">Ligera ×${n.light}: +${Math.round(n.light * 2.5)} % de velocidad de ataque y esquiva ${Math.round(n.light * 5)} % más larga</p>
+        <p class="${n.medium ? 'on' : 'off'}">Media ×${n.medium}: equilibrio entre defensa y movilidad</p>
+        <p class="${n.heavy ? 'on' : 'off'}">Pesada ×${n.heavy}: ${Math.round(Math.min(0.6, n.heavy * 0.15) * 100)} % menos empuje, esquiva ${Math.round(n.heavy * 4)} % más corta</p></div>
+        <div class="gearBox"><h3>✨ Conjunto</h3>${set ? `<p class="on">✔ <b>${SET_BONUS[set].name}</b>: ${SET_BONUS[set].desc}</p>` : '<p class="off">Lleva las cuatro piezas del mismo material.</p>'}
+        <p>Habilidad de clase: <b>${keyName(settings.keys.classAb)}</b>${IS_TOUCH ? ', botón ✦' : ''}${pad.connected ? ', cruceta derecha' : ''}.</p></div></div>`;
+    } else {
+      h += '<div class="clsGrid">';
+      for (const [k, P] of Object.entries(PROFS56)) {
+        const v = d.prof[k], max = v.l >= PROF_MAX, need = rpg56.need(v.l);
+        h += `<div class="clsCard on profCard"><h3>${P.icon} ${P.name} <small>nivel ${v.l}</small></h3><div class="skBar"><i style="width:${max ? 100 : v.x / need * 100}%"></i><span>${max ? 'Nivel máximo' : `${Math.floor(v.x)} / ${need}`}</span></div>
+          <p class="clsNote">${P.how}</p>${P.perks(v.l).map((t) => `<p>• ${t}</p>`).join('')}`;
+        if (k === 'smith') {
+          const s = p.held(), ok = rpg56.tool56(s), q = rpg56.qualOf(s), g = s && s.ench && s.ench._g;
+          h += `<h4>Forja</h4>${ok ? `<p>En la mano: <b>${itemName(s.id)}</b> · <span style="color:${QUAL_COL[q]}">${QUAL_NAMES[q]}</span>${g ? ` · 💎 ${GEMS56[g].name}` : ''}</p>` : '<p class="clsNote">Ten un arma en la mano para engarzarle una gema.</p>'}
+            <div class="gemRow">${Object.entries(GEMS56).map(([gk, G]) => `<button class="btn gemBtn" data-gem="${gk}" title="${G.txt}"${!ok || (v.l < 3 && game.mode !== 'creative') || (p.inv.count(G.item) < 1 && game.mode !== 'creative') ? ' disabled' : ''}><i style="background-image:url(${ICON[G.item]})"></i>${G.name} (${p.inv.count(G.item)})</button>`).join('')}</div>
+            <p class="clsNote">${v.l < 3 ? 'Necesitas Herrería nivel 3 para engarzar.' : 'Cada arma lleva una gema; engarzar otra reemplaza la anterior.'}</p>`;
+          const bps = Object.keys(WEAPON_INFO).map(Number).filter((id) => BP_LEVEL[WEAPON_INFO[id].tier]);
+          const got = bps.filter((id) => !rpg56.locked(id));
+          h += `<h4>Planos de forja (${got.length}/${bps.length})</h4><p class="clsNote">${got.length ? got.map((id) => itemName(id)).join(' · ') : 'Ninguno todavía: rompe sellos de mazmorras y completa encargos.'}</p>`;
+        }
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+    if (body._h !== h) { body._h = h; body.innerHTML = h; }
+  };
+  $('#charBody').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    if (b.dataset.cls) rpg56.choose(b.dataset.cls);
+    else if (b.dataset.up) rpg56.upgrade();
+    else if (b.dataset.gem) rpg56.socket(b.dataset.gem);
+  });
+  /* ---------- Enciclopedia → Saber ---------- */
+  const _cr = codex.render;
+  codex.render = function () {
+    if (this.tab !== 'lore') return _cr.call(this);
+    $$('#codexScreen .stab').forEach((b) => b.classList.toggle('on', b.dataset.ctab === this.tab));
+    if (this.preview) this.preview.stop();
+    const box = $('#codexBody'), d = rpg56.data(), got = LORE56.filter((L) => d.lore.includes(L[0]) || game.mode === 'creative');
+    box.scrollTop = 0;
+    box.innerHTML = `<div class="cxProg"><b>${got.length} / ${LORE56.length}</b> entradas del saber<u><s style="width:${(got.length / LORE56.length * 100).toFixed(1)}%"></s></u></div>
+      <p class="cxHint">Las entradas se desbloquean al conseguir cada tipo de arma, al romper sellos de mazmorras y al completar encargos.</p>
+      <div class="loreGrid">${LORE56.map((L) => { const on = got.includes(L); return `<div class="loreCard${on ? '' : ' off'}"><h4>${on ? L[1] : '🔒'} ${on ? L[2] : '???'}</h4><p>${on ? L[3] : 'Todavía no descubriste esta entrada.'}</p></div>`; }).join('')}</div>`;
+  };
+  /* ---------- Habilidad de clase: tecla, mando y botón táctil ---------- */
+  KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'dodge') + 1, 0, ['classAb', 'Habilidad de clase', 'KeyC']);
+  DEFAULT_KEYS.classAb = 'KeyC'; settings.keys.classAb ??= 'KeyC';
+  const _ad = actionDown;
+  actionDown = function (a, ev) { if (a === 'classAb') { rpg56.useAbility(); return; } return _ad(a, ev); };
+  const _press = pad.press;
+  pad.press = function (i, a) { if (a === 'fly' && game.mode !== 'creative' && rpg56.cls()) a = 'classAb'; return _press.call(this, i, a); };
+  const tb = $('#tbClass');
+  if (tb) tb.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); rpg56.useAbility(); });
+  /* ---------- Barra de recarga: la del objeto, o la de la clase ---------- */
+  const _hud = updateAbilityHud;
+  updateAbilityHud = function () {
+    _hud();
+    const el = $('#abilityCd'), p = game.player; if (!el || !p || game.state !== 'playing') return;
+    const c = rpg56.cls(p); if (!c || el.style.display === 'block') return;
+    const left = rpg56.abReady - performance.now() / 1000, f = clamp(1 - left / rpg56.abCd(p), 0, 1);
+    el.style.display = 'block'; el.firstChild.style.width = (f * 100).toFixed(0) + '%'; el.classList.toggle('ready', f >= 1); el.title = CLASSES[c].ab.name;
+  };
+  /* ---------- Avatar: detalles de armadura en 3D ---------- */
+  const _sa = PlayerAvatar.prototype.syncArmor;
+  PlayerAvatar.prototype.syncArmor = function (p) {
+    const before = this.armorSig; _sa.call(this, p);
+    if (this.armorSig === before) return;
+    const M = this.model, add = (pivot, boxes) => {
+      const geo = mergeGeometries(boxes.map(([w, h, d, x, y, z, c]) => cbox(w * P16, h * P16, d * P16, x * P16, y * P16, z * P16, c)));
+      const mesh = new THREE.Mesh(geo, this.mat); pivot.add(mesh); this.armorMeshes.push(mesh);
+    };
+    const sl = p.armor.slots, full = sl.every(Boolean);
+    sl.forEach((s) => {
+      if (!s) return;
+      const a = ITEMS[s.id].armor, base = ARMOR_STATS[a.mat]?.color || [170, 170, 176], c = rgb(...base), d = c.map((v) => v * 0.72), l = c.map((v) => Math.min(1, v * 1.18)), w = ARMOR_WEIGHT[a.mat] || 'medium';
+      if (a.slot === 'chest' && w !== 'light') for (const arm of M.arms) add(arm, w === 'heavy' ? [[6.8, 2, 6.8, 0, 2.9, 0, l], [6, 1.2, 6, 0, 1.4, 0, d]] : [[6.4, 1.6, 6.4, 0, 2.7, 0, d]]);   // hombreras
+      if (a.slot === 'helmet') {
+        add(M.head, [[9.6, 1.2, 1.4, 0, 5.2, 4.4, d]]);                                                  // visera
+        if (w !== 'light') add(M.head, [[1.4, w === 'heavy' ? 2.8 : 1.8, 7, 0, 9.8, -0.4, w === 'heavy' ? l : d]]);   // cresta
+      }
+    });
+    if (full) { const ch = ITEMS[sl[1].id].armor, cc = rgb(...(ARMOR_STATS[ch.mat]?.color || [170, 170, 176])).map((v) => v * 0.6); add(M.body, [[8.2, 10.5, 0.8, 0, -0.8, -3.1, cc], [8.6, 1.2, 1, 0, 4.6, -3, cc.map((v) => v * 0.8)]]); }   // capa corta
+  };
+  rpg56.syncTouch();
+}
+/* ---------- Pícaro: atacar desde las sombras ---------- */
+{
+  const _hit = combat56.hitOne;
+  combat56.hitOne = function (mt, s, t, step, scale, hand) {
+    const p = game.player, hidden = p.hidden56 > 0;
+    const r = _hit.call(this, mt, s, t, step, scale, hand);
+    if (r && hidden) { p.hidden56 = 0; document.body.classList.remove('hidden56'); dmgText.add(mt.pos.x, mt.pos.y + mt.h + 1.3, mt.pos.z, '¡Emboscada!', 'crit'); }
+    if (r && game.effLvl('charged') > 0 && settings.particles) game.particles.emit(mt.pos.x, mt.pos.y + mt.h * 0.7, mt.pos.z, [0.6, 0.85, 1], 6, { speed: 3, life: 0.25, size: 0.05 });
+    return r;
+  };
+  const _atk = combat56.attack;
+  combat56.attack = function (mt) { const r = _atk.call(this, mt); if (r && this.step === 2 && mt) game.unlock('combo3'); return r; };
+}
+/* ---------- Sonidos nuevos: choque metálico de la parada perfecta ---------- */
+{
+  const SFX56 = {
+    clang: (s, d, t, k) => { s.tone(d, 'square', 1500 * k, 980 * k, t, 0.09, 0.09); s.tone(d, 'triangle', 2600 * k, 2100 * k, t, 0.3, 0.07); s.burst(d, t, 0.05, 0.3, 'highpass', 3200); },
+  };
+  const _play = sfx.play;
+  sfx.play = function (name, opts = {}) {
+    const fx = SFX56[name]; if (!fx) return _play.call(this, name, opts);
+    if (!this.ctx || this.ctx.state !== 'running') return;
+    const d = this.out(opts); if (!d) return;
+    fx(this, d, this.ctx.currentTime, opts.pitch ?? 1);
+  };
+}
+/* ---------- Zoom: mantener Z (rueda para acercar o alejar), botón 🔍 táctil, mantener R3 en el mando ---------- */
+const zoom56 = {
+  level: 4, key: false, touch: false, padT0: 0, padHeld: false,
+  get on() { return game.state === 'playing' && (this.key || this.touch || this.padHeld); },
+  fovMul() { return this.on ? 1 / this.level : 1; },
+  sens() { return this.on ? Math.max(0.18, 1.3 / this.level) : 1; },
+  update() {
+    if (this.padT0 && performance.now() - this.padT0 > 350) this.padHeld = true;
+    const on = this.on; document.body.classList.toggle('zoom56', on);
+    if (typeof controls !== 'undefined' && controls) { controls.pointerSpeed = settings.sensitivity * this.sens(); }
+    const b = $('#zoomTouch'); if (b) b.classList.toggle('on', this.touch);
+  },
+  wheel(dir) { this.level = clamp(this.level * (dir > 0 ? 1.25 : 0.8), 2, 10); hud.toast(`🔍 Zoom ×${fmt56(this.level)}`, 700); },
+};
+{
+  KEY_ACTIONS.splice(KEY_ACTIONS.findIndex((k) => k[0] === 'classAb') + 1, 0, ['zoom', 'Zoom (mantener)', 'KeyZ']);
+  DEFAULT_KEYS.zoom = 'KeyZ'; settings.keys.zoom ??= 'KeyZ';
+  const _ad = actionDown, _au = actionUp;
+  actionDown = function (a, ev) {
+    if (a === 'zoom') { if (game.state === 'playing') zoom56.key = true; return; }
+    if (zoom56.on && (a === 'hotbarNext' || a === 'hotbarPrev')) { zoom56.wheel(a === 'hotbarPrev' ? 1 : -1); return; }   // con zoom, la rueda acerca o aleja
+    return _ad(a, ev);
+  };
+  actionUp = function (a) { if (a === 'zoom') zoom56.key = false; return _au(a); };
+  // mando: R3 (cambiar de mano) tocado cambia de mano; mantenido hace zoom
+  const _press = pad.press, _rel = pad.release;
+  pad.press = function (i, a) { if (a === 'swapHand' && game.state === 'playing') { this.zoomBtn = i; zoom56.padT0 = performance.now(); return; } return _press.call(this, i, a); };
+  pad.release = function (i, ...r) {
+    if (i === this.zoomBtn) { this.zoomBtn = null; if (!zoom56.padHeld && game.state === 'playing') game.swapHands(); zoom56.padT0 = 0; zoom56.padHeld = false; return; }
+    return _rel.call(this, i, ...r);
+  };
+  const zb = $('#zoomTouch');
+  if (zb) zb.addEventListener('click', (e) => { e.stopPropagation(); if (game.state === 'playing') { zoom56.touch = !zoom56.touch; hud.toast(zoom56.touch ? '🔍 Zoom activado' : '🔍 Zoom desactivado', 800); } });
+  const _u = rpg56.update;
+  rpg56.update = function (dt) { zoom56.update(); return _u.call(this, dt); };
 }
 
 /* ==========================================================================
