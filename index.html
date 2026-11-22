@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.3</title>
+<title>LinkCraft 5.4</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -1007,7 +1007,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.3!</span>
+      <span class="ver">¡Versión 5.4!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1017,7 +1017,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.3</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.4</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -4622,14 +4622,23 @@ function blockBoxes(id, meta, nb, mode) {
 }
 
 // ---------- Shaders ----------
+// 5.4: light.y lleva además una marca de vegetación (+32 hojas, +64 plantas) para el viento
 const TERRAIN_VS = `
 attribute vec2 light;
 varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog; varying vec3 vW;
-uniform float uTime;
+uniform float uTime; uniform float uFx;
 void main() {
-  vUv = uv; vColor = color; vLight = light;
-  vW = (modelMatrix * vec4(position, 1.0)).xyz;
-  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vUv = uv; vColor = color;
+  float wf = floor(light.y / 32.0 + 0.001);
+  vLight = vec2(light.x, light.y - wf * 32.0);
+  vec4 w = modelMatrix * vec4(position, 1.0);
+  if (uFx > 1.5 && wf > 0.5) {
+    float ph = w.x * 0.73 + w.z * 0.91 + uTime * 1.7;
+    float amp = wf > 1.5 ? 0.075 * step(0.05, fract(position.y + 0.001)) : 0.028;
+    w.x += sin(ph) * amp; w.z += cos(ph * 0.83 + 1.3) * amp * 0.7;
+  }
+  vW = w.xyz;
+  vec4 mv = viewMatrix * w;
   vFog = length(mv.xyz);
   gl_Position = projectionMatrix * mv;
 }`;
@@ -4645,15 +4654,48 @@ vec3 lightOf(vec2 l, vec3 wp) {
   L = max(L, vec3(uNV));
   return pow(max(L, vec3(uBr.x)), vec3(uBr.y));    // brillo: suelo de luz y curva (Ajustes → Gráficos)
 }`;
+// 5.4: «shaders» — luz del sol con dirección, sombras, brillo de las luces y niebla que se tiñe hacia el sol
+const FX_FN = `
+uniform float uFx; uniform vec3 uSunDir; uniform vec3 uSunCol; uniform float uSunAmt; uniform float uSunGlow; uniform vec3 uCamPos;
+uniform sampler2D uShadow; uniform mat4 uShadowM; uniform float uShadowOn; uniform float uShadowTexel;
+float fxShadow(vec3 wp, float ndl) {
+  vec4 s = uShadowM * vec4(wp, 1.0);
+  vec3 p = s.xyz / s.w * 0.5 + 0.5;
+  if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
+  float bias = 0.0008 + 0.0025 * (1.0 - clamp(ndl, 0.0, 1.0));
+  float sum = 0.0;
+  for (int i = -1; i <= 1; i++) for (int j = -1; j <= 1; j++) sum += step(p.z - bias, texture2D(uShadow, p.xy + vec2(float(i), float(j)) * uShadowTexel).r);
+  float edge = smoothstep(0.8, 1.0, max(abs(p.x - 0.5), abs(p.y - 0.5)) * 2.0);
+  return mix(sum / 9.0, 1.0, edge);
+}
+vec3 fxNormal(vec3 wp) { return normalize(cross(dFdx(wp), dFdy(wp))); }
+vec3 fxLight(vec3 base, vec3 lit, vec2 l, vec3 wp, vec3 N) {
+  float ndl = dot(N, uSunDir), skyF = smoothstep(0.4, 0.95, l.x) * uSunAmt;
+  float sh = 1.0;
+  if (uShadowOn > 0.5 && skyF > 0.0 && ndl > 0.0) sh = fxShadow(wp + N * 0.05, ndl);
+  float direct = max(ndl, 0.0) * sh;
+  vec3 c = lit * (1.0 - 0.45 * skyF) + base * uSunCol * direct * skyF * 0.46;
+  float lum = dot(base, vec3(0.3, 0.59, 0.11));
+  c += base * smoothstep(0.5, 0.85, lum) * smoothstep(0.86, 0.97, l.y) * 1.4;          // lo que emite luz brilla (y la difusión lo agranda)
+  return c;
+}
+vec3 fxFog(vec3 wp) {
+  vec3 v = normalize(wp - uCamPos);
+  float g = pow(max(dot(v, uSunDir), 0.0), 5.0);
+  return fogColor + uSunCol * g * uSunGlow;
+}`;
 const TERRAIN_FS = `
 uniform sampler2D map;
 varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog; varying vec3 vW;
 ${LIGHT_FN}
+${FX_FN}
 void main() {
   vec4 t = texture2D(map, vUv);
   if (t.a < 0.5) discard;
-  vec3 c = t.rgb * vColor * lightOf(vLight, vW);
-  gl_FragColor = vec4(mix(c, fogColor, smoothstep(fogNear, fogFar, vFog)), 1.0);
+  vec3 base = t.rgb * vColor;
+  vec3 c = base * lightOf(vLight, vW), fc = fogColor;
+  if (uFx > 0.5) { c = fxLight(base, c, vLight, vW, fxNormal(vW)); fc = fxFog(vW); }
+  gl_FragColor = vec4(mix(c, fc, smoothstep(fogNear, fogFar, vFog)), 1.0);
 }`;
 const WATER_VS = `
 attribute vec2 light;
@@ -4671,15 +4713,41 @@ void main() {
 }`;
 const WATER_FS = `
 uniform sampler2D map; uniform float uTime; uniform vec3 uTile;
+uniform vec3 uTop; uniform vec3 uHorizon; uniform sampler2D uRefl; uniform mat4 uReflM; uniform float uReflOn; uniform float uReflH;
 varying vec2 vUv; varying vec3 vColor; varying vec2 vLight; varying float vFog; varying vec3 vW;
 ${LIGHT_FN}
+${FX_FN}
 void main() {
   vec2 a = fract(vUv + vec2(uTime * 0.05, uTime * 0.031));
   vec2 b = fract(vUv * 0.73 - vec2(uTime * 0.027, uTime * 0.043));
   float t = texture2D(map, uTile.xy + a * uTile.z).r * 0.5 + texture2D(map, uTile.xy + b * uTile.z).r * 0.5;
   vec3 base = vec3(0.16, 0.36, 0.78) * vColor;
   vec3 c = (base * (0.75 + t * 0.45)) * lightOf(vLight, vW);
-  gl_FragColor = vec4(mix(c, fogColor, smoothstep(fogNear, fogFar, vFog)), mix(0.72, 1.0, smoothstep(fogNear, fogFar, vFog)));
+  float fogK = smoothstep(fogNear, fogFar, vFog), alpha = mix(0.72, 1.0, fogK);
+  vec3 fc = fogColor;
+  if (uFx > 0.5) {
+    // 5.4: olas con normales, reflejo (del mundo o del cielo), brillo del sol y transparencia según el ángulo
+    vec3 V = normalize(vW - uCamPos), N = fxNormal(vW);
+    bool top = abs(N.y) > 0.6;
+    if (top) {
+      vec2 q = vW.xz; float T = uTime;
+      float dx = cos(q.x * 1.7 + T * 1.9) * 0.85 + cos((q.x + q.y) * 2.9 - T * 2.4) * 0.72 + cos(q.y * 0.9 + q.x * 0.4 + T) * 0.16;
+      float dz = cos((q.x + q.y) * 2.9 - T * 2.4) * 0.72 + cos(q.y * 0.9 + q.x * 0.4 + T) * 0.36 + cos(q.y * 2.3 - T * 1.6) * 0.6;
+      N = normalize(vec3(-dx * 0.05, 1.0, -dz * 0.05));
+    }
+    float fres = 0.03 + 0.97 * pow(1.0 - clamp(abs(dot(V, N)), 0.0, 1.0), 4.0);
+    vec3 R = reflect(V, N);
+    vec3 refl = mix(uHorizon, uTop, pow(clamp(R.y, 0.0, 1.0), 0.6));
+    if (uReflOn > 0.5 && top && abs(vW.y - uReflH) < 0.3) { vec4 r = uReflM * vec4(vW + vec3(N.x, 0.0, N.z) * 2.5, 1.0); refl = texture2D(uRefl, r.xy / r.w).rgb; }
+    float skyF = smoothstep(0.4, 0.95, vLight.x);
+    refl *= mix(0.25, 1.0, skyF);
+    float spec = pow(max(dot(R, uSunDir), 0.0), 260.0) * uSunAmt * skyF;
+    float k = top ? clamp(fres * 0.95 + 0.06, 0.0, 0.85) : 0.12;
+    c = mix(c, refl, k) + uSunCol * spec * 7.0;
+    alpha = mix(mix(0.62, 0.95, k), 1.0, fogK);
+    fc = fxFog(vW);
+  }
+  gl_FragColor = vec4(mix(c, fc, fogK), alpha);
 }`;
 
 const atlasCanvas = buildAtlas();
@@ -4692,7 +4760,13 @@ const sharedUniforms = {
   map: { value: atlasTex }, uTime: { value: 0 }, uDay: { value: 1 }, uSkyCol: { value: new THREE.Color(1, 1, 1) },
   fogColor: { value: new THREE.Color(0.6, 0.78, 1) }, fogNear: { value: 40 }, fogFar: { value: 80 }, uNV: { value: 0 }, uBr: { value: new THREE.Vector2(0.03, 1) },
   uDyn: { value: [new THREE.Vector4(), new THREE.Vector4(), new THREE.Vector4(), new THREE.Vector4()] },
+  // 5.4: shaders (los actualiza §54)
+  uFx: { value: 0 }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 1, 1) }, uSunAmt: { value: 0 }, uSunGlow: { value: 0 },
+  uCamPos: { value: new THREE.Vector3() }, uShadow: { value: new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1) }, uShadowM: { value: new THREE.Matrix4() },
+  uShadowOn: { value: 0 }, uShadowTexel: { value: 1 / 2048 }, uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() },
+  uRefl: { value: new THREE.DataTexture(new Uint8Array([128, 160, 220, 255]), 1, 1) }, uReflM: { value: new THREE.Matrix4() }, uReflOn: { value: 0 }, uReflH: { value: 0 },
 };
+sharedUniforms.uShadow.value.needsUpdate = true; sharedUniforms.uRefl.value.needsUpdate = true;
 const terrainMat = new THREE.ShaderMaterial({ uniforms: sharedUniforms, vertexShader: TERRAIN_VS, fragmentShader: TERRAIN_FS, vertexColors: true });
 const waterTile = tileUV(T.water);
 const waterMat = new THREE.ShaderMaterial({
@@ -4703,14 +4777,14 @@ const waterMat = new THREE.ShaderMaterial({
 // ---------- Búfer de geometría reutilizable (evita basura en el GC) ----------
 class GeoBuf {
   constructor() { this.f = new Float32Array(1 << 16); this.ix = new Uint32Array(1 << 15); this.reset(); }
-  reset() { this.n = 0; this.ni = 0; this.v = 0; }
+  reset() { this.n = 0; this.ni = 0; this.v = 0; this.wf = 0; }
   grow(nf, ni) {
     if (this.n + nf > this.f.length) { const a = new Float32Array(this.f.length * 2); a.set(this.f); this.f = a; }
     if (this.ni + ni > this.ix.length) { const a = new Uint32Array(this.ix.length * 2); a.set(this.ix); this.ix = a; }
   }
   vert(x, y, z, u, v, r, g, b, s, l) {
     const f = this.f, n = this.n;
-    f[n] = x; f[n + 1] = y; f[n + 2] = z; f[n + 3] = u; f[n + 4] = v; f[n + 5] = r; f[n + 6] = g; f[n + 7] = b; f[n + 8] = s; f[n + 9] = l;
+    f[n] = x; f[n + 1] = y; f[n + 2] = z; f[n + 3] = u; f[n + 4] = v; f[n + 5] = r; f[n + 6] = g; f[n + 7] = b; f[n + 8] = s; f[n + 9] = l + this.wf;
     this.n = n + 10; this.v++;
   }
   quad(flip) {
@@ -4817,6 +4891,7 @@ function buildSection(ch, s, nb) {
     const p = (x + 1) + (z + 1) * PAD + (y + 1) * PAD2, id = pIds[p];
     if (!id) continue;
     const def = BLOCKS[id];
+    solidBuf.wf = def.leaves ? 32 : def.shape === 'cross' ? 64 : 0;          // 5.4: vegetación que se mueve con el viento
     if (def.shape === 'cube') emitCube(x, y, z, p, id, def, fancy);
     else if (def.shape === 'liquid') emitLiquid(x, y, z, p);
     else { emitCustom(x, y, z, p, id, def); if (def.watery) emitLiquid(x, y, z, p); }
@@ -9856,6 +9931,7 @@ TRADES.explorer.push([[I.EMERALD, 6], [I.EXPEDITION_MAP, 1], 2], [[I.EMERALD, 2]
 const SKY_VS = `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
 const SKY_FS = `
 uniform vec3 uTop; uniform vec3 uHorizon; uniform vec3 uSunDir; uniform vec3 uGlow; uniform float uGlowAmt;
+uniform float uFx; uniform vec3 uSunCol; uniform float uSunVis;
 varying vec3 vDir;
 void main(){
   float h = clamp(vDir.y, -1.0, 1.0);
@@ -9863,7 +9939,13 @@ void main(){
   float s = max(dot(normalize(vDir), uSunDir), 0.0);
   c += uGlow * uGlowAmt * pow(s, 6.0) * (1.0 - smoothstep(0.0, 0.5, abs(h)));
   if (h < -0.05) c = mix(c, uHorizon * 0.6, smoothstep(-0.05, -0.3, h));
-  gl_FragColor = vec4(c, 1.0);
+  if (uFx > 0.5) {
+    // 5.4: halo del sol con luz de sobra (la difusión hace el resplandor) y franja cálida en el horizonte
+    float sd = max(dot(normalize(vDir), uSunDir), 0.0);
+    c += uSunCol * (pow(sd, 900.0) * 3.0 + pow(sd, 48.0) * 0.45 + pow(sd, 6.0) * 0.18 * (1.0 - smoothstep(0.0, 0.6, abs(h)))) * uSunVis;
+    c *= mix(vec3(1.0), vec3(1.1, 0.96, 0.86), uGlowAmt * (1.0 - smoothstep(0.0, 0.35, abs(h))));
+  }
+  gl_FragColor = vec4(c, uFx > 0.5 ? 0.0 : 1.0);      // con shaders, alfa 0 = cielo (de ahí salen los rayos de sol)
 }`;
 const CLOUD_FS = `
 uniform sampler2D uTex; uniform vec2 uOff; uniform vec3 uCol; uniform float uAlpha;
@@ -9886,7 +9968,8 @@ class Environment {
     this.flash = 0; this.boltT = 0; this.nextBolt = 6; this.precip = 'rain';
     this.daylight = 1;
     // Cúpula del cielo
-    this.skyU = { uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uGlow: { value: new THREE.Color(1, 0.5, 0.25) }, uGlowAmt: { value: 0 } };
+    this.skyU = { uTop: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uGlow: { value: new THREE.Color(1, 0.5, 0.25) }, uGlowAmt: { value: 0 },
+      uFx: { value: 0 }, uSunCol: { value: new THREE.Color(1, 1, 1) }, uSunVis: { value: 0 } };
     this.sky = new THREE.Mesh(new THREE.SphereGeometry(300, 24, 12), new THREE.ShaderMaterial({ uniforms: this.skyU, vertexShader: SKY_VS, fragmentShader: SKY_FS, side: THREE.BackSide, depthWrite: false, fog: false }));
     this.sky.renderOrder = -10; this.sky.frustumCulled = false; scene.add(this.sky);
     // Estrellas
@@ -10719,6 +10802,7 @@ function initSettingsUI() {
     ['volume', 'Volumen de efectos', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['music', 'Volumen de la música', 'range', 0, 1, 0.05, (v) => Math.round(v * 100) + '%'],
     ['quality', 'Resolución', 'select', ['baja', 'media', 'alta', 'ultra']],
+    ['shaders', 'Shaders (sombras, reflejos, luz del sol)', 'select', ['apagado', 'suave', 'completo']],
     ['fxLevel', 'Efectos de partículas', 'select', ['bajo', 'medio', 'alto', 'ultra']], ['detail', 'Detalle lejano (criaturas y carga del mundo)', 'select', ['bajo', 'medio', 'alto', 'ultra']],
     ['hudScale', 'Tamaño de la interfaz', 'range', 0.7, 1.3, 0.05, (v) => Math.round(v * 100) + '%'], ['mmZoom', 'Zoom del minimapa', 'select', ['cerca', 'normal', 'lejos']],
     ['fancyLeaves', 'Hojas detalladas', 'check'], ['particles', 'Partículas', 'check'], ['clouds', 'Nubes', 'check'], ['showFps', 'Mostrar FPS y coordenadas', 'check'],
@@ -10730,7 +10814,7 @@ function initSettingsUI() {
   for (const [key, label, type, a, b, step, fmt] of rows) {
     if ((key === 'sensitivity' && IS_TOUCH) || (key === 'touchSensitivity' && !IS_TOUCH)) continue;
     const box = $(TAB[key] || '#settingsList');
-    const row = document.createElement('label'); row.className = 'setRow' + (['preset', 'renderDistance', 'fov', 'quality', 'detail'].includes(key) ? ' full' : '');
+    const row = document.createElement('label'); row.className = 'setRow' + (['preset', 'renderDistance', 'fov', 'quality', 'detail', 'shaders'].includes(key) ? ' full' : '');
     const name = document.createElement('span'); name.textContent = label;
     let input, val;
     if (type === 'range') {
@@ -10738,7 +10822,7 @@ function initSettingsUI() {
       val = document.createElement('em'); val.textContent = fmt(settings[key]);
       input.oninput = () => { settings[key] = +input.value; val.textContent = fmt(settings[key]); applySettings(key); presetTouched50(key); };
     } else if (type === 'select') {
-      input = document.createElement('select'); for (const o of a) { const op = document.createElement('option'); op.value = o; op.textContent = o[0].toUpperCase() + o.slice(1); input.append(op); }
+      input = document.createElement('select'); for (const o of a) { const op = document.createElement('option'); op.value = o; op.textContent = ({ suave: 'Suaves', completo: 'Completos' })[o] || o[0].toUpperCase() + o.slice(1); input.append(op); }
       input.value = settings[key] ?? a[0]; input.onchange = () => {
         settings[key] = input.value;
         if (key === 'preset' && GFX_PRESETS[input.value]) { applyPreset50(input.value); initSettingsUI(); return; }
@@ -12480,7 +12564,8 @@ function loop(now) {
   renderer.clear();
   view52.update(dt);                                  // 5.2: personaje visible en tercera persona
   const third = view52.beforeRender();
-  renderer.render(scene, camera);
+  fx54.update(camera);                                // 5.4: shaders
+  if (fx54.level() && game.player && world) fx54.render(camera); else renderer.render(scene, camera);
   view52.afterRender();
   if (!third && (game.state === 'playing' || game.state === 'inventory')) { renderer.clearDepth(); renderer.render(viewScene, viewCam); }
   updateAbilityHud(); ambient.update(dt); combat.update(dt); bossFx.update(dt); adventure.update(dt); build34.update(dt); events.update(dt); codex.update(dt); biomeMusic.update(dt); perfAuto.update(dt); dynLight.update(dt); village43.update(dt); zones44.update(dt); char45.update(dt); life47.update(dt); build48.update(dt); v50.update(dt); fluids.update50(dt); dims.update(dt);
@@ -12494,7 +12579,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.3  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.4  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12519,7 +12604,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15454,6 +15539,15 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.4', name: 'Gráficos renovados', date: 'noviembre de 2026', items: [
+    'Gran mejora visual: el mundo se ve con luz, sombras, reflejos y color mucho más detallados. Las texturas de bloques, criaturas y agua ganan volumen y brillo con la luz del sol.',
+    'Nuevo ajuste «Shaders» en Ajustes → Gráficos: Apagado, Suaves o Completos. La calidad Alto los trae Suaves y Ultra, Completos (necesita WebGL 2; consume más en equipos modestos y celulares).',
+    'Luz del sol con dirección: lo que mira al sol se ilumina con su color, dorado al amanecer y al atardecer, y lo demás queda en sombra suave.',
+    'Agua con olas, reflejos, brillo del sol sobre la superficie y transparencia según el ángulo (más espejo cuanto más rasante la miras).',
+    'Cielo con halo del sol; atardeceres y amaneceres con horizonte naranja, cielo violeta y nubes rosadas; la niebla se tiñe con la luz del sol.',
+    'Posprocesado: resplandor de las luces fuertes (sol, antorchas, faroles, lava, piedra luminosa), rayos de sol que se cuelan entre árboles y montañas, curva de tono cinematográfica, colores más vivos y viñeta.',
+    'Shaders Completos, además: sombras reales del sol (árboles, edificios, criaturas y tu personaje, también en primera persona) hasta unos 60 bloques alrededor; el mundo se refleja en el agua (orillas, árboles, montañas y cielo); y hojas, hierba, flores y cultivos que se mecen con el viento.',
+  ] },
   { v: '5.3', name: 'Criaturas y jefes rediseñados', date: 'noviembre de 2026', items: [
     'Araña nueva: abdomen con dibujo y hileras, ocho ojos, quelíceros con colmillos, pedipalpos y patas articuladas con rodilla y pelos que llegan al suelo.',
     'Murciélago nuevo (antes usaba el modelo de pájaro): cuerpo peludo, orejas grandes, hocico con colmillos, ojos amarillos y alas de membrana con los huesos de los dedos.',
@@ -18472,7 +18566,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.3';
+const GAME_VERSION = '5.4';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -23273,6 +23367,246 @@ settings.keys.view ??= 'KeyV'; DEFAULT_KEYS.view = 'KeyV';
   };
   MOBS.voidherald.model = herald53;
 }
+
+/* ==========================================================================
+   §54 SHADERS (5.4)
+   --------------------------------------------------------------------------
+   Ajustes → Gráficos → «Shaders»: Apagado, Suaves o Completos (Alto usa
+   Suaves y Ultra, Completos). Necesita WebGL 2.
+   Suaves:
+     · Luz del sol con dirección: las caras que miran al sol se iluminan con
+       su color (dorado al amanecer y al atardecer) y las del otro lado
+       quedan en sombra suave.
+     · Agua con olas, reflejo del cielo, brillo del sol y transparencia
+       según el ángulo (más espejo cuanto más rasante se mira).
+     · Cielo con halo del sol y franja cálida en el horizonte; la niebla se
+       tiñe con la luz del sol.
+     · Posprocesado: difusión de las luces (bloom), rayos de sol entre los
+       árboles y montañas, curva de tono cinematográfica, color más vivo y
+       viñeta. Antorchas, faroles, lava y piedra luminosa brillan.
+   Completos (además):
+     · Sombras reales del sol (árboles, edificios, criaturas y el propio
+       personaje) hasta unos 60 bloques alrededor.
+     · Reflejo del mundo en el agua (montañas, árboles, casas y cielo).
+     · Hojas, hierba, flores y cultivos que se mecen con el viento.
+   ========================================================================== */
+GFX_PRESETS.bajo.shaders = 'apagado'; GFX_PRESETS.medio.shaders = 'apagado'; GFX_PRESETS.alto.shaders = 'suave'; GFX_PRESETS.ultra.shaders = 'completo';
+settings.shaders ??= (GFX_PRESETS[settings.preset] && GFX_PRESETS[settings.preset].shaders) || 'apagado';
+if (!['apagado', 'suave', 'completo'].includes(settings.shaders)) settings.shaders = 'apagado';
+
+const POST_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+const fx54 = {
+  ok: !!(renderer.capabilities && renderer.capabilities.isWebGL2),
+  size: new THREE.Vector2(), V: new THREE.Vector3(), V2: new THREE.Vector3(), sunUV: new THREE.Vector2(),
+  level() { return this.ok ? (settings.shaders === 'completo' ? 2 : settings.shaders === 'suave' ? 1 : 0) : 0; },
+  init() {
+    if (this.quad) return;
+    const HF = { type: THREE.HalfFloatType, depthBuffer: false };
+    this.sceneRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType, samples: IS_TOUCH ? 0 : 4 });
+    this.halfRT = new THREE.WebGLRenderTarget(4, 4, HF);
+    this.qA = new THREE.WebGLRenderTarget(4, 4, HF); this.qB = new THREE.WebGLRenderTarget(4, 4, HF);
+    this.eA = new THREE.WebGLRenderTarget(4, 4, HF); this.eB = new THREE.WebGLRenderTarget(4, 4, HF);
+    this.rayRT = new THREE.WebGLRenderTarget(4, 4, HF);
+    for (const t of [this.halfRT, this.qA, this.qB, this.eA, this.eB, this.rayRT]) t.texture.minFilter = t.texture.magFilter = THREE.LinearFilter;
+    this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)); this.quad.frustumCulled = false;
+    this.qscene = new THREE.Scene(); this.qscene.add(this.quad);
+    const mk = (fs, u) => new THREE.ShaderMaterial({ uniforms: u, vertexShader: POST_VS, fragmentShader: fs, depthTest: false, depthWrite: false });
+    // luces fuertes (para la difusión)
+    this.mBright = mk(`uniform sampler2D tSrc; varying vec2 vUv;
+      void main(){ vec3 c = texture2D(tSrc, vUv).rgb; float l = dot(c, vec3(0.3, 0.59, 0.11)); gl_FragColor = vec4(c * smoothstep(1.0, 1.7, l), 1.0); }`, { tSrc: { value: null } });
+    // desenfoque separable de 9 muestras
+    this.mBlur = mk(`uniform sampler2D tSrc; uniform vec2 uDir; varying vec2 vUv;
+      void main(){ vec3 c = texture2D(tSrc, vUv).rgb * 0.227;
+        c += (texture2D(tSrc, vUv + uDir * 1.38).rgb + texture2D(tSrc, vUv - uDir * 1.38).rgb) * 0.316;
+        c += (texture2D(tSrc, vUv + uDir * 3.23).rgb + texture2D(tSrc, vUv - uDir * 3.23).rgb) * 0.07;
+        gl_FragColor = vec4(c, 1.0); }`, { tSrc: { value: null }, uDir: { value: new THREE.Vector2() } });
+    // rayos de sol: desenfoque radial hacia el sol de lo que es cielo (alfa 0) y está claro
+    this.mRays = mk(`uniform sampler2D tSrc; uniform vec2 uSun; uniform float uAsp; varying vec2 vUv;
+      void main(){ vec2 d = (uSun - vUv) * 0.92 / 36.0; vec2 p = vUv; float w = 1.0, s = 0.0;
+        for (int i = 0; i < 36; i++) { vec4 c = texture2D(tSrc, p); float l = dot(c.rgb, vec3(0.3, 0.59, 0.11));
+          vec2 q = (p - uSun) * vec2(uAsp, 1.0); s += (1.0 - c.a) * smoothstep(0.55, 1.3, l) * w * (1.0 - smoothstep(0.0, 0.45, length(q))); w *= 0.955; p += d; }
+        gl_FragColor = vec4(vec3(s / 36.0 * 2.2), 1.0); }`, { tSrc: { value: null }, uSun: { value: new THREE.Vector2() }, uAsp: { value: 1 } });
+    // composición final: difusión + rayos + tono cinematográfico + color + viñeta
+    this.mFinal = mk(`uniform sampler2D tSrc; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tRay; uniform vec3 uSunCol; uniform float uRays; uniform float uBloom; uniform float uWarm;
+      varying vec2 vUv;
+      vec3 aces(vec3 x){ return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0); }
+      void main(){
+        vec3 c = texture2D(tSrc, vUv).rgb;
+        vec3 b = texture2D(tB1, vUv).rgb * 0.7 + texture2D(tB2, vUv).rgb * 0.9;
+        c += b * uBloom + texture2D(tRay, vUv).rgb * uSunCol * uRays;
+        c = aces(c * 1.12);
+        float l = dot(c, vec3(0.3, 0.59, 0.11));
+        c = mix(vec3(l), c, 1.16);                                     // color más vivo
+        c = mix(c, c * vec3(1.06, 1.0, 0.93), uWarm);                  // tono cálido al amanecer y al atardecer
+        c = (c - 0.5) * 1.06 + 0.5;
+        vec2 v = vUv - 0.5; c *= 1.0 - dot(v, v) * 0.55;               // viñeta
+        gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
+      }`, { tSrc: { value: null }, tB1: { value: null }, tB2: { value: null }, tRay: { value: null }, uSunCol: { value: new THREE.Color() }, uRays: { value: 0 }, uBloom: { value: 0.6 }, uWarm: { value: 0 } });
+    // sombras
+    this.shadowSize = 2048; this.shadowR = 56;
+    this.shadowRT = new THREE.WebGLRenderTarget(this.shadowSize, this.shadowSize, { depthTexture: new THREE.DepthTexture(this.shadowSize, this.shadowSize), depthBuffer: true });
+    this.shadowCam = new THREE.OrthographicCamera(-this.shadowR, this.shadowR, this.shadowR, -this.shadowR, 1, 420);
+    this.depthMat = new THREE.MeshBasicMaterial({ colorWrite: false });
+    // reflejo
+    this.reflRT = new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType });
+    this.reflRT.texture.minFilter = this.reflRT.texture.magFilter = THREE.LinearFilter;
+    this.reflCam = new THREE.PerspectiveCamera(); this.reflH = null; this.reflT = 0;
+    this.hidden = [];
+  },
+  resize() {
+    renderer.getDrawingBufferSize(this.size);
+    const w = Math.max(4, this.size.x), h = Math.max(4, this.size.y);
+    if (this.sceneRT.width === w && this.sceneRT.height === h) return;
+    this.sceneRT.setSize(w, h); this.halfRT.setSize(w >> 1, h >> 1);
+    this.qA.setSize(w >> 2, h >> 2); this.qB.setSize(w >> 2, h >> 2); this.eA.setSize(w >> 3, h >> 3); this.eB.setSize(w >> 3, h >> 3);
+    this.rayRT.setSize(w >> 2, h >> 2); this.reflRT.setSize(w >> 1, h >> 1);
+  },
+  pass(mat, target) { this.quad.material = mat; renderer.setRenderTarget(target); renderer.render(this.qscene, this.cam); },
+  blur(src, tmp, dst) {
+    const m = this.mBlur;
+    m.uniforms.tSrc.value = src.texture; m.uniforms.uDir.value.set(1 / src.width, 0); this.pass(m, tmp);
+    m.uniforms.tSrc.value = tmp.texture; m.uniforms.uDir.value.set(0, 1 / tmp.height); this.pass(m, dst);
+  },
+  // Objetos que no deben proyectar sombra ni reflejarse (cielo, agua, partículas, letreros…)
+  hide(forShadow) {
+    const env = game.env, H = this.hidden; H.length = 0;
+    scene.traverseVisible((o) => {
+      if (o === scene) return;
+      if (o.isSprite || o.isPoints || o.isLine || o.isLineSegments) { H.push(o); return; }
+      if (env && (o === env.sky || o === env.sun || o === env.moon || o === env.clouds)) { if (forShadow) H.push(o); return; }
+      const m = o.material; if (!m || Array.isArray(m)) return;
+      if (m === waterMat || (forShadow && (m.transparent || m.depthWrite === false)) || (game.particles && o === game.particles.mesh && forShadow)) H.push(o);
+    });
+    for (const o of H) o.visible = false;
+  },
+  unhide() { for (const o of this.hidden) o.visible = true; this.hidden.length = 0; },
+  // El personaje también proyecta sombra (y se refleja) en primera persona
+  withAvatar(fn) {
+    const p = game.player, show = view52.mode === 0 && p && !p.dead;
+    let a = null;
+    if (show) { a = view52.ensure(); a.pose(0.016); a.mesh.visible = true; }
+    fn();
+    if (a) a.mesh.visible = false;
+  },
+  shadowPass() {
+    const U = sharedUniforms, sd = U.uSunDir.value, p = game.player.pos, R = this.shadowR, S = this.shadowSize, c = this.shadowCam;
+    // centro ajustado a la rejilla de la sombra para que no tiemble al caminar
+    c.position.set(0, 0, 0); c.lookAt(-sd.x, -sd.y, -sd.z); c.updateMatrixWorld();
+    const ctr = this.V.set(p.x, p.y, p.z).applyMatrix4(c.matrixWorldInverse), tx = (2 * R) / S;
+    ctr.x = Math.round(ctr.x / tx) * tx; ctr.y = Math.round(ctr.y / tx) * tx;
+    ctr.applyMatrix4(c.matrixWorld);
+    c.position.copy(ctr).addScaledVector(sd, 200); c.lookAt(ctr); c.updateMatrixWorld(); c.updateProjectionMatrix();
+    U.uShadowM.value.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
+    this.hide(true);
+    this.withAvatar(() => {
+      scene.overrideMaterial = this.depthMat; const fog = scene.fog; scene.fog = null;
+      renderer.setRenderTarget(this.shadowRT); renderer.clear(); renderer.render(scene, c);
+      scene.overrideMaterial = null; scene.fog = fog;
+    });
+    this.unhide();
+    U.uShadow.value = this.shadowRT.depthTexture; U.uShadowTexel.value = 1 / S; U.uShadowOn.value = 1;
+  },
+  // Altura del agua más común alrededor de la cámara (el plano del reflejo)
+  findWater(cam) {
+    const cnt = new Map(), cx = Math.floor(cam.position.x), cz = Math.floor(cam.position.z), cy = Math.floor(cam.position.y);
+    for (let dx = -16; dx <= 16; dx += 4) for (let dz = -16; dz <= 16; dz += 4) {
+      const x = cx + dx, z = cz + dz;
+      for (let y = Math.min(WY - 2, cy + 1); y > cy - 30 && y > 1; y--) {
+        const id = world.get(x, y, z);
+        if (id === WATER) { if (world.get(x, y + 1, z) === AIR && !(world.getMeta(x, y, z) & 15)) cnt.set(y, (cnt.get(y) || 0) + 1); break; }
+        if (id !== AIR && BLOCKS[id] && BLOCKS[id].opaque) break;
+      }
+    }
+    let best = null, n = 1; for (const [y, k] of cnt) if (k > n) { n = k; best = y; }
+    return best == null ? null : best + 0.875 - 0.03;
+  },
+  reflPass(cam) {
+    const U = sharedUniforms;
+    const now = performance.now(); if (now - this.reflT > 250) { this.reflT = now; this.reflH = this.findWater(cam); }
+    const h = this.reflH;
+    if (h == null || cam.position.y < h + 0.05) { U.uReflOn.value = 0; return; }
+    const rc = this.reflCam, N = this.V.set(0, 1, 0), P = this.V2.set(cam.position.x, h, cam.position.z);
+    const camPos = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld), rot = new THREE.Matrix4().extractRotation(cam.matrixWorld);
+    const view = P.clone().sub(camPos).reflect(N).negate().add(P);
+    const look = new THREE.Vector3(0, 0, -1).applyMatrix4(rot).add(camPos), target = P.clone().sub(look).reflect(N).negate().add(P);
+    rc.position.copy(view); rc.up.set(0, 1, 0).applyMatrix4(rot).reflect(N); rc.lookAt(target);
+    rc.near = cam.near; rc.far = cam.far; rc.fov = cam.fov; rc.aspect = cam.aspect; rc.updateProjectionMatrix(); rc.updateMatrixWorld();
+    // plano de recorte oblicuo: no se dibuja lo que está bajo el agua
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(N, P).applyMatrix4(rc.matrixWorldInverse);
+    const cp = new THREE.Vector4(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant), pe = rc.projectionMatrix.elements, q = new THREE.Vector4();
+    q.x = (Math.sign(cp.x) + pe[8]) / pe[0]; q.y = (Math.sign(cp.y) + pe[9]) / pe[5]; q.z = -1; q.w = (1 + pe[10]) / pe[14];
+    cp.multiplyScalar(2 / cp.dot(q));
+    pe[2] = cp.x; pe[6] = cp.y; pe[10] = cp.z + 1 - 0.003; pe[14] = cp.w;
+    U.uReflM.value.set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1).multiply(rc.projectionMatrix).multiply(rc.matrixWorldInverse);
+    const sh = U.uShadowOn.value; U.uShadowOn.value = 0; U.uReflOn.value = 0;
+    this.hide(false);
+    this.withAvatar(() => { renderer.setRenderTarget(this.reflRT); renderer.clear(); renderer.render(scene, rc); });
+    this.unhide();
+    U.uShadowOn.value = sh; U.uRefl.value = this.reflRT.texture; U.uReflOn.value = 1; U.uReflH.value = h;
+  },
+  // Valores de cada fotograma (también con los shaders apagados: deja todo como antes)
+  update(cam) {
+    const U = sharedUniforms, env = game.env, lv = this.level();
+    U.uFx.value = lv; if (env) { env.skyU.uFx.value = lv; }
+    if (!lv || !env || !game.player) { U.uShadowOn.value = 0; U.uReflOn.value = 0; if (env) env.sun.material.color.setHex(0xfff6c0); return; }
+    const sd = env.skyU.uSunDir.value, sunY = sd.y, p = game.player;
+    const over = dimOf(Math.floor(p.pos.x), Math.floor(p.pos.z)) === 0, gray = Math.min(1, env.rainAmt * 0.85 + env.fogAmt * 0.6);
+    const amt = over ? smoothstep(-0.03, 0.14, sunY) * (1 - gray * 0.85) : 0;
+    const warm = 1 - smoothstep(0.05, 0.5, sunY);
+    U.uSunDir.value.copy(sd); U.uSunAmt.value = amt;
+    U.uSunCol.value.setRGB(1.0, lerp(0.93, 0.6, warm), lerp(0.82, 0.36, warm)).multiplyScalar(lerp(1.15, 1.35, warm));
+    U.uSunGlow.value = over ? (0.05 + warm * 0.45) * amt : 0;
+    U.uCamPos.value.copy(cam.position);
+    // atardeceres y amaneceres más intensos: horizonte naranja, cielo violeta, nubes rosadas
+    const g = env.skyU.uGlowAmt.value;
+    if (g > 0.01 && over) {
+      const H = env.skyU.uHorizon.value, Tp = env.skyU.uTop.value, C = env.cloudU.uCol.value;
+      H.lerp(this.cA || (this.cA = new THREE.Color(1.0, 0.42, 0.2)), g * 0.55);
+      Tp.lerp(this.cB || (this.cB = new THREE.Color(0.3, 0.26, 0.55)), g * 0.5);
+      C.lerp(this.cC || (this.cC = new THREE.Color(1.0, 0.58, 0.5)), g * 0.6);
+      if (!p.headInWater) U.fogColor.value.lerp(this.cD || (this.cD = new THREE.Color(0.95, 0.55, 0.38)), g * 0.4);
+    }
+    U.uTop.value.copy(env.skyU.uTop.value); U.uHorizon.value.copy(env.skyU.uHorizon.value);
+    env.skyU.uSunCol.value.copy(U.uSunCol.value); env.skyU.uSunVis.value = over ? smoothstep(-0.05, 0.05, sunY) * (1 - gray) : 0;
+    env.sun.material.color.setRGB(2.4, 2.25, 1.8);
+    for (const m of [env.sun, env.moon]) if (m.material.blending !== THREE.CustomBlending) {
+      Object.assign(m.material, { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.ZeroFactor, blendDstAlpha: THREE.OneFactor });
+      m.material.needsUpdate = true;
+    }
+  },
+  render(cam) {
+    this.init(); this.resize();
+    const U = sharedUniforms, lv = this.level(), env = game.env, underwater = !!(game.player && game.player.headInWater);
+    if (lv >= 2 && U.uSunAmt.value > 0.02 && !underwater) this.shadowPass(); else U.uShadowOn.value = 0;
+    if (lv >= 2 && !underwater) this.reflPass(cam); else U.uReflOn.value = 0;
+    renderer.setRenderTarget(this.sceneRT); renderer.clear(); renderer.render(scene, cam);
+    // difusión
+    this.mBright.uniforms.tSrc.value = this.sceneRT.texture; this.pass(this.mBright, this.halfRT);
+    this.blur(this.halfRT, this.qB, this.qA);
+    this.blur(this.qA, this.eB, this.eA);
+    // rayos de sol (solo si el sol está delante)
+    let rays = 0;
+    const sd = U.uSunDir.value, sv = env ? env.skyU.uSunVis.value : 0;
+    if (sv > 0.01 && !underwater) {
+      const s = this.V.copy(cam.position).addScaledVector(sd, 200).project(cam);
+      const facing = this.V2.set(0, 0, -1).applyQuaternion(cam.quaternion).dot(sd);
+      if (facing > 0.1 && s.z < 1) {
+        this.sunUV.set(s.x * 0.5 + 0.5, s.y * 0.5 + 0.5);
+        rays = sv * smoothstep(0.1, 0.5, facing) * (1 - smoothstep(0.9, 1.6, Math.max(Math.abs(s.x), Math.abs(s.y)))) * (0.35 + 0.45 * (1 - smoothstep(0.05, 0.5, sd.y)));
+        if (rays > 0.01) {
+          const m = this.mRays; m.uniforms.tSrc.value = this.sceneRT.texture; m.uniforms.uSun.value.copy(this.sunUV); m.uniforms.uAsp.value = this.size.x / this.size.y;
+          this.pass(m, this.rayRT);
+        }
+      }
+    }
+    const f = this.mFinal.uniforms;
+    f.tSrc.value = this.sceneRT.texture; f.tB1.value = this.qA.texture; f.tB2.value = this.eA.texture; f.tRay.value = this.rayRT.texture;
+    f.uRays.value = rays; f.uSunCol.value.copy(U.uSunCol.value); f.uWarm.value = U.uSunGlow.value * 0.9; f.uBloom.value = 0.45;
+    this.pass(this.mFinal, null);
+    renderer.setRenderTarget(null);
+  },
+};
 
 /* ==========================================================================
    ARRANQUE (al final: todos los sistemas ya están definidos)

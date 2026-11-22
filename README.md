@@ -1,4 +1,4 @@
-# LinkCraft 5.3
+# LinkCraft 5.4
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -131,6 +131,13 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 **Criaturas y jefes rediseñados (5.3)**
 - Modelos 3D nuevos, mucho más detallados, para la araña, el murciélago, las aves, el calamar y los jefes: Gólem ancestral, Dragón de las ruinas, Guardián de las profundidades, Señor de las brasas y Heraldo del vacío.
 - Las animaciones y los ataques no cambian.
+
+**Gráficos renovados (5.4)**
+- Gran mejora visual: luz, sombras, reflejos y color mucho más detallados; las texturas de bloques, criaturas y agua ganan volumen y brillo con la luz del sol.
+- Nuevo ajuste en Ajustes → Gráficos → Shaders, con dos niveles: Suaves (lo trae la calidad Alto) y Completos (la calidad Ultra).
+- **Suaves:** luz del sol con dirección y color, agua con olas, reflejos y brillo del sol, atardeceres naranjas y violetas, resplandor de las luces, rayos de sol y curva de tono cinematográfica.
+- **Completos:** además, sombras reales del sol, el mundo reflejado en el agua y vegetación que se mece con el viento.
+- Necesita WebGL 2.
 
 ## Funciones existentes que se mejoraron
 
