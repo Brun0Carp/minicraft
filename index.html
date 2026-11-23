@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.8.1</title>
+<title>LinkCraft 5.9</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -1099,7 +1099,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.8.1!</span>
+      <span class="ver">¡Versión 5.9!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1109,7 +1109,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.8.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.9</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -12719,7 +12719,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.8.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.9  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12744,7 +12744,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { worlds58, OB_PHASES, themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { sky59, SKY59, worlds58, OB_PHASES, themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15681,6 +15681,13 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.9', name: 'Islas de bioma en SkyBlock', date: 'noviembre de 2026', items: [
+    'En SkyBlock, lejos de la isla principal (a unos 80 bloques o más), flotan islas de todos los biomas del Mundo: llanuras, bosques, desierto, selva, taiga, tundra, hongos, cerezos, badlands, región volcánica, bosque encantado, océano, oasis y el resto, 26 en total.',
+    'Las islas más cercanas recorren todos los biomas antes de repetir ninguno (en un orden propio de cada semilla). Más lejos siguen apareciendo al azar.',
+    'Cada isla es un poco más grande que la principal y tiene el suelo, los árboles y las plantas de su bioma, mineral en la piedra de abajo, y algunas agua, hielo, arcilla o magma. El color del césped y el bioma que ves son los de la isla.',
+    'Cada isla tiene un cofre con objetos útiles de su bioma: brotes, semillas, caña de pescar, cactus, hielo, oro, hongos, obsidiana…',
+    'Las criaturas de cada bioma aparecen en su isla cuando estás cerca: los animales de día y los monstruos de noche o a oscuras.',
+  ] },
   { v: '5.8.1', name: 'Arreglo del OneBlock', date: 'noviembre de 2026', items: [
     'OneBlock: el bloque mágico ahora suelta lo que corresponde al romperlo (tierra, troncos, minerales…). Lo que soltaba quedaba dentro del bloque nuevo y se caía al vacío; ahora sale por arriba y lo recoges al momento.',
     'Lo mismo con el contenido de los cofres que salen del bloque.',
@@ -18769,7 +18776,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.8.1';
+const GAME_VERSION = '5.9';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -25364,6 +25371,211 @@ const worlds58 = {
   mainQuest = function (p) { return worlds58.voidType() ? null : _mq(p); };
   const _new = worlds58.onNewWorld;
   worlds58.onNewWorld = function () { _new.call(this); if (this.voidType()) camera.rotation.set(this.type() === 'skyblock' ? -0.32 : -0.75, this.type() === 'skyblock' ? -1.35 : 0, 0); };
+}
+
+/* ==========================================================================
+   §62 ISLAS DE BIOMA EN SKYBLOCK (5.9)
+   --------------------------------------------------------------------------
+   Lejos de la isla principal (a unos 80 bloques o más) flotan islas de
+   todos los biomas del Mundo, una por celda de una cuadrícula de 80×80:
+     · Cada una con el suelo, los árboles y las plantas de su bioma, mineral
+       en la piedra de abajo y, en algunas, agua o hielo.
+     · Las 46 islas más cercanas recorren todos los biomas (orden propio de
+       cada semilla); más lejos el bioma sale al azar.
+     · Un cofre con objetos útiles del bioma (se llena la primera vez que te
+       acercas; se recuerda en el jugador).
+     · Sus criaturas: los animales y monstruos del bioma aparecen en la isla
+       cuando estás cerca (los monstruos, de noche o a oscuras).
+   ========================================================================== */
+const SKY59 = { G: 80, cells: new Map(), built: new Map(), seed: null };
+const OW_BIOMES = BIOMES.map((b, i) => i).filter((i) => !BIOMES[i].dim);
+// Suelo de cada bioma: [arriba, relleno, piedra], extras
+const ISLE_SURF = {
+  [BIOME.OCEAN]: { top: SAND, fill: SAND, stone: SANDSTONE, pool: true, extra: ['turtle'] },
+  [BIOME.BEACH]: { top: SAND, fill: SAND, stone: SANDSTONE, extra: ['turtle'] },
+  [BIOME.DESERT]: { top: SAND, fill: SAND, stone: SANDSTONE, cactus: true, extra: ['rabbit'] },
+  [BIOME.DUNES]: { top: SAND, fill: SAND, stone: SANDSTONE, cactus: true, extra: ['rabbit'] },
+  [BIOME.OASIS]: { top: SAND, fill: SAND, stone: SANDSTONE, pool: true, grassRing: true },
+  [BIOME.ISLAND]: { top: SAND, fill: SAND, stone: SANDSTONE, grassRing: true },
+  [BIOME.SWAMP]: { pool: true, clay: true },
+  [BIOME.RIVER]: { pool: true, extra: ['duck'] },
+  [BIOME.MOUNTAINS]: { stony: true, ores: 2 },
+  [BIOME.SNOWY]: { top: SNOWY_GRASS, ice: true },
+  [BIOME.TUNDRA]: { top: SNOWY_GRASS, ice: true },
+  [BIOME.TAIGA]: { top: SNOWY_GRASS },
+  [BIOME.BADLANDS]: { top: RED_SAND, fill: TERRACOTTA, stone: TERRACOTTA, gold: true },
+  [BIOME.MUSHROOM]: { top: MYCELIUM },
+  [BIOME.VOLCANIC]: { top: BASALT, fill: BASALT, stone: BASALT, magma: true },
+  [BIOME.VOLCANO]: { top: BASALT, fill: OBSIDIAN, stone: BASALT, magma: true },
+  [BIOME.HIGHLANDS]: { stony: true, ores: 1.5 },
+};
+const W59 = (n) => (I[n] != null && ITEMS[I[n]] ? I[n] : null);
+// Botín del cofre de cada bioma: [id, mín, máx]
+const ISLE_LOOT = {
+  base: [[W59('BREAD'), 1, 3], [W59('WHEAT_SEEDS'), 2, 4], [W59('BONE_MEAL'), 1, 3], [TORCH, 2, 6]],
+  [BIOME.OCEAN]: [[W59('FISHING_ROD'), 1, 1], [W59('SEASHELL'), 1, 3], [W59('RAW_FISH'), 2, 4], [W59('WATER_BUCKET'), 1, 1]],
+  [BIOME.BEACH]: [[W59('SEASHELL'), 2, 4], [W59('RAW_FISH'), 1, 3], [W59('FISHING_ROD'), 1, 1]],
+  [BIOME.PLAINS]: [[OAK_SAPLING, 1, 3], [W59('WHEAT_SEEDS'), 3, 6], [W59('LEATHER'), 1, 3]],
+  [BIOME.FOREST]: [[OAK_SAPLING, 2, 4], [W59('APPLE'), 1, 3]],
+  [BIOME.DARK_FOREST]: [[OAK_SAPLING, 1, 3], [MUSHROOM_RED, 1, 2], [MUSHROOM_BROWN, 1, 2]],
+  [BIOME.DESERT]: [[CACTUS, 1, 3], [W59('GOLD_INGOT'), 1, 3], [SAND, 4, 8]],
+  [BIOME.SWAMP]: [[CLAY, 2, 6], [LILY_PAD, 1, 3], [W59('WATER_BUCKET'), 1, 1]],
+  [BIOME.MOUNTAINS]: [[W59('IRON_INGOT'), 2, 4], [W59('COAL'), 3, 6], [W59('EMERALD'), 1, 2]],
+  [BIOME.SNOWY]: [[ICE, 2, 4], [SPRUCE_SAPLING, 1, 2], [W59('SNOWBALL'), 4, 8]],
+  [BIOME.RIVER]: [[W59('FISHING_ROD'), 1, 1], [W59('RAW_FISH'), 2, 4], [CLAY, 2, 4]],
+  [BIOME.TAIGA]: [[SPRUCE_SAPLING, 2, 3], [W59('LEATHER'), 1, 3], [FERN, 1, 3]],
+  [BIOME.JUNGLE]: [[W59('MANGO'), 1, 3], [W59('MELON_SLICE'), 2, 5], [OAK_SAPLING, 1, 2]],
+  [BIOME.SAVANNA]: [[OAK_SAPLING, 1, 2], [W59('LEATHER'), 2, 4], [W59('WHEAT_SEEDS'), 2, 4]],
+  [BIOME.CHERRY]: [[BIRCH_SAPLING, 1, 2], [W59('CHERRY'), 2, 4], [POPPY, 1, 3]],
+  [BIOME.BADLANDS]: [[W59('GOLD_INGOT'), 2, 5], [TERRACOTTA, 4, 8], [RED_SAND, 4, 8]],
+  [BIOME.MUSHROOM]: [[MUSHROOM_RED, 2, 4], [MUSHROOM_BROWN, 2, 4], [W59('MUSHROOM_SOUP'), 1, 2]],
+  [BIOME.VOLCANIC]: [[OBSIDIAN, 2, 5], [W59('EMBER'), 2, 4], [W59('FLINT_STEEL'), 1, 1]],
+  [BIOME.ENCHANTED]: [[W59('CRYSTAL_SHARD'), 1, 3], [GLOW_FLOWER, 1, 3], [BIRCH_SAPLING, 1, 2]],
+  [BIOME.VOLCANO]: [[OBSIDIAN, 3, 6], [W59('EMBER_CORE'), 1, 1], [W59('INFERNITE'), 1, 1]],
+  [BIOME.MEADOW]: [[BIRCH_SAPLING, 1, 2], [DANDELION, 2, 4], [POPPY, 2, 4], [W59('BONE_MEAL'), 2, 4]],
+  [BIOME.BIRCH]: [[BIRCH_SAPLING, 2, 4], [W59('APPLE'), 1, 2]],
+  [BIOME.HIGHLANDS]: [[SPRUCE_SAPLING, 1, 2], [BIRCH_SAPLING, 1, 2], [W59('IRON_INGOT'), 1, 3]],
+  [BIOME.DUNES]: [[CACTUS, 1, 3], [W59('GOLD_INGOT'), 1, 2], [SANDSTONE, 4, 8]],
+  [BIOME.ISLAND]: [[W59('MANGO'), 2, 4], [OAK_SAPLING, 1, 2], [W59('FISHING_ROD'), 1, 1]],
+  [BIOME.OASIS]: [[W59('WATER_BUCKET'), 1, 1], [CACTUS, 1, 2], [W59('MANGO'), 1, 2]],
+  [BIOME.TUNDRA]: [[ICE, 2, 4], [SPRUCE_SAPLING, 1, 2], [W59('ICEFISH'), 1, 3]],
+};
+const sky59 = {
+  hash(gx, gz, k = 0) { let h = Math.imul(gx | 0, 73856093) ^ Math.imul(gz | 0, 19349663) ^ Math.imul(k + 1, 83492791) ^ (SKY59.seed | 0); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; },
+  // orden de biomas para las islas cercanas: todos aparecen antes de repetirse
+  order(seed) {
+    if (SKY59.seed === seed && SKY59.ord) return SKY59.ord;
+    SKY59.seed = seed; SKY59.cells.clear(); SKY59.built.clear();
+    const cells = [];
+    for (let gx = -3; gx <= 3; gx++) for (let gz = -3; gz <= 3; gz++) if (!(gx === 0 && gz === 0) && !(gx === 1 && gz === 0)) cells.push([gx, gz]);
+    cells.sort((a, b) => Math.max(Math.abs(a[0]), Math.abs(a[1])) - Math.max(Math.abs(b[0]), Math.abs(b[1])) || Math.atan2(a[1], a[0]) - Math.atan2(b[1], b[0]));
+    const rnd = mulberry32(seed ^ 0x51c9), perm = [...OW_BIOMES];
+    for (let i = perm.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    SKY59.ord = new Map(cells.map((c, k) => [c.join(','), perm[k % perm.length]]));
+    return SKY59.ord;
+  },
+  cell(gen, gx, gz) {
+    const key = `${gx},${gz}`; if (SKY59.cells.has(key)) return SKY59.cells.get(key);
+    let isl = null;
+    if (!(gx === 0 && gz === 0) && !(gx === 1 && gz === 0)) {
+      const ord = this.order(gen.seed), b = ord.has(key) ? ord.get(key) : OW_BIOMES[Math.floor(this.hash(gx, gz, 1) * OW_BIOMES.length)];
+      const G = SKY59.G, small = b === BIOME.OCEAN || b === BIOME.BEACH || b === BIOME.RIVER;
+      isl = { key, b, x: Math.round(gx * G + (this.hash(gx, gz, 2) - 0.5) * 34), z: Math.round(gz * G + (this.hash(gx, gz, 3) - 0.5) * 34),
+        y: 54 + Math.floor(this.hash(gx, gz, 4) * 14), R: (small ? 6 : 7) + Math.floor(this.hash(gx, gz, 5) * (small ? 3 : 6)) };
+    }
+    SKY59.cells.set(key, isl); return isl;
+  },
+  islandsIn(gen, x0, z0, x1, z1, margin = 30) {
+    const G = SKY59.G, out = [];
+    for (let gx = Math.floor((x0 - margin) / G - 0.5); gx <= Math.ceil((x1 + margin) / G + 0.5); gx++)
+      for (let gz = Math.floor((z0 - margin) / G - 0.5); gz <= Math.ceil((z1 + margin) / G + 0.5); gz++) {
+        const isl = this.cell(gen, gx, gz); if (isl && isl.x + isl.R + margin >= x0 && isl.x - isl.R - margin <= x1 && isl.z + isl.R + margin >= z0 && isl.z - isl.R - margin <= z1) out.push(isl);
+      }
+    return out;
+  },
+  // bloques de la isla (se calcula una vez)
+  build(gen, isl) {
+    if (SKY59.built.has(isl.key)) return SKY59.built.get(isl.key);
+    const B = BIOMES[isl.b], S = ISLE_SURF[isl.b] || {}, rnd = mulberry32((gen.seed ^ Math.imul(isl.x, 31)) ^ Math.imul(isl.z, 17)), map = new Map(), cols = new Set();
+    const put = (x, y, z, id) => { if (y >= 0 && y < WY) map.set(`${x},${y},${z}`, [x, y, z, id]); };
+    const rad = Array.from({ length: 16 }, () => 0.82 + rnd() * 0.3), R = isl.R, tops = [];
+    const radAt = (a) => { const f = ((a / (Math.PI * 2)) * 16 + 16) % 16, i = Math.floor(f), k = f - i; return R * (rad[i] * (1 - k) + rad[(i + 1) % 16] * k); };
+    for (let dx = -R - 4; dx <= R + 4; dx++) for (let dz = -R - 4; dz <= R + 4; dz++) {
+      const d = Math.hypot(dx, dz) / radAt(Math.atan2(dz, dx)); if (d > 1) continue;
+      const x = isl.x + dx, z = isl.z + dz, top = isl.y + (d < 0.6 && rnd() < 0.25 ? 1 : 0), depth = 2 + Math.round((1 - d * d) * R * 0.9);
+      cols.add(`${x},${z}`);
+      let topId = S.top ?? GRASS;
+      if (S.stony && rnd() < 0.45) topId = rnd() < 0.3 ? GRAVEL : STONE;
+      if (S.grassRing && d < 0.55) topId = GRASS;
+      if (S.ice && rnd() < 0.12) topId = ICE;
+      if (S.clay && rnd() < 0.15) topId = CLAY;
+      if (S.magma && rnd() < 0.1) topId = MAGMA;
+      for (let k = 0; k <= depth; k++) {
+        const y = top - k; let id;
+        if (k === 0) id = topId;
+        else if (k <= 3) id = S.fill ?? (topId === SAND ? SAND : DIRT);
+        else { id = S.stone ?? STONE; const r = rnd(), o = S.ores || 1; if (r < 0.04 * o) id = COAL_ORE; else if (r < 0.065 * o) id = IRON_ORE; else if (r < 0.085 * o) id = COPPER_ORE; else if (S.gold && r < 0.11) id = GOLD_ORE; else if (r < 0.088 * o) id = DIAMOND_ORE; }
+        put(x, y, z, id);
+      }
+      if (S.pool && d < 0.32) { put(x, top, z, WATER); put(x, top - 1, z, topId === SAND ? SAND : CLAY); }
+      else if (d < 0.75) tops.push([x, top, z, topId]);
+    }
+    // cofre cerca del centro
+    tops.sort((a, b) => Math.hypot(a[0] - isl.x - 2, a[2] - isl.z - 1) - Math.hypot(b[0] - isl.x - 2, b[2] - isl.z - 1));
+    const ch = tops.shift(); if (ch) { isl.chest = [ch[0], ch[1] + 1, ch[2]]; put(ch[0], ch[1] + 1, ch[2], CHEST); }
+    // árboles y plantas del bioma
+    const trees = B.trees || [], tw = trees.reduce((s, t) => s + t[1], 0);
+    let nt = trees.length ? 2 + Math.floor(rnd() * 2) + ((B.treeDensity || 0) > 0.02 ? 2 : 0) : 0;
+    const set = (x, y, z, id, force) => { const k = `${x},${y},${z}`; if (y < 0 || y >= WY) return; if (force || !map.has(k)) map.set(k, [x, y, z, id]); };
+    const free = tops.filter((t) => t[3] === GRASS || t[3] === SNOWY_GRASS || t[3] === MYCELIUM || t[3] === BASALT || t[3] === SAND && S.grassRing);
+    for (let i = free.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [free[i], free[j]] = [free[j], free[i]]; }
+    const used = [];
+    for (const t of free) {
+      if (nt <= 0) break;
+      if (used.some((u) => Math.hypot(u[0] - t[0], u[2] - t[2]) < 4) || (isl.chest && Math.hypot(isl.chest[0] - t[0], isl.chest[2] - t[2]) < 2.5)) continue;
+      let r = rnd() * tw, type = trees[0][0]; for (const [tt, w] of trees) if ((r -= w) < 0) { type = tt; break; }
+      try { gen.growTree(type, t[0], t[1], t[2], rnd, set); used.push(t); nt--; } catch (e) { nt--; }
+    }
+    const plants = (B.plants || []).filter(([id]) => BLOCKS[id]), pw = plants.reduce((s, p) => s + (p[1] || 1), 0);
+    for (const t of free) {
+      if (used.includes(t) || rnd() > 0.22 || !plants.length) continue;
+      const k = `${t[0]},${t[1] + 1},${t[2]}`; if (map.has(k)) continue;
+      let r = rnd() * pw, pid = plants[0][0]; for (const [id, w] of plants) if ((r -= (w || 1)) < 0) { pid = id; break; }
+      map.set(k, [t[0], t[1] + 1, t[2], pid]);
+    }
+    if (S.cactus) for (let i = 0; i < 3 && tops.length; i++) { const t = tops[Math.floor(rnd() * tops.length)]; if (t[3] === SAND && !map.has(`${t[0]},${t[1] + 1},${t[2]}`)) { put(t[0], t[1] + 1, t[2], CACTUS); if (rnd() < 0.5) put(t[0], t[1] + 2, t[2], CACTUS); } }
+    const res = { blocks: [...map.values()], cols };
+    SKY59.built.set(isl.key, res); return res;
+  },
+  decorate(gen, ch) {
+    const x0 = ch.cx * 16, z0 = ch.cz * 16;
+    for (const isl of this.islandsIn(gen, x0, z0, x0 + 15, z0 + 15)) {
+      const { blocks, cols } = this.build(gen, isl);
+      for (const [x, y, z, id] of blocks) if (x >= x0 && x < x0 + 16 && z >= z0 && z < z0 + 16) ch.blocks[(x - x0) | ((z - z0) << 4) | (y << 8)] = id;
+      for (const c of cols) { const [x, z] = c.split(',').map(Number); if (x >= x0 && x < x0 + 16 && z >= z0 && z < z0 + 16) ch.biome[(x - x0) | ((z - z0) << 4)] = isl.b; }
+    }
+  },
+  /* ---------- Cerca de una isla: llenar su cofre y poblarla ---------- */
+  spawnT: 0,
+  topAt(x, z, y0) { for (let y = y0 + 8; y >= y0 - 4; y--) { const id = world.get(x, y, z); if (id && BLOCKS[id].solid && !world.get(x, y + 1, z) && !world.get(x, y + 2, z)) return y + 1; } return null; },
+  update(dt) {
+    if (worlds58.type() !== 'skyblock' || game.state !== 'playing' || (this.spawnT -= dt) > 0) return;
+    this.spawnT = 2;
+    const p = game.player, done = p.sky59 || (p.sky59 = new Set());
+    for (const isl of this.islandsIn(world.gen, p.pos.x - 90, p.pos.z - 90, p.pos.x + 90, p.pos.z + 90, 0)) {
+      if (!world.chunk(isl.x >> 4, isl.z >> 4)) continue;
+      const dist = Math.hypot(isl.x - p.pos.x, isl.z - p.pos.z);
+      this.build(world.gen, isl);
+      if (!done.has(isl.key) && isl.chest && dist < 70 && world.get(...isl.chest) === CHEST) {
+        const t = game.getTile(...isl.chest);
+        if (t && t.inv) {
+          const loot = [...(ISLE_LOOT[isl.b] || []), ...ISLE_LOOT.base].filter(([id]) => id != null && ITEMS[id]), rnd = mulberry32(Math.imul(isl.x, 7) ^ isl.z ^ world.gen.seed);
+          for (const [id, a, b] of loot.slice(0, 3)) t.inv.add(id, a + Math.floor(rnd() * (b - a + 1)));
+          for (let i = 0; i < 2; i++) { const [id, a, b] = loot[3 + Math.floor(rnd() * Math.max(1, loot.length - 3))] || loot[0]; t.inv.add(id, a + Math.floor(rnd() * (b - a + 1))); }
+          done.add(isl.key);
+        }
+      }
+      if (dist > 80 || game.mode !== 'survival' && game.mode !== 'creative') continue;
+      // criaturas del bioma en la isla
+      const B = BIOMES[isl.b], S = ISLE_SURF[isl.b] || {}, near = game.entities.list.filter((e) => e.kind === 'mob' && !e.dead && Math.hypot(e.pos.x - isl.x, e.pos.z - isl.z) < isl.R + 4);
+      const pas = [...(B.passive || []), ...(S.extra || [])].filter((t) => MOBS[t] && !MOBS[t].ai?.startsWith?.('fish')), hos = (B.hostile || []).filter((t) => MOBS[t] && t !== 'drowned');
+      const nP = near.filter((e) => !e.spec.hostile).length, nH = near.filter((e) => e.spec.hostile).length;
+      const spot = () => { const a = Math.random() * Math.PI * 2, r = Math.random() * isl.R * 0.6, x = Math.floor(isl.x + Math.cos(a) * r), z = Math.floor(isl.z + Math.sin(a) * r), y = this.topAt(x, z, isl.y); return y == null ? null : [x + 0.5, y + 0.1, z + 0.5]; };
+      if (pas.length && nP < 3 && Math.random() < 0.5 && dist > 6) { const s = spot(); if (s) game.entities.spawnMob(pas[Math.floor(Math.random() * pas.length)], ...s); }
+      if (hos.length && nH < 2 && game.mode === 'survival' && Math.random() < 0.3 && dist > 10) {
+        const s = spot(); if (s) { const lvl = Math.max(world.skyAt(Math.floor(s[0]), Math.floor(s[1]), Math.floor(s[2])) * sharedUniforms.uDay.value, world.blockLightAt(Math.floor(s[0]), Math.floor(s[1]), Math.floor(s[2]))); if (lvl < 7) game.entities.spawnMob(hos[Math.floor(Math.random() * hos.length)], ...s); }
+      }
+    }
+  },
+};
+{
+  const _dec = worlds58.decorate;
+  worlds58.decorate = function (gen, ch) { _dec.call(this, gen, ch); if (gen.wtype === 'skyblock') sky59.decorate(gen, ch); };
+  const _u = worlds58.update;
+  worlds58.update = function (dt) { _u.call(this, dt); sky59.update(dt); };
+  const P = Player.prototype, _tj = P.toJSON, _ld = P.load;
+  P.toJSON = function () { const o = _tj.call(this); if (this.sky59 && this.sky59.size) o.sky = [...this.sky59].slice(0, 2000); return o; };
+  P.load = function (o) { const r = _ld.call(this, o); this.sky59 = new Set(Array.isArray(o?.sky) ? o.sky.filter((k) => typeof k === 'string').slice(0, 2000) : []); return r; };
 }
 
 /* ==========================================================================
