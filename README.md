@@ -1,4 +1,4 @@
-# LinkCraft 5.7
+# LinkCraft 5.8
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -160,6 +160,10 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 **Menús con estilo (5.7)**
 - Cada menú lleva la textura de lo que representa: la mesa de fabricación es de madera con patas, el cofre tiene cerrojo, el horno brilla, los encantamientos son de obsidiana, el mapa es de pergamino, los logros de oro, la enciclopedia una estantería…
 - Se puede apagar en Ajustes → Gráficos.
+
+**OneBlock y SkyBlock (5.8)**
+- Tipo de mundo al crearlo: Clásico, OneBlock (un bloque que se regenera, con nueve fases de la Pradera al Vacío, cofres y criaturas) o SkyBlock (la isla en L con su árbol y cofre, y la isla de arena).
+- Brotes de árbol que caen de las hojas y crecen, y cubo de lava.
 
 ## Funciones existentes que se mejoraron
 

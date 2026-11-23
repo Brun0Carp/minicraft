@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.7</title>
+<title>LinkCraft 5.8</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -785,6 +785,10 @@
 
 
 
+  /* 5.8: tipos de mundo */
+  #ob58 { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top)); transform: translateX(-50%); display: none; min-width: 220px; padding: 4px 10px 5px; background: rgba(0,0,0,.5); border: 2px solid #000; border-radius: 4px; text-align: center; font-size: 13px; color: #fff; text-shadow: 0 1px 0 #000; pointer-events: none; }
+  #ob58 u { display: block; height: 5px; margin-top: 3px; background: rgba(255,255,255,.15); } #ob58 s { display: block; height: 100%; background: #7ad04a; }
+  body.touch #ob58 { top: calc(56px + env(safe-area-inset-top)); }
   /* 5.6: combate RPG */
   #zoomTouch { display: none; position: absolute; right: calc(8px + env(safe-area-inset-right)); top: calc(224px + env(safe-area-inset-top)); width: 40px; height: 40px; border-radius: 10px; border: 2px solid rgba(0,0,0,.6); background: rgba(0,0,0,.4); color: #fff; font-size: 19px; z-index: 6; }
   body.touch #zoomTouch { display: block; } body.touch:not(.minimap-on) #zoomTouch { top: calc(108px + env(safe-area-inset-top)); } body.inv-open #zoomTouch, body.overlay #zoomTouch { display: none !important; }
@@ -1028,6 +1032,7 @@
 <div id="hud">
   <div id="crosshair"></div>
   <div id="abilityCd"><i></i></div>
+  <div id="ob58"><span></span><u><s></s></u></div>
   <div id="gStam" title="Resistencia del grifo"><b>🪽</b><div><i></i></div></div>
   <div id="senseChip"></div>
   <div id="fishGame"><b>🎣 ¡Recoge el sedal!</b><div class="fgBar"><i class="fgZone"></i><i class="fgFish">🐟</i></div><div class="fgProg"><s></s></div><small>Mantén Usar para mover la zona verde y que el pez no se salga de ella</small></div>
@@ -1094,7 +1099,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.7!</span>
+      <span class="ver">¡Versión 5.8!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1104,7 +1109,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.7</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 5.8</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1211,6 +1216,9 @@
       <button class="modeBtn on" data-mode="survival"><i class="bico lg" data-icon="survival"></i><b>Supervivencia</b><small>Vida, hambre, enemigos y fabricación</small></button>
       <button class="modeBtn" data-mode="creative"><i class="bico lg" data-icon="creative"></i><b>Creativo</b><small>Bloques infinitos, vuelo, sin daño</small></button>
     </div>
+    <label class="field" for="wType">Tipo de mundo</label>
+    <select id="wType"><option value="classic" selected>🌍 Clásico</option><option value="oneblock">🟩 OneBlock</option><option value="skyblock">☁ SkyBlock</option></select>
+    <p id="wTypeDesc" class="cardSub" style="margin:4px 0 8px;text-align:left">El mundo de siempre: biomas, cuevas, aldeas, mazmorras y jefes.</p>
     <label class="field" for="wDay">Duración del día</label>
     <select id="wDay"><option value="600">10 minutos</option><option value="1200" selected>20 minutos</option><option value="2400">40 minutos</option></select>
     <label class="check"><input id="wKeep" type="checkbox"> Conservar inventario al morir</label>
@@ -3240,6 +3248,45 @@ defBlock(TEAM_CHEST, 'Cofre de equipo', 'En un servidor multijugador abre el alm
     const prev = def.tileFn;
     def.tileFn = (f, meta, bi) => (bi === 2 ? T.iron_block : prev ? prev(f, meta, bi) : null);
   }
+}
+
+/* ==========================================================================
+   §2j BROTES DE ÁRBOL (5.8)
+   --------------------------------------------------------------------------
+   Brotes de roble, abedul y abeto (1080-1082): caen a veces de las hojas,
+   se plantan en tierra o césped y crecen hasta ser un árbol (o al instante
+   con harina de hueso). Imprescindibles en SkyBlock y OneBlock, y útiles en
+   cualquier mundo. La lógica del crecimiento está en §61.
+   ========================================================================== */
+const OAK_SAPLING = 1080, BIRCH_SAPLING = 1081, SPRUCE_SAPLING = 1082;
+for (const n of ['oak_sapling', 'birch_sapling', 'spruce_sapling']) { T[n] = TILE_NAMES.length; TILE_NAMES.push(n); }
+const SAPLING_TREE = { [OAK_SAPLING]: 'oak', [BIRCH_SAPLING]: 'birch', [SPRUCE_SAPLING]: 'spruce' };
+{
+  const D = 'Plántalo en tierra o césped con luz alrededor: con el tiempo crece un árbol. Con harina de hueso crece al momento.';
+  defBlock(OAK_SAPLING, 'Brote de roble', D, T.oak_sapling, { ...PLANT, sapling: 'oak', sound: 'grass' });
+  defBlock(BIRCH_SAPLING, 'Brote de abedul', D, T.birch_sapling, { ...PLANT, sapling: 'birch', sound: 'grass' });
+  defBlock(SPRUCE_SAPLING, 'Brote de abeto', D, T.spruce_sapling, { ...PLANT, sapling: 'spruce', sound: 'grass' });
+  // las hojas sueltan brotes (6 %)
+  for (const [leaf, sap] of [[OAK_LEAVES, OAK_SAPLING], [BIRCH_LEAVES, BIRCH_SAPLING], [SPRUCE_LEAVES, SPRUCE_SAPLING], [DARK_LEAVES, OAK_SAPLING]]) {
+    const B = BLOCKS[leaf]; if (!B) continue;
+    const d0 = B.drop;
+    B.drop = (rnd, held, meta) => { const out = typeof d0 === 'function' ? d0(rnd, held, meta) : d0 != null ? [[d0, 1]] : []; if (rnd() < 0.06) out.push([sap, 1]); return out; };
+  }
+  const _pe = paintExtraTiles;
+  paintExtraTiles = function (h) {
+    _pe(h);
+    const { paint, rnd } = h, N = (v) => (rnd() - 0.5) * v;
+    const sap = (t, leaf, dark, stem, spruce) => paint(t, (x, y) => {
+      if ((x === 7 || x === 8) && y >= 9) return y > 13 ? stem.map((v) => v * 0.8) : stem;
+      const inLeaf = spruce ? y >= 2 && y <= 11 && Math.abs(x - 7.5) <= (y - 1) * 0.55 && (y % 3 !== 1 || Math.abs(x - 7.5) < (y - 1) * 0.4)
+        : Math.hypot(x - 7.5, (y - 6) * 1.15) < 5.2 && rnd() > 0.12;
+      if (!inLeaf) return [0, 0, 0, 0];
+      const n = N(26); return (x + y) % 4 === 0 ? dark.map((v) => v + n) : leaf.map((v) => v + n);
+    });
+    sap(T.oak_sapling, [76, 150, 44], [46, 104, 30], [104, 76, 42]);
+    sap(T.birch_sapling, [128, 178, 72], [90, 140, 50], [216, 214, 200]);
+    sap(T.spruce_sapling, [44, 100, 58], [30, 72, 44], [86, 60, 36], true);
+  };
 }
 
 /* ==========================================================================
@@ -10822,7 +10869,7 @@ function renderWorldList() {
     const creative = w.mode === 'creative';
     let kb = 0; try { kb = Math.round(saveStore.size(SAVE_PREFIX + w.id) / 1024); } catch {}
     card.innerHTML = `<div class="wthumb" title="Jugar"><canvas width="48" height="24"></canvas>
-        <span class="wmode ${creative ? 'creative' : 'survival'}"><i class="bico" style="background-image:url(${menuIcon(creative ? 'creative' : 'survival')})"></i>${creative ? 'Creativo' : 'Supervivencia'}</span>
+        <span class="wmode ${creative ? 'creative' : 'survival'}"><i class="bico" style="background-image:url(${menuIcon(creative ? 'creative' : 'survival')})"></i>${creative ? 'Creativo' : 'Supervivencia'}</span>${w.wtype && w.wtype !== 'classic' && typeof WTYPES !== 'undefined' && WTYPES[w.wtype] ? ` <span class="wmode">${WTYPES[w.wtype].icon} ${WTYPES[w.wtype].name}</span>` : ''}
         <b class="wname">${escapeHtml(w.name)}</b></div>
       <dl class="wmeta"><dt>Última partida</dt><dd>${fmtDate(w.last)}</dd><dt>Semilla</dt><dd class="seed">${w.seed}</dd>
         <dt>Guardado</dt><dd>${kb} KB${w.keepInventory ? ' · conserva inventario' : ''}${w.verified ? ' · <span class="wver" title="Lo guardado se volvió a leer y coincide">✔ comprobado</span>' : ''}</dd></dl>
@@ -10878,7 +10925,7 @@ function initMenus() {
     let seed = seedTxt ? (/^-?\d+$/.test(seedTxt) ? parseInt(seedTxt, 10) : [...seedTxt].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261)) : Math.floor(Math.random() * 2147483647);
     seed = seed | 0;
     const meta = { id: 'w' + Date.now().toString(36), name, seed, gen: WORLD_GEN, mode: $('#createScreen').dataset.mode || 'survival',
-      keepInventory: $('#wKeep').checked, dayLength: +$('#wDay').value, created: Date.now(), last: Date.now() };
+      keepInventory: $('#wKeep').checked, dayLength: +$('#wDay').value, created: Date.now(), last: Date.now(), wtype: $('#wType')?.value || 'classic' };
     const list = listWorlds(); list.push(meta); saveWorldIndex(list);
     game.startWorld(meta.id, meta);
   };
@@ -11804,7 +11851,8 @@ const game = {
     this.state = 'loading';
     if (this.chunks) this.chunks.disposeAll();
     this.entities.clear();
-    world = new World(meta.seed, meta.gen || 1);          // gen 1 = terreno de antes de la 3.1 (se conserva en mundos antiguos)
+    world = new World(meta.seed, meta.gen || 1); world.gen.wtype = WTYPES[meta.wtype] ? meta.wtype : 'classic';   // 5.8: tipo de mundo
+    // gen 1 = terreno de antes de la 3.1 (se conserva en mundos antiguos)
     this.chunks = new ChunkManager(scene, world);
     this.structs = new Map(); this.boss = null; decor.clear(); mapUI.cache.clear();
     world.onLoad = (ch) => { this.entities.wake(ch.key); recordMap(ch); };
@@ -12671,7 +12719,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.7  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 5.8  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12696,7 +12744,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { worlds58, OB_PHASES, themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15633,6 +15681,16 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '5.8', name: 'OneBlock y SkyBlock', date: 'noviembre de 2026', items: [
+    'Al crear un mundo eliges el tipo: Clásico (el de siempre), OneBlock o SkyBlock. La lista de mundos muestra de qué tipo es cada uno.',
+    'OneBlock: empiezas sobre un único bloque que vuelve a salir cada vez que lo rompes. A veces sale un cofre con objetos de la fase o aparece una criatura.',
+    'Nueve fases: Pradera (tierra, césped, madera, hojas), Subsuelo (piedra, carbón, cobre, hierro), Tundra, Océano, Selva, Desierto, Inframundo, Profundidades (diamante, esmeralda, obsidiana) y El Vacío, que no termina. Al cambiar de fase sale un cofre especial, y arriba ves la fase y cuánto falta.',
+    'SkyBlock: la isla en L de siempre flotando en el vacío, con un árbol y un cofre (lava, agua, hielo, brotes, semillas y comida), y una isla de arena lejana con otro cofre y obsidiana. Con la lava y el agua haces un generador de piedra.',
+    'En OneBlock y SkyBlock el Mundo está vacío: no hay terreno, aldeas ni estructuras, ni historia principal. El Inframundo y el Vacío siguen existiendo si abres un portal.',
+    'Nuevo en todos los mundos: brotes de roble, abedul y abeto. Caen a veces de las hojas, se plantan en tierra o césped y crecen hasta ser un árbol (o al momento con polvo de hueso, a veces).',
+    'Nuevo: cubo de lava. Usa un cubo vacío sobre una fuente de lava para recogerla y colócala donde quieras.',
+    'Logros nuevos: «Un bloque, un mundo», «Hasta el Vacío», «Generador de piedra» y «Pulgar verde».',
+  ] },
   { v: '5.7', name: 'Menús con estilo', date: 'noviembre de 2026', items: [
     'Cada menú se viste con el material de lo que representa, con las mismas texturas pixeladas del mundo.',
     'Mesa de fabricación: tablones de madera, la cara de la mesa en la cabecera y patas debajo, como una mesita.',
@@ -18707,7 +18765,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.7';
+const GAME_VERSION = '5.8';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -23813,7 +23871,7 @@ Object.assign(questUI, {
           ${q.kind === 'side' ? `<button class="bkX" data-act="drop" data-id="${escapeHtml(q.id)}" title="Abandonar">✕</button>` : ''}</div>
           ${this.bar(a, b, ready ? '#3d8a3a' : null)}<div class="bkSub"><span>${ready ? (q.kind === 'side' ? '¡Lista para entregar!' : '¡Completada!') : `${a}/${b}`}</span><span>${q.kind === 'main' ? 'Historia' : escapeHtml(q.giver || '')}</span></div></div>`);
       }
-      if (!m) rows.unshift('<p class="bkSmall">👑 Historia completada: has derrotado a todas las amenazas del reino.</p>');
+      if (!m) rows.unshift(typeof worlds58 !== 'undefined' && worlds58.voidType() ? `<p class="bkSmall">${worlds58.type() === 'oneblock' ? '🟩 En OneBlock no hay historia: tu aventura son las fases del bloque.' : '☁ En SkyBlock no hay historia: tu aventura es hacer crecer la isla.'}</p>` : '<p class="bkSmall">👑 Historia completada: has derrotado a todas las amenazas del reino.</p>');
       if (!Q.active.length) rows.push('<p class="bkSmall">No tienes encargos. Habla con los aldeanos: cada uno puede ofrecerte un trabajo al día.</p>');
       const q = list.find((x) => x.id === this.sel);
       rt.textContent = q ? 'Detalle' : 'Diario del aventurero';
@@ -25046,6 +25104,258 @@ const themes57 = {
     if (th === 'iron' && ui.tile && ui.tile.type === 'hopper' && ICON[HOPPER]) panel.style.setProperty('--th-icon', `url(${ICON[HOPPER]})`);
     return r;
   };
+}
+
+/* ==========================================================================
+   §61 TIPOS DE MUNDO (5.8): Clásico, OneBlock y SkyBlock
+   --------------------------------------------------------------------------
+   · Se elige al crear el mundo (meta.wtype). En OneBlock y SkyBlock el
+     Mundo es vacío (sin terreno ni estructuras); el Inframundo y el Vacío
+     siguen igual, por si llegas a abrir un portal.
+   · OneBlock: un único bloque mágico en (0, 64, 0). Al romperlo vuelve a
+     salir otro según la fase; a veces sale un cofre con objetos de la fase o
+     una criatura. Nueve fases: Pradera, Subsuelo, Tundra, Océano, Selva,
+     Desierto, Inframundo, Profundidades y el Vacío (sin fin).
+   · SkyBlock: la isla en L de siempre (césped, árbol y cofre con lava,
+     agua, hielo, brotes y semillas) y una isla de arena lejana con otro
+     cofre. Con lava y agua haces un generador de piedra.
+   · Brotes de árbol (§2j) y cubo de lava, también en el mundo clásico.
+   ========================================================================== */
+const WTYPES = {
+  classic: { name: 'Clásico', icon: '🌍', desc: 'El mundo de siempre: biomas, cuevas, aldeas, mazmorras y jefes.' },
+  oneblock: { name: 'OneBlock', icon: '🟩', desc: 'Empiezas sobre un único bloque que vuelve a salir cada vez que lo rompes. Avanza por nueve fases, de la Pradera al Vacío.' },
+  skyblock: { name: 'SkyBlock', icon: '☁', desc: 'Una pequeña isla flotando en el vacío, un árbol y un cofre. Cuida cada bloque: lo que cae, se pierde.' },
+};
+Object.assign(I, { LAVA_BUCKET: 763 });
+defItem(I.LAVA_BUCKET, 'Cubo de lava', 'Coloca una fuente de lava. Junto al agua forma piedra (o obsidiana si es la fuente). También es un combustible muy duradero.', { stack: 1, fuel: 100 });
+{
+  const P = (fn) => () => { const p = new Pix(); fn(p); return p.canvas(); };
+  ICON_OVERRIDE[I.LAVA_BUCKET] = P((p) => { p.poly([[3, 4], [13, 4], [12, 14], [4, 14]], (x, y) => (x < 6 ? [200, 200, 206] : x > 10 ? [120, 120, 128] : [168, 168, 176])); p.poly([[4, 4.5], [12, 4.5], [11.6, 7], [4.4, 7]], (x, y) => ((x + y) % 3 ? [250, 120, 30] : [255, 210, 80])); p.line([[3, 3.6], [13, 3.6]], 1, [90, 90, 96]); });
+}
+const OB_POS = [0, 64, 0];
+const WI = (n) => (I[n] != null ? I[n] : null);
+// [nombre, bloques que dura, [bloque, peso]…, criaturas, botín de los cofres [id, mín, máx]]
+const OB_PHASES = [
+  ['Pradera', '🌱', 100, [[GRASS, 30], [DIRT, 24], [OAK_LOG, 20], [OAK_LEAVES, 8], [BIRCH_LOG, 6], [SAND, 4], [GRAVEL, 3], [CLAY, 2], [MELON, 1]],
+    ['cow', 'pig', 'sheep', 'chicken'], [[OAK_SAPLING, 1, 3], [BIRCH_SAPLING, 1, 2], [WI('WHEAT_SEEDS'), 2, 5], [WI('BONE_MEAL'), 2, 4], [WI('APPLE'), 1, 3], [WI('BREAD'), 1, 3], [WI('WATER_BUCKET'), 1, 1], [WI('CARROT'), 1, 2], [WI('POTATO'), 1, 2]]],
+  ['Subsuelo', '⛏', 200, [[STONE, 30], [COBBLE, 20], [ANDESITE, 8], [GRANITE, 8], [DIORITE, 8], [COAL_ORE, 10], [COPPER_ORE, 7], [IRON_ORE, 6], [GRAVEL, 4], [MOSSY_COBBLE, 3]],
+    ['zombie', 'skeleton', 'spider', 'bat'], [[TORCH, 6, 14], [WI('IRON_INGOT'), 2, 4], [WI('COAL'), 4, 8], [WI('BREAD'), 2, 4], [WI('BUCKET'), 1, 1], [WI('LAVA_BUCKET'), 1, 1], [WI('STRING'), 2, 4]]],
+  ['Tundra', '❄', 200, [[SNOWY_GRASS, 15], [SNOW, 12], [ICE, 15], [SPRUCE_LOG, 20], [SPRUCE_LEAVES, 8], [STONE, 10], [IRON_ORE, 6], [COAL_ORE, 5]],
+    ['wolf', 'fox', 'rabbit', 'stray'], [[SPRUCE_SAPLING, 1, 3], [WI('LEATHER'), 2, 5], [WI('ARROW'), 6, 12], [WI('ICEFISH'), 1, 3], [WI('IRON_INGOT'), 1, 3], [WI('EMERALD'), 1, 2]]],
+  ['Océano', '🌊', 200, [[SAND, 25], [SANDSTONE, 15], [CLAY, 12], [GRAVEL, 10], [SEA_STONE, 12], [SEA_BRICKS, 6], [GOLD_ORE, 4], [IRON_ORE, 4]],
+    ['drowned', 'turtle'], [[WI('FISHING_ROD'), 1, 1], [WI('WATER_BUCKET'), 1, 1], [WI('SEASHELL'), 1, 3], [WI('RAW_FISH'), 2, 4], [WI('GOLD_INGOT'), 1, 3], [WI('ABYSS_PEARL'), 1, 1]]],
+  ['Selva', '🌴', 250, [[JUNGLE_LOG, 25], [JUNGLE_LEAVES, 10], [MOSS, 15], [GRASS, 15], [DIRT, 10], [CHERRY_LOG, 6], [MELON, 5], [GOLD_ORE, 3]],
+    ['panda', 'frog', 'spider'], [[WI('MANGO'), 1, 3], [WI('TOMATO_SEEDS'), 2, 4], [WI('RICE'), 2, 4], [WI('MELON_SLICE'), 2, 5], [OAK_SAPLING, 1, 2], [WI('CABBAGE_SEEDS'), 2, 4]]],
+  ['Desierto', '🏜', 250, [[SAND, 25], [RED_SAND, 10], [SANDSTONE, 20], [TERRACOTTA, 15], [GOLD_ORE, 6], [IRON_ORE, 4], [DIAMOND_ORE, 1]],
+    ['husk', 'rabbit', 'spider'], [[WI('GOLD_INGOT'), 2, 5], [WI('EMERALD'), 1, 3], [CACTUS, 1, 2], [WI('DIAMOND'), 1, 1], [WI('BONE'), 2, 5]]],
+  ['Inframundo', '🔥', 300, [[NETHERRACK, 35], [NETHER_BRICKS, 10], [MAGMA, 8], [GLOWSTONE, 6], [CRIMSON_NYLIUM, 8], [CRIMSON_STEM, 10], [BASALT, 8], [INFERNITE_ORE, 4], [GOLD_ORE, 3], [OBSIDIAN, 2]],
+    ['scorched', 'imp', 'magmacube'], [[WI('INFERNITE'), 1, 3], [WI('EMBER'), 2, 5], [WI('FLINT_STEEL'), 1, 1], [OBSIDIAN, 2, 6], [WI('GOLD_INGOT'), 2, 4], [WI('EMBER_CORE'), 1, 1]]],
+  ['Profundidades', '💎', 350, [[STONE, 15], [OBSIDIAN, 12], [DIAMOND_ORE, 6], [EMERALD_ORE, 5], [GOLD_ORE, 8], [IRON_ORE, 10], [CRYSTAL_BLOCK, 6], [AERITE_ORE, 4], [COAL_ORE, 6]],
+    ['brute', 'skeleton', 'zombie', 'spider'], [[WI('DIAMOND'), 1, 3], [WI('EMERALD'), 2, 4], [WI('AERITE'), 1, 3], [WI('CRYSTAL_SHARD'), 2, 4], [WI('VOID_EYE'), 1, 1], [WI('GOLDEN_APPLE'), 1, 1]]],
+  ['El Vacío', '🌌', Infinity, [[VOID_STONE, 35], [VOID_CRYSTAL, 10], [VOIDITE_ORE, 6], [OBSIDIAN, 8], [CRYSTAL_BLOCK, 6], [DIAMOND_ORE, 3], [EMERALD_ORE, 3]],
+    ['voidling', 'wraith', 'watcher'], [[WI('VOIDITE'), 1, 3], [WI('VOID_SHARD'), 2, 5], [WI('RECALL_PEARL'), 1, 2], [WI('DIAMOND'), 2, 4], [WI('TOTEM'), 1, 1]]],
+].map(([name, icon, len, blocks, mobs, loot]) => ({ name, icon, len, blocks: blocks.filter(([b]) => b != null && BLOCKS[b]), mobs, loot: loot.filter(([id]) => id != null && ITEMS[id]) }));
+ACHIEVEMENTS.push(['ob_100', 'Un bloque, un mundo', 'Rompe 100 veces el bloque del OneBlock.'], ['ob_void', 'Hasta el Vacío', 'Llega a la última fase del OneBlock.'],
+  ['sky_cobble', 'Generador de piedra', 'Consigue piedra en un mundo SkyBlock.'], ['sapling_grow', 'Pulgar verde', 'Haz crecer un árbol desde un brote.']);
+
+const worlds58 = {
+  island: null, sandIsland: null, obT: 0, hudEl: null,
+  type() { return (world && world.gen && world.gen.wtype) || 'classic'; },
+  voidType(t = this.type()) { return t === 'oneblock' || t === 'skyblock'; },
+  /* ---------- Islas de SkyBlock (se calculan una vez, con el mismo árbol del generador) ---------- */
+  buildIslands(gen) {
+    const out = new Map(), put = (x, y, z, id) => out.set(`${x},${y},${z}`, [x, y, z, id]);
+    const Y = 64;
+    for (let x = -1; x <= 4; x++) for (let z = -1; z <= 1; z++) for (let d = 0; d < 3; d++) put(x, Y - d, z, d ? DIRT : GRASS);
+    for (let x = -1; x <= 1; x++) for (let z = 2; z <= 4; z++) for (let d = 0; d < 3; d++) put(x, Y - d, z, d ? DIRT : GRASS);
+    put(0, Y - 2, 0, BEDROCK);
+    const set = (x, y, z, id, force) => { const k = `${x},${y},${z}`; if (force || !out.has(k)) put(x, y, z, id); };
+    gen.growTree('oak', 4, Y, -1, mulberry32(gen.seed ^ 0x5b1), set);
+    put(-1, Y + 1, 4, CHEST);
+    this.island = [...out.values()];
+    const S = [], sx = 62, sz = 2;
+    for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) for (let d = 0; d < 3; d++) S.push([sx + x, 62 - d, sz + z, d === 2 ? SANDSTONE : SAND]);
+    S.push([sx, 63, sz, CACTUS], [sx + 1, 63, sz + 1, CHEST]);
+    this.sandIsland = S;
+  },
+  decorate(gen, ch) {
+    const t = gen.wtype, x0 = ch.cx * 16, z0 = ch.cz * 16;
+    const place = (x, y, z, id) => { if (x < x0 || x > x0 + 15 || z < z0 || z > z0 + 15 || y < 0 || y >= WY) return; ch.blocks[(x - x0) | ((z - z0) << 4) | (y << 8)] = id; };
+    if (t === 'oneblock') place(OB_POS[0], OB_POS[1], OB_POS[2], GRASS);
+    else if (t === 'skyblock') { if (!this.island) this.buildIslands(gen); for (const [x, y, z, id] of this.island) place(x, y, z, id); for (const [x, y, z, id] of this.sandIsland) place(x, y, z, id); }
+  },
+  /* ---------- Al crear el mundo: cofres iniciales ---------- */
+  fillChest(x, y, z, items) {
+    if (world.get(x, y, z) !== CHEST) return;
+    const t = game.getTile(x, y, z); if (!t || !t.inv) return;
+    for (const [id, n] of items) if (id != null && ITEMS[id]) t.inv.add(id, n);
+  },
+  onNewWorld() {
+    const t = this.type();
+    if (t === 'skyblock') {
+      this.fillChest(-1, 65, 4, [[I.LAVA_BUCKET, 1], [I.WATER_BUCKET, 1], [ICE, 2], [OAK_SAPLING, 2], [I.WHEAT_SEEDS, 3], [I.BONE_MEAL, 3], [I.BREAD, 3], [MELON, 1], [I.MUSHROOM_RED ?? null, 1], [I.MUSHROOM_BROWN ?? null, 1]]);
+      this.fillChest(63, 63, 3, [[OBSIDIAN, 10], [I.MELON_SLICE ?? null, 2], [I.BEET_SEEDS ?? null, 3], [BIRCH_SAPLING, 1], [I.TOMATO_SEEDS ?? null, 2]]);
+      setTimeout(() => hud.toast('☁ SkyBlock: abre el cofre de la isla. Con la lava y el agua puedes hacer un generador de piedra.', 6000), 1200);
+    }
+    if (t === 'oneblock') setTimeout(() => hud.toast('🟩 OneBlock: rompe el bloque bajo tus pies. Siempre vuelve a salir otro.', 6000), 1200);
+  },
+  /* ---------- OneBlock ---------- */
+  ob(p = game.player) { return p.ob58 || (p.ob58 = { n: 0 }); },
+  phaseOf(n) { let a = 0; for (let i = 0; i < OB_PHASES.length; i++) { if (n < a + OB_PHASES[i].len) return [i, n - a]; a += OB_PHASES[i].len; } return [OB_PHASES.length - 1, n - a]; },
+  pick(list) { const tot = list.reduce((s, e) => s + e[1], 0); let r = Math.random() * tot; for (const e of list) if ((r -= e[1]) < 0) return e[0]; return list[0][0]; },
+  isOB(x, y, z) { return this.type() === 'oneblock' && x === OB_POS[0] && y === OB_POS[1] && z === OB_POS[2] && dimOf(x, z) === 0; },
+  regen(counted) {
+    const [x, y, z] = OB_POS; if (world.get(x, y, z) !== AIR || !world.chunk(x >> 4, z >> 4)) return;
+    const o = this.ob(), before = this.phaseOf(o.n)[0];
+    if (counted) { o.n++; game.stats.add('oneblock'); if (o.n >= 100) game.unlock('ob_100'); }
+    const [pi] = this.phaseOf(o.n), P = OB_PHASES[pi];
+    if (pi !== before) {
+      notify(`${P.icon} Fase ${pi + 1}: ${P.name}`, pi === OB_PHASES.length - 1 ? 'La última fase: el bloque ya no cambia más.' : `Nuevos bloques, criaturas y cofres de la fase.`, 'ach');
+      sfx.play('levelup'); if (typeof journalAdd === 'function') journalAdd(P.icon, `OneBlock: fase ${pi + 1}, ${P.name}`);
+      if (pi === OB_PHASES.length - 1) game.unlock('ob_void');
+      this.chest(P, true); return;
+    }
+    const r = Math.random();
+    if (r < 0.025) { this.chest(P); return; }
+    world.set(x, y, z, this.pick(P.blocks), 0);
+    if (r > 0.97 && game.mode === 'survival') {
+      const list = P.mobs.filter((t) => MOBS[t]); if (list.length) { const m = game.entities.spawnMob(list[Math.floor(Math.random() * list.length)], x + 0.5, y + 1.2, z + 0.5); if (m) game.particles.emit(x + 0.5, y + 1.5, z + 0.5, [0.8, 0.8, 0.8], 8, { speed: 1, life: 0.4 }); }
+    }
+    game.particles.emit(x + 0.5, y + 0.6, z + 0.5, [0.6, 1, 0.6], 6, { speed: 1.2, up: 1.4, life: 0.4, size: 0.07 });
+  },
+  chest(P, big) {
+    const [x, y, z] = OB_POS; world.set(x, y, z, CHEST, 0);
+    const t = game.getTile(x, y, z); if (!t || !t.inv) return;
+    const n = big ? 5 : 2 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < n; i++) { const [id, a, b] = P.loot[Math.floor(Math.random() * P.loot.length)]; t.inv.add(id, a + Math.floor(Math.random() * (b - a + 1))); }
+    sfx.play('chest'); dmgText.add(x + 0.5, y + 1.4, z + 0.5, big ? '¡Cofre de la fase!' : '¡Cofre!', 'crit');
+  },
+  /* ---------- Brotes: crecen con el tiempo o con harina de hueso ---------- */
+  saplings: new Map(),
+  growAt(x, y, z) {
+    const id = world.get(x, y, z), type = SAPLING_TREE[id]; if (!type) return false;
+    const below = world.get(x, y - 1, z); if (![GRASS, DIRT, SNOWY_GRASS, MOSS, FARMLAND].includes(below)) return false;
+    for (let dy = 1; dy <= 5; dy++) { const a = world.get(x, y + dy, z); if (a && !BLOCKS[a].replaceable && !BLOCKS[a].name.startsWith('Hojas')) return false; }
+    world.set(x, y, z, AIR, 0);
+    const set = (bx, by, bz, bid, force) => { if (by < 0 || by >= WY) return; const cur = world.get(bx, by, bz); if (cur === AIR || BLOCKS[cur]?.replaceable || (force && bid !== DIRT)) { if (bid === DIRT && cur !== AIR) return; world.set(bx, by, bz, bid, 0); } };
+    world.gen.growTree(type, x, y - 1, z, mulberry32((x * 73856093) ^ (z * 19349663) ^ Date.now()), set);
+    this.saplings.delete(`${x},${y},${z}`); game.unlock('sapling_grow');
+    game.particles.emit(x + 0.5, y + 1, z + 0.5, [0.45, 0.9, 0.4], 14, { speed: 1.6, up: 2, life: 0.6, size: 0.09 });
+    return true;
+  },
+  scanSaplings() {
+    this.saplings.clear();
+    for (const [ck, list] of world.edits) {
+      const [cx, cz] = ck.split(',').map(Number);
+      for (const [i, v] of list) { const id = editId(v); if (SAPLING_TREE[id]) { const x = cx * 16 + (i & 15), z = cz * 16 + ((i >> 4) & 15), y = i >> 8; this.saplings.set(`${x},${y},${z}`, 60 + Math.random() * 120); } }
+    }
+  },
+  /* ---------- Indicador de la fase del OneBlock ---------- */
+  hud() {
+    let el = this.hudEl || (this.hudEl = $('#ob58'));
+    const on = this.type() === 'oneblock' && game.state === 'playing';
+    if (!el) return;
+    el.style.display = on ? 'block' : 'none'; if (!on) return;
+    const o = this.ob(), [pi, k] = this.phaseOf(o.n), P = OB_PHASES[pi], txt = `${P.icon} Fase ${pi + 1} · ${P.name} · ${P.len === Infinity ? `${o.n} bloques` : `${k}/${P.len}`}`;
+    if (el._t !== txt) { el._t = txt; el.querySelector('span').textContent = txt; el.querySelector('s').style.width = (P.len === Infinity ? 100 : k / P.len * 100) + '%'; }
+  },
+  update(dt) {
+    if (!world || game.state !== 'playing') { this.hud(); return; }
+    if ((this.obT -= dt) <= 0) {
+      this.obT = 0.5;
+      if (this.type() === 'oneblock') this.regen(false);              // por si algo lo quitó sin romperlo (explosión, pistón, agua…)
+      for (const [k, t] of this.saplings) { const nt = t - 0.5; if (nt > 0) { this.saplings.set(k, nt); continue; } const [x, y, z] = k.split(',').map(Number); if (!world.chunk(x >> 4, z >> 4)) continue; if (!this.growAt(x, y, z)) this.saplings.set(k, 30); }
+    }
+    this.hud();
+  },
+};
+/* ---------- Generación: Mundo vacío (sin estructuras) en OneBlock y SkyBlock ---------- */
+{
+  const _gen = WorldGen.prototype.generateChunk;
+  WorldGen.prototype.generateChunk = function (ch) {
+    _gen.call(this, ch);
+    if (!worlds58.voidType(this.wtype) || dimOf(ch.cx * 16 + 8, ch.cz * 16 + 8)) return;
+    ch.blocks.fill(AIR); ch.meta.fill(0); ch.plans = [];
+    worlds58.decorate(this, ch);
+  };
+  const _pi = WorldGen.prototype.plansIn;
+  WorldGen.prototype.plansIn = function (x0, z0, x1, z1) { if (worlds58.voidType(this.wtype) && !dimOf((x0 + x1) / 2, (z0 + z1) / 2)) return []; return _pi.call(this, x0, z0, x1, z1); };
+  const _fs = findSpawn;
+  findSpawn = function (seed) { return worlds58.voidType() ? [0, 0] : _fs(seed); };
+}
+/* ---------- Romper el bloque mágico, plantar brotes, cubos de lava y harina de hueso ---------- */
+{
+  const _brk = game.breakBlock;
+  game.breakBlock = function (x, y, z, byPlayer = true) {
+    const was = world.get(x, y, z), r = _brk.call(this, x, y, z, byPlayer);
+    if (was && world.get(x, y, z) === AIR) {
+      if (worlds58.isOB(x, y, z)) worlds58.regen(true);
+      if (SAPLING_TREE[was]) worlds58.saplings.delete(`${x},${y},${z}`);
+      if (byPlayer && (was === COBBLE || was === STONE) && worlds58.type() === 'skyblock') game.unlock('sky_cobble');
+    }
+    return r;
+  };
+  const _set = World.prototype.set;
+  World.prototype.set = function (x, y, z, id, meta = 0) {
+    const r = _set.call(this, x, y, z, id, meta);
+    if (r && SAPLING_TREE[id] && this === world) worlds58.saplings.set(`${x},${y},${z}`, 60 + Math.random() * 120);
+    return r;
+  };
+  const _use = game.useItem;
+  game.useItem = function () {
+    const p = this.player, s = p.held(), t = this.target;
+    if (s && s.id === I.BONE_MEAL && t && SAPLING_TREE[t.id]) {
+      if (Math.random() < 0.45 || this.mode === 'creative') worlds58.growAt(t.x, t.y, t.z); else this.particles.emit(t.x + 0.5, t.y + 0.6, t.z + 0.5, [0.4, 0.9, 0.4], 6, { gravity: -1, up: 1 });
+      if (this.mode === 'survival') { s.count--; if (!s.count) p.inv.slots[p.selected] = null; }
+      this.swing = 1; hud.update(); return true;
+    }
+    if (s && s.id === I.BUCKET) {
+      const d = new THREE.Vector3(); camera.getWorldDirection(d);
+      const w = raycastBlocks(camera.position, d, REACH + MODS.reach, true);
+      if (w && w.id === LAVA && !(world.getMeta(w.x, w.y, w.z) & 15)) {
+        world.set(w.x, w.y, w.z, AIR, 0);
+        if (this.mode === 'survival') { s.count--; if (!s.count) p.inv.slots[p.selected] = null; const left = p.inv.add(I.LAVA_BUCKET, 1); if (left) this.entities.dropItem({ id: I.LAVA_BUCKET, count: 1 }, p.pos.x, p.pos.y + 1, p.pos.z); }
+        sfx.play('bucket', { pitch: 0.7 }); this.swing = 1; hud.update(); return true;
+      }
+    }
+    if (s && s.id === I.LAVA_BUCKET && t) {
+      let x = t.x + t.normal[0], y = t.y + t.normal[1], z = t.z + t.normal[2];
+      if (BLOCKS[t.id].replaceable) { x = t.x; y = t.y; z = t.z; }
+      const cur = world.get(x, y, z); if (cur && !BLOCKS[cur].replaceable) return false;
+      world.set(x, y, z, LAVA, 0); this.queueFlow(x, y - 1, z, 24);
+      for (const [dx, dz] of FACING_DIR) this.queueFlow(x + dx, y, z + dz, 12);
+      if (this.mode === 'survival') p.inv.slots[p.selected] = { id: I.BUCKET, count: 1, dmg: 0 };
+      sfx.play('bucket', { pitch: 0.7 }); this.swing = 1; hud.update(); return true;
+    }
+    return _use.call(this);
+  };
+}
+/* ---------- Crear el mundo: tipo, arranque y guardado del OneBlock ---------- */
+{
+  const P = Player.prototype, _tj = P.toJSON, _ld = P.load;
+  P.toJSON = function () { const o = _tj.call(this); if (this.ob58) o.ob = { n: this.ob58.n | 0 }; return o; };
+  P.load = function (o) { const r = _ld.call(this, o); if (o && o.ob && Number.isFinite(o.ob.n)) this.ob58 = { n: Math.max(0, Math.floor(o.ob.n)) }; return r; };
+  const _start = game.startWorld;
+  game.startWorld = async function (id, meta, ...rest) {
+    worlds58.island = null; worlds58.saplings.clear();
+    const fresh = !!meta && !rest[0];
+    const r = await _start.call(this, id, meta, ...rest);
+    if (world) { worlds58.scanSaplings(); if (fresh) worlds58.onNewWorld(); }
+    return r;
+  };
+}
+{
+  const sel = $('#wType'), desc = $('#wTypeDesc');
+  if (sel) sel.onchange = () => { desc.textContent = WTYPES[sel.value].desc; };
+  const _u = rpg56.update;
+  rpg56.update = function (dt) { worlds58.update(dt); return _u.call(this, dt); };
+}
+/* ---------- En OneBlock y SkyBlock no hay historia (no hay aldeas ni jefes en el Mundo); al empezar se mira al bloque ---------- */
+{
+  const _mq = mainQuest;
+  mainQuest = function (p) { return worlds58.voidType() ? null : _mq(p); };
+  const _new = worlds58.onNewWorld;
+  worlds58.onNewWorld = function () { _new.call(this); if (this.voidType()) camera.rotation.set(this.type() === 'skyblock' ? -0.32 : -0.75, this.type() === 'skyblock' ? -1.35 : 0, 0); };
 }
 
 /* ==========================================================================
