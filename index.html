@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 5.9</title>
+<title>LinkCraft 6.0</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -36,7 +36,7 @@
   ============================================================================
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --font: 'Pixelify Sans', ui-monospace, 'Courier New', monospace;
@@ -785,6 +785,53 @@
 
 
 
+
+  /* 6.0: cuaderno del explorador */
+  #codexScreen { background: rgba(8,10,8,.55); }
+  #codexScreen .book { position: relative; width: min(980px, calc(96vw - 56px)); margin-right: 44px; height: min(600px, 86vh); display: flex; padding: 14px 16px 22px; }
+  .nbBook .bkCover { background: #3e4a3a; box-shadow: inset 0 0 0 3px #1e261c, inset 0 -8px 0 #2a3428, 0 6px 0 #121810, 0 0 0 3px #121810; }
+  .nbBook .bkCover::after { background: repeating-linear-gradient(90deg, #56634e 0 46px, #2e3a2a 46px 50px); }
+  .nbBook .bkPage { background: #fbf8ee; color: #2c3654; font-family: 'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-size: 19px; line-height: 1.25;
+    background-image: repeating-linear-gradient(transparent 0 23px, rgba(90,130,200,.22) 23px 24px); background-position: 0 6px;
+    box-shadow: inset 0 0 0 2px #e6dfcc, inset 0 0 0 5px #fbf8ee, inset 0 0 0 6px #d8cfb8, 0 3px 0 #cfc6ae; }
+  .nbBook .bkPage.left::before { content: ''; position: absolute; left: 34px; top: 6px; bottom: 6px; width: 1px; background: rgba(210,80,80,.35); box-shadow: none; height: auto; }
+  .nbBook .bkPage.left::after, .nbBook .bkPage.right::before, .nbBook .bkPage.right::after { display: none; }
+  .nbBook .bkPage h3 { font-family: inherit; font-size: 28px; font-weight: 700; color: #2c3654; border-bottom: 0; margin: 0 0 2px; text-decoration: underline wavy rgba(44,54,84,.35); text-underline-offset: 6px; }
+  .nbBook .bkSpine { background: linear-gradient(90deg, #e9e2cf, #b8ad94 45%, #9a907a 50%, #b8ad94 55%, #e9e2cf); }
+  .nbBook .bkTab.gold { background: #c89a2a; }
+  #nbTools { display: flex; flex-direction: column; gap: 4px; margin: 0 0 6px 22px; }
+  #nbSearch { font-family: inherit; font-size: 18px; color: #2c3654; background: transparent; border: 0; border-bottom: 2px dashed rgba(44,54,84,.4); padding: 2px 4px; outline: none; }
+  #nbCats { display: flex; flex-wrap: wrap; gap: 2px 10px; } .nbCat { font-family: inherit; font-size: 17px; color: #6a7290; background: none; border: 0; padding: 0; cursor: pointer; }
+  .nbCat.on { color: #2c3654; text-decoration: underline; text-decoration-thickness: 2px; }
+  .nbGrid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px 8px; align-content: start; padding-left: 22px !important; }
+  #codexBody .nbSub, .nbBook .nbSub { grid-column: 1 / -1; margin: 6px 0 0; padding: 0; border: 0; text-align: left; font-family: inherit; font-size: 23px; font-weight: 700; color: #2c3654; text-decoration: underline; text-decoration-color: rgba(44,54,84,.3); }
+  .nbCell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0; padding: 6px 4px 4px; background: #fffdf6; border: 0; cursor: pointer; transform: rotate(var(--rot, 0deg));
+    box-shadow: 0 1px 0 rgba(0,0,0,.08), 0 2px 6px rgba(80,60,30,.18); font-family: inherit; color: #2c3654; transition: transform .12s; }
+  .nbCell:hover, .nbCell.sel { transform: rotate(0deg) scale(1.06); box-shadow: 0 0 0 2px rgba(44,54,84,.45), 0 3px 8px rgba(80,60,30,.25); z-index: 1; }
+  .nbCell img { width: 72px; height: 72px; object-fit: contain; mix-blend-mode: multiply; } .nbCell img:not([src]) { visibility: hidden; }
+  .nbCell span { font-size: 15.5px; line-height: 1.05; text-align: center; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .nbCell em { position: absolute; right: 2px; top: 0; font-style: normal; font-size: 14px; color: #a05030; transform: rotate(8deg); }
+  .nbBlank, .nbEmpty { grid-column: 1 / -1; font-size: 18px; color: #8a90a8; margin: 8px 0; }
+  .nbDay { grid-column: 1 / -1; display: flex; justify-content: space-between; font-family: inherit; font-size: 20px; color: #2c3654; background: none; border: 0; border-bottom: 1px dashed rgba(44,54,84,.25); padding: 2px 4px; cursor: pointer; text-align: left; }
+  .nbDay.sel { background: rgba(255,230,120,.35); } .nbDay span { color: #6a7290; font-size: 16px; }
+  #nbRight { padding: 0 6px 8px; } #nbRight p { margin: 4px 0; }
+  .nbFig { position: relative; float: right; margin: 2px 0 6px 10px; padding: 8px; background: #fffdf6; transform: rotate(2deg); box-shadow: 0 2px 8px rgba(80,60,30,.22); }
+  .nbFig img { display: block; width: 150px; height: 150px; object-fit: contain; mix-blend-mode: multiply; } .nbFig.wide { float: none; margin: 4px auto 8px; transform: rotate(-1.2deg); width: max-content; max-width: 100%; }
+  .nbFig.wide img { width: 260px; height: auto; max-width: 100%; aspect-ratio: 200 / 144; } .nbFig img:not([src]) { visibility: hidden; }
+  .nbFig .tape { position: absolute; width: 46px; height: 14px; background: rgba(240,220,150,.65); top: -6px; } .nbFig .tape.a { left: -10px; transform: rotate(-28deg); } .nbFig .tape.b { right: -10px; transform: rotate(26deg); }
+  .nbName { font-family: inherit; font-size: 30px; font-weight: 700; margin: 2px 0 0; color: #1e2846; line-height: 1.05; } .nbName small { font-size: 18px; font-weight: 500; }
+  .nbDate { font-size: 17px !important; color: #8a6a40; margin-top: 0 !important; }
+  .nbMargin { clear: both; color: #a0503a; font-size: 18px !important; transform: rotate(-1deg); }
+  .nbMini { display: flex; flex-wrap: wrap; gap: 4px; } .nbMini img { width: 40px; height: 40px; mix-blend-mode: multiply; }
+  .nbRecipe { display: flex; align-items: center; gap: 10px; } .nbRGrid { display: grid; grid-template-columns: repeat(3, 38px); grid-template-rows: repeat(3, 38px); border: 2px solid rgba(44,54,84,.55); transform: rotate(-1deg); }
+  .nbRGrid span { border: 1px solid rgba(44,54,84,.3); display: flex; align-items: center; justify-content: center; } .nbRGrid img { width: 32px; height: 32px; mix-blend-mode: multiply; }
+  .nbJ { font-size: 19px; } .nbJ b { color: #8a6a40; font-weight: 500; margin-right: 4px; }
+  @media (max-width: 760px) and (orientation: portrait) {
+    #codexScreen .book { flex-direction: column; height: 88vh; width: 96vw; margin-right: 0; padding: 52px 10px 18px; }
+    #codexScreen .bkPage.left { flex: 1.1 1 0; } .nbBook .bkPage { font-size: 17px; } .nbFig img { width: 110px; height: 110px; }
+    .nbGrid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } .nbCell img { width: 56px; height: 56px; } .nbBook .bkPage.left::before { display: none; } .nbGrid, #nbTools { padding-left: 0 !important; margin-left: 0; }
+  }
+  @media (max-height: 480px) { #codexScreen .book { height: 92vh; padding: 8px 12px 16px; } #codexScreen .bkPage { padding: 8px 12px; } .nbFig img { width: 100px; height: 100px; } }
   /* 5.8: tipos de mundo */
   #ob58 { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top)); transform: translateX(-50%); display: none; min-width: 220px; padding: 4px 10px 5px; background: rgba(0,0,0,.5); border: 2px solid #000; border-radius: 4px; text-align: center; font-size: 13px; color: #fff; text-shadow: 0 1px 0 #000; pointer-events: none; }
   #ob58 u { display: block; height: 5px; margin-top: 3px; background: rgba(255,255,255,.15); } #ob58 s { display: block; height: 100%; background: #7ad04a; }
@@ -1099,7 +1146,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 5.9!</span>
+      <span class="ver">¡Versión 6.0!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1109,7 +1156,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 5.9</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 6.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -1284,11 +1331,18 @@
   </div>
 </div>
 <div id="codexScreen" class="screen">
-  <div class="card wideCard codexCard">
-    <div class="cardHead"><h2>📖 Enciclopedia</h2></div>
-    <div class="stabs"><button class="stab on" data-ctab="items">Objetos</button><button class="stab" data-ctab="mobs">Criaturas</button><button class="stab" data-ctab="explore">Exploración</button><button class="stab" data-ctab="journal">Diario</button><button class="stab" data-ctab="lore">Saber</button></div>
-    <div id="codexBody"></div>
-    <button id="codexClose" class="btn primary">Cerrar</button>
+  <i class="bkCorner tl"></i><i class="bkCorner tr"></i><i class="bkCorner bl"></i><i class="bkCorner br"></i>
+  <div class="book nbBook">
+    <div class="bkCover"></div>
+    <div class="bkPage left"><h3 id="nbLT">Objetos</h3><div id="nbTools"><input id="nbSearch" type="search" placeholder="Buscar en mis notas…"><div id="nbCats"></div></div><div id="codexBody" class="bkScroll nbGrid"></div></div>
+    <div class="bkSpine"></div>
+    <div class="bkPage right"><div id="nbRight" class="bkScroll"></div></div>
+    <div class="bkTabs">
+      <button class="bkTab red on" data-ctab="items" title="Objetos">✎</button><button class="bkTab blue" data-ctab="mobs" title="Criaturas">🐾</button>
+      <button class="bkTab green" data-ctab="explore" title="Lugares">⛰</button><button class="bkTab purple" data-ctab="journal" title="Diario">📅</button><button class="bkTab gold" data-ctab="lore" title="Saber">✦</button>
+    </div>
+    <i class="bkRibbon"></i>
+    <button id="codexClose" class="bkClose" title="Cerrar">✕</button>
   </div>
 </div>
 <div id="charScreen" class="screen">
@@ -5536,6 +5590,7 @@ const maxStack = (id) => ITEMS[id]?.stack ?? 64;
 
 // ---------- Iconos ----------
 const ICON = [];        // dataURL 48×48 para la interfaz
+const ICON_CV = [];     // 6.0: el mismo icono como canvas (para dibujarlo a lápiz sin esperar)
 const ICON_PIX = [];    // lienzo 16×16 (objetos planos) para el modelo 3D en mano y en el suelo
 
 function tileCanvas(tile, tint) {
@@ -5704,7 +5759,7 @@ function buildIcons() {
     } else {
       ICON_PIX[it.id] = drawItemPixels(it.id); canvas = flatIcon(ICON_PIX[it.id]);
     }
-    ICON[it.id] = canvas.toDataURL();
+    ICON_CV[it.id] = canvas; ICON[it.id] = canvas.toDataURL();
   }
 }
 
@@ -12719,7 +12774,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 5.9  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 6.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -12744,7 +12799,7 @@ function boot() {
   startPanorama();
   requestAnimationFrame(loop);
   window.__game = game; // depuración
-  window.__dbg = { sky59, SKY59, worlds58, OB_PHASES, themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
+  window.__dbg = { journalAdd, pencil60, notebook, firstPerson, sky59, SKY59, worlds58, OB_PHASES, themes57, zoom56, openInventory, combat56, rpg56, CLASSES, PROFS56, LORE56, GEMS56, armorPoints56: (p) => armorPoints(p), WEAPON56, WEAPON_INFO, TIER56, WEAPON_TYPES, SHIELD56, ARMOR_WEIGHT, TRADES55, TRADE_RANKS, tradeRank, fx54, sharedUniforms, view52, look52, PlayerAvatar, lookCode, lookFrom, fluids, LAVA, OBSIDIAN, COBBLE, applySettings, hud, notify, renderWorldList, v50, GFX_PRESETS, applyPreset50, backups50, trash50, notifLog, SAVE_PREFIX, minimap, exportAllWorlds, importWorld, exportWorld, validateSave, net49, grp49, trade49, plList49, B49: { TEAM_CHEST }, build48, termScreen, elevScreen, tile48, circuit, B48: { WHITE_BRICKS, FRAMED_GLASS, DRESSER, ARMCHAIR, COFFEE_TABLE, RUG_RED, PLANTER, HOPPER, STORAGE_TERMINAL, CONVEYOR, DISPENSER, ITEM_DETECTOR, IRON_DOOR, GLASS_DOOR, IRON_TRAPDOOR, GLASS_TRAPDOOR, AND_GATE, TOGGLE_GATE, CLOCK_BLOCK, LAMP_RED_ON, LAMP_RED_OFF, LAMP_GREEN_ON, LAMP_BLUE_ON, LIGHT_STRIP, FLAME_TRAP, FROST_TRAP, CHEST, FURNACE, ELEVATOR, SIGN, LEVER, WIRE, POWER_BLOCK, BARREL, CONCRETE_RED, MOSAIC, COPPER_TILES, BLACK_TILES, CARVED_PLANKS, RUG_BLUE }, fishing, life47, potScreen, potTile, cookDish, collectPot, startExpedition: () => startExpedition(), DISHES, CROP_BIOMES, FORAGE, NEW_CROPS, FISH_TABLE, questState, B47: { COOKING_POT, COMPOSTER, FEEDER, RICE_CROP, TOMATO_CROP, CORN_CROP, CABBAGE_CROP, DRAGONFRUIT_CROP, FARMLAND, SAND, CAMPFIRE, WATER, TALL_GRASS, CACTUS }, zoneMobs46: (p) => zoneMobs46(p), mob46, STATUS46, BOSS_PHASE_NAMES, SoulMissile, shoot46, Bolt46, POI_NAMES_42, petActive: (e) => petActive(e), petName: (e) => petName(e), renderInventory: () => renderInventory(), slotAccepts: (c, i, s) => slotAccepts(c, i, s), char45, MODS, SKILLS, SKILL_BY_ID, SET_BONUS, PET_INFO, petPanel, callPets, tamePet, tameInteract: (e, s) => tameInteract(e, s), rideSpeedK, ORE_BLOCKS, abilityCd, useAbility: (s) => useAbility(s), ui, openInventory, closeInventory, quickMove: (c, i) => quickMove(c, i), mobBar, combat, ICON, zones44, LOOT, getPlan, Z44: { SKY_STONE, CLOUD, AERITE_ORE, SEA_BRICKS, DUNGEON_BRICKS, LAB_TILE, RUNE_BLOCK }, TILE_NAMES, packBlock, editId, editMeta, village43, Villager, PackMule, vrec, villagerTrades: (v) => villagerTrades(v), doTrade: (v, i) => doTrade(v, i), dialog, VILLAGE_SPECS, hash2, WorldGen, FEATURES, dynLight, itemLight, heldLight, dynLightAt, book, craftRecipe, recipeMax, sortSlots, gatherToCursor, world: () => world, openInventory, closeInventory, ui, ITEMS, I, RECIPES, matchRecipe, recipeNeeds, saveGame, loadSave, slotAction, renderInventory, BLOCKS, Inventory, toolId, camera, input, SMELT, listWorlds, renderer, scene, buildSection, settings, STRUCTS, getPlan, Villager, Boss, mapUI, openAchievements, openStats, decor, importWorld, exportWorld, validateSave, enchantOffers, doEnchant, doTrade, TRADES, armorId, potionId, hoeId, toolId, ITEMS_: ITEMS, makeTile, sharedUniforms, LOOT, BREW_INGREDIENTS, brewResult, MOBS, sfx, controls, applyTouchLayout, pano, startPanorama, net, BLOCKS, getPlan, STRUCTS, BIOMES, WorldGen, TILE_NAMES, combat, dmgText, Arrow, rarityOf, bossFx, Boss, tameInteract, attackStyle, Villager, dialog, questUI, vrec, startUpgrade, villageInfo, questState, potionId, MAIN_QUESTS, contribute, villagerTrades, runCommand, EGGS, chatUI, showScreen, events, EVENTS, eventFx, codex, saveStore, biomeMusic, perfAuto, migrateSave, pad: () => pad, toggleFullscreen, actionDown, roomsUI: () => roomsUI, dims, dimOf, localXZ, DIM_OFF, lightPortal, findPortal, BOSS_CLASSES, MOBS, BIOME, BIOMES, B35: { LAVA, PORTAL, NETHERRACK, CRIMSON_NYLIUM, CRIMSON_STEM, CRIMSON_WART, INFERNITE_ORE, NETHER_BRICKS, VOID_STONE, VOID_TURF, VOIDITE_ORE, VOID_CRYSTAL, VOID_BRICKS, OBSIDIAN, CRYSTAL_BLOCK, GLOWSTONE }, circuit, build34, boxIconCanvas, pistonExtend, autoDoorPresence, B34: { LEVER, BUTTON_STONE, BUTTON_WOOD, PLATE_STONE, PLATE_WOOD, PROX_SENSOR, DAY_SENSOR, WIRE, POWER_BLOCK, INVERTER, REPEATER, PISTON, STICKY_PISTON, PISTON_HEAD, AUTO_DOOR, AUTO_DOOR_ITEM, SPIKES, ARROW_TRAP, ELEVATOR, OAK_GATE, IRON_GATE, COBBLE_WALL, GLASS_PANE, STONE_COLUMN, SOFA_RED, WARDROBE, STOVE, CHANDELIER, ROOF_RED_STAIRS, MARBLE, LAMP_ON, LAMP_OFF, DOOR, TRAPDOOR, STONE, GLASS, COBBLE, DIRT, FENCE, BIRCH_FENCE } };
 }
 
 /* ==========================================================================
@@ -15681,6 +15736,17 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '6.0', name: 'Cuaderno del explorador', date: 'noviembre de 2026', items: [
+    'La enciclopedia ahora es un cuaderno en blanco que se va llenando solo: hojas rayadas, letra a mano, marcapáginas de colores (Objetos, Criaturas, Lugares, Diario y Saber) y las páginas que faltan quedan en blanco.',
+    'Cada objeto que consigues, o que miras de cerca con la mira, queda anotado con el día y el bioma donde fue. Los que solo viste llevan la marca «visto».',
+    'Todo queda dibujado a mano: los objetos y bloques a lápiz y acuarela a partir de su icono, las criaturas a partir de su modelo 3D, y los biomas, lugares y dimensiones como un boceto del paisaje (árboles, montañas, dunas, volcanes, agua, estrellas…). Los dibujos van pegados con cinta en la página.',
+    'Las fichas están escritas en primera persona y salen de los datos reales del juego: «Con esto puedo hacer tablones de roble», qué ingredientes uso, qué sale del horno, si me lo puedo comer, para qué me sirve una herramienta, quién lo suelta, si da luz o necesito un pico…',
+    'Las descripciones de siempre también pasan a primera persona («Puedes colocarlo en tu casa» → «Puedo colocarlo en mi casa»), y la receta aparece dibujada en una cuadrícula a mano.',
+    'Criaturas: cuándo y dónde la vi, si es peligrosa y cuánto pega, cuántos espadazos aguanta, dónde vive, cómo domesticarla o criarla, qué suelta y cuántas derroté. Los jefes con su guarida y sus fases.',
+    'Lugares: cada bioma visitado con su clima, sus árboles, sus animales y sus peligros; cada lugar descubierto con sus coordenadas; y el Inframundo y el Vacío.',
+    'Diario: cada día en su página, en primera persona («Fabriqué un pico de piedra»). Saber: las entradas de la 5.6 con su dibujo.',
+    'Las partidas anteriores conservan todo lo que ya tenían anotado.',
+  ] },
   { v: '5.9', name: 'Islas de bioma en SkyBlock', date: 'noviembre de 2026', items: [
     'En SkyBlock, lejos de la isla principal (a unos 80 bloques o más), flotan islas de todos los biomas del Mundo: llanuras, bosques, desierto, selva, taiga, tundra, hongos, cerezos, badlands, región volcánica, bosque encantado, océano, oasis y el resto, 26 en total.',
     'Las islas más cercanas recorren todos los biomas antes de repetir ninguno (en un orden propio de cada semilla). Más lejos siguen apareciendo al azar.',
@@ -16224,7 +16290,7 @@ function boxIconCanvas(def) {
   const _buildIcons = buildIcons;
   buildIcons = function () {
     _buildIcons();
-    for (const it of ITEMS) if (it && it.block && BOXED_ICON(BLOCKS[it.block]) && !ICON_OVERRIDE[it.id]) ICON[it.id] = boxIconCanvas(BLOCKS[it.block]).toDataURL();
+    for (const it of ITEMS) if (it && it.block && BOXED_ICON(BLOCKS[it.block]) && !ICON_OVERRIDE[it.id]) { const cv = boxIconCanvas(BLOCKS[it.block]); ICON_CV[it.id] = cv; ICON[it.id] = cv.toDataURL(); }
   };
   // En la mano y en el suelo: modelo 3D con las mismas cajas que en el mundo
   const _blockItemGeo = blockItemGeo;
@@ -18593,7 +18659,6 @@ settings.keys.codex ??= 'KeyK'; DEFAULT_KEYS.codex = 'KeyK';
   actionDown = function (a, ev) { if (a === 'codex') { if (codex.open) codex.hide(); else codex.show(); return; } return _ad(a, ev); };
 }
 function initCodexUI() {
-  $$('#codexScreen .stab').forEach((b) => (b.onclick = () => codex.setTab(b.dataset.ctab)));
   $('#codexClose').onclick = () => codex.hide();
   $('#pCodex').onclick = () => codex.show();
   const tb = $('#codexTouch'); if (tb) tb.addEventListener('click', (e) => { e.stopPropagation(); codex.show(); });
@@ -18776,7 +18841,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '5.9';
+const GAME_VERSION = '6.0';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -25004,7 +25069,7 @@ const THEMES57 = {
 const SCREEN_TH = {
   pauseScreen: 'stone', settingsScreen: 'stone', statsScreen: 'stone', aboutScreen: 'stone', bakScreen: 'chest',
   newsScreen: 'paper', logScreen: 'paper', dialogScreen: 'paper', mapScreen: 'paper', achScreen: 'gold', deathScreen: 'nether',
-  charScreen: 'hero', codexScreen: 'library', grpScreen: 'banner', tradeScreen: 'market', termScreen: 'copper', elevScreen: 'iron',
+  charScreen: 'hero', grpScreen: 'banner', tradeScreen: 'market', termScreen: 'copper', elevScreen: 'iron',
   cookScreen: 'pot', petScreen: 'hay', signScreen: 'sign', worldsScreen: 'dirt', createScreen: 'dirt', mpScreen: 'dirt', roomScreen: 'dirt',
 };
 // Texturas hechas a mano (no hay bloque): cuero, pergamino y toldo de mercado
@@ -25576,6 +25641,411 @@ const sky59 = {
   const P = Player.prototype, _tj = P.toJSON, _ld = P.load;
   P.toJSON = function () { const o = _tj.call(this); if (this.sky59 && this.sky59.size) o.sky = [...this.sky59].slice(0, 2000); return o; };
   P.load = function (o) { const r = _ld.call(this, o); this.sky59 = new Set(Array.isArray(o?.sky) ? o.sky.filter((k) => typeof k === 'string').slice(0, 2000) : []); return r; };
+}
+
+/* ==========================================================================
+   §63 CUADERNO DEL EXPLORADOR (6.0)
+   --------------------------------------------------------------------------
+   La enciclopedia pasa a ser un libro en blanco que se va llenando solo:
+     · Cada objeto que consigues o que miras de cerca, cada criatura que ves,
+       cada bioma, lugar y dimensión que visitas se anota con la fecha y el
+       sitio donde fue, y queda dibujado a mano (lápiz, tinta y acuarela,
+       generado a partir del icono, del modelo 3D o como un boceto del sitio).
+     · Las fichas están escritas en primera persona («Con esto puedo hacer
+       tablones de roble…»), a partir de los datos reales del juego: recetas,
+       horno, comida, herramienta, quién lo suelta, hábitat, botín… y de la
+       descripción de siempre pasada a primera persona.
+     · Pestañas como marcapáginas: Objetos, Criaturas, Lugares, Diario y
+       Saber. Las páginas que faltan quedan en blanco.
+   La partida guarda en codex: seen, kills (de 4.0), when (fecha y bioma de
+   cada anotación) y look (bloques vistos de cerca).
+   ========================================================================== */
+const NB_TABS = [['items', '✎', 'Objetos', 'red'], ['mobs', '🐾', 'Criaturas', 'blue'], ['explore', '⛰', 'Lugares', 'green'], ['journal', '📅', 'Diario', 'purple'], ['lore', '✦', 'Saber', 'gold']];
+const NB_INK = '#2c3654';
+/* ---------- Lápiz: el filtro que convierte cualquier imagen en un dibujo a mano ---------- */
+const pencil60 = {
+  cache: new Map(), queue: [], busy: false,
+  hash(a, b, s) { let h = Math.imul(a | 0, 374761393) ^ Math.imul(b | 0, 668265263) ^ Math.imul(s | 0, 2246822519); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; },
+  // src: canvas o imagen pequeña (≤ 64 px). Devuelve un canvas de out × out con el dibujo:
+  // acuarela lavada y corrida, contorno de grafito (bordes suavizados, trazo doble) y sombreado en diagonal.
+  sketch(src, out = 128, seed = 1, opt = {}) {
+    const w = src.width, h = src.height, M = Math.max(w, h), k = (out * 0.82) / M, dw = Math.round(w * k), dh = Math.round(h * k), ox = Math.round((out - dw) / 2), oy = Math.round((out - dh) / 2);
+    const c = document.createElement('canvas'); c.width = c.height = out; const g = c.getContext('2d');
+    // 1) acuarela: colores lavados, desenfocados y un poco corridos respecto del dibujo
+    g.save(); g.globalAlpha = opt.wash ?? 0.5; g.filter = 'saturate(0.5) brightness(1.18) blur(2px)'; g.imageSmoothingEnabled = true;
+    g.drawImage(src, ox + out * 0.012, oy + out * 0.01, dw, dh); g.restore();
+    // imagen suavizada a tamaño final: de ahí salen las líneas
+    const u = document.createElement('canvas'); u.width = u.height = out; const ug = u.getContext('2d'); ug.imageSmoothingEnabled = true; ug.drawImage(src, ox, oy, dw, dh);
+    const D = ug.getImageData(0, 0, out, out).data, N = out * out, lum = new Float32Array(N), al = new Float32Array(N);
+    for (let p = 0; p < N; p++) { const q = p * 4; al[p] = D[q + 3] / 255; lum[p] = (D[q] * 0.3 + D[q + 1] * 0.59 + D[q + 2] * 0.11) / 255 * al[p] + (1 - al[p]); }
+    const L = g.createImageData(out, out), o = L.data, rnd = mulberry32(seed * 9301 + 49297), sp = Math.max(4, Math.round(out / 26));
+    for (let y = 1; y < out - 1; y++) for (let x = 1; x < out - 1; x++) {
+      const p = y * out + x;
+      const gx = (lum[p - out + 1] + 2 * lum[p + 1] + lum[p + out + 1]) - (lum[p - out - 1] + 2 * lum[p - 1] + lum[p + out - 1]);
+      const gy = (lum[p + out - 1] + 2 * lum[p + out] + lum[p + out + 1]) - (lum[p - out - 1] + 2 * lum[p - out] + lum[p - out + 1]);
+      const ga = Math.abs(al[p + 1] - al[p - 1]) + Math.abs(al[p + out] - al[p - out]);
+      let a = Math.min(1, Math.max(0, Math.hypot(gx, gy) * 1.6 - 0.12) + ga * 1.4);
+      const dark = 1 - lum[p];
+      if (al[p] > 0.5 && dark > 0.32) {                         // sombreado: diagonales, y cruzadas donde es muy oscuro
+        if ((x + y) % sp === 0) a = Math.max(a, (dark - 0.2) * 0.7);
+        if (dark > 0.62 && (x - y + out) % (sp + 2) === 0) a = Math.max(a, (dark - 0.4) * 0.75);
+      }
+      if (a < 0.05) continue;
+      a *= 0.7 + rnd() * 0.3;                                  // grano del lápiz
+      const q = p * 4; o[q] = 46; o[q + 1] = 42; o[q + 2] = 40; o[q + 3] = Math.min(255, a * 255);
+    }
+    const t = document.createElement('canvas'); t.width = t.height = out; t.getContext('2d').putImageData(L, 0, 0);
+    const wob = out * 0.006 * (opt.wobble ?? 1);
+    g.globalAlpha = 0.38; g.drawImage(t, wob * 1.4, -wob);          // segunda pasada corrida: el trazo doble de un boceto
+    g.globalAlpha = 0.95; g.drawImage(t, 0, 0); g.globalAlpha = 1;
+    return c;
+  },
+  // dibujo de un objeto a partir de su icono (asíncrono: el icono es una imagen)
+  item(id, out = 128) {
+    const key = `i${id}:${out}`; if (this.cache.has(key)) return Promise.resolve(this.cache.get(key));
+    const cv = ICON_CV[id];
+    if (cv) return new Promise((res) => this.soon(() => { let url = ''; try { url = this.sketch(cv.width > 64 ? this.shrink(cv, 48) : cv, out, id).toDataURL(); } catch (e) {} this.cache.set(key, url); res(url); }));
+    return new Promise((res) => { this.queue.push(() => {
+      const src = ICON[id]; if (!src) { res(''); this.pump(); return; }
+      const img = new Image();
+      img.onload = () => { let url = ''; try { const s = img.width > 64 ? this.shrink(img, 48) : img; url = this.sketch(s, out, id).toDataURL(); } catch (e) {} this.cache.set(key, url); res(url); this.pump(); };
+      img.onerror = () => { res(''); this.pump(); };
+      img.src = src;
+    }); if (!this.busy) this.pump(); });
+  },
+  shrink(img, n) { const c = document.createElement('canvas'), r = n / Math.max(img.width, img.height); c.width = Math.round(img.width * r); c.height = Math.round(img.height * r); const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, c.width, c.height); return c; },
+  // trabajos pequeños repartidos en los fotogramas (unos pocos por fotograma)
+  soonQ: [], soon(f) { this.soonQ.push(f); if (this.soonQ.length === 1) requestAnimationFrame(() => this.flush()); },
+  flush() { const t0 = performance.now(); while (this.soonQ.length && performance.now() - t0 < 12) this.soonQ.shift()(); if (this.soonQ.length) requestAnimationFrame(() => this.flush()); },
+  pump() { const f = this.queue.shift(); this.busy = !!f; if (f) setTimeout(f, 0); },
+  // dibujo de una criatura a partir de su modelo 3D (un renderizador pequeño, compartido)
+  mob(type, out = 160) {
+    const key = `m${type}:${out}`; if (this.cache.has(key)) return this.cache.get(key);
+    let url = '';
+    try {
+      const R = this.r3 || (this.r3 = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 96; const r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: false, preserveDrawingBuffer: true, powerPreference: 'low-power' }); r.setPixelRatio(1); r.setSize(96, 96, false); return { r, cv, sc: new THREE.Scene(), cam: new THREE.PerspectiveCamera(30, 1, 0.1, 400) }; })());
+      const s = MOBS[type], mat = new THREE.MeshBasicMaterial({ vertexColors: true }), md = s.model(mat), root = md.root;
+      R.sc.add(root);
+      const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), cen = box.getCenter(new THREE.Vector3()), M = Math.max(size.x, size.y, size.z) || 1;
+      R.cam.position.set(cen.x + M * 1.55, cen.y + M * 0.55, cen.z + M * 1.75); R.cam.lookAt(cen);
+      R.r.setClearColor(0x000000, 0); R.r.clear(); R.r.render(R.sc, R.cam);
+      R.sc.remove(root); root.traverse((o) => o.geometry && o.geometry.dispose()); mat.dispose();
+      url = this.sketch(this.shrink(R.cv, 56), out, type.length * 31 + type.charCodeAt(0), { wobble: 1 }).toDataURL();
+    } catch (e) { console.warn('boceto de criatura:', e); }
+    this.cache.set(key, url); return url;
+  },
+  // un emoji dibujado a lápiz (para el saber y los iconos de los lugares)
+  emojiCanvas(ch, out = 128) {
+    const key = `ec${ch}:${out}`; if (this.cache.has(key)) return this.cache.get(key);
+    const c = document.createElement('canvas'); c.width = c.height = 40; const g = c.getContext('2d'); g.font = '32px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, 20, 22);
+    const s = this.sketch(c, out, ch.codePointAt(0), { wobble: 1, wash: 0.45 }); this.cache.set(key, s); return s;
+  },
+  emoji(ch, out = 128) { const key = `e${ch}:${out}`; if (!this.cache.has(key)) this.cache.set(key, this.emojiCanvas(ch, out).toDataURL()); return this.cache.get(key); },
+  /* ---------- Bocetos de lugares: paisaje dibujado con trazos temblorosos ---------- */
+  place(key, spec, out = 200) {
+    const ck = `p${key}:${out}`; if (this.cache.has(ck)) return this.cache.get(ck);
+    const c = document.createElement('canvas'); c.width = out; c.height = Math.round(out * 0.72); const g = c.getContext('2d'), W = c.width, H = c.height;
+    let s = 0; for (const ch of key) s = (s * 31 + ch.charCodeAt(0)) | 0;
+    const rnd = mulberry32(s), J = (v) => v + (rnd() - 0.5) * 2.2;
+    const line = (pts, col = 'rgba(40,30,24,.85)', lw = 1.6) => { g.strokeStyle = col; g.lineWidth = lw; g.lineCap = g.lineJoin = 'round'; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(J(x), J(y)) : g.moveTo(J(x), J(y)))); g.stroke(); };
+    const wash = (pts, col, a = 0.45) => { g.save(); g.globalAlpha = a; g.fillStyle = col; g.filter = 'blur(1.5px)'; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fill(); g.restore(); };
+    const rgbS = (a, m = 255) => `rgb(${a.map((v) => Math.round(Math.min(255, v * m))).join(',')})`;
+    const hor = H * (0.58 + (rnd() - 0.5) * 0.08), grass = spec.grass ? rgbS(spec.grass) : '#9ab06a', sky = spec.sky || '#a8c4e0';
+    wash([[0, 0], [W, 0], [W, hor], [0, hor]], sky, 0.28);
+    // terreno
+    const hills = []; const amp = spec.peaks ? H * 0.32 : spec.flat ? H * 0.04 : H * 0.12;
+    for (let x = 0; x <= W; x += W / 10) hills.push([x, hor - (spec.peaks ? Math.abs(Math.sin(x / W * 7 + s)) * amp : Math.sin(x / W * 4 + s % 7) * amp * 0.5 + amp * 0.3)]);
+    wash([...hills, [W, H], [0, H]], spec.ground || grass, 0.5); line(hills);
+    if (spec.peaks && spec.snow) for (const [x, y] of hills) if (y < hor - amp * 0.6) line([[x - 8, y + 8], [x, y], [x + 8, y + 8]], 'rgba(40,30,24,.6)', 1);
+    const treeAt = (x, y, kind) => {
+      if (kind === 'spruce') { line([[x, y], [x, y - 6]]); line([[x - 9, y - 6], [x, y - 30], [x + 9, y - 6], [x - 9, y - 6]]); wash([[x - 9, y - 6], [x, y - 30], [x + 9, y - 6]], '#3e6a44', 0.55); }
+      else if (kind === 'acacia') { line([[x, y], [x + 2, y - 18]]); line([[x - 14, y - 20], [x + 16, y - 20]]); wash([[x - 14, y - 24], [x + 16, y - 24], [x + 12, y - 18], [x - 10, y - 18]], '#7a9a3a', 0.55); }
+      else if (kind === 'shroom') { line([[x, y], [x, y - 14]]); line([[x - 13, y - 14], [x - 8, y - 24], [x + 8, y - 24], [x + 13, y - 14], [x - 13, y - 14]]); wash([[x - 13, y - 14], [x - 8, y - 24], [x + 8, y - 24], [x + 13, y - 14]], '#c03a30', 0.6); }
+      else if (kind === 'cactus') { line([[x, y], [x, y - 24]]); line([[x, y - 12], [x - 6, y - 12], [x - 6, y - 18]]); line([[x, y - 16], [x + 6, y - 16], [x + 6, y - 22]]); wash([[x - 3, y], [x - 3, y - 24], [x + 3, y - 24], [x + 3, y]], '#5a9a4a', 0.6); }
+      else if (kind === 'palm') { line([[x, y], [x + 4, y - 26]]); for (const d of [-1, 1]) line([[x + 4, y - 26], [x + 4 + d * 12, y - 22]]); }
+      else { line([[x, y], [x, y - 10]]); g.save(); g.strokeStyle = 'rgba(40,30,24,.85)'; g.lineWidth = 1.5; g.beginPath(); g.arc(J(x), J(y - 18), 9 + rnd() * 3, 0, Math.PI * 2); g.stroke(); g.restore(); g.save(); g.globalAlpha = 0.5; g.fillStyle = spec.leaf || '#5a8a40'; g.filter = 'blur(1px)'; g.beginPath(); g.arc(x, y - 18, 9, 0, Math.PI * 2); g.fill(); g.restore(); }
+    };
+    const yAt = (x) => { const i = Math.min(hills.length - 2, Math.floor(x / (W / 10))), t = x / (W / 10) - i; return hills[i][1] * (1 - t) + hills[i + 1][1] * t; };
+    for (let i = 0; i < (spec.trees || 0); i++) { const x = W * (0.1 + rnd() * 0.8); treeAt(x, yAt(x) + 4, spec.tree); }
+    if (spec.water) { const wy = hor + H * 0.12; wash([[0, wy], [W, wy], [W, H], [0, H]], '#5a8ad0', 0.4); for (let i = 0; i < 6; i++) { const x = rnd() * W * 0.8, y = wy + rnd() * (H - wy - 6); line([[x, y], [x + 6, y - 3], [x + 12, y], [x + 18, y - 3]], 'rgba(40,60,120,.55)', 1); } }
+    if (spec.volcano) { const x = W * 0.55, y = hor; line([[x - 40, y + 10], [x - 10, y - 50], [x + 10, y - 50], [x + 40, y + 10]]); wash([[x - 40, y + 10], [x - 10, y - 50], [x + 10, y - 50], [x + 40, y + 10]], '#6a5a50', 0.5); wash([[x - 8, y - 50], [x + 8, y - 50], [x + 3, y - 30], [x - 3, y - 30]], '#e05a20', 0.7); for (let i = 0; i < 3; i++) { g.save(); g.strokeStyle = 'rgba(60,60,60,.45)'; g.beginPath(); g.arc(x + i * 6, y - 60 - i * 10, 7 + i * 2, 0, Math.PI * 2); g.stroke(); g.restore(); } }
+    if (spec.flames) for (let i = 0; i < 7; i++) { const x = rnd() * W, y = yAt(x); line([[x - 4, y], [x, y - 12 - rnd() * 8], [x + 4, y]], 'rgba(200,70,20,.8)', 1.4); }
+    if (spec.stars) for (let i = 0; i < 18; i++) { const x = rnd() * W, y = rnd() * hor * 0.8; line([[x - 2, y], [x + 2, y]], 'rgba(60,40,100,.7)', 1); line([[x, y - 2], [x, y + 2]], 'rgba(60,40,100,.7)', 1); }
+    if (spec.isles) for (let i = 0; i < 3; i++) { const x = W * (0.2 + i * 0.3), y = H * (0.3 + rnd() * 0.25); line([[x - 18, y], [x + 18, y], [x + 6, y + 14], [x - 4, y + 16], [x - 18, y]]); wash([[x - 18, y], [x + 18, y], [x + 6, y + 14], [x - 4, y + 16]], '#8a6ad0', 0.4); }
+    if (spec.snowflakes) for (let i = 0; i < 10; i++) { const x = rnd() * W, y = rnd() * hor; line([[x - 2, y - 2], [x + 2, y + 2]], 'rgba(60,70,90,.5)', 1); line([[x + 2, y - 2], [x - 2, y + 2]], 'rgba(60,70,90,.5)', 1); }
+    if (spec.icon) g.drawImage(this.emojiCanvas(spec.icon, 90), W * 0.5 - 30, hor - 58, 60, 60);
+    if (!spec.noSun && !spec.stars && !spec.flames) { g.save(); g.strokeStyle = 'rgba(200,140,40,.7)'; g.lineWidth = 1.4; g.beginPath(); g.arc(W * 0.82, H * 0.18, 9, 0, Math.PI * 2); g.stroke(); g.restore(); }
+    const url = c.toDataURL(); this.cache.set(ck, url); return url;
+  },
+};
+/* ---------- Textos en primera persona ---------- */
+const FP_RULES = [
+  ['Puedes', 'Puedo'], ['puedes', 'puedo'], ['Tienes', 'Tengo'], ['tienes', 'tengo'], ['Necesitas', 'Necesito'], ['necesitas', 'necesito'], ['quieres', 'quiero'], ['quieras', 'quiera'],
+  ['Estás', 'Estoy'], ['estás', 'estoy'], ['estés', 'esté'], ['consigues', 'consigo'], ['haces', 'hago'], ['recibes', 'recibo'], ['ganas', 'gano'], ['pierdes', 'pierdo'], ['sabes', 'sé'],
+  ['ves', 'veo'], ['llevas', 'llevo'], ['usas', 'uso'], ['eres', 'soy'], ['mantienes', 'mantengo'], ['caes', 'caigo'], ['esquivas', 'esquivo'], ['atacas', 'ataco'], ['golpeas', 'golpeo'],
+  ['vuelves', 'vuelvo'], ['encuentras', 'encuentro'], ['tocas', 'toco'], ['comes', 'como'], ['duermes', 'duermo'], ['apuntas', 'apunto'], ['disparas', 'disparo'], ['cargas', 'cargo'], ['nadas', 'nado'], ['vuelas', 'vuelo'],
+  ['Úsalo', 'Lo uso'], ['Úsala', 'La uso'], ['Colócalo', 'Lo coloco'], ['Colócala', 'La coloco'], ['Plántalo', 'Lo planto'], ['Plántala', 'La planto'], ['Equípalo', 'Lo equipo'], ['Equípala', 'La equipo'],
+  ['Cómelo', 'Me lo como'], ['Cómela', 'Me la como'], ['Bébela', 'Me la bebo'], ['Bébelo', 'Me lo bebo'], ['Lánzala', 'La lanzo'], ['Lánzalo', 'Lo lanzo'], ['Ponlo', 'Lo pongo'], ['Ponla', 'La pongo'], ['Rómpelo', 'Lo rompo'],
+  ['Llévalo', 'Lo llevo'], ['Mantén', 'Mantengo'], ['Toca', 'Toco'], ['Usa', 'Uso'], ['Coloca', 'Coloco'], ['Pon', 'Pongo'], ['Equipa', 'Equipo'], ['Combina', 'Combino'], ['Mezcla', 'Mezclo'], ['Haz', 'Hago'],
+  ['Lleva', 'Llevo'], ['Habla', 'Hablo'], ['Dale', 'Le doy'], ['Abre', 'Abro'], ['Elige', 'Elijo'], ['Mira', 'Miro'], ['Golpea', 'Golpeo'], ['Mátalo', 'Lo mato'], ['Ve', 'Voy'],
+  ['tu', 'mi'], ['Tu', 'Mi'], ['tus', 'mis'], ['Tus', 'Mis'], ['te', 'me'], ['Te', 'Me'], ['ti', 'mí'], ['contigo', 'conmigo'], ['tuyo', 'mío'], ['tuya', 'mía'],
+].map(([a, b]) => [new RegExp(`(^|[^\\p{L}])${a}(?=[^\\p{L}]|$)`, 'gu'), `$1${b}`]);
+const FP_NOUNS = new Set(['contraste', 'desgaste', 'gaste', 'baste', 'caste', 'traste', 'engaste', 'Contraste']);
+const firstPerson = (s) => {
+  let t = String(s || ''); for (const [r, b] of FP_RULES) t = t.replace(r, b);
+  // pretérito: «Fabricaste» → «Fabriqué», «Conseguiste» → «Conseguí»
+  t = t.replace(/(^|[^\p{L}])(\p{L}{2,})aste(?=[^\p{L}]|$)/gu, (m, a, st) => (FP_NOUNS.has(st + 'aste') ? m : a + st.replace(/c$/, 'qu').replace(/g$/, 'gu').replace(/z$/, 'c') + 'é'));
+  t = t.replace(/(^|[^\p{L}])(\p{L}{2,})iste(?=[^\p{L}]|$)/gu, (m, a, st) => (/^(tr|ch|qu|ex|al|v)$/i.test(st) ? m : a + st + 'í'));
+  return t;
+};
+const lc = (s) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+const listEs = (a) => (a.length <= 1 ? a.join('') : a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1]);
+const BIOME_ART = (n) => { const l = lc(n); if (/^(islas|campos)/i.test(n)) return 'los ' + l; if (/^(llanuras|montañas|tierras|badlands)/i.test(n)) return 'las ' + l; if (/^(playa|sabana|selva|taiga|tundra|región|isla|pradera)/i.test(n)) return 'la ' + l; return 'el ' + l; };
+const nbWhen = (w) => { if (!w) return null; const [d, b] = w; return `Día ${d}${b != null && BIOMES[b] ? `, ${BIOMES[b].name}` : ''}`; };
+const TOOL_VERB = { pickaxe: 'picar piedra y minerales', axe: 'talar árboles y romper madera rápido', shovel: 'cavar tierra, arena y grava', hoe: 'arar la tierra para sembrar', sword: 'defenderme', shears: 'esquilar ovejas y cortar hojas' };
+const notebook = {
+  usesOf: null,
+  uses(id) {
+    if (!this.usesOf) {
+      this.usesOf = new Map();
+      for (const r of RECIPES) { const ins = new Set(); if (r.items) r.items.forEach((x) => x != null && (Array.isArray(x) ? x : [x]).forEach((v) => ins.add(v))); else for (const ch of Object.keys(r.key || {})) (Array.isArray(r.key[ch]) ? r.key[ch] : [r.key[ch]]).forEach((v) => ins.add(v)); for (const v of ins) { if (!this.usesOf.has(v)) this.usesOf.set(v, new Set()); this.usesOf.get(v).add(r.out); } }
+    }
+    return [...(this.usesOf.get(id) || [])];
+  },
+  ingredients(id) {
+    const r = RECIPES.find((x) => x.out === id); if (!r) return null;
+    const ins = new Set(); if (r.items) r.items.forEach((x) => x != null && ins.add(Array.isArray(x) ? x[0] : x)); else for (const ch of Object.keys(r.key || {})) { const v = r.key[ch]; ins.add(Array.isArray(v) ? v[0] : v); }
+    return [...ins].filter((v) => ITEMS[v]).map((v) => lc(ITEMS[v].name));
+  },
+  itemText(it) {
+    const C = codex.data(), id = it.id, got = game.player.discovered.has(id), out = [];
+    const w = C.when['i:' + id];
+    out.push(w ? (w[2] === 'saw' && !got ? `Lo vi por primera vez el día ${w[0]}${w[1] != null && BIOMES[w[1]] ? `, en ${BIOME_ART(BIOMES[w[1]].name)}` : ''}, pero todavía no conseguí ninguno.` : `Lo conseguí el día ${w[0]}${w[1] != null && BIOMES[w[1]] ? `, en ${BIOME_ART(BIOMES[w[1]].name)}` : ''}.`) : got ? 'Lo tengo anotado desde mis primeros días de aventura.' : 'Todavía no lo vi nunca.');
+    if (it.desc) out.push(firstPerson(it.desc));
+    const uses = this.uses(id).filter((o) => ITEMS[o] && o !== id).map((o) => lc(ITEMS[o].name));
+    if (uses.length) out.push(`Con esto puedo hacer ${listEs([...new Set(uses)].slice(0, 4))}${uses.length > 4 ? ' y otras cosas' : ''}.`);
+    const ing = this.ingredients(id); if (ing && ing.length) out.push(`Para fabricarlo uso ${listEs(ing)}.`);
+    const sm = SMELT[id]; if (sm && ITEMS[sm[0]]) out.push(`Si lo meto en el horno obtengo ${lc(ITEMS[sm[0]].name)}.`);
+    const from = Object.entries(SMELT).filter(([, v]) => v && v[0] === id).map(([k]) => ITEMS[+k]).filter(Boolean); if (from.length && !ing) out.push(`Sale del horno fundiendo ${lc(from[0].name)}.`);
+    if (it.fuel) out.push('Me sirve como combustible para el horno.');
+    if (it.food) out.push(`Me lo puedo comer: me llena ${it.food.hunger} de hambre${it.food.effects?.length ? ' y me da ' + listEs(it.food.effects.map(([e]) => lc(EFFECTS[e]?.name || e))) : ''}.`);
+    if (it.potion) out.push(`Si me la bebo tengo ${lc(EFFECTS[it.potion.eff]?.name || '')} durante ${Math.round(it.potion.dur / 60)} minutos.`);
+    if (it.tool) { const T = it.tool; if (T.wt) out.push(`Pega ${T.dmg} de daño.`); else if (TOOL_VERB[T.type]) out.push(`Me sirve para ${TOOL_VERB[T.type]}${T.dmg ? ` (pega ${T.dmg})` : ''}.`); if (T.dur) out.push(`Aguanta unos ${T.dur} usos antes de romperse.`); }
+    if (it.armor) out.push(`Me protege: ${it.armor.pts} puntos de armadura.`);
+    if (it.shield) out.push(`Con él en la otra mano bloqueo el ${Math.round((it.block ?? 0.75) * 100)} % de los golpes de frente.`);
+    if (it.block) { const b = BLOCKS[it.block]; if (b?.light) out.push('Da luz alrededor.'); if (b?.tool === 'pickaxe' && b.hardness >= 1.5) out.push('Para sacarlo necesito un pico.'); else if (b?.tool === 'axe') out.push('Sale más rápido con un hacha.'); else if (b?.tool === 'shovel') out.push('Con una pala sale enseguida.'); }
+    const drops = Object.entries(MOBS).filter(([t, s]) => s.drops && s.drops.some((d) => d[0] === id) && !t.startsWith('__') && C.seen[t]).map(([, s]) => lc(s.name));
+    if (drops.length) out.push(`Lo sueltan: ${listEs([...new Set(drops)].slice(0, 4))}.`);
+    const r = rarityOf(id); if (r >= 2 && RARITY[r]) out.push(`Es ${lc(RARITY[r][0])}: no se ve todos los días.`);
+    return out;
+  },
+  mobText(type) {
+    const s = MOBS[type], C = codex.data(), w = C.when['m:' + type], out = [];
+    out.push(w ? `Lo vi por primera vez el día ${w[0]}${w[1] != null && BIOMES[w[1]] ? `, en ${BIOME_ART(BIOMES[w[1]].name)}` : ''}.` : 'Lo anoté en mis primeros días de aventura.');
+    if (s.boss) out.push(`Es un jefe enorme, con ${s.hp} de vida. Tengo que prepararme bien antes de enfrentarlo.`);
+    else if (s.hostile) out.push(`Es peligroso: si me ve, viene por mí${s.melee ? ` y pega ${s.melee} de daño` : ''}${s.ranged ? '; además ataca a distancia' : ''}.`);
+    else out.push('Es tranquilo: no me ataca si lo dejo en paz.');
+    if (!s.boss) out.push(`Aguanta unos ${Math.max(1, Math.round(s.hp / 6))} espadazos (${s.hp} de vida).`);
+    const L = BOSS_LORE[type]; if (L) out.push(`Vive en ${lc(L.where)} Pelea en fases: ${listEs(L.phases.map(lc))}.`);
+    const hab = codex.habitat(type); if (hab.length) out.push(`Lo encuentro en ${listEs(hab.slice(0, 4))}.`);
+    if (s.tameFood) out.push(`Lo puedo domesticar dándole ${listEs(s.tameFood.filter((i) => ITEMS[i]).map((i) => lc(ITEMS[i].name)).slice(0, 3))}.`);
+    if (BREED_FOOD[type]) out.push(`Para que tengan crías les doy ${listEs(BREED_FOOD[type].filter((i) => ITEMS[i]).map((i) => lc(ITEMS[i].name)))}.`);
+    const drops = (s.drops || []).filter((d) => ITEMS[d[0]]).map((d) => (codex.known(d[0]) ? lc(ITEMS[d[0]].name) : 'algo que todavía no conozco'));
+    if (drops.length) out.push(`Cuando lo derroto suelta ${listEs([...new Set(drops)].slice(0, 4))}.`);
+    if (C.kills[type]) out.push(`Ya derroté ${C.kills[type]}.`);
+    return out;
+  },
+  biomeSpec(b) {
+    const B = BIOMES[b], n = B.name, T = (B.trees || [])[0]?.[0] || '';
+    const tree = /spruce/.test(T) ? 'spruce' : /acacia/.test(T) ? 'acacia' : /shroom/.test(T) ? 'shroom' : /jungle_bush/.test(T) ? 'palm' : T ? 'oak' : '';
+    return { grass: B.grass, tree, trees: tree ? (B.treeDensity > 0.02 ? 5 : 3) : 0, peaks: /Montaña|altas/.test(n), snow: /nevad|Tundra|Taiga/.test(n) || B.precip === 'snow', snowflakes: B.precip === 'snow',
+      water: /Océano|Río|Playa|Pantano|Oasis|Isla/.test(n), flat: /Llanura|Desierto|dunas|Badlands/.test(n), ground: /Desierto|dunas|Playa|Isla/.test(n) ? '#e6d29a' : /Badlands/.test(n) ? '#d07a4a' : /volcán/i.test(n) ? '#6a6060' : null,
+      volcano: /volcán/i.test(n), flames: B.dim === 1, stars: B.dim === 2, isles: B.dim === 2, noSun: B.dim === 1, sky: B.dim === 1 ? '#d07050' : B.dim === 2 ? '#8a7ab0' : null,
+      ...(/Desierto|dunas/.test(n) ? { tree: 'cactus', trees: 3 } : {}), leaf: B.foliage ? `rgb(${B.foliage.map((v) => Math.round(v * 200)).join(',')})` : null };
+  },
+  biomeText(b) {
+    const B = BIOMES[b], C = codex.data(), w = C.when['b:' + b], out = [];
+    out.push(w ? `Llegué por primera vez el día ${w[0]}.` : 'Pasé por aquí en mis primeros días.');
+    out.push(B.precip === 'snow' ? 'Hace frío y a veces nieva.' : B.precip === 'none' ? 'Aquí casi nunca llueve.' : 'A veces llueve.');
+    const T = [...new Set((B.trees || []).map(([t]) => ({ oak: 'robles', birch: 'abedules', spruce: 'abetos', dark: 'robles oscuros', jungle: 'árboles de la selva', acacia: 'acacias', cherry: 'cerezos', swamp: 'árboles de pantano', shroom_red: 'hongos gigantes', charred: 'árboles calcinados', enchanted: 'árboles encantados' }[t] || null)).filter(Boolean))];
+    if (T.length) out.push(`Crecen ${listEs(T)}.`);
+    const pas = (B.passive || []).filter((t) => MOBS[t]).map((t) => (C.seen[t] ? lc(MOBS[t].name) : '???')), hos = (B.hostile || []).filter((t) => MOBS[t]).map((t) => (C.seen[t] ? lc(MOBS[t].name) : '???'));
+    if (pas.length) out.push(`Vi animales: ${listEs([...new Set(pas)])}.`);
+    if (hos.length) out.push(`De noche tengo que cuidarme de: ${listEs([...new Set(hos)])}.`);
+    return out;
+  },
+};
+/* ---------- Registro: qué se anota y cuándo ---------- */
+{
+  const _data = codex.data;
+  codex.data = function () { const C = _data.call(this); C.when ||= {}; C.look ||= {}; return C; };
+  const stamp = (key, how) => { const C = codex.data(); if (C.when[key]) return false; const p = game.player; C.when[key] = [(game.env?.days | 0) + 1, p ? world?.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z)) ?? null : null, how]; return true; };
+  let toastT = 0;
+  const note = (txt) => { const now = performance.now(); if (now - toastT > 2500 && game.state === 'playing') { toastT = now; hud.toast(`✏ Lo anoto en el cuaderno: ${txt}`, 1800); } };
+  const _disc = Player.prototype.discover;
+  Player.prototype.discover = function (id) {
+    const isNew = !this.discovered.has(id); const r = _disc.call(this, id);
+    if (this === game.player && ITEMS[id] && game.state !== 'menu') { const C = codex.data(); if (!C.when['i:' + id] || C.when['i:' + id][2] === 'saw') { C.when['i:' + id] = null; delete C.when['i:' + id]; stamp('i:' + id, 'got'); if (isNew) note(ITEMS[id].name); } }
+    return r;
+  };
+  const _upd = codex.update;
+  codex.update = function (dt) {
+    _upd.call(this, dt);
+    if (this.scanT !== 1) return;                                       // solo cuando el escaneo de 4.0 corrió (una vez por segundo)
+    const p = game.player; if (!p || game.state !== 'playing' || !world) return;
+    const C = this.data();
+    for (const t in C.seen) stamp('m:' + t, 'saw');
+    const b = world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z)); if (b != null && BIOMES[b] && stamp('b:' + b, 'saw')) note(BIOMES[b].name);
+    for (const [k] of p.pois) stamp('p:' + k, 'saw');
+    // bloques mirados de cerca
+    const t = game.target, set = this.itemSet || (this.itemSet = new Set(codexItems().map((it) => it.id)));
+    if (t && t.id && set.has(t.id) && !p.discovered.has(t.id) && !C.look[t.id]) { C.look[t.id] = 1; if (stamp('i:' + t.id, 'saw')) note(ITEMS[t.id].name); }
+  };
+  // cargar y guardar las anotaciones nuevas
+  const _ld = Player.prototype.load;
+  Player.prototype.load = function (o) {
+    const r = _ld.call(this, o);
+    if (o && o.codex && typeof o.codex === 'object') { const w = o.codex.when, l = o.codex.look; this.codex.when = w && typeof w === 'object' ? w : {}; this.codex.look = l && typeof l === 'object' ? l : {}; }
+    return r;
+  };
+  // los objetos vistos (sin conseguir) también cuentan como página escrita
+  codex.known = function (id) { return game.mode === 'creative' || game.player.discovered.has(id); };
+  codex.noted = function (id) { return this.known(id) || !!this.data().look[id]; };
+}
+/* ---------- El libro ---------- */
+Object.assign(codex, {
+  tab: 'items',
+  render() {
+    const C = this.data();
+    $$('#codexScreen .bkTab').forEach((b) => b.classList.toggle('on', b.dataset.ctab === this.tab));
+    const L = $('#codexBody'), R = $('#nbRight'), lt = $('#nbLT'), tools = $('#nbTools');
+    if (this.preview) this.preview.stop();
+    L.scrollTop = 0; tools.style.display = this.tab === 'items' ? '' : 'none';
+    const tile = (key, name, img, extra = '') => `<button class="nbCell${this.selKey === key ? ' sel' : ''}" data-k="${escapeHtml(key)}" style="--rot:${((key.length * 37 + key.charCodeAt(key.length - 1)) % 7 - 3) * 0.7}deg"><img alt="" ${img ? `src="${img}"` : ''} data-src="${escapeHtml(key)}"><span>${escapeHtml(name)}</span>${extra}</button>`;
+    let left = '', blank = 0;
+    if (this.tab === 'items') {
+      lt.textContent = 'Objetos';
+      const all = codexItems(), filt = CODEX_CATS.find((c) => c[0] === this.cat)[2], q = norm(this.q);
+      const list = all.filter((it) => filt(it) && this.noted(it.id) && (!q || norm(it.name).includes(q)));
+      blank = all.filter((it) => filt(it) && !this.noted(it.id)).length;
+      left = list.map((it) => tile('i:' + it.id, it.name, pencil60.cache.get(`i${it.id}:96`), game.player.discovered.has(it.id) || game.mode === 'creative' ? '' : '<em>visto</em>')).join('');
+      $('#nbCats').innerHTML = CODEX_CATS.map(([k, n]) => `<button class="nbCat${this.cat === k ? ' on' : ''}" data-cat="${k}">${n}</button>`).join('');
+    } else if (this.tab === 'mobs') {
+      lt.textContent = 'Criaturas';
+      const list = this.mobList(); blank = list.filter(([t]) => !C.seen[t] && game.mode !== 'creative').length;
+      for (const [g, f] of [['Animales', (s) => !s.hostile && !s.boss], ['Monstruos', (s) => s.hostile && !s.boss], ['Jefes', (s) => s.boss]]) {
+        const seen = list.filter(([t, s]) => f(s) && (C.seen[t] || game.mode === 'creative'));
+        if (seen.length) left += `<h4 class="nbSub">${g}</h4>` + seen.map(([t, s]) => tile('m:' + t, s.name, pencil60.cache.get(`m${t}:120`), C.kills[t] ? `<em>×${C.kills[t]}</em>` : '')).join('');
+      }
+    } else if (this.tab === 'explore') {
+      lt.textContent = 'Lugares';
+      const p = game.player, bs = [...new Set([...p.biomes].filter((b) => BIOMES[b]))], all = BIOMES.map((b, i) => i).filter((i) => biomeAvailable(i));
+      blank = all.filter((i) => !bs.includes(i)).length;
+      left += `<h4 class="nbSub">Biomas</h4>` + bs.map((b) => tile('b:' + b, BIOMES[b].name, pencil60.cache.get(`pb${b}:200`))).join('');
+      const pois = [...p.pois.entries()].slice(-80).reverse();
+      if (pois.length) left += `<h4 class="nbSub">Lugares descubiertos</h4>` + pois.map(([k, q]) => tile('p:' + k, q.name || POI_NAMES[q.type] || q.type, pencil60.cache.get(`pp${q.type}:200`))).join('');
+      const dims = [['Inframundo', 'dim_nether', '🔥'], ['El Vacío', 'dim_void', '🌌']].filter(([, a]) => p.ach.has(a));
+      if (dims.length) left += `<h4 class="nbSub">Dimensiones</h4>` + dims.map(([n, a]) => tile('d:' + a, n, '')).join('');
+    } else if (this.tab === 'journal') {
+      lt.textContent = 'Diario';
+      const J = (game.player.evs && game.player.evs.journal) || [], days = [...new Set(J.map((e) => e.d))].reverse();
+      left = days.length ? days.map((d) => `<button class="nbDay${this.selKey === 'j:' + d ? ' sel' : ''}" data-k="j:${d}"><b>Día ${d}</b><span>${J.filter((e) => e.d === d).length} anotaciones</span></button>`).join('') : '<p class="nbEmpty">Todavía no escribí nada. El diario se llena solo con lo que me va pasando.</p>';
+    } else {
+      lt.textContent = 'Saber';
+      const d = rpg56.data(), got = LORE56.filter((L0) => d.lore.includes(L0[0]) || game.mode === 'creative'); blank = LORE56.length - got.length;
+      left = got.map((L0) => tile('l:' + L0[0], L0[2], pencil60.emoji(L0[1], 96))).join('');
+    }
+    if (blank > 0) left += `<p class="nbBlank">${blank} ${blank === 1 ? 'página en blanco' : 'páginas en blanco'} por llenar…</p>`;
+    if (!left) left = '<p class="nbEmpty">Este cuaderno todavía está en blanco.</p>';
+    L.innerHTML = left;
+    this.lazySketches(L);
+    if (!this.selKey || !L.querySelector(`[data-k="${CSS.escape(this.selKey)}"]`)) {
+      const first = L.querySelector('[data-k]'); this.selKey = first ? first.dataset.k : null; if (first) first.classList.add('sel');
+    }
+    this.page(R);
+  },
+  lazySketches(L) {
+    for (const im of L.querySelectorAll('img[data-src]')) {
+      if (im.getAttribute('src')) continue;
+      const k = im.dataset.src, kind = k.slice(0, 2), v = k.slice(2);
+      if (kind === 'i:') pencil60.item(+v, 96).then((u) => { if (u) im.src = u; });
+      else if (kind === 'm:') requestAnimationFrame(() => { const u = pencil60.mob(v, 120); if (u) im.src = u; });
+      else if (kind === 'b:') { const u = pencil60.place('b' + v, notebook.biomeSpec(+v), 200); pencil60.cache.set(`pb${v}:200`, u); im.src = u; }
+      else if (kind === 'p:') { const q = game.player.pois.get(v); if (q) { const u = this.poiSketch(q); im.src = u; } }
+      else if (kind === 'd:') im.src = pencil60.place(v, v === 'dim_nether' ? { flames: true, ground: '#8a3a2a', sky: '#d07050', noSun: true } : { stars: true, isles: true, sky: '#8a7ab0' }, 200);
+    }
+  },
+  poiSketch(q) {
+    const n = (q.name || POI_NAMES[q.type] || '').toLowerCase();
+    const icon = /aldea/.test(n) ? '🏘' : /torre|atalaya|pico/.test(n) ? '🗼' : /templo|pirámide/.test(n) ? '🛕' : /ruina|columna/.test(n) ? '🏛' : /naufrag|barco/.test(n) ? '⛵' : /mina|cueva|catacumba|cripta|mazmorra/.test(n) ? '⛏' : /castillo|fortaleza|forja|trono/.test(n) ? '🏰' : /pozo/.test(n) ? '🪣' : /tesoro/.test(n) ? '💰' : /campamento/.test(n) ? '⛺' : /santuario/.test(n) ? '🐚' : /laboratorio/.test(n) ? '⚗' : /dragón/.test(n) ? '🐉' : /cabaña/.test(n) ? '🛖' : '📍';
+    const b = world.biomeAt(Math.floor(q.x), Math.floor(q.z)), spec = BIOMES[b] ? { ...notebook.biomeSpec(b), trees: 1, icon } : { icon };
+    const u = pencil60.place('poi' + q.type + (q.name || ''), spec, 200); pencil60.cache.set(`pp${q.type}:200`, u); return u;
+  },
+  // página derecha: la ficha
+  page(R) {
+    R = R || $('#nbRight'); const k = this.selKey, C = this.data();
+    if (!k) { R.innerHTML = '<p class="nbEmpty">Elige una página de la izquierda.</p>'; return; }
+    const kind = k.slice(0, 2), v = k.slice(2);
+    const para = (lines) => lines.filter(Boolean).map((t) => `<p>${escapeHtml(t)}</p>`).join('');
+    const fig = (src, cls = '') => `<figure class="nbFig ${cls}"><img alt="" ${src ? `src="${src}"` : ''}><i class="tape a"></i><i class="tape b"></i></figure>`;
+    let h = '';
+    if (kind === 'i:') {
+      const it = ITEMS[+v]; if (!it) return;
+      const w = C.when[k], r = rarityOf(it.id), st = [];
+      if (it.tool?.dmg) st.push(`daño ${it.tool.dmg}`); if (it.tool?.dur) st.push(`${it.tool.dur} usos`); if (it.armor) st.push(`armadura ${it.armor.pts}`); if (it.food) st.push(`hambre +${it.food.hunger}`); if (it.block && BLOCKS[it.block]?.light) st.push(`luz ${BLOCKS[it.block].light}`);
+      h = `${fig(pencil60.cache.get(`i${it.id}:220`), 'big')}<h2 class="nbName">${escapeHtml(it.name)}${r >= 2 && RARITY[r] ? ` <small style="color:${RARITY[r][1]}">${RARITY[r][0]}</small>` : ''}</h2>
+        ${w ? `<p class="nbDate">${nbWhen(w)}</p>` : ''}${para(notebook.itemText(it))}${st.length ? `<p class="nbMargin">✎ ${escapeHtml(st.join(' · '))}</p>` : ''}${this.recipeSketch(it)}`;
+      R.innerHTML = h; pencil60.item(it.id, 220).then((u) => { const im = R.querySelector('.nbFig img'); if (u && im && this.selKey === k) im.src = u; });
+      return;
+    }
+    if (kind === 'm:') {
+      const s = MOBS[v]; if (!s) return;
+      h = `${fig(pencil60.mob(v, 220), 'big')}<h2 class="nbName">${escapeHtml(s.name)}</h2>${C.when[k] ? `<p class="nbDate">${nbWhen(C.when[k])}</p>` : ''}${para(notebook.mobText(v))}
+        ${(s.drops || []).filter((d) => ITEMS[d[0]] && this.known(d[0])).length ? `<p class="nbMargin">Botín:</p><div class="nbMini">${(s.drops || []).filter((d) => ITEMS[d[0]] && this.known(d[0])).map((d) => `<img alt="" data-i="${d[0]}" title="${escapeHtml(ITEMS[d[0]].name)}">`).join('')}</div>` : ''}`;
+    } else if (kind === 'b:') {
+      h = `${fig(pencil60.place('b' + v, notebook.biomeSpec(+v), 260), 'wide')}<h2 class="nbName">${escapeHtml(BIOMES[+v].name)}</h2>${C.when[k] ? `<p class="nbDate">${nbWhen(C.when[k])}</p>` : ''}${para(notebook.biomeText(+v))}`;
+    } else if (kind === 'p:') {
+      const q = game.player.pois.get(v); if (!q) { R.innerHTML = ''; return; }
+      const [lx, lz] = localXZ(q.x, q.z), w = C.when[k];
+      h = `${fig(this.poiSketch(q), 'wide')}<h2 class="nbName">${escapeHtml(q.name || POI_NAMES[q.type] || q.type)}</h2>${w ? `<p class="nbDate">${nbWhen(w)}</p>` : ''}
+        ${para([w ? `Lo encontré el día ${w[0]}.` : 'Lo encontré hace tiempo.', `Queda en X ${Math.round(lx)}, Z ${Math.round(lz)}${dimOf(q.x, q.z) ? `, en ${DIM_NAMES[dimOf(q.x, q.z)]}` : ''}.`, 'Lo marqué en el mapa para poder volver.'])}`;
+    } else if (kind === 'd:') {
+      const nether = v === 'dim_nether';
+      h = `${fig(pencil60.place(v, nether ? { flames: true, ground: '#8a3a2a', sky: '#d07050', noSun: true } : { stars: true, isles: true, sky: '#8a7ab0' }, 260), 'wide')}<h2 class="nbName">${nether ? 'Inframundo' : 'El Vacío'}</h2>
+        ${para(nether ? ['Crucé el portal y llegué a un mundo de fuego.', 'Aquí el agua no dura nada y la lava está por todas partes.', 'Hay infernita bajo la piedra infernal: con ella forjé cosas muy fuertes.'] : ['Islas flotando sobre la nada, cristales y un silencio raro.', 'Si me caigo, no hay vuelta atrás: tengo que ir con cuidado.', 'Aquí se encuentra la vacuita, el material más duro que conozco.'])}`;
+    } else if (kind === 'j:') {
+      const d = +v, J = ((game.player.evs && game.player.evs.journal) || []).filter((e) => e.d === d);
+      h = `<h2 class="nbName">Día ${d}</h2>` + J.map((e) => `<p class="nbJ"><b>${String(e.h).padStart(2, '0')}:00</b> ${escapeHtml(e.i || '•')} ${escapeHtml(firstPerson(e.x))}</p>`).join('');
+    } else if (kind === 'l:') {
+      const L0 = LORE56.find((x) => x[0] === v); if (!L0) return;
+      h = `${fig(pencil60.emoji(L0[1], 200), 'big')}<h2 class="nbName">${escapeHtml(L0[2])}</h2>${para([firstPerson(L0[3])])}`;
+    }
+    R.innerHTML = h;
+    for (const im of R.querySelectorAll('img[data-i]')) pencil60.item(+im.dataset.i, 64).then((u) => { if (u) im.src = u; });
+  },
+  // receta como la anoté: una cuadrícula a mano con los dibujos
+  recipeSketch(it) {
+    const r = RECIPES.find((x) => x.out === it.id); if (!r || !this.known(it.id)) return '';
+    const cells = [];
+    if (r.items) for (let i = 0; i < 9; i++) cells.push(r.items[i] != null ? (Array.isArray(r.items[i]) ? r.items[i][0] : r.items[i]) : null);
+    else for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { const ch = r.pattern[y]?.[x]; const v = ch && ch !== ' ' ? r.key[ch] : null; cells.push(v == null ? null : Array.isArray(v) ? v[0] : v); }
+    setTimeout(() => { for (const im of $$('#nbRight .nbRGrid img[data-i]')) pencil60.item(+im.dataset.i, 64).then((u) => { if (u) im.src = u; }); }, 0);
+    return `<p class="nbMargin">Cómo lo fabrico:</p><div class="nbRecipe"><div class="nbRGrid">${cells.map((c) => (c != null ? `<span><img alt="" data-i="${c}" title="${escapeHtml(ITEMS[c]?.name || '')}"></span>` : '<span></span>')).join('')}</div><b>→ ${r.n > 1 ? r.n + ' ×' : ''}</b></div>`;
+  },
+});
+/* ---------- Clics del libro ---------- */
+{
+  const scr = $('#codexScreen');
+  scr.addEventListener('click', (e) => {
+    const cell = e.target.closest('[data-k]'), cat = e.target.closest('[data-cat]'), tab = e.target.closest('.bkTab');
+    if (tab) { codex.tab = tab.dataset.ctab; codex.selKey = null; sfx.play('click'); codex.render(); return; }
+    if (cat) { codex.cat = cat.dataset.cat; codex.selKey = null; sfx.play('click'); codex.render(); return; }
+    if (cell) { codex.selKey = cell.dataset.k; $$('#codexBody [data-k].sel').forEach((x) => x.classList.remove('sel')); cell.classList.add('sel'); sfx.play('click'); codex.page(); }
+  });
+  const s = $('#nbSearch');
+  if (s) { s.oninput = () => { codex.q = s.value; codex.render(); s.focus(); }; s.addEventListener('keydown', (e) => e.stopPropagation()); }
+  // la vista 3D de 4.0 ya no se usa: el dibujo la reemplaza
+  codex.mobCard = function () {}; codex.itemCard = function () {};
 }
 
 /* ==========================================================================
