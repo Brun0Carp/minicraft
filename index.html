@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>LinkCraft 6.0</title>
+<title>LinkCraft 6.0.1</title>
 <!--
   ============================================================================
   LINKCRAFT 5.0 (antes MiniCraft) — supervivencia voxel en un único HTML
@@ -832,6 +832,9 @@
     .nbGrid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } .nbCell img { width: 56px; height: 56px; } .nbBook .bkPage.left::before { display: none; } .nbGrid, #nbTools { padding-left: 0 !important; margin-left: 0; }
   }
   @media (max-height: 480px) { #codexScreen .book { height: 92vh; padding: 8px 12px 16px; } #codexScreen .bkPage { padding: 8px 12px; } .nbFig img { width: 100px; height: 100px; } }
+  /* 6.0.1: aviso de cierre inesperado */
+  #crash61 { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.6); padding: 16px; }
+  #crash61 .card { max-width: 440px; } #crash61 h3 { margin: 0 0 8px; } #crash61 p { margin: 6px 0; color: #ddd; } #crash61 .btn { width: 100%; margin-top: 8px; }
   /* 5.8: tipos de mundo */
   #ob58 { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top)); transform: translateX(-50%); display: none; min-width: 220px; padding: 4px 10px 5px; background: rgba(0,0,0,.5); border: 2px solid #000; border-radius: 4px; text-align: center; font-size: 13px; color: #fff; text-shadow: 0 1px 0 #000; pointer-events: none; }
   #ob58 u { display: block; height: 5px; margin-top: 3px; background: rgba(255,255,255,.15); } #ob58 s { display: block; height: 100%; background: #7ad04a; }
@@ -1146,7 +1149,7 @@
   <div class="menuWrap">
     <div class="title">
       <h1 data-text="LINKCRAFT">LINKCRAFT</h1>
-      <span class="ver">¡Versión 6.0!</span>
+      <span class="ver">¡Versión 6.0.1!</span>
       <p class="subtitle">Supervivencia y construcción voxel</p>
     </div>
     <div class="card menuCard">
@@ -1156,7 +1159,7 @@
       <div class="row"><button id="btnSettings" class="btn"><i class="bico" data-icon="settings"></i>Ajustes</button><button id="btnAbout" class="btn"><i class="bico" data-icon="about"></i>Cómo jugar</button></div>
     </div>
   </div>
-  <div class="menuFoot"><span>LinkCraft 6.0</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
+  <div class="menuFoot"><span>LinkCraft 6.0.1</span><span id="touchHint">Controles táctiles activados</span><span>Three.js · WebGL</span></div>
 </div>
 <div id="aboutScreen" class="screen">
   <div class="card about">
@@ -12774,7 +12777,7 @@ function loop(now) {
     $('#hudClock').textContent = `${game.env.clock()}`;
     if (settings.showFps) {
       const b = BIOMES[world.biomeAt(Math.floor(p.pos.x), Math.floor(p.pos.z))].name;
-      dbg.textContent = `LinkCraft 6.0  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
+      dbg.textContent = `LinkCraft 6.0.1  ${fps} FPS\nXYZ: ${localXZ(p.pos.x, p.pos.z)[0].toFixed(1)} / ${p.pos.y.toFixed(1)} / ${localXZ(p.pos.x, p.pos.z)[1].toFixed(1)}\n${DIM_NAMES[dimOf(p.pos.x, p.pos.z)]} · Bioma: ${b}\nChunks: ${world.chunks.size} · Entidades: ${game.entities.list.length}\nDía ${game.env.days + 1} ${game.env.clock()} · ${WEATHER_NAMES[game.env.weather]}\n` +
         (game.target ? `Mirando: ${BLOCKS[game.target.id].name}` : game.mobTarget ? `Mirando: ${game.mobTarget.spec.name} (${Math.ceil(game.mobTarget.hp)}♥)` : '');
     }
   }
@@ -15736,6 +15739,13 @@ $('#chatInput').placeholder = 'Escribe un mensaje o un comando (/ayuda)';
 
 /* ---------- Novedades ---------- */
 const CHANGELOG = [
+  { v: '6.0.1', name: 'Arreglos para el celular', date: 'noviembre de 2026', items: [
+    'Corregido: al golpear a una criatura, en vez de echarse un poco hacia atrás, giraba 90° y quedaba patas arriba atravesando el suelo. La inclinación se acumulaba en cada fotograma; ahora vuelve a su postura enseguida.',
+    'Menos memoria en el celular: en pantallas táctiles la resolución tiene tope (2× en Ultra, 1,5× en Alta, 1× en Media). En teléfonos con pantalla muy densa, la calidad Ultra pedía hasta 3× y podía cerrar el navegador.',
+    'Si el navegador se cierra de golpe mientras juegas, al volver a abrir el juego te ofrece bajar un escalón la calidad gráfica y apagar los shaders.',
+    'Si el navegador reinicia la tarjeta gráfica, el juego guarda y se recarga solo en vez de quedarse en negro.',
+    'El cuaderno libera el dibujante de criaturas al cerrarse.',
+  ] },
   { v: '6.0', name: 'Cuaderno del explorador', date: 'noviembre de 2026', items: [
     'La enciclopedia ahora es un cuaderno en blanco que se va llenando solo: hojas rayadas, letra a mano, marcapáginas de colores (Objetos, Criaturas, Lugares, Diario y Saber) y las páginas que faltan quedan en blanco.',
     'Cada objeto que consigues, o que miras de cerca con la mira, queda anotado con el día y el bioma donde fue. Los que solo viste llevan la marca «visto».',
@@ -18841,7 +18851,7 @@ const biomeMusic = {
        navegadores) todo sigue funcionando con localStorage, como antes.
    ========================================================================== */
 const SAVE_VERSION = 5;          // 5 = LinkCraft 5.0 (mismo formato que la 4, con «game» y copias verificadas)
-const GAME_VERSION = '6.0';
+const GAME_VERSION = '6.0.1';
 const saveStore = {
   mode: 'local', db: null, cache: new Map(), ready: false, errors: 0, migrated: 0, emergencies: 0,
   open() {
@@ -24385,9 +24395,13 @@ const GEMS56 = {
     _sq.call(this, dt);
     const L = this.lean56;
     if (L && this.mesh) {
+      // 6.0.1: la inclinación se aplica cada fotograma sobre la orientación limpia (solo el giro en Y). Antes se acumulaba
+      // fotograma a fotograma y la criatura terminaba girada 90° y patas arriba atravesando el suelo.
+      const R = this.mesh.rotation;
+      if (L.bx === undefined) { L.bx = R.x; L.bz = R.z; }
       L.t -= dt;
-      if (L.t <= 0 || this.deathT) this.lean56 = null;
-      else { const l = Math.hypot(L.dx, L.dz) || 1, k = Math.sin(Math.min(1, L.t / 0.26) * Math.PI) * 0.32; AX.set(L.dz / l, 0, -L.dx / l); Q.setFromAxisAngle(AX, k); this.mesh.quaternion.premultiply(Q); }
+      if (L.t <= 0 || this.deathT || this.dead) { this.lean56 = null; if (!this.deathT) { R.x = L.bx; R.z = L.bz; } }
+      else { R.x = L.bx; R.z = L.bz; const l = Math.hypot(L.dx, L.dz) || 1, k = Math.sin(Math.min(1, L.t / 0.26) * Math.PI) * 0.32; AX.set(L.dz / l, 0, -L.dx / l); Q.setFromAxisAngle(AX, k); this.mesh.quaternion.premultiply(Q); }
     }
     const B = this.bleed56;
     if (B && !this.remote && !this.deathT) {
@@ -26046,6 +26060,72 @@ Object.assign(codex, {
   if (s) { s.oninput = () => { codex.q = s.value; codex.render(); s.focus(); }; s.addEventListener('keydown', (e) => e.stopPropagation()); }
   // la vista 3D de 4.0 ya no se usa: el dibujo la reemplaza
   codex.mobCard = function () {}; codex.itemCard = function () {};
+}
+
+/* ==========================================================================
+   §64 ESTABILIDAD EN EL CELULAR (6.0.1)
+   --------------------------------------------------------------------------
+   · Resolución con tope en pantallas táctiles: en un teléfono con pantalla
+     de densidad 3, la calidad Ultra pedía imágenes de hasta 3× (y los
+     efectos de los shaders se multiplican con eso). Ahora el máximo táctil
+     es 2× en Ultra, 1,5× en Alta, 1× en Media y 0,75× en Baja.
+   · Si el navegador se cerró de golpe mientras jugabas (se nota porque la
+     partida quedó marcada como «en juego»), al volver se ofrece bajar un
+     escalón la calidad gráfica.
+   · Si el navegador reinicia la tarjeta gráfica (pérdida del contexto
+     WebGL), se guarda y se recarga en vez de quedar en negro.
+   · El dibujante de criaturas del cuaderno libera su contexto WebGL al
+     cerrar el cuaderno.
+   ========================================================================== */
+{
+  const KEY = 'lc-alive';
+  setQuality = function () {
+    const dpr = window.devicePixelRatio || 1;
+    const cap = IS_TOUCH ? { baja: 0.75, media: 1, alta: 1.5, ultra: 2 } : { baja: 0.75, media: 1.25, alta: 2, ultra: 3 };
+    const want = { baja: Math.min(dpr, 0.75), media: Math.min(dpr, 1.25), alta: Math.min(dpr, 2), ultra: Math.min(dpr * 1.5, 3) }[settings.quality] || 1;
+    renderer.setPixelRatio(Math.min(want, cap[settings.quality] || 1));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  };
+  setQuality();
+  // marca de «en juego»: se borra al salir del juego, al ir a segundo plano o al cerrar la pestaña normalmente
+  const alive = (on) => { try { if (on) localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), q: settings.preset || settings.quality })); else localStorage.removeItem(KEY); } catch (e) {} };
+  let beat = 0;
+  setInterval(() => { if (game.state === 'playing' && !document.hidden) { alive(true); beat++; } }, 5000);
+  addEventListener('pagehide', () => alive(false));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) alive(false); else if (game.state === 'playing') alive(true); });
+  const _toMenu = game.quitToMenu;
+  game.quitToMenu = function (...a) { alive(false); return _toMenu.apply(this, a); };
+  // al arrancar: ¿la última vez se cerró de golpe?
+  let crashed = null; try { crashed = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+  alive(false);
+  const ORDER = ['bajo', 'medio', 'alto', 'ultra'];
+  const lower = () => {
+    const cur = ORDER.includes(settings.preset) ? settings.preset : settings.quality === 'ultra' ? 'ultra' : settings.quality === 'alta' ? 'alto' : settings.quality === 'media' ? 'medio' : 'bajo';
+    const i = Math.max(0, ORDER.indexOf(cur) - 1);
+    applyPreset50(ORDER[i]); settings.shaders = 'apagado'; saveSettings();
+    setQuality(); applySettings('shaders');
+    return ORDER[i];
+  };
+  if (crashed && crashed.t && Date.now() - crashed.t < 3 * 864e5) {
+    const box = document.createElement('div'); box.id = 'crash61';
+    box.innerHTML = `<div class="card"><h3>El juego se cerró de golpe</h3><p>La última vez el navegador se cerró mientras jugabas. En los teléfonos suele pasar cuando se queda sin memoria por la calidad gráfica.</p>
+      <p>Tu partida se guarda sola cada poco, así que no deberías haber perdido casi nada.</p>
+      <button class="btn primary" id="crashLower">Bajar la calidad gráfica</button><button class="btn" id="crashKeep">Dejarla así</button></div>`;
+    document.body.appendChild(box);
+    $('#crashLower').onclick = () => { const p = lower(); box.remove(); hud.toast(`Calidad gráfica: ${p[0].toUpperCase() + p.slice(1)}, sin shaders`, 3000); };
+    $('#crashKeep').onclick = () => box.remove();
+  }
+  // pérdida del contexto gráfico: guardar y recargar
+  renderer.domElement.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    try { if (world && game.state !== 'menu') saveGame(true); } catch (err) {}
+    alive(false);
+    const m = document.createElement('div'); m.id = 'crash61'; m.innerHTML = '<div class="card"><h3>Reiniciando los gráficos…</h3><p>El navegador reinició la tarjeta gráfica. Guardé la partida y recargo el juego.</p></div>'; document.body.appendChild(m);
+    setTimeout(() => location.reload(), 1500);
+  });
+  // el dibujante de criaturas del cuaderno suelta su contexto WebGL al cerrar
+  const _hide = codex.hide;
+  codex.hide = function (...a) { const r = _hide.apply(this, a); const R = pencil60.r3; if (R) { try { R.r.dispose(); R.r.forceContextLoss(); } catch (e) {} pencil60.r3 = null; } return r; };
 }
 
 /* ==========================================================================

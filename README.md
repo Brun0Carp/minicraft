@@ -1,4 +1,4 @@
-# LinkCraft 6.0
+# LinkCraft 6.0.1
 
 Juego de supervivencia y construcción con bloques que corre en el navegador, en **un solo archivo HTML**. Antes se llamaba MiniCraft. La 5.0 cierra la evolución que empezó en MiniCraft 4.0. Los mundos, ajustes, logros y servidores de MiniCraft siguen funcionando.
 
@@ -172,6 +172,7 @@ Cada versión intermedia está detallada en el juego, en **Novedades**.
 **Cuaderno del explorador (6.0)**
 - La enciclopedia es un cuaderno en blanco que se llena solo con lo que consigues, miras, ves y visitas, con fecha y bioma.
 - Cada entrada está dibujada a mano (lápiz y acuarela generados a partir del icono, del modelo 3D o como boceto del paisaje) y escrita en primera persona a partir de los datos del juego.
+- 6.0.1: arreglado el giro de las criaturas al golpearlas; menos memoria en el celular y aviso para bajar la calidad si el navegador se cerró de golpe.
 
 ## Funciones existentes que se mejoraron
 
